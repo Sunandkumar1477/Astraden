@@ -44,86 +44,114 @@ $conn->close();
             padding: 0;
             box-sizing: border-box;
         }
+        
         body {
             font-family: 'Rajdhani', sans-serif;
             background: #0a0a0f;
             color: #00ffff;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
             background-image: 
-                radial-gradient(circle at 20% 50%, rgba(157, 78, 221, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%);
+                radial-gradient(circle at 20% 50%, rgba(157, 78, 221, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.08) 0%, transparent 50%);
         }
+        
+        /* Header - Compact */
         .header {
-            max-width: 1000px;
-            margin: 0 auto 30px;
+            max-width: 1100px;
+            margin: 0 auto 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            background: rgba(15, 15, 25, 0.8);
+            padding: 15px 20px;
+            background: rgba(15, 15, 25, 0.9);
             border: 2px solid #00ffff;
             border-radius: 10px;
         }
+        
         .header h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
+            font-size: 1.5rem;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
         }
+        
         .header-buttons {
             display: flex;
             gap: 10px;
         }
+        
         .btn {
-            background: rgba(0, 255, 255, 0.2);
+            background: rgba(0, 255, 255, 0.15);
             border: 2px solid #00ffff;
             color: #00ffff;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
             text-decoration: none;
             font-weight: 600;
+            font-size: 0.9rem;
             transition: all 0.3s;
         }
+        
         .btn:hover {
-            background: rgba(0, 255, 255, 0.4);
+            background: rgba(0, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
+        
         .btn-primary {
             background: linear-gradient(135deg, #00ffff, #9d4edd);
             color: white;
             border: none;
         }
+        
         .btn-primary:hover {
-            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
+            box-shadow: 0 3px 15px rgba(0, 255, 255, 0.4);
         }
+        
+        /* Container */
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
         }
+        
+        /* Profile Display - Compact Layout */
         .profile-display {
-            background: rgba(15, 15, 25, 0.8);
+            background: rgba(15, 15, 25, 0.9);
             border: 2px solid #00ffff;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
+            border-radius: 12px;
+            padding: 25px;
         }
+        
+        /* Top Section: Icon, Name, Credits in Row */
+        .profile-top-section {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+        }
+        
         .profile-icon-container {
-            margin-bottom: 30px;
-        }
-        .profile-icon-display {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: 4px solid #00ffff;
-            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 6rem;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-            position: relative;
-            overflow: hidden;
         }
+        
+        .profile-icon-display {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #00ffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+            flex-shrink: 0;
+        }
+        
         /* Profile Icons */
         .icon-boy1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .icon-girl1 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
@@ -131,104 +159,292 @@ $conn->close();
         .icon-bald { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
         .icon-fashion { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
         .icon-specs { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+        
+        .profile-name-section {
+            text-align: left;
+        }
+        
         .profile-name {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             font-weight: 900;
-            margin-bottom: 20px;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
         }
+        
         .credits-display {
-            margin: 30px 0;
-            padding: 25px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            border: 3px solid;
-            display: inline-block;
-            min-width: 250px;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            border: 2px solid;
+            text-align: center;
+            min-width: 140px;
         }
+        
         .credits-label {
-            font-size: 1rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: 15px;
-            color: rgba(0, 255, 255, 0.7);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            color: rgba(255, 215, 0, 0.9);
+            font-weight: 600;
         }
+        
         .credits-value {
             font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem;
+            font-size: 2rem;
             font-weight: 900;
         }
+        
+        /* Info Grid - Compact */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
         }
+        
         .info-card {
             background: rgba(0, 0, 0, 0.3);
             border: 2px solid #00ffff;
-            border-radius: 10px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 12px 15px;
             text-align: left;
+            transition: all 0.3s;
         }
+        
+        .info-card:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        
         .info-card h3 {
             font-family: 'Orbitron', sans-serif;
             color: #9d4edd;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
             border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-            padding-bottom: 8px;
+            padding-bottom: 5px;
+            font-weight: 700;
         }
+        
         .info-card p {
             color: #00ffff;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 600;
+            word-break: break-word;
         }
+        
+        /* Bio Section - Compact */
         .bio-section {
-            margin-top: 30px;
-            padding: 20px;
+            margin: 20px 0;
+            padding: 15px;
             background: rgba(0, 0, 0, 0.3);
             border: 2px solid #00ffff;
-            border-radius: 10px;
+            border-radius: 8px;
             text-align: left;
         }
+        
         .bio-section h3 {
             font-family: 'Orbitron', sans-serif;
             color: #9d4edd;
-            font-size: 1rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            font-weight: 700;
         }
+        
         .bio-section p {
-            color: rgba(0, 255, 255, 0.8);
+            color: rgba(0, 255, 255, 0.9);
             line-height: 1.6;
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
+        
+        /* Action Sections - Compact */
+        .action-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .action-section {
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid;
+        }
+        
+        .password-section {
+            background: rgba(0, 255, 255, 0.08);
+            border-color: #00ffff;
+        }
+        
+        .danger-section {
+            background: rgba(255, 0, 0, 0.08);
+            border-color: #ff0000;
+        }
+        
+        .action-section h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .password-section h3 {
+            color: #00ffff;
+        }
+        
+        .danger-section h3 {
+            color: #ff0000;
+        }
+        
+        .action-section p {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .btn-change-password,
+        .btn-delete {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+        }
+        
+        .btn-change-password {
+            background: linear-gradient(135deg, #00ffff, #9d4edd);
+            color: white;
+        }
+        
+        .btn-change-password:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 0, 0, 0.4);
+        }
+        
+        /* Incomplete Profile Notice */
+        .incomplete-notice {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(157, 78, 221, 0.15);
+            border: 2px solid #9d4edd;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .incomplete-notice p {
+            color: #9d4edd;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        /* Responsive Design */
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
             .header {
                 flex-direction: column;
-                gap: 15px;
+                gap: 12px;
+                padding: 12px 15px;
             }
+            
+            .header h1 {
+                font-size: 1.3rem;
+            }
+            
             .header-buttons {
                 width: 100%;
                 flex-direction: column;
             }
+            
             .btn {
                 width: 100%;
                 text-align: center;
             }
-            .profile-icon-display {
-                width: 150px;
-                height: 150px;
-                font-size: 4rem;
+            
+            .profile-display {
+                padding: 20px 15px;
             }
+            
+            .profile-top-section {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .profile-name-section {
+                text-align: center;
+            }
+            
+            .profile-icon-display {
+                width: 90px;
+                height: 90px;
+                font-size: 3rem;
+            }
+            
             .profile-name {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
+            }
+            
+            .credits-display {
+                margin: 0 auto;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .action-sections {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.1rem;
+            }
+            
+            .profile-icon-display {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem;
+            }
+            
+            .profile-name {
+                font-size: 1.3rem;
+            }
+            
+            .credits-value {
+                font-size: 1.6rem;
             }
         }
     </style>
@@ -244,33 +460,38 @@ $conn->close();
 
     <div class="container">
         <div class="profile-display">
-            <div class="profile-icon-container">
-                <?php 
-                $selected_icon = $profile['profile_photo'] ?? '';
-                $icon_classes = [
-                    'boy1' => '👨',
-                    'girl1' => '👩',
-                    'beard' => '🧔',
-                    'bald' => '👨‍🦲',
-                    'fashion' => '👸',
-                    'specs' => '👨‍💼'
-                ];
-                $icon_class = $selected_icon ? 'icon-' . $selected_icon : '';
-                $icon_emoji = $icon_classes[$selected_icon] ?? '🌍';
-                ?>
-                <div class="profile-icon-display <?php echo htmlspecialchars($icon_class); ?>">
-                    <?php echo $icon_emoji; ?>
+            <!-- Top Section: Icon, Name, Credits -->
+            <div class="profile-top-section">
+                <div class="profile-icon-container">
+                    <?php 
+                    $selected_icon = $profile['profile_photo'] ?? '';
+                    $icon_classes = [
+                        'boy1' => '👨',
+                        'girl1' => '👩',
+                        'beard' => '🧔',
+                        'bald' => '👨‍🦲',
+                        'fashion' => '👸',
+                        'specs' => '👨‍💼'
+                    ];
+                    $icon_class = $selected_icon ? 'icon-' . $selected_icon : '';
+                    $icon_emoji = $icon_classes[$selected_icon] ?? '🌍';
+                    ?>
+                    <div class="profile-icon-display <?php echo htmlspecialchars($icon_class); ?>">
+                        <?php echo $icon_emoji; ?>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="profile-name">
-                <?php echo htmlspecialchars($profile['full_name'] ?? $_SESSION['username'] ?? 'User'); ?>
-            </div>
-            
-            <div class="credits-display" style="border-color: #FFD700;">
-                <div class="credits-label">Credits</div>
-                <div class="credits-value" style="color: #FFD700;">
-                    <?php echo number_format($profile['credits'] ?? 0); ?>
+                
+                <div class="profile-name-section">
+                    <div class="profile-name">
+                        <?php echo htmlspecialchars($profile['full_name'] ?? $_SESSION['username'] ?? 'User'); ?>
+                    </div>
+                </div>
+                
+                <div class="credits-display" style="border-color: #FFD700;">
+                    <div class="credits-label">Credits</div>
+                    <div class="credits-value" style="color: #FFD700;">
+                        <?php echo number_format($profile['credits'] ?? 0); ?>
+                    </div>
                 </div>
             </div>
             
@@ -320,36 +541,31 @@ $conn->close();
             <?php endif; ?>
             
             <?php if (!$profile || !$profile['full_name']): ?>
-            <div style="margin-top: 30px; padding: 20px; background: rgba(157, 78, 221, 0.2); border: 2px solid #9d4edd; border-radius: 10px;">
-                <p style="color: #9d4edd; font-size: 1.1rem; margin-bottom: 15px;">Complete your profile to unlock all features!</p>
-                <a href="profile.php" class="btn btn-primary" style="display: inline-block;">Create Profile Now</a>
+            <div class="incomplete-notice">
+                <p>Complete your profile to unlock all features!</p>
+                <a href="profile.php" class="btn btn-primary">Create Profile Now</a>
             </div>
             <?php endif; ?>
             
-            <!-- Change Password Section -->
-            <div style="margin-top: 40px; padding: 25px; background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; border-radius: 10px;">
-                <h3 style="font-family: 'Orbitron', sans-serif; color: #00ffff; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;">
-                    🔐 Change Password
-                </h3>
-                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 20px; line-height: 1.6;">
-                    Update your account password to keep your account secure.
-                </p>
-                <button onclick="showChangePasswordModal()" class="btn-change-password" style="background: linear-gradient(135deg, #00ffff, #9d4edd); border: none; color: white; padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
-                    Change Password
-                </button>
-            </div>
-            
-            <!-- Delete Account Section -->
-            <div style="margin-top: 40px; padding: 25px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff0000; border-radius: 10px;">
-                <h3 style="font-family: 'Orbitron', sans-serif; color: #ff0000; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;">
-                    ⚠️ Danger Zone
-                </h3>
-                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 15px; line-height: 1.6;">
-                    Deleting your account will permanently remove all your data including profile, credits, scores, and referral information. This action cannot be undone.
-                </p>
-                <button onclick="showDeleteModal()" class="btn-delete" style="background: linear-gradient(135deg, #ff0000, #cc0000); border: none; color: white; padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
-                    Delete My Account
-                </button>
+            <!-- Action Sections: Password & Delete -->
+            <div class="action-sections">
+                <!-- Change Password Section -->
+                <div class="action-section password-section">
+                    <h3>🔐 Change Password</h3>
+                    <p>Update your account password to keep your account secure.</p>
+                    <button onclick="showChangePasswordModal()" class="btn-change-password">
+                        Change Password
+                    </button>
+                </div>
+                
+                <!-- Delete Account Section -->
+                <div class="action-section danger-section">
+                    <h3>⚠️ Danger Zone</h3>
+                    <p>Permanently delete your account and all data. This cannot be undone.</p>
+                    <button onclick="showDeleteModal()" class="btn-delete">
+                        Delete Account
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -80,7 +80,7 @@ session_start();
             <div class="user-dropdown-content" id="userDropdown">
                 <div class="dropdown-header">
                     <div class="user-profile-summary">
-                        <div class="user-profile-icon" id="profileIcon">🌍</div>
+                        <div class="user-profile-icon" id="dropdownProfileIcon">🌍</div>
                         <div class="user-profile-details">
                             <div class="user-profile-name" id="fullDisplayName">User</div>
                             <div class="user-profile-rank">Rank: <span id="rankValueDisplay">N/A</span></div>
@@ -227,7 +227,7 @@ session_start();
 
     <!-- Profile Planet Button -->
     <a href="view_profile.php" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile">
-        <span class="profile-icon" id="profileIcon">🌍</span>
+        <span class="profile-icon" id="profileButtonIcon">🌍</span>
         <span class="profile-text">Profile</span>
     </a>
 
@@ -1168,10 +1168,9 @@ session_start();
                         fetch('check_user_profile.php')
                             .then(response => response.json())
                             .then(profileData => {
-                                const profileIconElements = [
-                                    document.getElementById('profileIcon'),
-                                    document.getElementById('mobileProfileIcon')
-                                ];
+                                // Update profile icons in dropdown and profile button
+                                const dropdownProfileIcon = document.getElementById('dropdownProfileIcon');
+                                const profileButtonIcon = document.getElementById('profileButtonIcon');
                                 
                                 const iconMap = {
                                     'boy1': '👨', 'girl1': '👩', 'beard': '🧔',
@@ -1180,7 +1179,15 @@ session_start();
                                 const iconEmoji = (profileData.profile_photo && iconMap[profileData.profile_photo]) ? 
                                                 iconMap[profileData.profile_photo] : '🌍';
                                 
-                                profileIconElements.forEach(el => { if(el) el.textContent = iconEmoji; });
+                                // Update dropdown profile icon
+                                if (dropdownProfileIcon) {
+                                    dropdownProfileIcon.textContent = iconEmoji;
+                                }
+                                
+                                // Update profile button icon
+                                if (profileButtonIcon) {
+                                    profileButtonIcon.textContent = iconEmoji;
+                                }
                                 
                                 if (profileData.has_profile) {
                                     const creditsDisplay = document.getElementById('creditsValueDisplay');
