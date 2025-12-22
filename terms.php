@@ -9,7 +9,12 @@ session_start();
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="robots" content="noindex, nofollow">
     <title>Terms and Conditions - Astraden</title>
+    <!-- Favicon - Must be early in head for proper display -->
     <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <link rel="shortcut icon" type="image/svg+xml" href="logo.svg">
+    <link rel="alternate icon" type="image/png" href="logo.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.svg">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="logo.svg">
     
     <!-- Google Fonts - Space Theme -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -42,7 +42,12 @@ $log_stmt->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Details - Admin</title>
+    <!-- Favicon - Must be early in head for proper display -->
     <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <link rel="shortcut icon" type="image/svg+xml" href="logo.svg">
+    <link rel="alternate icon" type="image/png" href="logo.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.svg">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="logo.svg">
     <style>
         * {
             margin: 0;
