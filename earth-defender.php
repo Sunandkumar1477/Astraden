@@ -105,27 +105,142 @@ $conn->close();
             font-family: 'Orbitron', monospace;
         }
 
+        /* Mobile Timer Display (Compact, near exit button) */
+        #contest-timer-mobile {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            color: #00ffff;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: 700;
+            background: rgba(0, 20, 40, 0.75);
+            padding: 6px 12px;
+            border: 1px solid rgba(0, 170, 170, 0.4);
+            border-radius: 6px;
+            pointer-events: none;
+            z-index: 1001;
+            display: none;
+            font-family: 'Orbitron', monospace;
+            white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(3px);
+        }
+
         #hud {
             position: absolute;
             top: 20px;
             left: 20px;
             color: #00ffff;
-            text-shadow: 0 0 10px #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
             font-size: 18px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 15px;
             pointer-events: none;
+            z-index: 100;
         }
 
         .hud-item {
-            background: rgba(0, 20, 40, 0.7);
-            padding: 10px 20px;
-            border: 1px solid #00aaaa;
-            border-radius: 4px;
+            background: rgba(0, 20, 40, 0.85);
+            padding: 12px 25px;
+            border: 1px solid rgba(0, 170, 170, 0.5);
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Mobile Optimized HUD (Compact for gameplay) */
+        @media (max-width: 768px) {
+            /* Hide desktop timer on mobile */
+            #contest-timer {
+                display: none !important;
+            }
+
+            /* Show mobile timer below exit button */
+            #contest-timer-mobile {
+                display: block !important;
+            }
+
+            #hud {
+                top: 10px;
+                left: 10px;
+                gap: 8px;
+                width: auto;
+            }
+
+            .hud-item {
+                padding: 6px 12px;
+                font-size: 14px;
+                gap: 8px;
+                border-radius: 6px;
+                background: rgba(0, 10, 20, 0.6);
+            }
+
+            /* Hide non-essential items on mobile during gameplay to maximize space */
+            #hud-total-score-item,
+            .hud-item:nth-last-child(1) { /* This is the control info item */
+                display: none !important;
+            }
+
+            .health-bar-container {
+                width: 100px;
+                height: 8px;
+            }
+
+            #exit-game-btn-hud {
+                top: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 12px;
+                border-radius: 6px;
+            }
+
+            #bomb-container {
+                bottom: 20px;
+                gap: 8px;
+            }
+
+            #bomb-btn {
+                padding: 10px 20px;
+                font-size: 1rem;
+                max-width: 200px;
+            }
+
+            #bomb-count-display {
+                font-size: 0.9rem;
+                padding: 4px 12px;
+            }
+        }
+
+        /* Desktop: Hide mobile timer, show desktop timer */
+        @media (min-width: 769px) {
+            #contest-timer-mobile {
+                display: none !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            #hud {
+                top: 40px;
+                left: 40px;
+                gap: 20px;
+            }
+            
+            .hud-item {
+                padding: 15px 30px;
+                font-size: 20px;
+            }
+            
+            #exit-game-btn-hud {
+                top: 40px;
+                right: 40px;
+                padding: 15px 30px;
+                font-size: 16px;
+            }
         }
 
         #exit-game-btn-hud {
@@ -158,72 +273,76 @@ $conn->close();
         }
 
         /* Bomb UI Specifics */
-        #bomb-btn {
-            background: linear-gradient(135deg, #ff9900, #ff3300);
-            border: none;
-            color: white;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 700;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 0 20px rgba(255, 153, 0, 0.3);
-            width: 100%;
-        }
-
-        #bomb-btn:hover {
-            transform: translateY(-4px) scale(1.05);
-            box-shadow: 0 0 30px rgba(255, 153, 0, 0.5);
-            filter: brightness(1.2);
-        }
-
-        #bomb-btn:active {
-            transform: translateY(1px) scale(0.95);
-        }
+        #bomb-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
             transform: translateX(-50%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            pointer-events: auto; /* Enable clicking on button */
-            width: 90%; /* Mobile friendly width */
-            max-width: 400px;
+            gap: 15px;
+            pointer-events: auto;
+            width: 90%;
+            max-width: 350px;
+            z-index: 100;
         }
 
         #bomb-btn {
-            background: rgba(255, 50, 50, 0.2);
-            border: 2px solid #ff3333;
-            color: #ff3333;
-            padding: 20px 0; /* Larger touch target */
+            background: linear-gradient(135deg, #ff3333, #880000);
+            border: 2px solid #ff0000;
+            color: white;
+            padding: 15px 30px;
             width: 100%;
-            font-size: 20px;
-            font-weight: bold;
+            font-size: 1.2rem;
+            font-weight: 800;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 2px;
-            border-radius: 30px;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
-            transition: all 0.1s;
-            -webkit-tap-highlight-color: transparent;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        #bomb-btn:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.6);
+            filter: brightness(1.2);
         }
 
         #bomb-btn:active {
-            background: rgba(255, 50, 50, 0.6);
-            transform: scale(0.98);
+            transform: translateY(2px) scale(0.95);
+            background: #ff0000;
         }
 
         #bomb-count-display {
             color: #ffaa00;
-            font-size: 20px;
+            font-size: 1.1rem;
             font-weight: bold;
-            text-shadow: 0 0 10px #ffaa00;
-            background: rgba(0,0,0,0.6);
-            padding: 5px 15px;
-            border-radius: 10px;
+            text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 170, 0, 0.3);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        @media (min-width: 769px) {
+            #bomb-container {
+                bottom: 50px;
+                max-width: 400px;
+            }
+            
+            #bomb-btn {
+                padding: 20px 40px;
+                font-size: 1.4rem;
+            }
         }
 
         #game-over {
@@ -236,17 +355,24 @@ $conn->close();
             display: none;
             flex-direction: column;
             align-items: center;
-            background: rgba(10, 0, 0, 0.95);
+            background: rgba(10, 0, 0, 0.98);
             padding: 50px;
             border: 3px solid #ff3333;
             border-radius: 20px;
             pointer-events: auto;
             cursor: default;
-            width: 90%;
-            max-width: 440px;
-            box-shadow: 0 0 60px rgba(255, 51, 51, 0.4);
+            width: 95%;
+            max-width: 500px;
+            box-shadow: 0 0 80px rgba(255, 51, 51, 0.5);
             font-family: 'Orbitron', sans-serif;
             z-index: 2000;
+        }
+
+        @media (min-width: 769px) {
+            #game-over {
+                padding: 70px;
+                max-width: 600px;
+            }
         }
 
         #game-over h1 { 
@@ -312,7 +438,7 @@ $conn->close();
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: radial-gradient(circle at center, rgba(10, 20, 30, 0.95) 0%, rgba(0, 5, 10, 0.98) 100%);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -321,174 +447,163 @@ $conn->close();
             justify-content: center;
             color: #00ffff;
             text-align: center;
-            padding: 20px;
+            padding: 40px 20px;
+            overflow-y: auto;
         }
+
         #game-status-overlay.hidden {
             display: none !important;
             pointer-events: none;
         }
+
         .status-title {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 20px;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            margin-bottom: 30px;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 5px;
             color: #ff3333;
+            text-shadow: 0 0 20px rgba(255, 51, 51, 0.4), 2px 2px 0px #000;
+            font-family: 'Orbitron', sans-serif;
         }
+
+        .prize-pool {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .prize-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+            font-size: 1.1rem;
+        }
+
+        .prize-item:last-child {
+            border-bottom: none;
+        }
+
         .timer-display {
-            font-size: 3rem;
-            font-weight: bold;
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 900;
             color: #00ffff;
             margin: 20px 0;
-            font-family: 'Courier New', monospace;
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
         }
+
         .status-message {
             font-size: 1.2rem;
-            color: rgba(0, 255, 255, 0.8);
-            margin: 10px 0;
+            color: rgba(0, 255, 255, 0.9);
+            margin: 15px 0;
+            max-width: 600px;
+            line-height: 1.5;
         }
+
         .credits-info {
-            font-size: 1rem;
-            color: rgba(0, 255, 255, 0.6);
-            margin-top: 20px;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+            background: rgba(255, 215, 0, 0.1);
+            padding: 10px 25px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
         }
-        /* Standardized Professional Buttons */
-        .game-btn {
-            padding: 14px 28px;
-            font-size: 1rem;
+
+        .game-btn, .start-game-btn, .demo-game-btn, .instructions-toggle-btn {
+            padding: 16px 32px;
+            font-size: 1.1rem;
             font-weight: 700;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: 'Orbitron', sans-serif;
             border: 2px solid transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 15px;
             width: 100%;
-            max-width: 340px;
+            max-width: 380px;
             text-decoration: none;
             outline: none;
             box-sizing: border-box;
             user-select: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            margin: 0;
         }
 
-        .game-btn:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-            filter: brightness(1.1);
+        .game-btn:hover, .start-game-btn:hover, .demo-game-btn:hover, .instructions-toggle-btn:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+            filter: brightness(1.2);
         }
 
-        .game-btn:active {
-            transform: translateY(1px) scale(0.98);
+        .game-btn:active, .start-game-btn:active, .demo-game-btn:active, .instructions-toggle-btn:active {
+            transform: translateY(2px) scale(0.98);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #00ffff, #0088ff);
-            color: #000;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-            border: none;
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: #fff;
-        }
-
-        .btn-accent {
-            background: rgba(0, 255, 255, 0.08);
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
-        }
-
-        .btn-home {
-            background: rgba(157, 78, 221, 0.08);
-            border: 2px solid #9d4edd;
-            color: #9d4edd;
-            box-shadow: 0 0 20px rgba(157, 78, 221, 0.2);
-        }
-
-        .btn-home:hover {
-            background: rgba(157, 78, 221, 0.25);
-            color: #fff;
-            border-color: #9d4edd;
-        }
-
-        .btn-claim {
-            background: linear-gradient(135deg, #00ff00, #008800);
-            color: #000;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-            border: none;
-        }
-
-        .game-btn-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            width: 100%;
-            margin-top: 25px;
-            pointer-events: auto;
+        @media (min-width: 769px) {
+            .game-btn-container {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                max-width: 900px;
+                gap: 25px;
+                margin: 40px auto;
+            }
+            
+            .game-btn, .start-game-btn, .demo-game-btn, .instructions-toggle-btn {
+                flex: 0 1 340px; /* Force uniform sizing on desktop */
+            }
+            
+            .prize-pool {
+                display: grid;
+                grid-template-columns: 1fr;
+                max-width: 700px;
+                gap: 0;
+            }
+            
+            .status-title {
+                margin-bottom: 40px;
+            }
         }
 
         .start-game-btn {
             background: linear-gradient(135deg, #00ffff, #9d4edd);
             border: none;
             color: white;
-            padding: 16px 32px;
-            font-size: 1.1rem;
-            font-weight: 800;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 0;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s;
-            width: 100%;
-            max-width: 340px;
-            font-family: 'Orbitron', sans-serif;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
         }
 
-        .start-game-btn:hover {
-            transform: translateY(-4px) scale(1.03);
-            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.4);
-            filter: brightness(1.2);
-        }
-        .start-game-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
-        }
         .start-game-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
         }
+
         .demo-game-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             color: white;
-            padding: 14px 28px;
-            font-size: 1rem;
+            padding: 16px 32px;
+            font-size: 1.1rem;
             font-weight: 700;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer !important;
-            margin-top: 0;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             pointer-events: auto !important;
             z-index: 1002 !important;
@@ -498,15 +613,16 @@ $conn->close();
             justify-content: center;
             visibility: visible !important;
             width: 100%;
-            max-width: 340px;
+            max-width: 380px;
             font-family: 'Orbitron', sans-serif;
             box-sizing: border-box;
         }
+
         .demo-game-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.2);
             border-color: #fff;
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
         }
         .demo-game-btn:active {
             transform: scale(0.98);
@@ -749,17 +865,37 @@ $conn->close();
         }
         
         .instructions-content {
-            background: rgba(10, 10, 15, 0.98);
+            background: rgba(10, 10, 15, 0.99);
             border: 2px solid #00ffff;
-            border-radius: 10px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 90vh;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 95%;
+            max-height: 85vh;
             overflow-y: auto;
-            padding: 20px;
+            padding: 40px;
             margin: 20px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.4);
             position: relative;
+            scrollbar-width: thin;
+            scrollbar-color: #00ffff rgba(0,0,0,0.5);
+        }
+
+        @media (min-width: 769px) {
+            .instructions-content {
+                padding: 60px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 40px;
+                align-content: start;
+            }
+            
+            .instructions-header {
+                grid-column: 1 / -1;
+            }
+            
+            .instruction-section:last-child {
+                grid-column: 1 / -1;
+            }
         }
         
         .instructions-header {
@@ -966,6 +1102,7 @@ $conn->close();
 
     <div id="ui-layer">
         <div id="contest-timer"></div>
+        <div id="contest-timer-mobile"></div>
         <div id="hud">
             <div class="hud-item">
                 <span>HP</span>
@@ -1198,15 +1335,21 @@ $conn->close();
         // Track if game ended due to time
         let gameEndedByTime = false;
         
+        function hideContestTimers() {
+            document.getElementById('contest-timer').style.display = 'none';
+            const mobileTimer = document.getElementById('contest-timer-mobile');
+            if (mobileTimer) mobileTimer.style.display = 'none';
+        }
+
         function updateContestTimer() {
             // Hide contest timer in demo mode - demo has no time limits
             if (state.isDemoMode) {
-                document.getElementById('contest-timer').style.display = 'none';
+                hideContestTimers();
                 return;
             }
             
             if (!gameSession || !gameSession.end_timestamp) {
-                document.getElementById('contest-timer').style.display = 'none';
+                hideContestTimers();
                 return;
             }
             
@@ -1215,10 +1358,16 @@ $conn->close();
             const remaining = endTime - now;
             
             const timerElement = document.getElementById('contest-timer');
+            const mobileTimerElement = document.getElementById('contest-timer-mobile');
             
             if (remaining <= 0) {
-                timerElement.textContent = 'Contest Ended';
+                const endText = 'Contest Ended';
+                timerElement.textContent = endText;
                 timerElement.style.color = '#ff3333';
+                if (mobileTimerElement) {
+                    mobileTimerElement.textContent = endText;
+                    mobileTimerElement.style.color = '#ff3333';
+                }
                 clearInterval(contestTimerInterval);
                 
                 // If game is currently playing (and NOT in demo mode), end it automatically
@@ -1234,6 +1383,7 @@ $conn->close();
             const minutes = Math.floor((remaining % 3600) / 60);
             const seconds = remaining % 60;
             
+            // Desktop timer format
             let timerText = '';
             if (hours > 0) {
                 timerText = `${hours} hr`;
@@ -1246,6 +1396,21 @@ $conn->close();
             timerElement.textContent = `⏰ Contest Ends In: ${timerText}`;
             timerElement.style.display = 'block';
             timerElement.style.color = '#00ffff';
+            
+            // Mobile timer format (compact)
+            if (mobileTimerElement) {
+                let mobileText = '';
+                if (hours > 0) {
+                    mobileText = `${hours}h ${minutes}m`;
+                } else if (minutes > 0) {
+                    mobileText = `${minutes}m ${seconds}s`;
+                } else {
+                    mobileText = `${seconds}s`;
+                }
+                mobileTimerElement.textContent = `⏰ ${mobileText}`;
+                mobileTimerElement.style.display = 'block';
+                mobileTimerElement.style.color = '#00ffff';
+            }
         }
         
         // Ensure demo button is always visible and enabled on page load
@@ -1331,17 +1496,17 @@ $conn->close();
                     } else {
                         // No active session - show message with next session date if available
                         showNoSession(data.next_session_date);
-                        document.getElementById('contest-timer').style.display = 'none';
+                        hideContestTimers();
                     }
                 } else {
                     // No session - show demo only
                     showNoSession(data.next_session_date);
-                    document.getElementById('contest-timer').style.display = 'none';
+                    hideContestTimers();
                 }
             } catch (error) {
                 console.error('Error checking game status:', error);
                 showNoSession(null);
-                document.getElementById('contest-timer').style.display = 'none';
+                hideContestTimers();
                 // Ensure demo button is always visible even on error
                 if (demoBtn) {
                     demoBtn.style.display = 'block';
