@@ -2969,6 +2969,273 @@ body.mobile-device .play-btn:active {
     }
 }
 
+/* Desktop Styles - Enhanced Login Modal */
+@media (min-width: 1024px) {
+    .auth-modal {
+        max-width: 520px;
+        padding: 40px 45px;
+        border-width: 3px;
+        box-shadow: 
+            0 15px 50px rgba(0, 255, 255, 0.4),
+            0 0 60px rgba(157, 78, 221, 0.3),
+            inset 0 0 30px rgba(0, 255, 255, 0.05);
+        animation: modalSlideInDesktop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    @keyframes modalSlideInDesktop {
+        from {
+            opacity: 0;
+            transform: translateY(-80px) scale(0.85) rotateX(10deg);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1) rotateX(0deg);
+        }
+    }
+    
+    .modal-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+        position: relative;
+    }
+    
+    .modal-header::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+    }
+    
+    .modal-header h2 {
+        font-size: 2.5rem;
+        letter-spacing: 4px;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: none;
+        position: relative;
+    }
+    
+    .modal-header p {
+        font-size: 1rem;
+        color: rgba(0, 255, 255, 0.8);
+        letter-spacing: 1px;
+    }
+    
+    .close-modal {
+        width: 40px;
+        height: 40px;
+        font-size: 1.4rem;
+        top: 20px;
+        right: 20px;
+        border-width: 2px;
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    }
+    
+    .close-modal:hover {
+        background: rgba(0, 255, 255, 0.3);
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+        transform: rotate(90deg) scale(1.1);
+    }
+    
+    .auth-form {
+        gap: 25px;
+    }
+    
+    .form-group {
+        gap: 10px;
+        position: relative;
+    }
+    
+    .form-group label {
+        font-size: 1rem;
+        letter-spacing: 1.5px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .form-group label::before {
+        content: '▸';
+        color: var(--primary-purple);
+        font-size: 0.8rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .form-group:focus-within label::before {
+        transform: translateX(5px);
+        color: var(--primary-cyan);
+    }
+    
+    .form-group input {
+        padding: 14px 18px;
+        font-size: 1rem;
+        border-width: 2px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.6);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .form-group input:hover {
+        background: rgba(0, 0, 0, 0.7);
+        border-color: rgba(0, 255, 255, 0.6);
+    }
+    
+    .form-group input:focus {
+        border-color: var(--primary-purple);
+        box-shadow: 
+            0 0 20px rgba(157, 78, 221, 0.6),
+            inset 0 0 20px rgba(157, 78, 221, 0.1);
+        background: rgba(0, 0, 0, 0.8);
+        transform: translateY(-2px);
+    }
+    
+    .form-group input::placeholder {
+        color: rgba(0, 255, 255, 0.5);
+        font-size: 0.95rem;
+    }
+    
+    .submit-btn {
+        padding: 16px 25px;
+        font-size: 1.1rem;
+        letter-spacing: 3px;
+        border-radius: 10px;
+        margin-top: 15px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+        box-shadow: 0 5px 25px rgba(0, 255, 255, 0.4);
+    }
+    
+    .submit-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .submit-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 30px rgba(0, 255, 255, 0.6);
+        letter-spacing: 4px;
+    }
+    
+    .submit-btn:active {
+        transform: translateY(-1px) scale(1);
+    }
+    
+    .switch-form {
+        margin-top: 25px;
+        font-size: 1rem;
+        padding-top: 20px;
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    
+    .switch-form a {
+        font-weight: 700;
+        transition: all 0.3s ease;
+        position: relative;
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+    
+    .switch-form a::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 2px;
+        background: var(--primary-purple);
+        transition: width 0.3s ease;
+    }
+    
+    .switch-form a:hover::after {
+        width: 100%;
+    }
+    
+    .switch-form a:hover {
+        color: var(--primary-purple);
+        background: rgba(157, 78, 221, 0.1);
+        text-shadow: 0 0 15px rgba(157, 78, 221, 0.6);
+    }
+    
+    .error-message,
+    .success-message {
+        padding: 14px 18px;
+        font-size: 0.95rem;
+        border-radius: 8px;
+        border-width: 2px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .error-message {
+        background: rgba(255, 0, 110, 0.25);
+        border-color: var(--primary-pink);
+        box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+    }
+    
+    .success-message {
+        background: rgba(0, 255, 0, 0.25);
+        border-color: #00ff00;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    }
+    
+    .modal-overlay {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.92);
+    }
+}
+
+/* Extra Large Desktop Screens */
+@media (min-width: 1440px) {
+    .auth-modal {
+        max-width: 560px;
+        padding: 45px 50px;
+    }
+    
+    .modal-header h2 {
+        font-size: 2.8rem;
+        letter-spacing: 5px;
+    }
+    
+    .modal-header p {
+        font-size: 1.1rem;
+    }
+    
+    .form-group input {
+        padding: 16px 20px;
+        font-size: 1.05rem;
+    }
+    
+    .submit-btn {
+        padding: 18px 30px;
+        font-size: 1.15rem;
+    }
+}
+
 .error-message {
     background: rgba(255, 0, 110, 0.2);
     border: 1px solid var(--primary-pink);
