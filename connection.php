@@ -13,17 +13,22 @@ $db_name = "astraden";
 // Create MySQLi connection
 $conn = new mysqli($servername, $username, $password, $db_name);
 
-// Create PDO connection
-try {
-    $connect = new PDO("mysql:host=$servername;dbname=$db_name", $username, $password);
-    $connect->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("PDO Connection failed: " . $e->getMessage());
-}
-
 // Check the MySQLi connection
 if ($conn->connect_error) {
-    die("MySQLi Connection failed: " . $conn->connect_error);
+    error_log("MySQLi Connection failed: " . $conn->connect_error);
+    die("Database connection failed. Please try again later.");
+}
+
+// Set charset to utf8mb4 for proper character support
+$conn->set_charset("utf8mb4");
+
+// Create PDO connection
+try {
+    $connect = new PDO("mysql:host=$servername;dbname=$db_name;charset=utf8mb4", $username, $password);
+    $connect->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    error_log("PDO Connection failed: " . $e->getMessage());
+    // Don't die here, MySQLi connection is primary
 }
 
 // Utility function for generating a unique ID
@@ -49,39 +54,59 @@ if (!$isLoggedIn && isset($_COOKIE['remember_token']) && isset($_COOKIE['user_id
     $cookie_user_id = $_COOKIE['user_id'];
     
     try {
-        // Verify the token in database
-        $token_query = "SELECT u.id, u.name, u.email, ut.expires_at 
-                        FROM users u 
-                        JOIN user_tokens ut ON u.id = ut.user_id 
-                        WHERE ut.token = ? AND ut.user_id = ? AND ut.expires_at > NOW()";
-        $token_stmt = $conn->prepare($token_query);
-        $token_stmt->bind_param('si', $remember_token, $cookie_user_id);
-        $token_stmt->execute();
-        $token_result = $token_stmt->get_result();
-        
-        if ($token_result->num_rows > 0) {
-            $user_data = $token_result->fetch_assoc();
-            
-            // Restore session
-            $_SESSION['user_id'] = $user_data['id'];
-            $_SESSION['user_name'] = $user_data['name'];
-            $_SESSION['user_email'] = $user_data['email'];
-            
-            $isLoggedIn = true;
-            $user_id = $user_data['id'];
-            
-            // Clean up expired tokens for this user
-            $cleanup_stmt = $conn->prepare("DELETE FROM user_tokens WHERE user_id = ? AND expires_at <= NOW()");
-            $cleanup_stmt->bind_param('i', $user_id);
-            $cleanup_stmt->execute();
+        // Check if user_tokens table exists before trying to use it
+        $table_check = $conn->query("SHOW TABLES LIKE 'user_tokens'");
+        if ($table_check && $table_check->num_rows > 0) {
+            // Verify the token in database
+            $token_query = "SELECT u.id, u.name, u.email, ut.expires_at 
+                            FROM users u 
+                            JOIN user_tokens ut ON u.id = ut.user_id 
+                            WHERE ut.token = ? AND ut.user_id = ? AND ut.expires_at > NOW()";
+            $token_stmt = $conn->prepare($token_query);
+            if ($token_stmt) {
+                $token_stmt->bind_param('si', $remember_token, $cookie_user_id);
+                $token_stmt->execute();
+                $token_result = $token_stmt->get_result();
+                
+                if ($token_result->num_rows > 0) {
+                    $user_data = $token_result->fetch_assoc();
+                    
+                    // Restore session
+                    $_SESSION['user_id'] = $user_data['id'];
+                    if (isset($user_data['name'])) {
+                        $_SESSION['user_name'] = $user_data['name'];
+                    }
+                    if (isset($user_data['email'])) {
+                        $_SESSION['user_email'] = $user_data['email'];
+                    }
+                    
+                    $isLoggedIn = true;
+                    $user_id = $user_data['id'];
+                    
+                    // Clean up expired tokens for this user
+                    $cleanup_stmt = $conn->prepare("DELETE FROM user_tokens WHERE user_id = ? AND expires_at <= NOW()");
+                    if ($cleanup_stmt) {
+                        $cleanup_stmt->bind_param('i', $user_id);
+                        $cleanup_stmt->execute();
+                        $cleanup_stmt->close();
+                    }
+                } else {
+                    // Invalid or expired token, clear cookies
+                    setcookie('remember_token', '', time() - 3600, '/', '', true, true);
+                    setcookie('user_id', '', time() - 3600, '/', '', true, true);
+                }
+                $token_stmt->close();
+            }
         } else {
-            // Invalid or expired token, clear cookies
+            // Table doesn't exist, clear cookies
             setcookie('remember_token', '', time() - 3600, '/', '', true, true);
             setcookie('user_id', '', time() - 3600, '/', '', true, true);
         }
+        if ($table_check) {
+            $table_check->close();
+        }
     } catch (Exception $e) {
-        // Database error, clear cookies and log error
-        error_log("Persistent login error: " . $e->getMessage());
+        // Database error, clear cookies and log error silently
         setcookie('remember_token', '', time() - 3600, '/', '', true, true);
         setcookie('user_id', '', time() - 3600, '/', '', true, true);
     }
@@ -90,15 +115,29 @@ if (!$isLoggedIn && isset($_COOKIE['remember_token']) && isset($_COOKIE['user_id
 if ($isLoggedIn) {
     $user_id = $_SESSION['user_id'];
 
-    // Fetch user data from the database
-    $query = "SELECT profile_photo FROM user_information WHERE user_id = ?";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Fetch user data from the database (only if table exists)
+    try {
+        $table_check = $conn->query("SHOW TABLES LIKE 'user_information'");
+        if ($table_check && $table_check->num_rows > 0) {
+            $query = "SELECT profile_photo FROM user_information WHERE user_id = ?";
+            $stmt = $conn->prepare($query);
+            if ($stmt) {
+                $stmt->bind_param("i", $user_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
 
-    if ($result && $result->num_rows > 0) {
-        $userInfo = $result->fetch_assoc();
+                if ($result && $result->num_rows > 0) {
+                    $userInfo = $result->fetch_assoc();
+                }
+                $stmt->close();
+            }
+        }
+        if ($table_check) {
+            $table_check->close();
+        }
+    } catch (Exception $e) {
+        // Table doesn't exist or error, continue without user info
+        $userInfo = [];
     }
 }
 // // Set session variable for login status and user data

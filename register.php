@@ -1,10 +1,21 @@
 <?php
+// Prevent any output before JSON
+ob_start();
+
+// Set error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 session_start();
 require_once 'connection.php';
+
+// Clear any output buffer
+ob_clean();
 
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
     exit;
 }
@@ -49,6 +60,7 @@ if ($password !== $confirm_password) {
 }
 
 if (!empty($errors)) {
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => implode(', ', $errors)]);
     exit;
 }
@@ -66,11 +78,13 @@ if ($result->num_rows > 0) {
     $check_stmt->execute();
     $check_result = $check_stmt->get_result();
     
+    ob_end_clean();
     if ($check_result->num_rows > 0) {
         echo json_encode(['success' => false, 'message' => 'Username already exists']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Mobile number already registered']);
     }
+    $check_stmt->close();
     $stmt->close();
     exit;
 }
@@ -80,6 +94,7 @@ $stmt->close();
 $referred_by = null;
 if (!empty($referral_code)) {
     if (!preg_match('/^[A-Z0-9]{4}$/', $referral_code)) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Invalid referral code format. Must be 4 alphanumeric characters.']);
         exit;
     }
@@ -94,6 +109,7 @@ if (!empty($referral_code)) {
         $ref_data = $ref_result->fetch_assoc();
         $referred_by = $ref_data['id'];
     } else {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Invalid referral code. Please check and try again.']);
         $ref_stmt->close();
         exit;
@@ -204,6 +220,7 @@ if ($stmt->execute()) {
         $_SESSION['login_log_id'] = null;
     }
     
+    ob_end_clean();
     echo json_encode([
         'success' => true, 
         'message' => 'Registration successful!',
@@ -213,10 +230,18 @@ if ($stmt->execute()) {
         ]
     ]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'Registration failed. Please try again.']);
+    ob_end_clean();
+    $error_msg = 'Registration failed. Please try again.';
+    if ($stmt->error) {
+        error_log("Registration error: " . $stmt->error);
+    }
+    echo json_encode(['success' => false, 'message' => $error_msg]);
 }
 
 $stmt->close();
-$conn->close();
+if (isset($conn)) {
+    $conn->close();
+}
+exit;
 ?>
 
