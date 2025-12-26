@@ -453,8 +453,8 @@ $conn->close();
     <div class="header">
         <h1>🌍 My Profile</h1>
         <div class="header-buttons">
-            <a href="profile" class="btn btn-primary">Edit Profile</a>
-            <a href="/" class="btn">← Back to Games</a>
+            <a href="profile.php" class="btn btn-primary">Edit Profile</a>
+            <a href="index.php" class="btn">← Back to Games</a>
         </div>
     </div>
 
@@ -462,35 +462,35 @@ $conn->close();
         <div class="profile-display">
             <!-- Top Section: Icon, Name, Credits -->
             <div class="profile-top-section">
-                <div class="profile-icon-container">
-                    <?php 
-                    $selected_icon = $profile['profile_photo'] ?? '';
-                    $icon_classes = [
-                        'boy1' => '👨',
-                        'girl1' => '👩',
-                        'beard' => '🧔',
-                        'bald' => '👨‍🦲',
-                        'fashion' => '👸',
-                        'specs' => '👨‍💼'
-                    ];
-                    $icon_class = $selected_icon ? 'icon-' . $selected_icon : '';
-                    $icon_emoji = $icon_classes[$selected_icon] ?? '🌍';
-                    ?>
-                    <div class="profile-icon-display <?php echo htmlspecialchars($icon_class); ?>">
-                        <?php echo $icon_emoji; ?>
-                    </div>
+            <div class="profile-icon-container">
+                <?php 
+                $selected_icon = $profile['profile_photo'] ?? '';
+                $icon_classes = [
+                    'boy1' => '👨',
+                    'girl1' => '👩',
+                    'beard' => '🧔',
+                    'bald' => '👨‍🦲',
+                    'fashion' => '👸',
+                    'specs' => '👨‍💼'
+                ];
+                $icon_class = $selected_icon ? 'icon-' . $selected_icon : '';
+                $icon_emoji = $icon_classes[$selected_icon] ?? '🌍';
+                ?>
+                <div class="profile-icon-display <?php echo htmlspecialchars($icon_class); ?>">
+                    <?php echo $icon_emoji; ?>
                 </div>
-                
+            </div>
+            
                 <div class="profile-name-section">
-                    <div class="profile-name">
-                        <?php echo htmlspecialchars($profile['full_name'] ?? $_SESSION['username'] ?? 'User'); ?>
+            <div class="profile-name">
+                <?php echo htmlspecialchars($profile['full_name'] ?? $_SESSION['username'] ?? 'User'); ?>
                     </div>
-                </div>
-                
-                <div class="credits-display" style="border-color: #FFD700;">
-                    <div class="credits-label">Credits</div>
-                    <div class="credits-value" style="color: #FFD700;">
-                        <?php echo number_format($profile['credits'] ?? 0); ?>
+            </div>
+            
+            <div class="credits-display" style="border-color: #FFD700;">
+                <div class="credits-label">Credits</div>
+                <div class="credits-value" style="color: #FFD700;">
+                    <?php echo number_format($profile['credits'] ?? 0); ?>
                     </div>
                 </div>
             </div>
@@ -543,28 +543,28 @@ $conn->close();
             <?php if (!$profile || !$profile['full_name']): ?>
             <div class="incomplete-notice">
                 <p>Complete your profile to unlock all features!</p>
-                <a href="profile" class="btn btn-primary">Create Profile Now</a>
+                <a href="profile.php" class="btn btn-primary">Create Profile Now</a>
             </div>
             <?php endif; ?>
             
             <!-- Action Sections: Password & Delete -->
             <div class="action-sections">
-                <!-- Change Password Section -->
+            <!-- Change Password Section -->
                 <div class="action-section password-section">
                     <h3>🔐 Change Password</h3>
                     <p>Update your account password to keep your account secure.</p>
                     <button onclick="showChangePasswordModal()" class="btn-change-password">
-                        Change Password
-                    </button>
-                </div>
-                
-                <!-- Delete Account Section -->
+                    Change Password
+                </button>
+            </div>
+            
+            <!-- Delete Account Section -->
                 <div class="action-section danger-section">
                     <h3>⚠️ Danger Zone</h3>
                     <p>Permanently delete your account and all data. This cannot be undone.</p>
                     <button onclick="showDeleteModal()" class="btn-delete">
                         Delete Account
-                    </button>
+                </button>
                 </div>
             </div>
         </div>
@@ -600,7 +600,7 @@ $conn->close();
                         }, 2000); // Reload after 2 seconds
                     </script>
                 <?php endif; ?>
-                <form method="POST" action="change_password" id="changePasswordForm" onsubmit="return validatePasswordChange(event)">
+                <form method="POST" action="change_password.php" id="changePasswordForm" onsubmit="return validatePasswordChange(event)">
                     <div id="currentPasswordSection">
                         <div class="form-group">
                             <label for="current_password">Current Password</label>
@@ -661,7 +661,7 @@ $conn->close();
                         ?>
                     </div>
                 <?php endif; ?>
-                <form method="POST" action="delete_account" id="deleteAccountForm" onsubmit="return confirmFinalDelete(event)">
+                <form method="POST" action="delete_account.php" id="deleteAccountForm" onsubmit="return confirmFinalDelete(event)">
                     <div class="form-group">
                         <label for="confirmText">Type <strong>DELETE</strong> to confirm:</label>
                         <input type="text" id="confirmText" name="confirm_text" placeholder="Type DELETE" required 
