@@ -2,19 +2,20 @@
 // Prevent any output before JSON
 ob_start();
 
+// Set error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 session_start();
 require_once 'connection.php';
 
 // Clear any output buffer
 ob_clean();
 
-// Set error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
     exit;
 }
@@ -24,11 +25,13 @@ $password = $_POST['password'] ?? '';
 
 // Validation
 if (empty($username)) {
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Username is required']);
     exit;
 }
 
 if (empty($password)) {
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Password is required']);
     exit;
 }
@@ -75,6 +78,7 @@ if ($result->num_rows === 0) {
         // Table might not exist, continue without logging
     }
     
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Invalid username']);
     $stmt->close();
     $conn->close();
@@ -82,6 +86,15 @@ if ($result->num_rows === 0) {
 }
 
 $user = $result->fetch_assoc();
+
+// Check if password exists
+if (empty($user['password'])) {
+    ob_end_clean();
+    echo json_encode(['success' => false, 'message' => 'Account password not set. Please contact support.']);
+    $stmt->close();
+    $conn->close();
+    exit;
+}
 
 // Verify password FIRST before checking sessions
 if (!password_verify($password, $user['password'])) {
@@ -97,6 +110,7 @@ if (!password_verify($password, $user['password'])) {
         // Table might not exist, continue without logging
     }
     
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Invalid password']);
     $stmt->close();
     $conn->close();
@@ -157,6 +171,7 @@ if ($has_session_column && !$force_login) {
             }
             
             // Return confirmation request
+            ob_end_clean();
             echo json_encode([
                 'success' => false,
                 'requires_confirmation' => true,
@@ -244,6 +259,7 @@ try {
 }
 
 // Ensure we output valid JSON
+ob_end_clean();
 try {
     $response = [
         'success' => true,

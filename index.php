@@ -1649,7 +1649,19 @@ session_start();
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Invalid JSON response:', text);
+                        throw new Error('Invalid response from server');
+                    }
+                });
+            })
             .then(data => {
                 if (data.success) {
                     successEl.textContent = data.message;
@@ -1665,18 +1677,18 @@ session_start();
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Login';
                 } else {
-                    errorEl.textContent = data.message;
+                    errorEl.textContent = data.message || 'Login failed. Please try again.';
                     errorEl.classList.add('show');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Login';
                 }
             })
             .catch(error => {
+                console.error('Login error:', error);
                 errorEl.textContent = 'An error occurred. Please try again.';
                 errorEl.classList.add('show');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Login';
-                console.error('Login error:', error);
             });
         }
         
