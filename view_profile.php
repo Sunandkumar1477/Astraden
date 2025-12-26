@@ -453,8 +453,8 @@ $conn->close();
     <div class="header">
         <h1>🌍 My Profile</h1>
         <div class="header-buttons">
-            <a href="profile.php" class="btn btn-primary">Edit Profile</a>
-            <a href="index.php" class="btn">← Back to Games</a>
+            <a href="profile" class="btn btn-primary">Edit Profile</a>
+            <a href="/" class="btn">← Back to Games</a>
         </div>
     </div>
 
@@ -543,7 +543,7 @@ $conn->close();
             <?php if (!$profile || !$profile['full_name']): ?>
             <div class="incomplete-notice">
                 <p>Complete your profile to unlock all features!</p>
-                <a href="profile.php" class="btn btn-primary">Create Profile Now</a>
+                <a href="profile" class="btn btn-primary">Create Profile Now</a>
             </div>
             <?php endif; ?>
             
@@ -600,7 +600,7 @@ $conn->close();
                         }, 2000); // Reload after 2 seconds
                     </script>
                 <?php endif; ?>
-                <form method="POST" action="change_password.php" id="changePasswordForm" onsubmit="return validatePasswordChange(event)">
+                <form method="POST" action="change_password" id="changePasswordForm" onsubmit="return validatePasswordChange(event)">
                     <div id="currentPasswordSection">
                         <div class="form-group">
                             <label for="current_password">Current Password</label>
@@ -661,7 +661,7 @@ $conn->close();
                         ?>
                     </div>
                 <?php endif; ?>
-                <form method="POST" action="delete_account.php" id="deleteAccountForm" onsubmit="return confirmFinalDelete(event)">
+                <form method="POST" action="delete_account" id="deleteAccountForm" onsubmit="return confirmFinalDelete(event)">
                     <div class="form-group">
                         <label for="confirmText">Type <strong>DELETE</strong> to confirm:</label>
                         <input type="text" id="confirmText" name="confirm_text" placeholder="Type DELETE" required 

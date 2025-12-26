@@ -119,7 +119,7 @@ session_start();
                         <i class="fas fa-chevron-right"></i>
                     </div>
 
-                    <a href="logout.php" class="logout-link">
+                    <a href="logout" class="logout-link">
                         <span class="item-icon">🚪</span>
                         <span class="logout-text">Logout</span>
                     </a>
@@ -226,7 +226,7 @@ session_start();
     </div>
 
     <!-- Profile Planet Button -->
-    <a href="view_profile.php" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile">
+    <a href="view_profile" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile">
         <span class="profile-icon" id="profileButtonIcon">🌍</span>
         <span class="profile-text">Profile</span>
     </a>
@@ -352,7 +352,7 @@ session_start();
                         <span class="custom-checkbox"></span>
                         <span class="checkbox-label-text">
                             I have read, understood, and agree to the 
-                            <a href="terms.php" target="_blank" style="color: var(--primary-cyan); text-decoration: underline; font-weight: 600;">
+                            <a href="terms" target="_blank" style="color: var(--primary-cyan); text-decoration: underline; font-weight: 600;">
                                 Terms and Conditions
                             </a>
                             . I acknowledge that Astraden is solely a contest platform provider and I accept all risks and limitations of liability as stated in the Terms.
@@ -643,7 +643,7 @@ session_start();
 
             // Obfuscate game paths (basic security)
             const gamePaths = {
-                'earth-defender': 'earth-defender.php'
+                'earth-defender': 'earth-defender'
             };
 
             // Validate game name to prevent path traversal
@@ -2406,9 +2406,9 @@ session_start();
             <div class="footer-section">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a href="index.php">Home</a></li>
-                    <li><a href="view_profile.php">My Profile</a></li>
-                    <li><a href="terms.php">Terms and Conditions</a></li>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="view_profile">My Profile</a></li>
+                    <li><a href="terms">Terms and Conditions</a></li>
                     <li><a href="#" onclick="const m=document.getElementById('loginModal');if(m){m.classList.add('show');document.body.style.overflow='hidden';}else if(typeof openModal==='function'){openModal('login');}return false;">Login</a></li>
                     <li><a href="#" onclick="const m=document.getElementById('registerModal');if(m){m.classList.add('show');document.body.style.overflow='hidden';}else if(typeof openModal==='function'){openModal('register');}return false;">Register</a></li>
                 </ul>
@@ -2448,10 +2448,10 @@ session_start();
             <div class="footer-section">
                 <h3>Game Categories</h3>
                 <ul>
-                    <li><a href="index.php#defense">🛡️ Defense Games</a></li>
-                    <li><a href="index.php#action">⚔️ Action Games</a></li>
-                    <li><a href="index.php#strategy">♟️ Strategy Games</a></li>
-                    <li><a href="index.php#arcade">🎮 Arcade Games</a></li>
+                    <li><a href="/#defense">🛡️ Defense Games</a></li>
+                    <li><a href="/#action">⚔️ Action Games</a></li>
+                    <li><a href="/#strategy">♟️ Strategy Games</a></li>
+                    <li><a href="/#arcade">🎮 Arcade Games</a></li>
                 </ul>
                 <p style="margin-top: 15px; font-size: 0.85rem; color: rgba(0, 255, 255, 0.6);">
                     More exciting games coming soon! Stay tuned for updates.
@@ -2465,7 +2465,7 @@ session_start();
                 Experience the future of gaming | Play. Compete. Win.
             </p>
             <p style="margin-top: 10px; font-size: 0.8rem;">
-                <a href="terms.php" style="color: rgba(0, 255, 255, 0.7); text-decoration: underline;">Terms and Conditions</a>
+                <a href="terms" style="color: rgba(0, 255, 255, 0.7); text-decoration: underline;">Terms and Conditions</a>
             </p>
         </div>
     </footer>
