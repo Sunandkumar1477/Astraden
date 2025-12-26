@@ -3570,3 +3570,323 @@ body.mobile-device .play-btn:active {
         letter-spacing: 3px;
     }
 }
+
+/* ============================================
+   MOBILE ACTION STYLE - Full Page Action Aesthetic
+   Apply action button style to entire page on mobile
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Apply action button style to body/container */
+    body {
+        background: var(--dark-bg);
+        border: 2px solid var(--primary-cyan);
+        border-radius: 0;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid var(--primary-cyan);
+        pointer-events: none;
+        z-index: 9998;
+        box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.3);
+    }
+    
+    /* Container with action button style */
+    .container {
+        background: var(--card-bg);
+        border: 2px solid var(--primary-cyan);
+        border-radius: 15px;
+        margin: 10px;
+        padding: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), var(--glow-cyan);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .container::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(0, 255, 255, 0.1);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+        pointer-events: none;
+    }
+    
+    /* Header with action style */
+    .header {
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid var(--primary-cyan);
+        border-radius: 12px;
+        padding: 20px 15px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+        animation: shimmer 3s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+    
+    .header h1 {
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(157, 78, 221, 0.6);
+    }
+    
+    .header p {
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    /* Categories with enhanced action style */
+    .categories {
+        background: rgba(0, 0, 0, 0.2);
+        border: 2px solid var(--primary-cyan);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 25px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+    
+    .category-btn {
+        background: var(--card-bg);
+        border: 2px solid var(--primary-cyan);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .category-btn.active {
+        background: rgba(0, 255, 255, 0.15);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.6), inset 0 0 20px rgba(0, 255, 255, 0.1);
+        border-color: var(--primary-purple);
+    }
+    
+    /* Game cards with action button style */
+    .game-card {
+        background: var(--card-bg);
+        border: 2px solid var(--primary-cyan);
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3), var(--glow-cyan);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .game-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(0, 255, 255, 0.1), transparent);
+        opacity: 0;
+        transition: opacity 0.4s;
+    }
+    
+    .game-card:active::after {
+        opacity: 1;
+    }
+    
+    .game-card:active {
+        transform: scale(0.98);
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.5), inset 0 0 30px rgba(0, 255, 255, 0.1);
+    }
+    
+    /* Section titles with action style */
+    .section-title {
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid var(--primary-purple);
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 15px rgba(157, 78, 221, 0.4);
+        text-shadow: 0 0 20px rgba(157, 78, 221, 0.8);
+    }
+    
+    /* Play button enhanced */
+    .play-btn {
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+        border: 2px solid var(--primary-cyan);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), var(--glow-cyan);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .play-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .play-btn:active::before {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .play-btn:active {
+        transform: scale(0.95);
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.8), inset 0 0 30px rgba(0, 255, 255, 0.2);
+    }
+    
+    /* Auth buttons enhanced */
+    .auth-btn {
+        background: var(--card-bg);
+        border: 2px solid var(--primary-cyan);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.4), var(--glow-cyan);
+        backdrop-filter: blur(10px);
+    }
+    
+    .auth-btn:active {
+        transform: scale(0.95);
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.6), inset 0 0 20px rgba(0, 255, 255, 0.1);
+    }
+    
+    /* User info bar with action style */
+    .user-info-bar {
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid var(--primary-cyan);
+        border-radius: 12px;
+        padding: 10px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), var(--glow-cyan);
+    }
+    
+    /* Game icon enhanced glow */
+    .game-icon {
+        filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.8));
+        animation: iconPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes iconPulse {
+        0%, 100% {
+            filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.8));
+            transform: scale(1);
+        }
+        50% {
+            filter: drop-shadow(0 0 25px rgba(0, 255, 255, 1));
+            transform: scale(1.05);
+        }
+    }
+    
+    /* Coming soon card with action style */
+    .coming-soon-card {
+        border: 2px dashed var(--primary-cyan);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Credits badge with action style */
+    .credits-badge {
+        border: 2px solid #FFD700;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+    
+    /* Game type badge with action style */
+    .game-type {
+        border: 2px solid var(--primary-purple);
+        box-shadow: 0 0 10px rgba(157, 78, 221, 0.4);
+    }
+    
+    /* Space background enhanced for mobile */
+    #space-background {
+        border: 2px solid rgba(0, 255, 255, 0.2);
+    }
+    
+    /* Add pulsing glow to container on mobile */
+    .container {
+        animation: containerGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes containerGlow {
+        0%, 100% {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), var(--glow-cyan);
+        }
+        50% {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5), 0 0 40px rgba(157, 78, 221, 0.3);
+        }
+    }
+    
+    /* Enhanced touch feedback */
+    *:active {
+        transition: all 0.1s ease;
+    }
+    
+    /* Text elements with action glow */
+    .game-title {
+        text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+    }
+    
+    .game-description {
+        text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+    }
+}
+
+/* Extra small mobile devices - even more action style */
+@media (max-width: 480px) {
+    .container {
+        margin: 8px;
+        padding: 12px;
+        border-width: 2px;
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.4), var(--glow-cyan);
+    }
+    
+    .header {
+        padding: 15px 10px;
+        border-width: 2px;
+    }
+    
+    .game-card {
+        border-width: 2px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), var(--glow-cyan);
+    }
+    
+    .category-btn {
+        border-width: 2px;
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+    }
+    
+    .play-btn {
+        border-width: 2px;
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.6), var(--glow-cyan);
+    }
+}
