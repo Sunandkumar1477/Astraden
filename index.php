@@ -12,7 +12,7 @@ session_start();
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0f">
-    <title>Space Boom Play - Select Your Game</title>
+    <title>Astra Den - Select Your Game</title>
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     
     <!-- Google Fonts - Space Theme -->
@@ -31,7 +31,7 @@ session_start();
     <!-- Account Deleted Message -->
     <?php if (isset($_GET['account_deleted']) && $_GET['account_deleted'] == '1'): ?>
     <div id="accountDeletedMessage" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10001; background: rgba(0, 255, 0, 0.2); border: 2px solid #00ff00; color: #00ff00; padding: 15px 25px; border-radius: 10px; font-weight: 700; text-align: center; max-width: 500px; box-shadow: 0 5px 20px rgba(0, 255, 0, 0.5);">
-        ✓ Your account has been permanently deleted. Thank you for using Space Boom Play!
+        ✓ Your account has been permanently deleted. Thank you for using Astra Den!
     </div>
     <script>
         // Remove URL parameter after showing message
@@ -181,7 +181,7 @@ session_start();
             <button class="close-modal" onclick="closeModal('register')">&times;</button>
             <div class="modal-header">
                 <h2>Create Account</h2>
-                <p>Join the Space Boom Play</p>
+                <p>Join Astra Den</p>
             </div>
             <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
                 <div class="error-message" id="registerError"></div>
@@ -293,7 +293,7 @@ session_start();
                             <a href="terms.php" target="_blank" style="color: var(--primary-cyan); text-decoration: underline; font-weight: 600;">
                                 Terms and Conditions
                             </a>
-                            . I acknowledge that Space Boom Play is solely a contest platform provider and I accept all risks and limitations of liability as stated in the Terms.
+                            . I acknowledge that Astra Den is solely a contest platform provider and I accept all risks and limitations of liability as stated in the Terms.
                         </span>
                     </label>
                     <small style="color: rgba(255, 0, 110, 0.8); font-size: 0.85rem; display: block; margin-top: 8px; margin-left: 34px;">
@@ -315,7 +315,7 @@ session_start();
             <button class="close-modal" onclick="closeModal('login')">&times;</button>
             <div class="modal-header">
                 <h2>Login</h2>
-                <p>Welcome back, Space Explorer</p>
+                <p>Welcome back, Astra Explorer</p>
             </div>
             <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
                 <div class="error-message" id="loginError"></div>
@@ -444,7 +444,7 @@ session_start();
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>SPACE BOOM PLAY</h1>
+            <h1>ASTRA DEN</h1>
             <p>Select Your Adventure</p>
         </div>
 
@@ -2208,8 +2208,8 @@ session_start();
         <div class="footer-content">
             <!-- About Section -->
             <div class="footer-section">
-                <h3>About Space Boom Play</h3>
-                <p>Space Boom Play is your ultimate destination for exciting space-themed gaming adventures. Experience thrilling games, compete for real prizes, and join a community of passionate gamers.</p>
+                <h3>About Astra Den</h3>
+                <p>Astra Den is your ultimate destination for exciting space-themed gaming adventures. Experience thrilling games, compete for real prizes, and join a community of passionate gamers.</p>
                 <p>Play, compete, and win real cash prizes in our exciting gaming tournaments. Join thousands of players in the galaxy's most thrilling gaming experience!</p>
             </div>
             
@@ -2302,7 +2302,7 @@ session_start();
         </div>
         
         <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> Space Boom Play. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> Astra Den. All rights reserved.</p>
             <p style="margin-top: 10px; font-size: 0.85rem;">
                 Experience the future of gaming | Play. Compete. Win.
             </p>
