@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($stmt->execute()) {
         $message = 'Profile updated successfully!';
         // Redirect to view profile after 2 seconds
-        header('refresh:2;url=view_profile');
+        header('refresh:2;url=view_profile.php');
     } else {
         $error = 'Failed to update profile. Please try again.';
     }
@@ -436,7 +436,7 @@ $indian_states = [
 <body>
     <div class="header">
         <h1>🌍 My Profile</h1>
-        <a href="/" class="back-btn">← Back to Games</a>
+        <a href="index.php" class="back-btn">← Back to Games</a>
     </div>
 
     <div class="container">
