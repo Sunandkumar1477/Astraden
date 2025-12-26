@@ -12,13 +12,8 @@ session_start();
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0f">
-    <!-- Favicon - Must be early in head for proper display -->
-    <link rel="icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="alternate icon" type="image/png" href="Alogo.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
-    <link rel="icon" type="image/svg+xml" sizes="any" href="Alogo.svg">
-    <title>Astraden - Select Your Game</title>
+    <title>Space Boom Play - Select Your Game</title>
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
     
     <!-- Google Fonts - Space Theme -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,7 +31,7 @@ session_start();
     <!-- Account Deleted Message -->
     <?php if (isset($_GET['account_deleted']) && $_GET['account_deleted'] == '1'): ?>
     <div id="accountDeletedMessage" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10001; background: rgba(0, 255, 0, 0.2); border: 2px solid #00ff00; color: #00ff00; padding: 15px 25px; border-radius: 10px; font-weight: 700; text-align: center; max-width: 500px; box-shadow: 0 5px 20px rgba(0, 255, 0, 0.5);">
-        ✓ Your account has been permanently deleted. Thank you for using Astraden!
+        ✓ Your account has been permanently deleted. Thank you for using Space Boom Play!
     </div>
     <script>
         // Remove URL parameter after showing message
@@ -68,166 +63,109 @@ session_start();
 
     <!-- User Info Bar (shown when logged in) -->
     <div class="user-info-bar hidden" id="userInfoBar">
-        <div class="user-info-container">
-            <button class="user-dropdown-btn" onclick="toggleUserMenu(event)">
-                <div class="user-btn-content">
-                    <span class="user-label">My Account</span>
-                    <span class="username-display" id="displayUsername">User</span>
-                </div>
-                <i class="fas fa-chevron-down dropdown-arrow"></i>
-            </button>
-            
-            <div class="user-dropdown-content" id="userDropdown">
-                <div class="dropdown-header">
-                    <div class="user-profile-summary">
-                        <div class="user-profile-icon" id="dropdownProfileIcon">🌍</div>
-                        <div class="user-profile-details">
-                            <div class="user-profile-name" id="fullDisplayName">User</div>
-                            <div class="user-profile-rank">Rank: <span id="rankValueDisplay">N/A</span></div>
+        <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
+        <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
+            <span class="referral-icon">🎁</span>
+            <span class="referral-code-value" id="referralCodeValue">----</span>
+            <!-- Referral Code Dropdown -->
+            <div class="referral-dropdown" id="referralDropdown">
+                <div class="referral-section">
+                    <div class="referral-section-title">🎁 Your Referral Code</div>
+                    <div class="referral-code-display">
+                        <div class="referral-code-box" id="referralCodeBox">
+                            <span id="referralCodeText">----</span>
+                            <button class="copy-referral-btn" onclick="copyReferralCode(event)" title="Copy Code">
+                                <i class="fas fa-copy"></i>
+                            </button>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="dropdown-body">
-                    <!-- Referral Section -->
-                    <div class="menu-item" id="referralMenuItem" style="display: none;" onclick="toggleReferralDropdown(event)">
-                        <span class="item-icon">🎁</span>
-                        <div class="item-info">
-                            <div class="item-label">Referral Code</div>
-                            <div class="item-value" id="referralCodeDisplay">----</div>
+                        <div class="referral-message">
+                            <p>💰 Share your code with friends and earn <strong>10% credits</strong> when they purchase credits for the first time!</p>
+                            <p style="margin-top: 8px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);">
+                                They can enter your code during registration.
+                            </p>
                         </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <!-- Credits Section -->
-                    <div class="menu-item" onclick="toggleCreditsDropdown(event)">
-                        <span class="item-icon">⚡</span>
-                        <div class="item-info">
-                            <div class="item-label">Your Credits</div>
-                            <div class="item-value"><span id="creditsValueDisplay">0</span> Credits</div>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <!-- Rank/Leaderboard Section -->
-                    <div class="menu-item" onclick="toggleRankDropdown(event)">
-                        <span class="item-icon">🏆</span>
-                        <div class="item-info">
-                            <div class="item-label">Leaderboard</div>
-                            <div class="item-value">View Global Rankings</div>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <a href="logout.php" class="logout-link">
-                        <span class="item-icon">🚪</span>
-                        <span class="logout-text">Logout</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dropdowns moved outside for proper display -->
-        <div id="referralDropdown" class="referral-dropdown">
-            <div class="referral-section">
-                <div class="referral-section-title">🎁 Your Referral Code</div>
-                <div class="referral-code-display">
-                    <div class="referral-code-box" id="referralCodeBox">
-                        <span id="referralCodeText">----</span>
-                        <button class="copy-referral-btn" onclick="copyReferralCode(event)" title="Copy Code">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-                    <div class="referral-message">
-                        <p>💰 Share your code with friends and earn <strong>10% credits</strong> when they purchase credits for the first time!</p>
-                        <p style="margin-top: 8px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);">
-                            They can enter your code during registration.
-                        </p>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div id="creditsDropdown" class="credits-dropdown">
-            <!-- Credit Timing Notice -->
-            <div id="creditTimingNotice" class="credit-timing-notice" style="display: none;">
-                <div class="timing-notice-content">
-                    <div class="timing-icon">⏰</div>
-                    <div class="timing-text">
-                        <div class="timing-title" id="timingTitle">Credits Available</div>
-                        <div class="timing-message" id="timingMessage"></div>
-                        <div class="timing-info">
-                            <div class="timing-item">
-                                <span class="timing-label">Buy:</span>
-                                <span class="timing-countdown" id="addTimingCountdown">--</span>
+        <div class="user-credits" id="userCredits" style="display: none;" onclick="toggleCreditsDropdown(event)" title="Credits">
+            <span class="power-icon">⚡</span>
+            <span class="user-credits-value" id="creditsValue">0</span>
+            <!-- Credits Dropdown -->
+            <div class="credits-dropdown" id="creditsDropdown">
+                <!-- Credit Timing Notice -->
+                <div id="creditTimingNotice" class="credit-timing-notice" style="display: none;">
+                    <div class="timing-notice-content">
+                        <div class="timing-icon">⏰</div>
+                        <div class="timing-text">
+                            <div class="timing-title" id="timingTitle">Credits Available</div>
+                            <div class="timing-message" id="timingMessage"></div>
+                            <div class="timing-info">
+                                <div class="timing-item">
+                                    <span class="timing-label">Buy:</span>
+                                    <span class="timing-countdown" id="addTimingCountdown">--</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Times Up Message -->
+                <div id="timesUpMessage" class="times-up-message" style="display: none;">
+                    <div class="times-up-content">
+                        <div class="times-up-icon">⏰</div>
+                        <div class="times-up-text">
+                            <div class="times-up-title">Times Up!</div>
+                            <div class="times-up-desc">Credit purchase period has ended. Claim credits is always available.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Credit Limit Notice (shown when sale_mode is 'limit') -->
+                <div id="creditLimitNotice" class="credit-timing-notice" style="display: none;">
+                    <div class="timing-notice-content">
+                        <div class="timing-icon">📊</div>
+                        <div class="timing-text">
+                            <div class="timing-title" id="limitTitle">Limited Credits</div>
+                            <div class="timing-message" id="limitMessage">Limited credits available for sale</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Credits Options (Claim Credits is always available) -->
+                <div id="creditsOptionsWrapper">
+                    <div id="creditsOptionsContainer">
+                        <!-- Credit packages will be loaded dynamically here -->
+                        <div style="text-align: center; padding: 20px; color: rgba(0, 255, 255, 0.6);">Loading credit packages...</div>
+                    </div>
+                    <button class="add-credits-btn" onclick="showQRCode(event)" disabled id="addCreditsBtn">Add Credits</button>
+                    <button class="claim-credits-btn" onclick="checkClaimTimingAndOpen()" id="claimCreditsBtn" style="display: block !important;">Claim Credits</button>
+                </div>
             </div>
-            
-            <!-- Times Up Message -->
-            <div id="timesUpMessage" class="times-up-message" style="display: none;">
-                <div class="times-up-content">
-                    <div class="times-up-icon">⏰</div>
-                    <div class="times-up-text">
-                        <div class="times-up-title">Times Up!</div>
-                        <div class="times-up-desc">Credit purchase period has ended. Claim credits is always available.</div>
+        </div>
+        <div class="user-rank" id="userRank" style="display: none;" onclick="toggleRankDropdown(event)">
+            <span class="user-rank-label">Your Rank:</span>
+            <span class="user-rank-value" id="rankValue">-</span>
+            <!-- Rank Dropdown -->
+            <div class="rank-dropdown" id="rankDropdown">
+                <div class="rank-section">
+                    <div class="rank-section-title">🏆 Your Ranking</div>
+                    <div id="userRankDisplay" class="no-rank-message">Loading...</div>
+                </div>
+                <div class="rank-section">
+                    <div class="rank-section-title">📊 Top 10 Gamers</div>
+                    <div class="leaderboard-list" id="leaderboardList">
+                        <div class="no-rank-message">Loading...</div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Credit Limit Notice (shown when sale_mode is 'limit') -->
-            <div id="creditLimitNotice" class="credit-timing-notice" style="display: none;">
-                <div class="timing-notice-content">
-                    <div class="timing-icon">📊</div>
-                    <div class="timing-text">
-                        <div class="timing-title" id="limitTitle">Limited Credits</div>
-                        <div class="timing-message" id="limitMessage">Limited credits available for sale</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Credits Options (Claim Credits is always available) -->
-            <div id="creditsOptionsWrapper">
-                <div id="creditsOptionsContainer">
-                    <div style="text-align: center; padding: 20px; color: rgba(0, 255, 255, 0.6);">Loading credit packages...</div>
-                </div>
-                <button class="add-credits-btn" onclick="showQRCode(event)" disabled id="addCreditsBtn">Add Credits</button>
-                <button class="claim-credits-btn" onclick="checkClaimTimingAndOpen()" id="claimCreditsBtn" style="display: block !important;">Claim Credits</button>
-            </div>
         </div>
-
-        <div id="rankDropdown" class="rank-dropdown">
-            <div class="rank-section">
-                <div class="rank-section-title">🏆 Your Ranking</div>
-                <div id="userRankDisplay" class="no-rank-message">Loading...</div>
-            </div>
-            <div class="rank-section">
-                <div class="rank-section-title">📊 Top 10 Gamers</div>
-                <div class="leaderboard-list" id="leaderboardList">
-                    <div class="no-rank-message">Loading...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hidden elements needed for existing JS functions/dropdowns -->
-        <div style="display: none;">
-            <div id="userReferralCode">
-                <span id="referralCodeValue"></span>
-            </div>
-            <div id="userCredits">
-                <span id="creditsValue"></span>
-            </div>
-            <div id="userRank">
-                <span id="rankValue"></span>
-            </div>
-        </div>
+        <a href="logout.php" class="logout-btn">Logout</a>
     </div>
 
     <!-- Profile Planet Button -->
     <a href="view_profile.php" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile">
-        <span class="profile-icon" id="profileButtonIcon">🌍</span>
+        <span class="profile-icon" id="profileIcon">🌍</span>
         <span class="profile-text">Profile</span>
     </a>
 
@@ -243,7 +181,7 @@ session_start();
             <button class="close-modal" onclick="closeModal('register')">&times;</button>
             <div class="modal-header">
                 <h2>Create Account</h2>
-                <p>Join Astraden</p>
+                <p>Join the Space Boom Play</p>
             </div>
             <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
                 <div class="error-message" id="registerError"></div>
@@ -355,7 +293,7 @@ session_start();
                             <a href="terms.php" target="_blank" style="color: var(--primary-cyan); text-decoration: underline; font-weight: 600;">
                                 Terms and Conditions
                             </a>
-                            . I acknowledge that Astraden is solely a contest platform provider and I accept all risks and limitations of liability as stated in the Terms.
+                            . I acknowledge that Space Boom Play is solely a contest platform provider and I accept all risks and limitations of liability as stated in the Terms.
                         </span>
                     </label>
                     <small style="color: rgba(255, 0, 110, 0.8); font-size: 0.85rem; display: block; margin-top: 8px; margin-left: 34px;">
@@ -506,7 +444,7 @@ session_start();
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>ASTRADEN</h1>
+            <h1>SPACE BOOM PLAY</h1>
             <p>Select Your Adventure</p>
         </div>
 
@@ -517,11 +455,10 @@ session_start();
             <button class="category-btn" data-category="defense">Defense</button>
             <button class="category-btn" data-category="strategy">Strategy</button>
             <button class="category-btn" data-category="arcade">Arcade</button>
-            <button class="category-btn" id="scoreboardBtn" data-category="scoreboard">Score Board</button>
         </div>
 
         <!-- Games Sections -->
-        <div class="games-section" id="defense" data-category="defense">
+        <div class="games-section" data-category="defense">
             <h2 class="section-title">DEFENSE GAMES</h2>
             <div class="games-grid">
                 <div class="game-card" data-game="earth-defender" data-type="defense" onclick="launchGame('earth-defender'); return false;" style="cursor: pointer;">
@@ -537,26 +474,26 @@ session_start();
                     <div class="game-description">
                         Protect Earth from incoming asteroids! Rotate the planet and shoot to defend against the cosmic threat.
                     </div>
-                    <div class="game-meta-row" id="meta-row-earth-defender">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                        <span class="game-type">Defense</span>
                         <span class="credits-badge" id="credits-badge-earth-defender">
                             <span class="power-icon">⚡</span>
                             <span id="credits-amount-earth-defender">30</span> Credits
                         </span>
-                        <span class="game-type">Defense</span>
                     </div>
                     <!-- Prizes Display -->
                     <div class="game-prizes" id="prizes-earth-defender" style="margin-top: 15px; display: none;">
                         <div class="prize-item">
                             <span class="prize-medal">🥇</span>
-                            <span class="prize-text">1st: <span id="prize-icon-1-earth-defender">₹</span><span id="first-prize-earth-defender">0</span></span>
+                            <span class="prize-text">1st: ₹<span id="first-prize-earth-defender">0</span></span>
                         </div>
                         <div class="prize-item">
                             <span class="prize-medal">🥈</span>
-                            <span class="prize-text">2nd: <span id="prize-icon-2-earth-defender">₹</span><span id="second-prize-earth-defender">0</span></span>
+                            <span class="prize-text">2nd: ₹<span id="second-prize-earth-defender">0</span></span>
                         </div>
                         <div class="prize-item">
                             <span class="prize-medal">🥉</span>
-                            <span class="prize-text">3rd: <span id="prize-icon-3-earth-defender">₹</span><span id="third-prize-earth-defender">0</span></span>
+                            <span class="prize-text">3rd: ₹<span id="third-prize-earth-defender">0</span></span>
                         </div>
                     </div>
                     <!-- Game Timing Badge -->
@@ -580,7 +517,7 @@ session_start();
         </div>
 
         <!-- Placeholder sections for future games -->
-        <div class="games-section hidden" id="action" data-category="action">
+        <div class="games-section hidden" data-category="action">
             <h2 class="section-title">ACTION GAMES</h2>
             <div class="games-grid">
                 <div class="coming-soon-card">
@@ -591,7 +528,7 @@ session_start();
             </div>
         </div>
 
-        <div class="games-section hidden" id="strategy" data-category="strategy">
+        <div class="games-section hidden" data-category="strategy">
             <h2 class="section-title">STRATEGY GAMES</h2>
             <div class="games-grid">
                 <div class="coming-soon-card">
@@ -602,7 +539,7 @@ session_start();
             </div>
         </div>
 
-        <div class="games-section hidden" id="arcade" data-category="arcade">
+        <div class="games-section hidden" data-category="arcade">
             <h2 class="section-title">ARCADE GAMES</h2>
             <div class="games-grid">
                 <div class="coming-soon-card">
@@ -687,36 +624,28 @@ session_start();
                         // Update credits and prizes for each game
                         Object.keys(data.games).forEach(gameName => {
                             const gameData = data.games[gameName];
-                            const creditsAmount = gameData.credits_per_chance;
-                            const isContest = gameData.is_contest_active === 1;
-                            
+                            const creditsAmount = typeof gameData === 'object' ? gameData.credits_per_chance : gameData;
                             const badgeElement = document.getElementById(`credits-amount-${gameName}`);
-                            const badgeContainer = document.getElementById(`credits-badge-${gameName}`);
-                            const metaRow = document.getElementById(`meta-row-${gameName}`);
-                            
                             if (badgeElement) {
                                 badgeElement.textContent = creditsAmount;
                             }
                             
-                            // If contest is active, hide the credits badge as requested
-                            if (badgeContainer && isContest) {
-                                badgeContainer.style.display = 'none';
-                                if (metaRow) metaRow.classList.add('contest-active');
-                            } else if (badgeContainer) {
-                                badgeContainer.style.display = 'inline-flex';
-                                badgeContainer.classList.remove('contest-fee');
-                                if (metaRow) metaRow.classList.remove('contest-active');
-                                const textNode = badgeContainer.childNodes[badgeContainer.childNodes.length - 1];
-                                if (textNode.nodeType === Node.TEXT_NODE) {
-                                    textNode.textContent = ' Credits';
-                                }
-                            }
-                            
                             // Update prizes if available
-                            if (typeof gameData === 'object' && gameData.contest_prizes !== undefined) {
-                                updateGamePrizes(gameName, gameData.contest_prizes['1st'], gameData.contest_prizes['2nd'], gameData.contest_prizes['3rd'], gameData.game_mode);
+                            if (typeof gameData === 'object' && gameData.first_prize !== undefined) {
+                                updateGamePrizes(gameName, gameData.first_prize, gameData.second_prize, gameData.third_prize);
                             }
                         });
+                    } else if (data.success && data.game_name) {
+                        // Single game response
+                        const badgeElement = document.getElementById(`credits-amount-${data.game_name}`);
+                        if (badgeElement) {
+                            badgeElement.textContent = data.credits_per_chance;
+                        }
+                        
+                        // Update prizes if available
+                        if (data.first_prize !== undefined) {
+                            updateGamePrizes(data.game_name, data.first_prize, data.second_prize, data.third_prize);
+                        }
                     }
                 } catch (error) {
                     console.error('Error loading game credits:', error);
@@ -724,7 +653,7 @@ session_start();
             }
 
             // Update game prizes display
-            function updateGamePrizes(gameName, firstPrize, secondPrize, thirdPrize, mode = 'money') {
+            function updateGamePrizes(gameName, firstPrize, secondPrize, thirdPrize) {
                 const prizesContainer = document.getElementById(`prizes-${gameName}`);
                 if (!prizesContainer) return;
                 
@@ -735,15 +664,6 @@ session_start();
                     const firstPrizeEl = document.getElementById(`first-prize-${gameName}`);
                     const secondPrizeEl = document.getElementById(`second-prize-${gameName}`);
                     const thirdPrizeEl = document.getElementById(`third-prize-${gameName}`);
-                    
-                    const icon1 = document.getElementById(`prize-icon-1-${gameName}`);
-                    const icon2 = document.getElementById(`prize-icon-2-${gameName}`);
-                    const icon3 = document.getElementById(`prize-icon-3-${gameName}`);
-                    
-                    const icon = mode === 'money' ? '₹' : '⚡';
-                    if (icon1) icon1.textContent = icon;
-                    if (icon2) icon2.textContent = icon;
-                    if (icon3) icon3.textContent = icon;
                     
                     if (firstPrizeEl) firstPrizeEl.textContent = Math.round(firstPrize).toLocaleString();
                     if (secondPrizeEl) secondPrizeEl.textContent = Math.round(secondPrize).toLocaleString();
@@ -878,98 +798,68 @@ session_start();
             loadGameCredits();
             loadGameTiming();
 
-            // Category filtering and Score Board logic
-            function filterGames(category) {
-                // Update active button
-                document.querySelectorAll('.category-btn').forEach(b => {
-                    if (b.dataset.category === category) {
-                        b.classList.add('active');
-                    } else {
-                        b.classList.remove('active');
-                    }
-                });
-
-                // Show/hide game sections
-                document.querySelectorAll('.games-section').forEach(section => {
-                    if (category === 'all' || section.dataset.category === category) {
-                        section.classList.remove('hidden');
-                    } else {
-                        section.classList.add('hidden');
-                    }
-                });
-            }
-
+            // Category filtering - ensure buttons are always clickable
             function setupCategoryButtons() {
-                const categoryButtons = document.querySelectorAll('.category-btn');
-                categoryButtons.forEach(btn => {
-                    const handleInteraction = (e) => {
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    // Clone button to remove any existing listeners
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    
+                    // Click handler
+                    newBtn.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
+                        e.stopImmediatePropagation();
                         
-                        const category = btn.dataset.category;
+                        const category = this.dataset.category;
                         
-                        if (category === 'scoreboard') {
-                            // Trigger rank dropdown
-                            if (typeof toggleRankDropdown === 'function') {
-                                toggleRankDropdown(e);
-                            } else if (window.toggleRankDropdown) {
-                                window.toggleRankDropdown(e);
+                        // Update active button
+                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+
+                        // Show/hide game sections
+                        document.querySelectorAll('.games-section').forEach(section => {
+                            if (category === 'all' || section.dataset.category === category) {
+                                section.classList.remove('hidden');
+                            } else {
+                                section.classList.add('hidden');
                             }
-                        } else {
-                            // Filter games
-                            filterGames(category);
-                        }
-                    };
-
-                    btn.onclick = handleInteraction;
-                    btn.addEventListener('touchstart', handleInteraction, { passive: false });
-                });
-
-                // Specifically handle the top user rank button as well for consistency
-                const rankBtn = document.getElementById('userRank');
-                if (rankBtn) {
-                    const handleRankToggle = function(e) {
+                        });
+                        
+                        return false;
+                    }, true); // Capture phase
+                    
+                    // Touch handler for mobile
+                    newBtn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
                         e.stopPropagation();
-                        if (typeof toggleRankDropdown === 'function') {
-                            toggleRankDropdown(e);
-                        } else if (window.toggleRankDropdown) {
-                            window.toggleRankDropdown(e);
-                        }
-                    };
-                    rankBtn.onclick = handleRankToggle;
-                    rankBtn.addEventListener('touchstart', handleRankToggle, { passive: true });
-                }
+                        e.stopImmediatePropagation();
+                        
+                        const category = this.dataset.category;
+                        
+                        // Update active button
+                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
 
-                // Handle footer links
-                document.querySelectorAll('a[href^="index.php#"]').forEach(link => {
-                    link.onclick = function(e) {
-                        const hash = this.getAttribute('href').split('#')[1];
-                        if (hash) {
-                            e.preventDefault();
-                            filterGames(hash);
-                            const targetElement = document.getElementById(hash);
-                            if (targetElement) {
-                                targetElement.scrollIntoView({ behavior: 'smooth' });
+                        // Show/hide game sections
+                        document.querySelectorAll('.games-section').forEach(section => {
+                            if (category === 'all' || section.dataset.category === category) {
+                                section.classList.remove('hidden');
+                            } else {
+                                section.classList.add('hidden');
                             }
-                            window.location.hash = hash;
-                        }
-                    };
+                        });
+                        
+                        return false;
+                    }, { passive: false, capture: true });
                 });
             }
             
-            // Initial setup
+            // Setup category buttons immediately
             setupCategoryButtons();
             
-            // Also handle hash on load
-            window.addEventListener('load', () => {
-                const hash = window.location.hash.substring(1);
-                if (hash) filterGames(hash);
-            });
-            
-            window.addEventListener('hashchange', () => {
-                const hash = window.location.hash.substring(1);
-                if (hash) filterGames(hash);
-            });
+            // Also setup after a short delay to ensure DOM is ready
+            setTimeout(setupCategoryButtons, 100);
 
             // Mobile detection and optimization
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -1135,135 +1025,94 @@ session_start();
                     if (data.logged_in) {
                         document.getElementById('userInfoBar').classList.remove('hidden');
                         document.getElementById('authButtons').classList.add('hidden');
-                        
-                        // Main display username
-                        const displayUsernameEl = document.getElementById('displayUsername');
-                        const fullDisplayNameEl = document.getElementById('fullDisplayName');
-                        if (displayUsernameEl) displayUsernameEl.textContent = data.user.username;
-                        if (fullDisplayNameEl) fullDisplayNameEl.textContent = data.user.username;
+                        document.getElementById('displayUsername').textContent = data.user.username;
                         
                         // Show profile button
                         document.getElementById('profilePlanetBtn').classList.remove('hidden');
                         
-                        // Referral code sync
+                        // Show referral code if available
                         if (data.referral_code) {
-                            const referralMenuItem = document.getElementById('referralMenuItem');
-                            const referralCodeDisplay = document.getElementById('referralCodeDisplay');
+                            const referralElement = document.getElementById('userReferralCode');
+                            const referralValueElement = document.getElementById('referralCodeValue');
+                            const referralCodeText = document.getElementById('referralCodeText');
                             
-                            // Legacy elements for compatibility
-                            const legacyVal = document.getElementById('referralCodeValue');
-                            const legacyText = document.getElementById('referralCodeText');
-                            
-                            if (referralMenuItem) referralMenuItem.style.display = 'flex';
-                            if (referralCodeDisplay) referralCodeDisplay.textContent = data.referral_code;
-                            
-                            if (legacyVal) legacyVal.textContent = data.referral_code;
-                            if (legacyText) legacyText.textContent = data.referral_code;
+                            referralElement.style.display = 'flex';
+                            referralValueElement.textContent = data.referral_code;
+                            referralCodeText.textContent = data.referral_code;
                         } else {
-                            const referralMenuItem = document.getElementById('referralMenuItem');
-                            if (referralMenuItem) referralMenuItem.style.display = 'none';
+                            document.getElementById('userReferralCode').style.display = 'none';
                         }
                         
-                        // Check profile
+                        // Check if user has profile
                         fetch('check_user_profile.php')
                             .then(response => response.json())
                             .then(profileData => {
-                                // Update profile icons in dropdown and profile button
-                                const dropdownProfileIcon = document.getElementById('dropdownProfileIcon');
-                                const profileButtonIcon = document.getElementById('profileButtonIcon');
-                                
-                                const iconMap = {
-                                    'boy1': '👨', 'girl1': '👩', 'beard': '🧔',
-                                    'bald': '👨‍🦲', 'fashion': '👸', 'specs': '👨‍💼'
-                                };
-                                const iconEmoji = (profileData.profile_photo && iconMap[profileData.profile_photo]) ? 
-                                                iconMap[profileData.profile_photo] : '🌍';
-                                
-                                // Update dropdown profile icon
-                                if (dropdownProfileIcon) {
-                                    dropdownProfileIcon.textContent = iconEmoji;
-                                }
-                                
-                                // Update profile button icon
-                                if (profileButtonIcon) {
-                                    profileButtonIcon.textContent = iconEmoji;
+                                // Update profile button icon based on user's profile photo
+                                const profileIconElement = document.getElementById('profileIcon');
+                                if (profileIconElement) {
+                                    const iconMap = {
+                                        'boy1': '👨',
+                                        'girl1': '👩',
+                                        'beard': '🧔',
+                                        'bald': '👨‍🦲',
+                                        'fashion': '👸',
+                                        'specs': '👨‍💼'
+                                    };
+                                    const profilePhoto = profileData.profile_photo;
+                                    // Show user's profile icon if set, otherwise show default icon
+                                    const iconEmoji = (profilePhoto && iconMap[profilePhoto]) ? iconMap[profilePhoto] : '🌍';
+                                    profileIconElement.textContent = iconEmoji;
                                 }
                                 
                                 if (profileData.has_profile) {
-                                    const creditsDisplay = document.getElementById('creditsValueDisplay');
-                                    const legacyCreditsVal = document.getElementById('creditsValue');
+                                    // Show credits display
+                                    const creditsElement = document.getElementById('userCredits');
+                                    const creditsValueElement = document.getElementById('creditsValue');
                                     
-                                    const creditsFormatted = data.credits.toLocaleString();
-                                    if (creditsDisplay) creditsDisplay.textContent = creditsFormatted;
-                                    if (legacyCreditsVal) legacyCreditsVal.textContent = creditsFormatted;
+                                    creditsElement.style.display = 'flex';
                                     
-                                    // Show userRank legacy element for visibility if needed
-                                    const userRankLegacy = document.getElementById('userRank');
-                                    if (userRankLegacy) userRankLegacy.style.display = 'block';
+                                    const creditsColor = '#FFD700'; // Gold color for value
+                                    const iconColor = '#00ff00'; // Green color for icon
+                                    
+                                    creditsElement.style.borderColor = iconColor; // Green border
+                                    creditsValueElement.textContent = data.credits.toLocaleString();
+                                    creditsValueElement.style.color = creditsColor; // Gold value
+                                    
+                                    // Ensure power icon stays green (force green color)
+                                    const powerIcon = creditsElement.querySelector('.power-icon');
+                                    if (powerIcon) {
+                                        powerIcon.style.setProperty('color', '#00ff00', 'important');
+                                    }
+                                    
+                                    // Show rank dropdown
+                                    document.getElementById('userRank').style.display = 'flex';
+                                } else {
+                                    document.getElementById('userCredits').style.display = 'none';
+                                    document.getElementById('userRank').style.display = 'none';
                                 }
+                            })
+                            .catch(error => {
+                                console.error('Profile check error:', error);
                             });
                     } else {
                         document.getElementById('userInfoBar').classList.add('hidden');
                         document.getElementById('authButtons').classList.remove('hidden');
                         document.getElementById('profilePlanetBtn').classList.add('hidden');
+                        document.getElementById('userCredits').style.display = 'none';
+                        document.getElementById('userReferralCode').style.display = 'none';
+                        document.getElementById('userRank').style.display = 'none';
                     }
+                })
+                .catch(error => {
+                    console.error('Session check error:', error);
                 });
         }
-
-        // Unified User Menu Toggle
-        function toggleUserMenu(event) {
-            event.stopPropagation();
-            const dropdown = document.getElementById('userDropdown');
-            const btn = document.querySelector('.user-dropdown-btn');
-            
-            if (!dropdown || !btn) return;
-            
-            const isShowing = dropdown.classList.contains('show');
-            
-            // Close other dropdowns
-            document.querySelectorAll('.rank-dropdown, .credits-dropdown, .referral-dropdown')
-                    .forEach(d => d.classList.remove('show'));
-            
-            if (isShowing) {
-                dropdown.classList.remove('show');
-                btn.classList.remove('active');
-            } else {
-                dropdown.classList.add('show');
-                btn.classList.add('active');
-            }
-        }
-        window.toggleUserMenu = toggleUserMenu;
-
-        // Close when clicking outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('userDropdown');
-            const btn = document.querySelector('.user-dropdown-btn');
-            if (dropdown && dropdown.classList.contains('show')) {
-                if (!dropdown.contains(event.target) && !btn.contains(event.target)) {
-                    dropdown.classList.remove('show');
-                    btn.classList.remove('active');
-                }
-            }
-        });
 
         // Referral dropdown functions
         function toggleReferralDropdown(event) {
             event.stopPropagation();
-            
-            // Close main user dropdown if open
-            const userDropdown = document.getElementById('userDropdown');
-            const userBtn = document.querySelector('.user-dropdown-btn');
-            if (userDropdown) userDropdown.classList.remove('show');
-            if (userBtn) userBtn.classList.remove('active');
-            
             const dropdown = document.getElementById('referralDropdown');
             dropdown.classList.toggle('show');
-            
-            // Close other dropdowns
-            const creditsDropdown = document.getElementById('creditsDropdown');
-            const rankDropdown = document.getElementById('rankDropdown');
-            if (creditsDropdown) creditsDropdown.classList.remove('show');
-            if (rankDropdown) rankDropdown.classList.remove('show');
         }
         
         function copyReferralCode(event) {
@@ -1318,13 +1167,6 @@ session_start();
         // Credits dropdown functions
         function toggleCreditsDropdown(event) {
             event.stopPropagation();
-            
-            // Close main user dropdown if open
-            const userDropdown = document.getElementById('userDropdown');
-            const userBtn = document.querySelector('.user-dropdown-btn');
-            if (userDropdown) userDropdown.classList.remove('show');
-            if (userBtn) userBtn.classList.remove('active');
-            
             const dropdown = document.getElementById('creditsDropdown');
             dropdown.classList.toggle('show');
             
@@ -1473,13 +1315,6 @@ session_start();
         // Rank dropdown functions
         function toggleRankDropdown(event) {
             event.stopPropagation();
-            
-            // Close main user dropdown if open
-            const userDropdown = document.getElementById('userDropdown');
-            const userBtn = document.querySelector('.user-dropdown-btn');
-            if (userDropdown) userDropdown.classList.remove('show');
-            if (userBtn) userBtn.classList.remove('active');
-            
             const dropdown = document.getElementById('rankDropdown');
             dropdown.classList.toggle('show');
             if (dropdown.classList.contains('show')) {
@@ -1502,30 +1337,15 @@ session_start();
                 const data = await response.json();
                 
                 if (data.success) {
-                    const userTotalPoints = data.user_total_points || 0;
-                    const rankValueDisplay = document.getElementById('rankValueDisplay');
-                    const rankTitle = document.querySelector('.rank-dropdown h3');
+                    const userTotalPoints = data.user_total_points || data.user_best_score || 0;
                     
-                    // Update Title based on mode
-                    if (rankTitle) {
-                        if (data.is_contest) {
-                            rankTitle.innerHTML = `🏆 MISSION RANKINGS <small style="display:block;font-size:0.6rem;color:var(--primary-cyan);">${data.game_mode === 'money' ? 'CASH PRIZE MISSION' : 'CREDIT REWARD MISSION'}</small>`;
-                        } else {
-                            rankTitle.innerHTML = `🌍 GLOBAL LEADERBOARD <small style="display:block;font-size:0.6rem;color:rgba(255,255,255,0.4);">TOTAL COMBAT POINTS</small>`;
-                        }
-                    }
-
-                    if (data.user_rank !== null && data.user_rank !== undefined && (userTotalPoints > 0 || data.is_contest)) {
-                        const rankStr = '#' + data.user_rank;
-                        rankValue.textContent = rankStr;
-                        if (rankValueDisplay) rankValueDisplay.textContent = rankStr;
-                        
-                        const scoreLabel = data.is_contest ? 'Best Score' : 'Total Pts';
+                    if (data.user_rank !== null && data.user_rank !== undefined && userTotalPoints > 0) {
+                        rankValue.textContent = '#' + data.user_rank;
                         userRankDisplay.innerHTML = `
                             <div class="rank-display">
                                 <span class="rank-number">#${data.user_rank}</span>
                                 <span class="rank-name">You</span>
-                                <span class="rank-score">${userTotalPoints.toLocaleString()} ${scoreLabel}</span>
+                                <span class="rank-score">${userTotalPoints.toLocaleString()} Total Pts</span>
                             </div>
                         `;
                     } else {
@@ -1535,8 +1355,6 @@ session_start();
                     
                     if (data.leaderboard && data.leaderboard.length > 0) {
                         const currentUserId = <?php echo isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 'null'; ?>;
-                        const scoreLabel = data.is_contest ? 'Best' : 'Total';
-                        
                         leaderboardList.innerHTML = data.leaderboard.map((entry) => {
                             const isCurrentUser = entry.user_id == currentUserId;
                             const totalPoints = entry.total_points || entry.score || 0;
@@ -1544,7 +1362,7 @@ session_start();
                                 <div class="leaderboard-item-rank ${isCurrentUser ? 'is-current-user' : ''}">
                                     <span class="rank-number">#${entry.rank}</span>
                                     <span class="rank-name">${entry.full_name || entry.username}</span>
-                                    <span class="rank-score">${totalPoints.toLocaleString()} ${scoreLabel}</span>
+                                    <span class="rank-score">${totalPoints.toLocaleString()} Total Pts</span>
                                 </div>
                             `;
                         }).join('');
@@ -2366,8 +2184,8 @@ session_start();
         <div class="footer-content">
             <!-- About Section -->
             <div class="footer-section">
-                <h3>About Astraden</h3>
-                <p>Astraden is your ultimate destination for exciting space-themed gaming adventures. Experience thrilling games, compete for real prizes, and join a community of passionate gamers.</p>
+                <h3>About Space Boom Play</h3>
+                <p>Space Boom Play is your ultimate destination for exciting space-themed gaming adventures. Experience thrilling games, compete for real prizes, and join a community of passionate gamers.</p>
                 <p>Play, compete, and win real cash prizes in our exciting gaming tournaments. Join thousands of players in the galaxy's most thrilling gaming experience!</p>
             </div>
             
@@ -2460,7 +2278,7 @@ session_start();
         </div>
         
         <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> Astraden. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> Space Boom Play. All rights reserved.</p>
             <p style="margin-top: 10px; font-size: 0.85rem;">
                 Experience the future of gaming | Play. Compete. Win.
             </p>
@@ -2470,5 +2288,4 @@ session_start();
         </div>
     </footer>
 </body>
-</html>
 </html>
