@@ -3850,23 +3850,14 @@ body.mobile-device .play-btn:active {
     /* Apply action button style to body/container */
     body {
         background: var(--dark-bg);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         border-radius: 0;
         position: relative;
         overflow-x: hidden;
     }
     
     body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border: 2px solid var(--primary-cyan);
-        pointer-events: none;
-        z-index: 9998;
-        box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.3);
+        display: none;
     }
     
     /* Container with action button style */
