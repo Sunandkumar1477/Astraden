@@ -230,6 +230,31 @@ session_start();
         <span class="profile-text">Profile</span>
     </a>
 
+    <!-- Assistive Touch Floating Action Button -->
+    <div class="assistive-touch-fab" id="assistiveTouchFab">
+        <button class="fab-main-btn" id="fabMainBtn" onclick="toggleFABMenu(event)">
+            <span class="fab-icon">⚡</span>
+        </button>
+        <div class="fab-menu" id="fabMenu">
+            <button class="fab-menu-item" onclick="scrollToTop()" title="Scroll to Top">
+                <span class="fab-menu-icon">⬆️</span>
+                <span class="fab-menu-label">Top</span>
+            </button>
+            <button class="fab-menu-item" onclick="scrollToGames()" title="Scroll to Games">
+                <span class="fab-menu-icon">🎮</span>
+                <span class="fab-menu-label">Games</span>
+            </button>
+            <button class="fab-menu-item" onclick="openProfile()" title="View Profile">
+                <span class="fab-menu-icon">👤</span>
+                <span class="fab-menu-label">Profile</span>
+            </button>
+            <button class="fab-menu-item" onclick="toggleDarkMode()" title="Toggle Theme">
+                <span class="fab-menu-icon">🌙</span>
+                <span class="fab-menu-label">Theme</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Auth Buttons (shown when not logged in) -->
     <div class="auth-buttons" id="authButtons">
         <button class="auth-btn" id="loginBtn" onclick="if(typeof openModal==='function'){openModal('login');}else if(window.openModal){window.openModal('login');}else{const m=document.getElementById('loginModal');if(m){m.classList.add('show');document.body.style.overflow='hidden';}}">Login</button>
@@ -2389,6 +2414,171 @@ session_start();
                 });
             }
         }
+        
+        // ============================================
+        // ASSISTIVE TOUCH FAB FUNCTIONS
+        // ============================================
+        
+        function toggleFABMenu(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const fab = document.getElementById('assistiveTouchFab');
+            const menu = document.getElementById('fabMenu');
+            const btn = document.getElementById('fabMainBtn');
+            
+            if (fab && menu && btn) {
+                const isOpen = menu.classList.contains('open');
+                if (isOpen) {
+                    menu.classList.remove('open');
+                    btn.classList.remove('active');
+                } else {
+                    menu.classList.add('open');
+                    btn.classList.add('active');
+                }
+            }
+        }
+        
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toggleFABMenu();
+        }
+        
+        function scrollToGames() {
+            const gamesSection = document.querySelector('.games-section');
+            if (gamesSection) {
+                gamesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            toggleFABMenu();
+        }
+        
+        function openProfile() {
+            const profileBtn = document.getElementById('profilePlanetBtn');
+            if (profileBtn && !profileBtn.classList.contains('hidden')) {
+                window.location.href = 'view_profile.php';
+            } else {
+                // If not logged in, show login modal
+                if (typeof openModal === 'function') {
+                    openModal('login');
+                } else {
+                    const loginModal = document.getElementById('loginModal');
+                    if (loginModal) {
+                        loginModal.classList.add('show');
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
+            }
+            toggleFABMenu();
+        }
+        
+        function toggleDarkMode() {
+            // Toggle dark mode (if implemented)
+            document.body.classList.toggle('dark-mode');
+            toggleFABMenu();
+        }
+        
+        // Make FAB draggable
+        function makeFABDraggable() {
+            const fab = document.getElementById('assistiveTouchFab');
+            if (!fab) return;
+            
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+            
+            // Get saved position from localStorage
+            const savedPosition = localStorage.getItem('fabPosition');
+            if (savedPosition) {
+                const pos = JSON.parse(savedPosition);
+                xOffset = pos.x;
+                yOffset = pos.y;
+                fab.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+            }
+            
+            fab.addEventListener('mousedown', dragStart);
+            fab.addEventListener('touchstart', dragStart, { passive: false });
+            
+            function dragStart(e) {
+                if (e.type === 'touchstart') {
+                    initialX = e.touches[0].clientX - xOffset;
+                    initialY = e.touches[0].clientY - yOffset;
+                } else {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                }
+                
+                // Only drag if clicking on the main button, not menu items
+                if (e.target.closest('.fab-main-btn')) {
+                    isDragging = true;
+                    // Close menu if open
+                    const menu = document.getElementById('fabMenu');
+                    if (menu && menu.classList.contains('open')) {
+                        toggleFABMenu();
+                    }
+                }
+            }
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    if (e.type === 'touchmove') {
+                        currentX = e.touches[0].clientX - initialX;
+                        currentY = e.touches[0].clientY - initialY;
+                    } else {
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                    }
+                    
+                    xOffset = currentX;
+                    yOffset = currentY;
+                    
+                    // Constrain to viewport
+                    const rect = fab.getBoundingClientRect();
+                    const maxX = window.innerWidth - rect.width;
+                    const maxY = window.innerHeight - rect.height;
+                    
+                    xOffset = Math.max(-maxX, Math.min(0, xOffset));
+                    yOffset = Math.max(-maxY, Math.min(0, yOffset));
+                    
+                    fab.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+                }
+            }
+            
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchend', dragEnd);
+            
+            function dragEnd() {
+                if (isDragging) {
+                    // Save position
+                    localStorage.setItem('fabPosition', JSON.stringify({ x: xOffset, y: yOffset }));
+                    isDragging = false;
+                }
+            }
+        }
+        
+        // Initialize FAB on load
+        window.addEventListener('load', function() {
+            makeFABDraggable();
+        });
+        
+        // Close FAB menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const fab = document.getElementById('assistiveTouchFab');
+            const menu = document.getElementById('fabMenu');
+            if (fab && menu && !fab.contains(event.target) && menu.classList.contains('open')) {
+                menu.classList.remove('open');
+                document.getElementById('fabMainBtn').classList.remove('active');
+            }
+        });
     </script>
 
     <!-- Footer -->
