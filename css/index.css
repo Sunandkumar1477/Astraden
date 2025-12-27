@@ -2143,6 +2143,111 @@ body.mobile-device .play-btn:active {
         letter-spacing: 0.3px;
     }
     
+    /* Mobile Credits Dropdown */
+    .mobile-credits-dropdown {
+        margin-top: 8px;
+        margin-bottom: 8px;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 10px;
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    /* Rotate arrow when credits dropdown is open */
+    #mobileCreditsItem.active .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+    
+    #mobileCreditsItem .dropdown-arrow {
+        transition: transform 0.3s ease;
+        margin-left: auto;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+            max-height: 0;
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 1000px;
+        }
+    }
+    
+    .mobile-credits-dropdown .credit-timing-notice,
+    .mobile-credits-dropdown .times-up-message {
+        margin-bottom: 12px;
+        font-size: 0.85rem;
+    }
+    
+    .mobile-credits-dropdown .credits-option {
+        padding: 10px;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+    }
+    
+    .mobile-credits-dropdown .credits-option-title {
+        font-size: 0.9rem;
+    }
+    
+    .mobile-credits-dropdown .credits-option-price {
+        font-size: 0.8rem;
+    }
+    
+    .mobile-add-credits-btn,
+    .mobile-claim-credits-btn {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        margin-top: 10px;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+        border: 2px solid;
+    }
+    
+    .mobile-add-credits-btn {
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+        border-color: var(--primary-cyan);
+        color: white;
+    }
+    
+    .mobile-add-credits-btn:hover:not(:disabled) {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.5);
+    }
+    
+    .mobile-add-credits-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .mobile-claim-credits-btn {
+        background: rgba(157, 78, 221, 0.2);
+        border-color: var(--primary-purple);
+        color: var(--primary-purple);
+    }
+    
+    .mobile-claim-credits-btn:hover {
+        background: rgba(157, 78, 221, 0.3);
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(157, 78, 221, 0.4);
+    }
+    
+    .mobile-credits-dropdown #mobileCreditsOptionsContainer {
+        max-height: 200px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+    }
+    
     .logout-link {
         padding: 14px 18px;
         margin-top: 10px;

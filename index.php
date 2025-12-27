@@ -84,11 +84,63 @@ session_start();
                 </div>
                 <div class="dropdown-body">
                     <!-- Credits Info -->
-                    <div class="menu-item" id="mobileCreditsItem" style="display: none;" onclick="handleMobileCreditsClick(event)">
+                    <div class="menu-item" id="mobileCreditsItem" style="display: none;" onclick="toggleMobileCreditsDropdown(event)">
                         <div class="item-icon">⚡</div>
                         <div class="item-info">
                             <div class="item-label">Credits</div>
                             <div class="item-value" id="mobileCreditsValue">0</div>
+                        </div>
+                        <span class="dropdown-arrow" style="margin-left: auto; font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); transition: transform 0.3s ease;">▼</span>
+                    </div>
+                    <!-- Mobile Credits Dropdown -->
+                    <div class="mobile-credits-dropdown" id="mobileCreditsDropdown" style="display: none;">
+                        <!-- Credit Timing Notice -->
+                        <div id="mobileCreditTimingNotice" class="credit-timing-notice" style="display: none;">
+                            <div class="timing-notice-content">
+                                <div class="timing-icon">⏰</div>
+                                <div class="timing-text">
+                                    <div class="timing-title" id="mobileTimingTitle">Credits Available</div>
+                                    <div class="timing-message" id="mobileTimingMessage"></div>
+                                    <div class="timing-info">
+                                        <div class="timing-item">
+                                            <span class="timing-label">Buy:</span>
+                                            <span class="timing-countdown" id="mobileAddTimingCountdown">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Times Up Message -->
+                        <div id="mobileTimesUpMessage" class="times-up-message" style="display: none;">
+                            <div class="times-up-content">
+                                <div class="times-up-icon">⏰</div>
+                                <div class="times-up-text">
+                                    <div class="times-up-title">Times Up!</div>
+                                    <div class="times-up-desc">Credit purchase period has ended. Claim credits is always available.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Credit Limit Notice -->
+                        <div id="mobileCreditLimitNotice" class="credit-timing-notice" style="display: none;">
+                            <div class="timing-notice-content">
+                                <div class="timing-icon">📊</div>
+                                <div class="timing-text">
+                                    <div class="timing-title" id="mobileLimitTitle">Limited Credits</div>
+                                    <div class="timing-message" id="mobileLimitMessage">Limited credits available for sale</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Credits Options -->
+                        <div id="mobileCreditsOptionsWrapper">
+                            <div id="mobileCreditsOptionsContainer">
+                                <!-- Credit packages will be loaded dynamically here -->
+                                <div style="text-align: center; padding: 15px; color: rgba(0, 255, 255, 0.6); font-size: 0.85rem;">Loading credit packages...</div>
+                            </div>
+                            <button class="mobile-add-credits-btn" onclick="handleMobileAddCredits(event)" disabled id="mobileAddCreditsBtn">Add Credits</button>
+                            <button class="mobile-claim-credits-btn" onclick="handleMobileClaimCredits(event)" id="mobileClaimCreditsBtn">Claim Credits</button>
                         </div>
                     </div>
                     <!-- Referral Code Info -->
@@ -1632,12 +1684,168 @@ session_start();
             }
         }
         
-        // Mobile credits click handler
-        function handleMobileCreditsClick(event) {
+        // Mobile credits dropdown toggle
+        function toggleMobileCreditsDropdown(event) {
             event.stopPropagation();
-            // Close mobile dropdown first
+            const mobileCreditsDropdown = document.getElementById('mobileCreditsDropdown');
+            const mobileCreditsItem = document.getElementById('mobileCreditsItem');
+            if (mobileCreditsDropdown) {
+                const isVisible = mobileCreditsDropdown.style.display === 'block';
+                mobileCreditsDropdown.style.display = isVisible ? 'none' : 'block';
+                
+                // Toggle active class for arrow rotation
+                if (mobileCreditsItem) {
+                    if (isVisible) {
+                        mobileCreditsItem.classList.remove('active');
+                    } else {
+                        mobileCreditsItem.classList.add('active');
+                    }
+                }
+                
+                // If opening, load credit packages and check timing
+                if (!isVisible) {
+                    loadMobileCreditPackages();
+                    checkMobileCreditTiming();
+                }
+            }
+        }
+        
+        // Load credit packages for mobile dropdown
+        function loadMobileCreditPackages() {
+            fetch('get_credit_packages.php')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('mobileCreditsOptionsContainer');
+                    if (!container) return;
+                    
+                    if (data.success && data.packages && data.packages.length > 0) {
+                        container.innerHTML = data.packages.map((pkg, index) => {
+                            const isPopular = index === 0;
+                            return `
+                                <div class="credits-option ${isPopular ? 'selected' : ''}" onclick="selectMobileCreditsOption(event, ${pkg.credits}, ${pkg.price})">
+                                    ${isPopular ? '<span class="popular-badge">Popular</span>' : ''}
+                                    <div class="credits-option-title">${pkg.credits} Credits</div>
+                                    <div class="credits-option-price">₹${pkg.price}</div>
+                                </div>
+                            `;
+                        }).join('');
+                        
+                        // Set first package as selected by default
+                        if (data.packages.length > 0) {
+                            selectedCreditsAmount = data.packages[0].credits;
+                            selectedCreditsPrice = data.packages[0].price;
+                            document.getElementById('mobileAddCreditsBtn').disabled = false;
+                        }
+                    } else {
+                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 0, 0, 0.6);">No credit packages available. Please contact administrator.</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading credit packages:', error);
+                    const container = document.getElementById('mobileCreditsOptionsContainer');
+                    if (container) {
+                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 0, 0, 0.6);">Error loading credit packages. Please refresh the page.</div>';
+                    }
+                });
+        }
+        
+        // Select mobile credits option
+        function selectMobileCreditsOption(event, amount, price) {
+            event.stopPropagation();
+            selectedCreditsAmount = amount;
+            selectedCreditsPrice = price;
+            
+            // Update selected state
+            const container = document.getElementById('mobileCreditsOptionsContainer');
+            if (container) {
+                container.querySelectorAll('.credits-option').forEach(opt => opt.classList.remove('selected'));
+                event.currentTarget.classList.add('selected');
+            }
+            
+            // Enable add credits button
+            const addBtn = document.getElementById('mobileAddCreditsBtn');
+            if (addBtn) addBtn.disabled = false;
+        }
+        
+        // Check mobile credit timing
+        function checkMobileCreditTiming() {
+            fetch('check_credit_sale_status.php')
+                .then(response => response.json())
+                .then(saleData => {
+                    const timingNotice = document.getElementById('mobileCreditTimingNotice');
+                    const timesUpMessage = document.getElementById('mobileTimesUpMessage');
+                    const limitNotice = document.getElementById('mobileCreditLimitNotice');
+                    const addBtn = document.getElementById('mobileAddCreditsBtn');
+                    
+                    if (saleData.sale_mode === 'limit') {
+                        // Limit-based mode
+                        if (timingNotice) timingNotice.style.display = 'none';
+                        if (timesUpMessage) timesUpMessage.style.display = 'none';
+                        if (limitNotice) {
+                            limitNotice.style.display = 'block';
+                            document.getElementById('mobileLimitTitle').textContent = 'Limited Credits';
+                            document.getElementById('mobileLimitMessage').textContent = saleData.message || 'Limited credits available for sale';
+                        }
+                        if (addBtn && saleData.can_buy) {
+                            addBtn.disabled = false;
+                        } else if (addBtn) {
+                            addBtn.disabled = true;
+                        }
+                    } else {
+                        // Timing-based mode
+                        if (limitNotice) limitNotice.style.display = 'none';
+                        fetch('check_credit_timing.php?type=add_credits')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success && data.is_active) {
+                                    if (timingNotice) {
+                                        timingNotice.style.display = 'block';
+                                        timingNotice.classList.remove('unavailable');
+                                        timingNotice.classList.add('available');
+                                        document.getElementById('mobileTimingTitle').textContent = 'Credits Available Now';
+                                        document.getElementById('mobileTimingMessage').textContent = 'You can purchase credits right now!';
+                                    }
+                                    if (timesUpMessage) timesUpMessage.style.display = 'none';
+                                    if (addBtn) addBtn.disabled = false;
+                                } else {
+                                    if (timingNotice) timingNotice.style.display = 'none';
+                                    if (timesUpMessage) timesUpMessage.style.display = 'block';
+                                    if (addBtn) addBtn.disabled = true;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error checking credit timing:', error);
+                            });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking credit sale status:', error);
+                });
+        }
+        
+        // Handle mobile add credits
+        function handleMobileAddCredits(event) {
+            event.stopPropagation();
+            // Close mobile dropdown
+            const mobileCreditsDropdown = document.getElementById('mobileCreditsDropdown');
             const mobileDropdown = document.getElementById('mobileUserDropdown');
             const mobileBtn = document.getElementById('mobileUserDropdownBtn');
+            if (mobileCreditsDropdown) mobileCreditsDropdown.style.display = 'none';
+            if (mobileDropdown) mobileDropdown.classList.remove('show');
+            if (mobileBtn) mobileBtn.classList.remove('active');
+            
+            // Use the same showQRCode function
+            showQRCode(event);
+        }
+        
+        // Handle mobile claim credits
+        function handleMobileClaimCredits(event) {
+            event.stopPropagation();
+            // Close mobile dropdown
+            const mobileCreditsDropdown = document.getElementById('mobileCreditsDropdown');
+            const mobileDropdown = document.getElementById('mobileUserDropdown');
+            const mobileBtn = document.getElementById('mobileUserDropdownBtn');
+            if (mobileCreditsDropdown) mobileCreditsDropdown.style.display = 'none';
             if (mobileDropdown) mobileDropdown.classList.remove('show');
             if (mobileBtn) mobileBtn.classList.remove('active');
             
@@ -2363,6 +2571,10 @@ session_start();
         window.showQRCode = showQRCode;
         window.toggleRankDropdown = toggleRankDropdown;
         window.handleClaimCredits = handleClaimCredits;
+        window.toggleMobileCreditsDropdown = toggleMobileCreditsDropdown;
+        window.selectMobileCreditsOption = selectMobileCreditsOption;
+        window.handleMobileAddCredits = handleMobileAddCredits;
+        window.handleMobileClaimCredits = handleMobileClaimCredits;
         
         // Forgot Password handler
         function handleForgotPassword(e) {
