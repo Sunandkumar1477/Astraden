@@ -2292,8 +2292,14 @@ body.mobile-device .play-btn:active {
     
     .mobile-credits-dropdown #mobileCreditsOptionsContainer {
         max-height: 200px;
-        overflow-y: auto;
+        overflow-y: visible;
         margin-bottom: 10px;
+    }
+    
+    /* Remove overflow-y: auto from all dropdowns in mobile */
+    .rank-dropdown,
+    .credits-dropdown {
+        overflow-y: visible !important;
     }
     
     .logout-link {
@@ -2418,6 +2424,11 @@ body.mobile-device .play-btn:active {
         width: calc(100vw - 16px);
         max-width: 280px;
         right: 0;
+    }
+    
+    /* Remove overflow-y: auto from dropdowns in mobile */
+    .rank-dropdown {
+        overflow-y: visible !important;
     }
     
     .dropdown-header {
@@ -4882,7 +4893,7 @@ body.mobile-device .play-btn:active {
         transform: translate(-50%, -50%) !important;
         max-width: 90vw !important;
         max-height: 80vh !important;
-        overflow-y: auto !important;
+        overflow-y: visible !important;
         z-index: 10003 !important;
     }
 }
