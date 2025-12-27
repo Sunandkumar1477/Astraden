@@ -527,7 +527,7 @@ session_start();
     <!-- QR Code Modal -->
     <div class="modal-overlay" id="qrModal">
         <div class="qr-modal">
-            <button class="close-modal" onclick="closeModal('qr')">&times;</button>
+            <button class="close-modal qr-close-modal" onclick="closeModal('qr')">&times;</button>
             <h3>Payment QR Code</h3>
             <div class="amount" id="qrAmount">Amount: ₹150/-</div>
             <img src="WhatsApp Image 2025-12-18 at 4.25.46 PM.jpeg" alt="Payment QR Code">

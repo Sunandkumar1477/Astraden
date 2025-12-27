@@ -3194,6 +3194,13 @@ body.mobile-device .play-btn:active {
     word-wrap: break-word;
 }
 
+/* QR Modal Close Button - Position on Left Side */
+.qr-modal .close-modal,
+.qr-close-modal {
+    right: auto !important;
+    left: 15px !important;
+}
+
 /* Verification Info */
 .verification-info {
     margin-top: 20px;
@@ -4150,6 +4157,13 @@ body.mobile-device .play-btn:active {
         min-width: 32px;
         min-height: 32px;
     }
+    
+    /* Keep QR modal close button on left side */
+    .qr-modal .close-modal,
+    .qr-close-modal {
+        right: auto !important;
+        left: 12px !important;
+    }
 
     .submit-btn {
         padding: 16px;
@@ -4286,6 +4300,13 @@ body.mobile-device .play-btn:active {
         right: 10px;
         min-width: 30px;
         min-height: 30px;
+    }
+    
+    /* Keep QR modal close button on left side */
+    .qr-modal .close-modal,
+    .qr-close-modal {
+        right: auto !important;
+        left: 10px !important;
     }
     
     .submit-btn {
@@ -5325,5 +5346,195 @@ body.mobile-device .play-btn:active {
         width: 42px;
         height: 42px;
         font-size: 1.1rem;
+    }
+}
+
+/* ============================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   Disable heavy effects on all mobile devices (max-width: 768px)
+   ============================================ */
+@media (max-width: 768px) {
+    /* Disable all animations for better performance */
+    .star,
+    .shooting-star,
+    .nebula,
+    .header h1,
+    .game-countdown-badge,
+    .coming-soon-icon,
+    .game-icon,
+    .container {
+        animation: none !important;
+    }
+    
+    /* Disable backdrop filters - major performance killer */
+    .modal-overlay,
+    .auth-modal,
+    .category-btn,
+    .game-card,
+    .coming-soon-card,
+    .user-info-bar {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    
+    /* Simplify modal overlay background */
+    .modal-overlay {
+        background: rgba(0, 0, 0, 0.95) !important;
+    }
+    
+    /* Reduce box-shadows - use simple shadows only */
+    .auth-modal {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .game-card {
+        box-shadow: 0 2px 8px rgba(0, 255, 255, 0.2) !important;
+    }
+    
+    .category-btn {
+        box-shadow: 0 2px 6px rgba(0, 255, 255, 0.2) !important;
+    }
+    
+    /* Disable complex filters */
+    .nebula {
+        filter: none !important;
+    }
+    
+    /* Disable modal slide-in animation */
+    .auth-modal {
+        animation: none !important;
+    }
+    
+    /* Optimize space background */
+    #space-background {
+        will-change: auto !important;
+    }
+    
+    .star,
+    .shooting-star,
+    .nebula {
+        will-change: auto !important;
+    }
+    
+    /* Reduce star count - hide most stars */
+    .star:nth-child(n+15) {
+        display: none !important;
+    }
+    
+    /* Hide extra nebulas */
+    .nebula-2,
+    .nebula-3 {
+        display: none !important;
+    }
+    
+    /* Simplify transitions - faster and simpler */
+    .game-card,
+    .category-btn,
+    .play-btn {
+        transition: transform 0.1s ease, background-color 0.1s ease !important;
+    }
+    
+    .submit-btn {
+        transition: background-color 0.15s ease !important;
+    }
+    
+    .form-group input {
+        transition: border-color 0.15s ease !important;
+    }
+    
+    /* Disable hover effects on mobile (hover doesn't work well on touch) */
+    .game-card:hover,
+    .category-btn:hover,
+    .play-btn:hover {
+        transform: none !important;
+        box-shadow: 0 2px 8px rgba(0, 255, 255, 0.2) !important;
+    }
+    
+    /* Simplify submit button hover */
+    .submit-btn:hover {
+        transform: none !important;
+        filter: none !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Simplify input focus effects */
+    .form-group input:focus {
+        box-shadow: 0 0 5px rgba(0, 255, 255, 0.3) !important;
+    }
+    
+    /* Reduce text shadows for performance */
+    .game-description,
+    .game-title,
+    .header p {
+        text-shadow: none !important;
+    }
+    
+    /* Keep minimal text shadow for headers only */
+    .header h1 {
+        text-shadow: 0 0 5px rgba(0, 255, 255, 0.4) !important;
+    }
+    
+    /* Optimize will-change property */
+    .star,
+    .shooting-star,
+    .nebula {
+        will-change: auto !important;
+    }
+    
+    /* Force GPU acceleration only for interactive elements */
+    .game-card,
+    .category-btn,
+    .play-btn {
+        transform: translateZ(0);
+        will-change: transform;
+    }
+    
+    /* Simplify submit button gradient */
+    .submit-btn {
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)) !important;
+    }
+    
+    /* Keep gradient line but simplify */
+    .auth-modal::before {
+        height: 3px !important;
+    }
+}
+
+/* Additional optimizations for very small screens (max-width: 480px) */
+@media (max-width: 480px) {
+    /* Hide all animated background elements */
+    .star,
+    .shooting-star,
+    .nebula {
+        display: none !important;
+    }
+    
+    /* Further simplify shadows */
+    .auth-modal {
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    .game-card,
+    .category-btn {
+        box-shadow: 0 1px 4px rgba(0, 255, 255, 0.15) !important;
+    }
+    
+    /* Disable all text shadows */
+    * {
+        text-shadow: none !important;
+    }
+    
+    /* Keep only essential transitions */
+    .game-card:active,
+    .category-btn:active,
+    .play-btn:active {
+        transition: transform 0.05s ease !important;
+        transform: scale(0.98) !important;
+    }
+    
+    /* Simplify all other transitions */
+    .submit-btn,
+    .form-group input {
+        transition: background-color 0.1s ease, border-color 0.1s ease !important;
     }
 }
