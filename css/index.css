@@ -2151,44 +2151,47 @@ body.mobile-device .play-btn:active {
         background: rgba(0, 0, 0, 0.4);
         border: 2px solid rgba(0, 255, 255, 0.3);
         border-radius: 10px;
-        animation: slideDown 0.3s ease-out;
+        /* Remove animation for better performance on mobile */
+        animation: none !important;
+        will-change: auto;
+        transform: translateZ(0);
     }
     
-    /* Rotate arrow when credits dropdown is open */
+    /* Rotate arrow when credits dropdown is open - Optimized */
     #mobileCreditsItem.active .dropdown-arrow {
         transform: rotate(180deg);
     }
     
     #mobileCreditsItem .dropdown-arrow {
-        transition: transform 0.3s ease;
+        /* Reduced transition for better performance */
+        transition: transform 0.2s ease;
         margin-left: auto;
         font-size: 0.75rem;
         color: rgba(255, 255, 255, 0.7);
-    }
-    
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-            max-height: 0;
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-            max-height: 1000px;
-        }
+        will-change: transform;
     }
     
     .mobile-credits-dropdown .credit-timing-notice,
     .mobile-credits-dropdown .times-up-message {
         margin-bottom: 12px;
         font-size: 0.85rem;
+        /* Remove animations for better performance */
+        animation: none !important;
     }
     
     .mobile-credits-dropdown .credits-option {
         padding: 10px;
         margin-bottom: 8px;
         font-size: 0.85rem;
+        /* Optimize for performance */
+        will-change: auto;
+        transform: translateZ(0);
+        /* Reduce transition */
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    
+    .mobile-credits-dropdown .credits-option:active {
+        background: rgba(0, 255, 255, 0.2);
     }
     
     .mobile-credits-dropdown .credits-option-title {
@@ -2210,8 +2213,12 @@ body.mobile-device .play-btn:active {
         cursor: pointer;
         margin-top: 10px;
         text-transform: uppercase;
-        transition: all 0.3s ease;
+        /* Reduced transition for better performance */
+        transition: background 0.2s ease, opacity 0.2s ease;
         border: 2px solid;
+        /* GPU acceleration */
+        will-change: auto;
+        transform: translateZ(0);
     }
     
     .mobile-add-credits-btn {
@@ -2220,9 +2227,8 @@ body.mobile-device .play-btn:active {
         color: white;
     }
     
-    .mobile-add-credits-btn:hover:not(:disabled) {
-        transform: scale(1.02);
-        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.5);
+    .mobile-add-credits-btn:active:not(:disabled) {
+        opacity: 0.8;
     }
     
     .mobile-add-credits-btn:disabled {
@@ -2236,10 +2242,9 @@ body.mobile-device .play-btn:active {
         color: var(--primary-purple);
     }
     
-    .mobile-claim-credits-btn:hover {
+    .mobile-claim-credits-btn:active {
         background: rgba(157, 78, 221, 0.3);
-        transform: scale(1.02);
-        box-shadow: 0 4px 15px rgba(157, 78, 221, 0.4);
+        opacity: 0.9;
     }
     
     .mobile-credits-dropdown #mobileCreditsOptionsContainer {
@@ -3290,10 +3295,16 @@ body.mobile-device .play-btn:active {
 }
 
 @media (max-width: 768px) {
+    /* Optimize QR Modal for Mobile - Remove lag */
     .qr-modal {
         padding: 20px;
         max-width: 95%;
         max-height: 95vh;
+        /* Remove heavy effects for better performance */
+        will-change: auto;
+        transform: translateZ(0);
+        /* Reduce animations */
+        animation: none !important;
     }
     
     .qr-modal h3 {
@@ -3302,6 +3313,27 @@ body.mobile-device .play-btn:active {
     
     .qr-modal img {
         max-height: 250px;
+        /* Optimize image rendering */
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+    
+    /* Optimize modal overlay for mobile */
+    .modal-overlay {
+        /* Reduce backdrop-filter for better performance */
+        backdrop-filter: blur(2px) !important;
+        -webkit-backdrop-filter: blur(2px) !important;
+        background: rgba(0, 0, 0, 0.95) !important;
+        /* Remove animations */
+        animation: none !important;
+    }
+    
+    /* Optimize claim modal */
+    .claim-modal {
+        /* Remove heavy effects */
+        will-change: auto;
+        transform: translateZ(0);
+        animation: none !important;
     }
     
     .verification-message {
@@ -3335,6 +3367,9 @@ body.mobile-device .play-btn:active {
 @media (max-width: 480px) {
     .qr-modal {
         padding: 15px;
+        /* Further optimize for small screens */
+        will-change: auto;
+        transform: translateZ(0);
     }
     
     .qr-modal h3 {
@@ -3343,6 +3378,7 @@ body.mobile-device .play-btn:active {
     
     .qr-modal img {
         max-height: 200px;
+        image-rendering: -webkit-optimize-contrast;
     }
     
     .verification-info {

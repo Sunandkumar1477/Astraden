@@ -1316,13 +1316,16 @@ session_start();
                                     const iconColor = '#00ff00'; // Green color for icon
                                     
                                     creditsElement.style.borderColor = iconColor; // Green border
-                                    creditsValueElement.textContent = data.credits.toLocaleString();
+                                    const creditsAmount = (data.credits !== undefined && data.credits !== null) ? data.credits : 0;
+                                    creditsValueElement.textContent = creditsAmount.toLocaleString();
                                     creditsValueElement.style.color = creditsColor; // Gold value
                                     
                                     // Update mobile dropdown credits
                                     const mobileCreditsValue = document.getElementById('mobileCreditsValue');
                                     const mobileCreditsItem = document.getElementById('mobileCreditsItem');
-                                    if (mobileCreditsValue) mobileCreditsValue.textContent = data.credits.toLocaleString();
+                                    if (mobileCreditsValue) {
+                                        mobileCreditsValue.textContent = creditsAmount.toLocaleString();
+                                    }
                                     if (mobileCreditsItem) mobileCreditsItem.style.display = 'flex';
                                     
                                     // Ensure power icon stays green (force green color)
@@ -1684,29 +1687,36 @@ session_start();
             }
         }
         
-        // Mobile credits dropdown toggle
+        // Mobile credits dropdown toggle - Optimized for performance
         function toggleMobileCreditsDropdown(event) {
             event.stopPropagation();
             const mobileCreditsDropdown = document.getElementById('mobileCreditsDropdown');
             const mobileCreditsItem = document.getElementById('mobileCreditsItem');
             if (mobileCreditsDropdown) {
                 const isVisible = mobileCreditsDropdown.style.display === 'block';
-                mobileCreditsDropdown.style.display = isVisible ? 'none' : 'block';
                 
-                // Toggle active class for arrow rotation
-                if (mobileCreditsItem) {
-                    if (isVisible) {
-                        mobileCreditsItem.classList.remove('active');
-                    } else {
-                        mobileCreditsItem.classList.add('active');
+                // Use requestAnimationFrame for smoother toggle
+                requestAnimationFrame(() => {
+                    mobileCreditsDropdown.style.display = isVisible ? 'none' : 'block';
+                    
+                    // Toggle active class for arrow rotation
+                    if (mobileCreditsItem) {
+                        if (isVisible) {
+                            mobileCreditsItem.classList.remove('active');
+                        } else {
+                            mobileCreditsItem.classList.add('active');
+                        }
                     }
-                }
-                
-                // If opening, load credit packages and check timing
-                if (!isVisible) {
-                    loadMobileCreditPackages();
-                    checkMobileCreditTiming();
-                }
+                    
+                    // If opening, load credit packages and check timing (async to prevent lag)
+                    if (!isVisible) {
+                        // Load packages immediately but check timing after a small delay
+                        loadMobileCreditPackages();
+                        setTimeout(() => {
+                            checkMobileCreditTiming();
+                        }, 50);
+                    }
+                });
             }
         }
         
