@@ -807,16 +807,177 @@ $conn->close();
         }
         
         @media (max-width: 768px) {
+            /* Align overlay content to left */
+            #game-status-overlay {
+                align-items: flex-start !important;
+                text-align: left !important;
+                padding: 20px 15px !important;
+                justify-content: flex-start !important;
+            }
+            
             .timer-display {
                 font-size: 2rem;
+                margin: 15px 0;
+                text-align: left;
             }
+            
             .status-title {
                 font-size: 1.5rem;
+                text-align: left;
+                margin-bottom: 20px;
             }
+            
             /* Hide status message on mobile */
             .status-message {
                 display: none !important;
             }
+            
+            /* Mission Rewards Section - Left Aligned */
+            .prize-pool {
+                background: rgba(255, 215, 0, 0.1);
+                border: 1px solid #FFD700;
+                border-radius: 10px;
+                padding: 15px 18px;
+                margin: 15px 0;
+                margin-left: 0;
+                margin-right: auto;
+                width: calc(100% - 30px);
+                max-width: none;
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+                text-align: left;
+            }
+            
+            .prize-pool > div:first-child {
+                color: #FFD700;
+                font-weight: bold;
+                margin-bottom: 12px;
+                text-transform: uppercase;
+                font-size: 0.9rem;
+                text-align: left;
+            }
+            
+            .prize-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+                font-size: 0.85rem;
+                text-align: left;
+            }
+            
+            .prize-item:last-child {
+                border-bottom: none;
+            }
+            
+            /* Credits Info - Left Aligned */
+            .credits-info {
+                font-size: 0.95rem;
+                padding: 12px 18px;
+                margin: 15px 0;
+                margin-left: 0;
+                margin-right: auto;
+                width: calc(100% - 30px);
+                max-width: none;
+                text-align: left;
+            }
+            
+            /* Game Buttons Container - Left Aligned */
+            .game-btn-container {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: flex-start;
+                gap: 12px;
+                margin: 20px 0;
+                margin-left: 0;
+                margin-right: auto;
+                width: calc(100% - 30px);
+                max-width: none;
+            }
+            
+            /* All Buttons - Left Aligned with Proper Padding */
+            .game-btn, 
+            .start-game-btn, 
+            .demo-game-btn, 
+            .instructions-toggle-btn {
+                width: 100%;
+                max-width: none;
+                padding: 14px 20px;
+                font-size: 0.95rem;
+                margin: 0;
+                text-align: left;
+                justify-content: flex-start;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            }
+            
+            .game-btn:hover, 
+            .start-game-btn:hover, 
+            .demo-game-btn:hover, 
+            .instructions-toggle-btn:hover {
+                transform: translateX(3px) scale(1.01);
+            }
+            
+            .game-btn:active, 
+            .start-game-btn:active, 
+            .demo-game-btn:active, 
+            .instructions-toggle-btn:active {
+                transform: translateX(0) scale(0.99);
+            }
+            
+            /* Game Guide Button */
+            .instructions-toggle-btn {
+                background: rgba(0, 255, 255, 0.08);
+                border: 2px solid #00ffff;
+                color: #00ffff;
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+            
+            /* Play Demo Button */
+            .demo-game-btn {
+                background: rgba(255, 255, 255, 0.08);
+                border: 2px solid rgba(255, 255, 255, 0.4);
+                color: white;
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+            
+            /* Back to Home Button */
+            .btn-home {
+                background: rgba(157, 78, 221, 0.1);
+                border: 2px solid rgba(157, 78, 221, 0.5);
+                color: #9d4edd;
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+            
+            .btn-home:hover {
+                background: rgba(157, 78, 221, 0.2);
+                border-color: #9d4edd;
+            }
+            
+            /* Claim Section - Left Aligned */
+            .claim-section {
+                background: rgba(0, 255, 0, 0.1);
+                border: 2px solid #00ff00;
+                border-radius: 10px;
+                padding: 18px;
+                margin: 20px 0;
+                margin-left: 0;
+                margin-right: auto;
+                width: calc(100% - 30px);
+                max-width: none;
+                text-align: left;
+            }
+            
+            .claim-btn {
+                width: 100%;
+                max-width: none;
+                padding: 14px 20px;
+                font-size: 0.95rem;
+                margin: 0;
             }
         }
         
