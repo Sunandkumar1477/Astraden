@@ -813,6 +813,11 @@ $conn->close();
             .status-title {
                 font-size: 1.5rem;
             }
+            /* Hide status message on mobile */
+            .status-message {
+                display: none !important;
+            }
+            }
         }
         
         /* Instructions Panel Styles */
@@ -1056,6 +1061,11 @@ $conn->close();
             
             .points-list li {
                 font-size: 0.75rem;
+            }
+            
+            /* Hide status message on mobile */
+            .status-message {
+                display: none !important;
             }
         }
     </style>

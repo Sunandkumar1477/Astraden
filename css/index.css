@@ -4469,6 +4469,11 @@ body.mobile-device .play-btn:active {
         display: none !important;
     }
     
+    /* Hide status message on mobile in game page */
+    .status-message {
+        display: none !important;
+    }
+    
     /* Game cards with action button style - optimized - no borders */
     .game-card {
         background: var(--card-bg);
