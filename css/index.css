@@ -1842,6 +1842,16 @@ body.mobile-device .play-btn:active {
         display: block !important;
     }
     
+    /* Hide floating assist button in mobile version (keep code for future use) */
+    .assistive-touch-fab {
+        display: none !important;
+    }
+    
+    /* Hide profile planet button in mobile version (keep code for future use) */
+    .profile-planet-btn {
+        display: none !important;
+    }
+    
     .user-info-bar,
     .auth-buttons {
         top: 10px;
@@ -3063,7 +3073,7 @@ body.mobile-device .play-btn:active {
     font-style: italic;
 }
 
-/* Profile Planet Button */
+/* Profile Planet Button - Visible in desktop only (keep code for future use) */
 .profile-planet-btn {
     position: fixed;
     bottom: 30px;
@@ -4958,6 +4968,7 @@ body.mobile-device .play-btn:active {
    ASSISTIVE TOUCH FLOATING ACTION BUTTON
    ============================================ */
 
+/* Floating Assist Button - Hidden in desktop version (keep code for future use) */
 .assistive-touch-fab {
     position: fixed;
     bottom: 30px;
@@ -4965,6 +4976,7 @@ body.mobile-device .play-btn:active {
     z-index: 9998;
     user-select: none;
     -webkit-user-select: none;
+    display: none !important; /* Hidden in desktop - can be enabled later */
 }
 
 .fab-main-btn {
