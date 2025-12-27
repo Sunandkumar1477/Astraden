@@ -236,21 +236,17 @@ session_start();
             <span class="fab-icon">⚡</span>
         </button>
         <div class="fab-menu" id="fabMenu">
-            <button class="fab-menu-item" onclick="scrollToTop()" title="Scroll to Top">
+            <button class="fab-menu-item fab-top" onclick="scrollToTop()" title="Scroll to Top">
                 <span class="fab-menu-icon">⬆️</span>
-                <span class="fab-menu-label">Top</span>
             </button>
-            <button class="fab-menu-item" onclick="scrollToGames()" title="Scroll to Games">
+            <button class="fab-menu-item fab-right" onclick="scrollToGames()" title="Scroll to Games">
                 <span class="fab-menu-icon">🎮</span>
-                <span class="fab-menu-label">Games</span>
             </button>
-            <button class="fab-menu-item" onclick="openProfile()" title="View Profile">
+            <button class="fab-menu-item fab-bottom" onclick="openProfile()" title="View Profile">
                 <span class="fab-menu-icon">👤</span>
-                <span class="fab-menu-label">Profile</span>
             </button>
-            <button class="fab-menu-item" onclick="toggleDarkMode()" title="Toggle Theme">
+            <button class="fab-menu-item fab-left" onclick="toggleDarkMode()" title="Toggle Theme">
                 <span class="fab-menu-icon">🌙</span>
-                <span class="fab-menu-label">Theme</span>
             </button>
         </div>
     </div>

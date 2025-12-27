@@ -4871,22 +4871,20 @@ body.mobile-device .play-btn:active {
 
 .fab-menu {
     position: absolute;
-    bottom: 80px;
-    right: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(20px) scale(0.8);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
 }
 
 .fab-menu.open {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0) scale(1);
     pointer-events: auto;
 }
 
@@ -4900,18 +4898,87 @@ body.mobile-device .play-btn:active {
     font-size: 1.4rem;
     cursor: pointer;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
     box-shadow: 
         0 0 15px rgba(0, 255, 255, 0.4),
         inset 0 0 15px rgba(0, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
     overflow: hidden;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: scale(0) translate(-50%, -50%);
+}
+
+/* Circular positioning - Top */
+.fab-menu-item.fab-top {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+}
+
+.fab-menu.open .fab-menu-item.fab-top {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+    top: -40px;
+}
+
+/* Circular positioning - Right */
+.fab-menu-item.fab-right {
+    top: 50%;
+    right: 0;
+    transform: translate(50%, -50%) scale(0);
+}
+
+.fab-menu.open .fab-menu-item.fab-right {
+    opacity: 1;
+    transform: translate(100%, -50%) scale(1);
+    right: -40px;
+}
+
+/* Circular positioning - Bottom */
+.fab-menu-item.fab-bottom {
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 50%) scale(0);
+}
+
+.fab-menu.open .fab-menu-item.fab-bottom {
+    opacity: 1;
+    transform: translate(-50%, 100%) scale(1);
+    bottom: -40px;
+}
+
+/* Circular positioning - Left */
+.fab-menu-item.fab-left {
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%) scale(0);
+}
+
+.fab-menu.open .fab-menu-item.fab-left {
+    opacity: 1;
+    transform: translate(-100%, -50%) scale(1);
+    left: -40px;
+}
+
+/* Staggered animation delays */
+.fab-menu.open .fab-menu-item.fab-top {
+    transition-delay: 0.1s;
+}
+
+.fab-menu.open .fab-menu-item.fab-right {
+    transition-delay: 0.2s;
+}
+
+.fab-menu.open .fab-menu-item.fab-bottom {
+    transition-delay: 0.3s;
+}
+
+.fab-menu.open .fab-menu-item.fab-left {
+    transition-delay: 0.4s;
 }
 
 .fab-menu-item::before {
@@ -4951,15 +5018,7 @@ body.mobile-device .play-btn:active {
     font-size: 1.3rem;
     line-height: 1;
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.6));
-}
-
-.fab-menu-label {
-    font-size: 0.5rem;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
+    display: block;
 }
 
 /* Mobile Optimizations for FAB */
@@ -4977,8 +5036,24 @@ body.mobile-device .play-btn:active {
     }
     
     .fab-menu {
-        bottom: 70px;
-        gap: 10px;
+        width: 180px;
+        height: 180px;
+    }
+    
+    .fab-menu.open .fab-menu-item.fab-top {
+        top: -35px;
+    }
+    
+    .fab-menu.open .fab-menu-item.fab-right {
+        right: -35px;
+    }
+    
+    .fab-menu.open .fab-menu-item.fab-bottom {
+        bottom: -35px;
+    }
+    
+    .fab-menu.open .fab-menu-item.fab-left {
+        left: -35px;
     }
     
     .fab-menu-item {
@@ -4990,10 +5065,6 @@ body.mobile-device .play-btn:active {
     
     .fab-menu-icon {
         font-size: 1.1rem;
-    }
-    
-    .fab-menu-label {
-        font-size: 0.45rem;
     }
 }
 
@@ -5010,8 +5081,24 @@ body.mobile-device .play-btn:active {
     }
     
     .fab-menu {
-        bottom: 65px;
-        gap: 8px;
+        width: 160px;
+        height: 160px;
+    }
+    
+    .fab-menu.open .fab-menu-item.fab-top {
+        top: -30px;
+    }
+    
+    .fab-menu.open .fab-menu-item.fab-right {
+        right: -30px;
+    }
+    
+    .fab-menu.open .fab-menu-item.fab-bottom {
+        bottom: -30px;
+    }
+    
+    .fab-menu.open .fab-menu-item.fab-left {
+        left: -30px;
     }
     
     .fab-menu-item {
