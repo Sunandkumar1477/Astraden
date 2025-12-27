@@ -1812,13 +1812,13 @@ body.mobile-device .play-btn:active {
     padding-left: 22px;
 }
 
-/* Mobile Responsive for User Bar & Auth */
+/* Mobile Responsive for User Bar & Auth - Professional Clean Style */
 @media (max-width: 768px) {
     .user-info-bar,
     .auth-buttons {
-        top: 15px;
-        right: 15px;
-        left: auto; /* Fixed: Removed extra left margin/stretch */
+        top: 10px;
+        right: 10px;
+        left: auto;
         width: auto;
         justify-content: flex-end;
         z-index: 10001;
@@ -1826,27 +1826,165 @@ body.mobile-device .play-btn:active {
 
     .user-info-container {
         width: auto;
-        min-width: 180px;
-        max-width: 280px; /* Refined length for better fit */
+        min-width: 160px;
+        max-width: 260px;
     }
 
+    /* Professional clean button - no visuals, just information */
     .user-dropdown-btn {
-        padding: 8px 15px;
-        min-height: 48px;
-        border-radius: 10px;
+        padding: 10px 14px;
+        min-height: 44px;
+        border-radius: 6px;
+        background: rgba(15, 15, 25, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        transition: background 0.2s ease;
+        font-family: 'Rajdhani', sans-serif; /* Clean professional font */
+    }
+    
+    .user-dropdown-btn:hover {
+        background: rgba(20, 20, 30, 0.95);
+        box-shadow: none;
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .user-dropdown-btn:active {
+        transform: none;
+        background: rgba(25, 25, 35, 0.95);
+    }
+    
+    .user-dropdown-btn.active {
+        background: rgba(20, 20, 30, 0.95);
+        border-color: rgba(255, 255, 255, 0.2);
     }
 
     .user-dropdown-content {
-        width: 280px; /* Fixed width to prevent clumsiness */
-        top: calc(100% + 10px);
+        width: calc(100vw - 20px);
+        max-width: 300px;
+        top: calc(100% + 8px);
         right: 0;
         left: auto;
         transform-origin: top right;
+        background: rgba(15, 15, 25, 0.98);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        animation: none;
     }
     
     .username-display {
-        max-width: 120px;
-        font-size: 0.85rem;
+        max-width: 140px;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .user-label {
+        font-size: 0.6rem;
+        color: rgba(255, 255, 255, 0.6);
+        letter-spacing: 0.5px;
+    }
+    
+    .dropdown-arrow {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
+        transition: transform 0.2s ease;
+    }
+    
+    .user-dropdown-btn.active .dropdown-arrow {
+        transform: rotate(180deg);
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    /* Clean dropdown header */
+    .dropdown-header {
+        padding: 16px 18px;
+        background: rgba(20, 20, 30, 0.5);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .user-profile-icon {
+        font-size: 1.8rem;
+        background: rgba(0, 0, 0, 0.3);
+        width: 50px;
+        height: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: none;
+    }
+    
+    .user-profile-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+        letter-spacing: 0.5px;
+        font-family: 'Rajdhani', sans-serif; /* Clean professional font */
+    }
+    
+    .user-profile-rank {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 500;
+    }
+    
+    /* Clean menu items */
+    .dropdown-body {
+        padding: 12px;
+    }
+    
+    .menu-item {
+        padding: 12px 14px;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: background 0.2s ease;
+    }
+    
+    .menu-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        transform: none;
+    }
+    
+    .item-icon {
+        font-size: 1.2rem;
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .item-label {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 0.5px;
+    }
+    
+    .item-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        letter-spacing: 0.3px;
+    }
+    
+    .logout-link {
+        padding: 14px 18px;
+        margin-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 100, 100, 0.9);
+        transition: background 0.2s ease;
+        font-family: 'Rajdhani', sans-serif; /* Clean professional font */
+    }
+    
+    .logout-link:hover {
+        background: rgba(255, 100, 100, 0.1);
+        padding-left: 18px;
     }
 
     .auth-buttons {
@@ -1858,11 +1996,20 @@ body.mobile-device .play-btn:active {
         flex: none;
         padding: 8px 15px;
         font-size: 0.75rem;
+        background: rgba(15, 15, 25, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+        backdrop-filter: none;
+    }
+    
+    .auth-btn:hover {
+        background: rgba(20, 20, 30, 0.95);
+        box-shadow: none;
     }
 
     .profile-planet-btn {
         bottom: 25px;
-        right: 15px; /* Fixed: Moved to right to remove extra left margin */
+        right: 15px;
         left: auto;
         width: 50px;
         min-width: 50px;
@@ -1873,6 +2020,9 @@ body.mobile-device .play-btn:active {
         align-items: center;
         justify-content: center;
         z-index: 9999;
+        background: rgba(15, 15, 25, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
     }
 
     .profile-planet-btn .profile-text {
@@ -1883,32 +2033,74 @@ body.mobile-device .play-btn:active {
 @media (max-width: 480px) {
     .user-info-bar,
     .auth-buttons {
-        top: 10px;
-        right: 10px;
+        top: 8px;
+        right: 8px;
         left: auto;
     }
 
     .user-info-container {
-        max-width: 240px;
+        max-width: 220px;
+        min-width: 140px;
     }
 
     .user-dropdown-btn {
-        padding: 6px 12px;
-        min-height: 44px;
+        padding: 8px 12px;
+        min-height: 40px;
+    }
+    
+    .username-display {
+        max-width: 110px;
+        font-size: 0.85rem;
+    }
+    
+    .user-label {
+        font-size: 0.55rem;
     }
 
     .user-dropdown-content {
-        width: calc(100vw - 20px);
+        width: calc(100vw - 16px);
+        max-width: 280px;
         right: 0;
     }
-
-    .username-display {
-        max-width: 100px;
-        font-size: 0.8rem;
+    
+    .dropdown-header {
+        padding: 14px 16px;
     }
-
-    .user-label {
-        font-size: 0.55rem;
+    
+    .user-profile-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.6rem;
+    }
+    
+    .user-profile-name {
+        font-size: 0.95rem;
+    }
+    
+    .user-profile-rank {
+        font-size: 0.75rem;
+    }
+    
+    .menu-item {
+        padding: 10px 12px;
+    }
+    
+    .item-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 1.1rem;
+    }
+    
+    .item-label {
+        font-size: 0.6rem;
+    }
+    
+    .item-value {
+        font-size: 0.85rem;
+    }
+    
+    .logout-link {
+        padding: 12px 16px;
     }
 
     .profile-planet-btn {
@@ -4018,14 +4210,14 @@ body.mobile-device .play-btn:active {
         box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
     }
     
-    /* User info bar with action style - optimized - no borders */
+    /* User info bar - professional clean style for mobile */
     .user-info-bar {
-        background: rgba(0, 0, 0, 0.4);
+        background: transparent;
         border: none;
-        border-radius: 12px;
-        padding: 10px;
-        backdrop-filter: none; /* Removed for performance */
-        box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+        border-radius: 0;
+        padding: 0;
+        backdrop-filter: none;
+        box-shadow: none;
     }
     
     /* Game icon - simplified for mobile performance */
