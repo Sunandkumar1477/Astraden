@@ -78,7 +78,7 @@ session_start();
                         <div class="user-profile-icon" id="mobileUserProfileIcon">👤</div>
                         <div>
                             <div class="user-profile-name" id="dropdownDisplayUsername">User</div>
-                            <div class="user-profile-rank" id="dropdownUserRank">Loading...</div>
+                            <div class="user-profile-rank" id="dropdownUserRank" style="display: none;">Loading...</div>
                         </div>
                     </div>
                 </div>

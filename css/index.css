@@ -1747,7 +1747,7 @@ body.mobile-device .play-btn:active {
     color: rgba(255, 255, 255, 0.85);
     font-family: 'Rajdhani', sans-serif;
     font-weight: 600;
-    display: flex;
+    display: none !important; /* Hide user rank from dropdown */
     align-items: center;
     gap: 6px;
 }
@@ -2080,6 +2080,7 @@ body.mobile-device .play-btn:active {
         font-size: 0.8rem;
         color: rgba(255, 255, 255, 0.7);
         font-weight: 500;
+        display: none !important; /* Hide user rank from dropdown */
     }
     
     /* Space-themed menu items */
@@ -2435,6 +2436,7 @@ body.mobile-device .play-btn:active {
     
     .user-profile-rank {
         font-size: 0.75rem;
+        display: none !important; /* Hide user rank from dropdown */
     }
     
     .menu-item {
