@@ -27,213 +27,367 @@ $conn->close();
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Profile - Space Games Hub</title>
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-dark: #050508;
+            --card-bg: rgba(15, 15, 25, 0.9);
+            --cyan: #00ffff;
+            --purple: #9d4edd;
+            --gold: #FFD700;
+            --danger: #ff4d4d;
+            --text-main: #e2e8f0;
+            --glow-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
+
         body {
             font-family: 'Rajdhani', sans-serif;
-            background: #0a0a0f;
-            color: #00ffff;
+            background: var(--bg-dark);
+            color: var(--text-main);
             min-height: 100vh;
-            padding: 20px;
+            line-height: 1.4;
             background-image: 
-                radial-gradient(circle at 20% 50%, rgba(157, 78, 221, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%);
+                radial-gradient(circle at 10% 20%, rgba(157, 78, 221, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+            padding: 15px;
         }
+
+        /* --- NAVIGATION / HEADER --- */
         .header {
-            max-width: 1000px;
-            margin: 0 auto 30px;
+            max-width: 900px;
+            margin: 10px auto 20px;
             display: flex;
+            flex-direction: row;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            background: rgba(15, 15, 25, 0.8);
-            border: 2px solid #00ffff;
-            border-radius: 10px;
+            padding: 15px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--cyan);
+            border-radius: 12px;
+            box-shadow: var(--glow-shadow);
         }
+
         .header h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
+            font-size: clamp(1rem, 4vw, 1.5rem);
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
+            color: var(--cyan);
         }
+
         .header-buttons {
             display: flex;
             gap: 10px;
         }
+
+        /* --- BUTTONS --- */
         .btn {
-            background: rgba(0, 255, 255, 0.2);
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .btn:hover {
-            background: rgba(0, 255, 255, 0.4);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #00ffff, #9d4edd);
-            color: white;
-            border: none;
-        }
-        .btn-primary:hover {
-            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .profile-display {
-            background: rgba(15, 15, 25, 0.8);
-            border: 2px solid #00ffff;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-        }
-        .profile-icon-container {
-            margin-bottom: 30px;
-        }
-        .profile-icon-display {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: 4px solid #00ffff;
-            margin: 0 auto;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 6rem;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+            background: rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        /* --- PROFILE MAIN DISPLAY --- */
+        .container {
+            max-width: 900px;
+            margin: 0 auto 50px;
+        }
+
+        .profile-display {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
             position: relative;
             overflow: hidden;
         }
-        /* Profile Icons */
-        .icon-boy1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .icon-girl1 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .icon-beard { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .icon-bald { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-        .icon-fashion { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
-        .icon-specs { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+
+        .profile-display::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--cyan), var(--purple), var(--cyan));
+        }
+
+        .profile-icon-display {
+            width: clamp(120px, 30vw, 180px);
+            height: clamp(120px, 30vw, 180px);
+            border-radius: 50%;
+            border: 3px solid var(--cyan);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(3rem, 10vw, 5rem);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+            background: #1a1a2e;
+        }
+
+        .icon-boy1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .icon-girl1 { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .icon-beard { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .icon-bald { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .icon-fashion { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+        .icon-specs { background: linear-gradient(135deg, #30cfd0, #330867); }
+
         .profile-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5rem, 6vw, 2.2rem);
+            font-weight: 900;
+            margin-bottom: 15px;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        /* --- CREDITS --- */
+        .credits-display {
+            margin: 10px 0 30px;
+            padding: 15px 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            border-left: 4px solid var(--gold);
+            border-right: 4px solid var(--gold);
+            display: inline-block;
+        }
+
+        .credits-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--gold);
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .credits-value {
             font-family: 'Orbitron', sans-serif;
             font-size: 2.5rem;
             font-weight: 900;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
         }
-        .credits-display {
-            margin: 30px 0;
-            padding: 25px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            border: 3px solid;
-            display: inline-block;
-            min-width: 250px;
-        }
-        .credits-label {
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: 15px;
-            color: rgba(0, 255, 255, 0.7);
-        }
-        .credits-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem;
-            font-weight: 900;
-        }
+
+        /* --- INFO GRID --- */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
         }
+
         .info-card {
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid #00ffff;
-            border-radius: 10px;
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 15px;
             text-align: left;
+            transition: border-color 0.3s;
         }
+
         .info-card h3 {
             font-family: 'Orbitron', sans-serif;
-            color: #9d4edd;
-            font-size: 0.9rem;
+            color: var(--purple);
+            font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-            padding-bottom: 8px;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
         }
+
         .info-card p {
-            color: #00ffff;
-            font-size: 1.1rem;
-            font-weight: 600;
+            color: var(--cyan);
+            font-size: 1rem;
+            font-weight: 700;
+            word-break: break-all;
         }
+
+        /* --- BIO --- */
         .bio-section {
-            margin-top: 30px;
+            margin-top: 25px;
             padding: 20px;
             background: rgba(0, 0, 0, 0.3);
-            border: 2px solid #00ffff;
-            border-radius: 10px;
+            border-radius: 12px;
+            border: 1px dashed var(--cyan);
             text-align: left;
         }
+
         .bio-section h3 {
             font-family: 'Orbitron', sans-serif;
-            color: #9d4edd;
-            font-size: 1rem;
-            text-transform: uppercase;
+            color: var(--purple);
+            font-size: 0.8rem;
+            margin-bottom: 10px;
             letter-spacing: 2px;
-            margin-bottom: 15px;
         }
+
         .bio-section p {
-            color: rgba(0, 255, 255, 0.8);
-            line-height: 1.6;
-            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .header-buttons {
-                width: 100%;
-                flex-direction: column;
-            }
-            .btn {
-                width: 100%;
-                text-align: center;
-            }
-            .profile-icon-display {
-                width: 150px;
-                height: 150px;
-                font-size: 4rem;
-            }
-            .profile-name {
-                font-size: 1.8rem;
-            }
+
+        /* --- ACTION SECTIONS (Security/Danger) --- */
+        .action-box {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .security-box {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid var(--cyan);
+        }
+
+        .danger-box {
+            background: rgba(255, 77, 77, 0.05);
+            border: 1px solid var(--danger);
+        }
+
+        .action-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .action-box p {
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .btn-action {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 800;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            color: white;
+            text-transform: uppercase;
+            transition: transform 0.2s;
+        }
+
+        .btn-pw { background: linear-gradient(90deg, var(--cyan), var(--purple)); }
+        .btn-del { background: linear-gradient(90deg, var(--danger), #990000); }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            z-index: 2000;
+        }
+
+        .password-modal, .delete-modal {
+            background: #0f172a;
+            border: 2px solid var(--cyan);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            padding: 25px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .delete-modal { border-color: var(--danger); }
+
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-size: 0.8rem; margin-bottom: 5px; color: var(--cyan); font-weight: 700; }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            color: var(--cyan);
+            font-family: inherit;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* --- MOBILE ADAPTATION --- */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .header { padding: 12px; }
+            .header h1 { font-size: 1.1rem; }
+            .header-buttons .btn { padding: 6px 12px; font-size: 0.75rem; }
+            
+            .profile-display { padding: 25px 15px; }
+            .credits-display { padding: 10px 20px; width: 100%; }
+            .credits-value { font-size: 2rem; }
+            
+            .info-grid { grid-template-columns: 1fr 1fr; }
+            .info-card { padding: 12px; }
+            .info-card p { font-size: 0.9rem; }
+            
+            .modal-footer { flex-direction: column-reverse; }
+            .modal-footer button { width: 100%; }
+        }
+
+        @media (max-width: 360px) {
+            .info-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🌍 My Profile</h1>
+        <h1>🌍 Profile</h1>
         <div class="header-buttons">
-            <a href="profile.php" class="btn btn-primary">Edit Profile</a>
-            <a href="index.php" class="btn">← Back to Games</a>
+            <a href="profile.php" class="btn btn-primary">Edit</a>
+            <a href="index.php" class="btn">Back</a>
         </div>
     </div>
 
@@ -262,89 +416,75 @@ $conn->close();
                 <?php echo htmlspecialchars($profile['full_name'] ?? $_SESSION['username'] ?? 'User'); ?>
             </div>
             
-            <div class="credits-display" style="border-color: #FFD700;">
-                <div class="credits-label">Credits</div>
-                <div class="credits-value" style="color: #FFD700;">
+            <div class="credits-display">
+                <div class="credits-label">Available Credits</div>
+                <div class="credits-value">
                     <?php echo number_format($profile['credits'] ?? 0); ?>
                 </div>
             </div>
             
             <div class="info-grid">
                 <div class="info-card">
-                    <h3>Username</h3>
+                    <h3>ID Name</h3>
                     <p><?php echo htmlspecialchars($user['username']); ?></p>
                 </div>
                 
                 <div class="info-card">
-                    <h3>Mobile Number</h3>
+                    <h3>Mobile</h3>
                     <p><?php echo htmlspecialchars($user['mobile_number']); ?></p>
                 </div>
                 
-                <?php if ($profile && $profile['state']): ?>
                 <div class="info-card">
-                    <h3>State</h3>
-                    <p><?php echo htmlspecialchars($profile['state']); ?></p>
+                    <h3>Location</h3>
+                    <p><?php echo htmlspecialchars($profile['state'] ?? 'Not Set'); ?></p>
                 </div>
-                <?php endif; ?>
+
+                <div class="info-card">
+                    <h3>Joined</h3>
+                    <p><?php echo date('M Y', strtotime($user['created_at'])); ?></p>
+                </div>
                 
                 <?php if ($profile && $profile['phone_pay_number']): ?>
                 <div class="info-card">
-                    <h3>Phone Pay</h3>
+                    <h3>PhonePay</h3>
                     <p><?php echo htmlspecialchars($profile['phone_pay_number']); ?></p>
                 </div>
                 <?php endif; ?>
                 
                 <?php if ($profile && $profile['google_pay_number']): ?>
                 <div class="info-card">
-                    <h3>Google Pay</h3>
+                    <h3>G-Pay</h3>
                     <p><?php echo htmlspecialchars($profile['google_pay_number']); ?></p>
                 </div>
                 <?php endif; ?>
-                
-                <div class="info-card">
-                    <h3>Member Since</h3>
-                    <p><?php echo date('F Y', strtotime($user['created_at'])); ?></p>
-                </div>
             </div>
             
             <?php if ($profile && $profile['bio']): ?>
             <div class="bio-section">
-                <h3>About Me</h3>
+                <h3>Bio Data</h3>
                 <p><?php echo nl2br(htmlspecialchars($profile['bio'])); ?></p>
             </div>
             <?php endif; ?>
             
             <?php if (!$profile || !$profile['full_name']): ?>
-            <div style="margin-top: 30px; padding: 20px; background: rgba(157, 78, 221, 0.2); border: 2px solid #9d4edd; border-radius: 10px;">
-                <p style="color: #9d4edd; font-size: 1.1rem; margin-bottom: 15px;">Complete your profile to unlock all features!</p>
-                <a href="profile.php" class="btn btn-primary" style="display: inline-block;">Create Profile Now</a>
+            <div style="margin-top: 30px; padding: 20px; background: rgba(157, 78, 221, 0.2); border: 1px solid var(--purple); border-radius: 12px;">
+                <p style="color: var(--purple); font-weight: bold; margin-bottom: 15px;">Your profile is incomplete!</p>
+                <a href="profile.php" class="btn btn-primary">Complete Profile</a>
             </div>
             <?php endif; ?>
             
-            <!-- Change Password Section -->
-            <div style="margin-top: 40px; padding: 25px; background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; border-radius: 10px;">
-                <h3 style="font-family: 'Orbitron', sans-serif; color: #00ffff; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;">
-                    🔐 Change Password
-                </h3>
-                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 20px; line-height: 1.6;">
-                    Update your account password to keep your account secure.
-                </p>
-                <button onclick="showChangePasswordModal()" class="btn-change-password" style="background: linear-gradient(135deg, #00ffff, #9d4edd); border: none; color: white; padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
-                    Change Password
-                </button>
+            <!-- Security Section -->
+            <div class="action-box security-box">
+                <h3>🔐 Privacy</h3>
+                <p>Manage your account security settings.</p>
+                <button onclick="showChangePasswordModal()" class="btn-action btn-pw">Change Password</button>
             </div>
             
-            <!-- Delete Account Section -->
-            <div style="margin-top: 40px; padding: 25px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff0000; border-radius: 10px;">
-                <h3 style="font-family: 'Orbitron', sans-serif; color: #ff0000; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;">
-                    ⚠️ Danger Zone
-                </h3>
-                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 15px; line-height: 1.6;">
-                    Deleting your account will permanently remove all your data including profile, credits, scores, and referral information. This action cannot be undone.
-                </p>
-                <button onclick="showDeleteModal()" class="btn-delete" style="background: linear-gradient(135deg, #ff0000, #cc0000); border: none; color: white; padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
-                    Delete My Account
-                </button>
+            <!-- Danger Zone -->
+            <div class="action-box danger-box">
+                <h3>⚠️ Danger Zone</h3>
+                <p>Permanently remove your account data.</p>
+                <button onclick="showDeleteModal()" class="btn-action btn-del">Delete Account</button>
             </div>
         </div>
     </div>
@@ -352,344 +492,92 @@ $conn->close();
     <!-- Change Password Modal -->
     <div class="modal-overlay" id="changePasswordModal" style="display: none;">
         <div class="password-modal">
-            <div class="password-modal-header">
-                <h2>🔐 Change Password</h2>
-                <button onclick="closeChangePasswordModal()" style="background: none; border: none; color: #00ffff; font-size: 1.5rem; cursor: pointer; position: absolute; top: 15px; right: 15px;">&times;</button>
+            <div style="text-align: right;">
+                <button onclick="closeChangePasswordModal()" style="background:none; border:none; color:#fff; font-size:1.5rem;">&times;</button>
             </div>
-            <div class="password-modal-content">
-                <?php if (isset($_SESSION['password_error'])): ?>
-                    <div class="error-message" style="background: rgba(255, 0, 0, 0.2); border: 2px solid #ff0000; color: #ff0000; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                        <?php 
-                        echo htmlspecialchars($_SESSION['password_error']); 
-                        unset($_SESSION['password_error']);
-                        ?>
+            <h2 style="font-family:'Orbitron'; color:var(--cyan); margin-bottom:20px; text-align:center;">Change Password</h2>
+            
+            <div id="pw-msg-container"></div>
+
+            <form method="POST" action="change_password.php" id="changePasswordForm" onsubmit="return validatePasswordChange(event)">
+                <div id="currentPasswordSection">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="current_password" name="current_password" class="form-control" required>
+                        <div id="currentPasswordError" style="color:var(--danger); font-size:0.8rem; margin-top:5px; display:none;"></div>
                     </div>
-                <?php endif; ?>
-                <?php if (isset($_SESSION['password_success'])): ?>
-                    <div class="success-message" id="passwordSuccessMessage" style="background: rgba(0, 255, 0, 0.2); border: 2px solid #00ff00; color: #00ff00; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                        <?php 
-                        echo htmlspecialchars($_SESSION['password_success']); 
-                        unset($_SESSION['password_success']);
-                        ?>
+                    <div class="modal-footer">
+                        <button type="button" onclick="closeChangePasswordModal()" class="btn" style="flex:1">Cancel</button>
+                        <button type="button" onclick="verifyCurrentPassword()" class="btn-primary btn" id="verifyPasswordBtn" style="flex:2">Next Step</button>
                     </div>
-                    <script>
-                        // Auto reload page after password change success
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 2000); // Reload after 2 seconds
-                    </script>
-                <?php endif; ?>
-                <form method="POST" action="change_password.php" id="changePasswordForm" onsubmit="return validatePasswordChange(event)">
-                    <div id="currentPasswordSection">
-                        <div class="form-group">
-                            <label for="current_password">Current Password</label>
-                            <input type="password" id="current_password" name="current_password" placeholder="Enter your current password" required 
-                                   style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px; color: #00ffff; font-size: 1rem;">
-                            <div id="currentPasswordError" style="color: #ff0000; font-size: 0.9rem; margin-top: 8px; display: none;"></div>
-                        </div>
-                        <div class="password-modal-buttons">
-                            <button type="button" onclick="closeChangePasswordModal()" class="btn-cancel">Cancel</button>
-                            <button type="button" onclick="verifyCurrentPassword()" class="btn-confirm-password" id="verifyPasswordBtn">Verify Password</button>
-                        </div>
+                </div>
+                
+                <div id="newPasswordSection" style="display: none;">
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="new_password" name="new_password" class="form-control" required>
                     </div>
-                    
-                    <div id="newPasswordSection" style="display: none;">
-                        <div class="form-group">
-                            <label for="new_password">New Password</label>
-                            <input type="password" id="new_password" name="new_password" placeholder="Enter new password (min 6 characters)" required 
-                                   style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px; color: #00ffff; font-size: 1rem;">
-                            <small style="color: rgba(0, 255, 255, 0.6); font-size: 0.85rem; margin-top: 5px; display: block;">Password must be at least 6 characters long</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="confirm_password">Confirm New Password</label>
-                            <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your new password" required 
-                                   style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.5); border: 2px solid #00ffff; border-radius: 8px; color: #00ffff; font-size: 1rem;">
-                            <small id="passwordMatch" style="color: rgba(0, 255, 255, 0.6); font-size: 0.85rem; margin-top: 5px; display: block;"></small>
-                        </div>
-                        <div class="password-modal-buttons">
-                            <button type="button" onclick="goBackToCurrentPassword()" class="btn-cancel">Back</button>
-                            <button type="submit" name="change_password" class="btn-confirm-password">Update Password</button>
-                        </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                        <small id="passwordMatch"></small>
                     </div>
-                </form>
-            </div>
+                    <div class="modal-footer">
+                        <button type="button" onclick="goBackToCurrentPassword()" class="btn" style="flex:1">Back</button>
+                        <button type="submit" name="change_password" class="btn btn-primary" style="flex:2">Save Changes</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
     
     <!-- Delete Account Modal -->
     <div class="modal-overlay" id="deleteAccountModal" style="display: none;">
         <div class="delete-modal">
-            <div class="delete-modal-header">
-                <h2>⚠️ Delete Account</h2>
-            </div>
-            <div class="delete-modal-content">
-                <p class="warning-text">This action cannot be undone!</p>
-                <p>All your data will be permanently deleted:</p>
-                <ul class="delete-list">
-                    <li>Your profile information</li>
-                    <li>All credits</li>
-                    <li>Game scores and leaderboard entries</li>
-                    <li>Transaction history</li>
-                    <li>Referral information</li>
-                </ul>
-                <?php if (isset($_SESSION['delete_error'])): ?>
-                    <div class="error-message" style="background: rgba(255, 0, 0, 0.2); border: 2px solid #ff0000; color: #ff0000; padding: 10px; border-radius: 8px; margin: 15px 0;">
-                        <?php 
-                        echo htmlspecialchars($_SESSION['delete_error']); 
-                        unset($_SESSION['delete_error']);
-                        ?>
-                    </div>
-                <?php endif; ?>
-                <form method="POST" action="delete_account.php" id="deleteAccountForm" onsubmit="return confirmFinalDelete(event)">
-                    <div class="form-group">
-                        <label for="confirmText">Type <strong>DELETE</strong> to confirm:</label>
-                        <input type="text" id="confirmText" name="confirm_text" placeholder="Type DELETE" required 
-                               style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.5); border: 2px solid #ff0000; border-radius: 8px; color: #ff0000; font-weight: 700; text-transform: uppercase; font-size: 1.1rem; text-align: center; letter-spacing: 2px;">
-                    </div>
-                    <div class="delete-modal-buttons">
-                        <button type="button" onclick="closeDeleteModal()" class="btn-cancel">Cancel</button>
-                        <button type="submit" name="confirm_delete" class="btn-confirm-delete">Delete Account Permanently</button>
-                    </div>
-                </form>
-            </div>
+            <h2 style="font-family:'Orbitron'; color:var(--danger); margin-bottom:15px; text-align:center;">⚠️ TERMINATE ACCOUNT</h2>
+            <p style="color:var(--danger); font-weight:bold; margin-bottom:15px; font-size:0.9rem;">THIS ACTION IS IRREVERSIBLE!</p>
+            <p style="font-size:0.85rem; margin-bottom:15px;">You will lose all credits, scores, and profile data.</p>
+            
+            <form method="POST" action="delete_account.php" onsubmit="return confirmFinalDelete(event)">
+                <div class="form-group">
+                    <label>Type <span style="color:#fff">DELETE</span> below:</label>
+                    <input type="text" id="confirmText" name="confirm_text" class="form-control" style="border-color:var(--danger); text-align:center; font-weight:bold; color:var(--danger);" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="closeDeleteModal()" class="btn" style="flex:1">Keep Account</button>
+                    <button type="submit" name="confirm_delete" class="btn" style="background:var(--danger); color:white; border:none; flex:1">Confirm Delete</button>
+                </div>
+            </form>
         </div>
     </div>
     
-    <style>
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-        
-        .delete-modal {
-            background: rgba(15, 15, 25, 0.95);
-            border: 3px solid #ff0000;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
-        }
-        
-        .delete-modal-header h2 {
-            font-family: 'Orbitron', sans-serif;
-            color: #ff0000;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .delete-modal-content {
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .warning-text {
-            color: #ff0000;
-            font-weight: 700;
-            font-size: 1.1rem;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        
-        .delete-list {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0;
-        }
-        
-        .delete-list li {
-            padding: 8px 0;
-            padding-left: 25px;
-            position: relative;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        .delete-list li:before {
-            content: '✗';
-            position: absolute;
-            left: 0;
-            color: #ff0000;
-            font-weight: 700;
-        }
-        
-        .delete-modal-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
-        }
-        
-        .btn-cancel {
-            flex: 1;
-            padding: 12px;
-            background: rgba(0, 255, 255, 0.2);
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-cancel:hover {
-            background: rgba(0, 255, 255, 0.4);
-        }
-        
-        .btn-confirm-delete {
-            flex: 1;
-            padding: 12px;
-            background: linear-gradient(135deg, #ff0000, #cc0000);
-            border: none;
-            color: white;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-confirm-delete:hover {
-            background: linear-gradient(135deg, #cc0000, #990000);
-            transform: scale(1.02);
-        }
-        
-        .btn-delete:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(255, 0, 0, 0.5);
-        }
-        
-        .btn-change-password:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
-        }
-        
-        .password-modal {
-            background: rgba(15, 15, 25, 0.95);
-            border: 3px solid #00ffff;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-            position: relative;
-        }
-        
-        .password-modal-header {
-            position: relative;
-        }
-        
-        .password-modal-header h2 {
-            font-family: 'Orbitron', sans-serif;
-            color: #00ffff;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .password-modal-content {
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .password-modal-content .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .password-modal-content label {
-            display: block;
-            margin-bottom: 8px;
-            color: #00ffff;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        
-        .password-modal-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
-        }
-        
-        .btn-confirm-password {
-            flex: 1;
-            padding: 12px;
-            background: linear-gradient(135deg, #00ffff, #9d4edd);
-            border: none;
-            color: white;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-confirm-password:hover {
-            transform: scale(1.02);
-            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
-        }
-    </style>
-    
     <script>
-        function showDeleteModal() {
-            document.getElementById('deleteAccountModal').style.display = 'flex';
-        }
-        
-        function closeDeleteModal() {
-            document.getElementById('deleteAccountModal').style.display = 'none';
-            document.getElementById('confirmText').value = '';
-        }
+        function showDeleteModal() { document.getElementById('deleteAccountModal').style.display = 'flex'; }
+        function closeDeleteModal() { document.getElementById('deleteAccountModal').style.display = 'none'; }
         
         function confirmFinalDelete(event) {
             const confirmText = document.getElementById('confirmText').value.trim();
-            
             if (confirmText !== 'DELETE') {
                 event.preventDefault();
-                alert('Please type "DELETE" exactly to confirm account deletion.');
+                alert('Please type "DELETE" exactly.');
                 return false;
             }
-            
-            // Final confirmation
-            if (!confirm('⚠️ FINAL WARNING: This will permanently delete your account and all data. This cannot be undone. Are you absolutely sure?')) {
-                event.preventDefault();
-                return false;
-            }
-            
-            return true;
+            return confirm('Final warning: Are you absolutely sure?');
         }
         
-        function showChangePasswordModal() {
-            document.getElementById('changePasswordModal').style.display = 'flex';
-            // Reset to initial state
-            resetPasswordForm();
-        }
-        
-        function closeChangePasswordModal() {
-            document.getElementById('changePasswordModal').style.display = 'none';
-            resetPasswordForm();
-        }
+        function showChangePasswordModal() { document.getElementById('changePasswordModal').style.display = 'flex'; resetPasswordForm(); }
+        function closeChangePasswordModal() { document.getElementById('changePasswordModal').style.display = 'none'; }
         
         function resetPasswordForm() {
             document.getElementById('changePasswordForm').reset();
-            document.getElementById('passwordMatch').textContent = '';
             document.getElementById('currentPasswordError').style.display = 'none';
-            document.getElementById('currentPasswordError').textContent = '';
             document.getElementById('currentPasswordSection').style.display = 'block';
             document.getElementById('newPasswordSection').style.display = 'none';
         }
-        
+
         function goBackToCurrentPassword() {
             document.getElementById('currentPasswordSection').style.display = 'block';
             document.getElementById('newPasswordSection').style.display = 'none';
-            document.getElementById('new_password').value = '';
-            document.getElementById('confirm_password').value = '';
-            document.getElementById('passwordMatch').textContent = '';
         }
         
         function verifyCurrentPassword() {
@@ -697,125 +585,58 @@ $conn->close();
             const errorDiv = document.getElementById('currentPasswordError');
             const verifyBtn = document.getElementById('verifyPasswordBtn');
             
-            if (!currentPassword) {
-                errorDiv.textContent = 'Please enter your current password';
-                errorDiv.style.display = 'block';
-                return;
-            }
+            if (!currentPassword) return;
             
-            // Disable button and show loading
             verifyBtn.disabled = true;
-            verifyBtn.textContent = 'Verifying...';
-            errorDiv.style.display = 'none';
+            verifyBtn.textContent = 'Checking...';
             
-            // Verify password via AJAX
             const formData = new FormData();
             formData.append('current_password', currentPassword);
             
-            fetch('verify_current_password.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.text();
-            })
-            .then(text => {
-                try {
-                    const data = JSON.parse(text);
-                    if (data.success) {
-                        // Password is correct, show new password fields
-                        document.getElementById('currentPasswordSection').style.display = 'none';
-                        document.getElementById('newPasswordSection').style.display = 'block';
-                        errorDiv.style.display = 'none';
-                    } else {
-                        // Password is wrong
-                        errorDiv.textContent = data.message || 'Wrong password';
-                        errorDiv.style.display = 'block';
-                        verifyBtn.disabled = false;
-                        verifyBtn.textContent = 'Verify Password';
-                    }
-                } catch (parseError) {
-                    console.error('JSON Parse Error:', parseError);
-                    console.error('Response Text:', text);
-                    errorDiv.textContent = 'Wrong password';
+            fetch('verify_current_password.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('currentPasswordSection').style.display = 'none';
+                    document.getElementById('newPasswordSection').style.display = 'block';
+                } else {
+                    errorDiv.textContent = data.message || 'Incorrect password.';
                     errorDiv.style.display = 'block';
                     verifyBtn.disabled = false;
-                    verifyBtn.textContent = 'Verify Password';
+                    verifyBtn.textContent = 'Next Step';
                 }
             })
-            .catch(error => {
-                console.error('Password verification error:', error);
-                errorDiv.textContent = 'Wrong password';
+            .catch(() => {
+                errorDiv.textContent = 'Error connecting to server.';
                 errorDiv.style.display = 'block';
                 verifyBtn.disabled = false;
-                verifyBtn.textContent = 'Verify Password';
+                verifyBtn.textContent = 'Next Step';
             });
         }
         
         function validatePasswordChange(event) {
-            const currentPassword = document.getElementById('current_password').value;
             const newPassword = document.getElementById('new_password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
             
-            // Check if new password is at least 6 characters
             if (newPassword.length < 6) {
-                event.preventDefault();
-                alert('New password must be at least 6 characters long.');
-                return false;
+                alert('Minimum 6 characters.');
+                event.preventDefault(); return false;
             }
-            
-            // Check if passwords match
             if (newPassword !== confirmPassword) {
-                event.preventDefault();
-                alert('New password and confirm password do not match. Please try again.');
-                return false;
+                alert('Passwords match error.');
+                event.preventDefault(); return false;
             }
-            
-            // Check if new password is different from current password
-            if (currentPassword === newPassword) {
-                event.preventDefault();
-                alert('New password must be different from your current password.');
-                return false;
-            }
-            
             return true;
         }
-        
-        // Real-time password match validation
+
         document.getElementById('confirm_password')?.addEventListener('input', function() {
-            const newPassword = document.getElementById('new_password').value;
-            const confirmPassword = this.value;
-            const matchElement = document.getElementById('passwordMatch');
-            
-            if (confirmPassword.length > 0) {
-                if (newPassword === confirmPassword) {
-                    matchElement.textContent = '✓ Passwords match';
-                    matchElement.style.color = '#00ff00';
-                } else {
-                    matchElement.textContent = '✗ Passwords do not match';
-                    matchElement.style.color = '#ff0000';
-                }
-            } else {
-                matchElement.textContent = '';
-            }
-        });
-        
-        // Close modals when clicking outside
-        document.getElementById('changePasswordModal')?.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeChangePasswordModal();
-            }
-        });
-        
-        document.getElementById('deleteAccountModal')?.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeDeleteModal();
-            }
+            const newP = document.getElementById('new_password').value;
+            const matchEl = document.getElementById('passwordMatch');
+            if (this.value) {
+                matchEl.textContent = (newP === this.value) ? '✓ Match' : '✗ No Match';
+                matchEl.style.color = (newP === this.value) ? '#00ff00' : '#ff0000';
+            } else { matchEl.textContent = ''; }
         });
     </script>
 </body>
 </html>
-
