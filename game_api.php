@@ -20,11 +20,37 @@ if ($requires_login && !isset($_SESSION['user_id'])) {
 
 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 
-// Ensure database columns are present for the new contest features
-$conn->query("ALTER TABLE games ADD COLUMN IF NOT EXISTS game_mode ENUM('money', 'credits') DEFAULT 'money'");
-$conn->query("ALTER TABLE games ADD COLUMN IF NOT EXISTS contest_credits_required INT(11) DEFAULT 0");
-$conn->query("ALTER TABLE contest_scores ADD COLUMN IF NOT EXISTS game_mode ENUM('money', 'credits') DEFAULT 'money'");
-$conn->query("ALTER TABLE game_leaderboard ADD COLUMN IF NOT EXISTS game_mode ENUM('money', 'credits') DEFAULT 'money'");
+// Ensure database columns are present for the new contest features (with proper error handling)
+try {
+    // Check and add game_mode column to games table
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'game_mode'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+    }
+    
+    // Check and add contest_credits_required column
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_credits_required'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_credits_required INT(11) DEFAULT 0");
+    }
+    
+    // Check and add game_mode to contest_scores if table exists
+    $check_table = $conn->query("SHOW TABLES LIKE 'contest_scores'");
+    if ($check_table->num_rows > 0) {
+        $check_col = $conn->query("SHOW COLUMNS FROM contest_scores LIKE 'game_mode'");
+        if ($check_col->num_rows == 0) {
+            $conn->query("ALTER TABLE contest_scores ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+        }
+    }
+    
+    // Check and add game_mode to game_leaderboard
+    $check_col = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'game_mode'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+    }
+} catch (Exception $e) {
+    // Silently handle errors - columns might already exist
+}
 
 // Check if tables exist
 $check_sessions = $conn->query("SHOW TABLES LIKE 'game_sessions'");
@@ -58,8 +84,10 @@ switch ($action) {
         $prizes = ['1st' => 0, '2nd' => 0, '3rd' => 0];
 
         $check_games_table = $conn->query("SHOW TABLES LIKE 'games'");
+        $game_mode = 'money'; // Default game mode
         if ($check_games_table->num_rows > 0) {
-            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, is_claim_active, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize FROM games WHERE game_name = ? AND is_active = 1");
+            // Remove is_active requirement - we need contest settings even if game is not marked active
+            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, is_claim_active, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, game_mode FROM games WHERE game_name = ?");
             $games_stmt->bind_param("s", $game_name);
             $games_stmt->execute();
             $games_result = $games_stmt->get_result();
@@ -68,6 +96,7 @@ switch ($action) {
                 $is_contest_active = intval($game_data['is_contest_active']);
                 $credits_per_chance = $is_contest_active ? intval($game_data['contest_credits_required']) : intval($game_data['credits_per_chance']);
                 $is_claim_active = intval($game_data['is_claim_active']);
+                $game_mode = $game_data['game_mode'] ?: 'money';
                 $prizes = [
                     '1st' => intval($game_data['contest_first_prize']),
                     '2nd' => intval($game_data['contest_second_prize']),
@@ -111,6 +140,7 @@ switch ($action) {
                 'is_active' => $is_active,
                 'is_contest_active' => $is_contest_active,
                 'is_claim_active' => $is_claim_active,
+                'game_mode' => $game_mode,
                 'contest_prizes' => $prizes,
                 'user_total_points' => $user_total_points,
                 'session' => [
@@ -149,6 +179,7 @@ switch ($action) {
                 'is_active' => false,
                 'is_contest_active' => $is_contest_active,
                 'is_claim_active' => $is_claim_active,
+                'game_mode' => $game_mode,
                 'contest_prizes' => $prizes,
                 'user_total_points' => $user_total_points,
                 'session' => null,
@@ -180,7 +211,8 @@ switch ($action) {
         $credits_required = 30; // Default fallback
         $check_games_table = $conn->query("SHOW TABLES LIKE 'games'");
         if ($check_games_table->num_rows > 0) {
-            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, contest_credits_required FROM games WHERE game_name = ? AND is_active = 1");
+            // Remove is_active requirement - we need contest settings even if game is not marked active
+            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, contest_credits_required FROM games WHERE game_name = ?");
             $games_stmt->bind_param("s", $game_name);
             $games_stmt->execute();
             $games_result = $games_stmt->get_result();

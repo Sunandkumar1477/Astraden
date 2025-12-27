@@ -1546,7 +1546,8 @@ $conn->close();
             creditsUsed: 0,
             gameStarted: false,
             isDemoMode: false, // Track if playing in demo mode
-            isContestMode: false // Track if contest mode is active
+            isContestMode: false, // Track if contest mode is active
+            gameMode: 'money' // Track game mode (money or credits)
         };
 
         // --- Game Session Management ---
@@ -1702,7 +1703,8 @@ $conn->close();
                 if (data.success && data.session) {
                     gameSession = data.session;
                     state.gameSessionId = gameSession.id || null;
-                    state.isContestMode = data.is_contest_active;
+                    state.isContestMode = data.is_contest_active || false;
+                    state.gameMode = data.game_mode || 'money';
                     
                     // Start contest timer
                     if (contestTimerInterval) {
@@ -1719,12 +1721,14 @@ $conn->close();
                         showCountdown(data.session.time_until_start);
                     } else {
                         // No active session - show message with next session date if available
-                        showNoSession(data.next_session_date);
+                        showNoSession(data.next_session_date, data.is_contest_active);
                         hideContestTimers();
                     }
                 } else {
-                    // No session - show demo only
-                    showNoSession(data.next_session_date);
+                    // No session - but check if contest is active
+                    state.isContestMode = data.is_contest_active || false;
+                    state.gameMode = data.game_mode || 'money';
+                    showNoSession(data.next_session_date, data.is_contest_active);
                     hideContestTimers();
                 }
             } catch (error) {
@@ -1821,14 +1825,20 @@ $conn->close();
                 const seconds = remaining % 60;
                 
                 timerDisplay.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                statusMessage.textContent = 'Game will start soon. Demo mode is always available (free, no restrictions)!';
+                
+                // Show contest message if contest is active
+                if (state.isContestMode) {
+                    statusMessage.textContent = `🏆 Contest is active! Game will start soon. Demo mode is always available (free, no restrictions)!`;
+                } else {
+                    statusMessage.textContent = 'Game will start soon. Demo mode is always available (free, no restrictions)!';
+                }
             }
             
             updateCountdown();
             countdownInterval = setInterval(updateCountdown, 1000);
         }
         
-        function showNoSession(nextSessionDate = null) {
+        function showNoSession(nextSessionDate = null, isContestActive = false) {
             const overlay = document.getElementById('game-status-overlay');
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
@@ -1839,16 +1849,29 @@ $conn->close();
             
             timerDisplay.textContent = 'NO SESSION';
             
-            // Build message based on whether next session date is available
+            // Hide play button when no session is active
+            startBtn.style.display = 'none';
+            
+            // Build message based on whether next session date is available and contest status
             let message = '';
-            if (nextSessionDate) {
-                // Format the date nicely
-                const dateObj = new Date(nextSessionDate + 'T00:00:00');
-                const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                const formattedDate = dateObj.toLocaleDateString('en-IN', options);
-                message = `This game will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
+            if (isContestActive) {
+                if (nextSessionDate) {
+                    const dateObj = new Date(nextSessionDate + 'T00:00:00');
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    const formattedDate = dateObj.toLocaleDateString('en-IN', options);
+                    message = `🏆 Contest is active! Game session will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
+                } else {
+                    message = '🏆 Contest is active! Wait for the game session to start. Demo mode is always available (free, no restrictions)!';
+                }
             } else {
-                message = 'This game does not start every day. For updates, follow our YouTube and Instagram. Demo mode is always available (free, no restrictions)!';
+                if (nextSessionDate) {
+                    const dateObj = new Date(nextSessionDate + 'T00:00:00');
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    const formattedDate = dateObj.toLocaleDateString('en-IN', options);
+                    message = `This game will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
+                } else {
+                    message = 'This game does not start every day. For updates, follow our YouTube and Instagram. Demo mode is always available (free, no restrictions)!';
+                }
             }
             
             if (!isLoggedIn) {
