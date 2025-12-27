@@ -281,16 +281,7 @@ body {
     animation: pulse-glow 2s ease-in-out infinite;
 }
 
-@keyframes pulse-glow {
-    0%, 100% {
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(157, 78, 221, 0.6);
-        transform: scale(1);
-    }
-    50% {
-        box-shadow: 0 0 30px rgba(0, 255, 255, 1), 0 0 60px rgba(157, 78, 221, 0.8);
-        transform: scale(1.05);
-    }
-}
+/* Removed duplicate pulse-glow keyframe - using the one defined earlier */
 
 .countdown-icon {
     font-size: 1.2rem;
@@ -375,14 +366,7 @@ body {
     animation: float 3s ease-in-out infinite;
 }
 
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-}
+/* Removed duplicate float keyframe - using the one defined earlier */
 
 .coming-soon-text {
     font-family: 'Orbitron', sans-serif;
@@ -674,26 +658,11 @@ body {
         box-sizing: border-box;
     }
 
-    /* All game sections - consistent styling for both All Games and individual sections */
+    /* All game sections - consistent styling */
     .games-section {
         margin-bottom: 35px;
         width: 100%;
         box-sizing: border-box;
-        padding: 0;
-        display: block;
-    }
-    
-    /* When All Games is selected, all visible sections should have same spacing */
-    .games-section:not(.hidden) {
-        margin-bottom: 35px;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0;
-    }
-    
-    /* Last visible section in All Games view */
-    .games-section:not(.hidden):last-of-type {
-        margin-bottom: 40px;
     }
 
     .games-section[data-category="action"],
@@ -702,8 +671,6 @@ body {
     .games-section[data-category="arcade"] {
         margin-bottom: 35px;
         padding: 0;
-        width: 100%;
-        box-sizing: border-box;
     }
 
     .section-title {
@@ -714,14 +681,6 @@ body {
         text-align: center;
         width: 100%;
         box-sizing: border-box;
-        display: block;
-    }
-    
-    /* Section titles in All Games view */
-    .games-section:not(.hidden) .section-title {
-        margin-bottom: 25px;
-        width: 100%;
-        box-sizing: border-box;
     }
 
     .games-grid {
@@ -730,29 +689,12 @@ body {
         padding: 15px 0;
         width: 100%;
         box-sizing: border-box;
-        margin: 0;
-    }
-    
-    /* Games grid in All Games view */
-    .games-section:not(.hidden) .games-grid {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 15px 0;
-        margin: 0;
     }
 
     .game-card {
         min-height: 180px;
         padding: 18px;
         border-width: 2px;
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0 auto;
-    }
-    
-    /* Game cards in All Games view */
-    .games-section:not(.hidden) .game-card,
-    .games-section:not(.hidden) .coming-soon-card {
         width: 100%;
         box-sizing: border-box;
         margin: 0 auto;
@@ -871,19 +813,91 @@ body {
         margin-top: 12px;
     }
 
-    /* Reduce animations for performance */
+    /* Reduce animations for performance - MOBILE OPTIMIZATION */
     .nebula {
-        filter: blur(30px);
-        opacity: 0.15;
+        filter: blur(20px);
+        opacity: 0.1;
+        animation: none !important; /* Disable animations on mobile */
+        will-change: auto; /* Optimize rendering */
+    }
+    
+    /* Hide extra nebulas on very small screens */
+    .nebula-2,
+    .nebula-3 {
+        display: none !important;
     }
 
     .star {
-        width: 1.5px;
-        height: 1.5px;
+        width: 1px;
+        height: 1px;
+        animation: none !important; /* Disable star animations on mobile */
+        box-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+        will-change: auto; /* Optimize rendering */
+    }
+    
+    /* Reduce star count - hide every other star */
+    .star:nth-child(odd) {
+        display: none !important;
     }
 
     .shooting-star {
-        display: none; /* Disable on very small screens */
+        display: none !important; /* Disable on very small screens */
+    }
+    
+    /* Optimize space background */
+    #space-background {
+        will-change: auto;
+    }
+    
+    /* Disable header animation on mobile */
+    .header h1 {
+        animation: none !important;
+    }
+    
+    /* Disable countdown badge animation on mobile */
+    .game-countdown-badge {
+        animation: none !important;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    /* Disable coming soon icon animation */
+    .coming-soon-icon {
+        animation: none !important;
+    }
+    
+    /* Remove backdrop-filter on mobile for better performance */
+    .category-btn,
+    .game-card,
+    .coming-soon-card {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    
+    /* Simplify box-shadows on mobile */
+    .game-card {
+        box-shadow: 0 2px 8px rgba(0, 255, 255, 0.2);
+    }
+    
+    .category-btn {
+        box-shadow: 0 2px 6px rgba(0, 255, 255, 0.2);
+    }
+    
+    /* Disable container glow animation */
+    .container {
+        animation: none !important;
+    }
+    
+    /* Disable icon pulse animation */
+    .game-icon {
+        animation: none !important;
+        filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.4));
+    }
+    
+    /* Simplify transitions on mobile */
+    .game-card,
+    .category-btn,
+    .play-btn {
+        transition: transform 0.2s ease, background 0.2s ease;
     }
 }
 
@@ -934,26 +948,11 @@ body {
         box-sizing: border-box;
     }
 
-    /* All game sections - consistent styling for both All Games and individual sections */
+    /* All game sections - consistent styling */
     .games-section {
         margin-bottom: 40px;
         width: 100%;
         box-sizing: border-box;
-        padding: 0;
-        display: block;
-    }
-    
-    /* When All Games is selected, all visible sections should have same spacing */
-    .games-section:not(.hidden) {
-        margin-bottom: 40px;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0;
-    }
-    
-    /* Last visible section in All Games view */
-    .games-section:not(.hidden):last-of-type {
-        margin-bottom: 45px;
     }
 
     .games-section[data-category="action"],
@@ -962,8 +961,6 @@ body {
     .games-section[data-category="arcade"] {
         margin-bottom: 40px;
         padding: 0;
-        width: 100%;
-        box-sizing: border-box;
     }
 
     .section-title {
@@ -974,14 +971,6 @@ body {
         text-align: center;
         width: 100%;
         box-sizing: border-box;
-        display: block;
-    }
-    
-    /* Section titles in All Games view */
-    .games-section:not(.hidden) .section-title {
-        margin-bottom: 30px;
-        width: 100%;
-        box-sizing: border-box;
     }
 
     .games-grid {
@@ -990,28 +979,11 @@ body {
         padding: 20px 0;
         width: 100%;
         box-sizing: border-box;
-        margin: 0;
-    }
-    
-    /* Games grid in All Games view */
-    .games-section:not(.hidden) .games-grid {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 20px 0;
-        margin: 0;
     }
 
     .game-card {
         min-height: 200px;
         padding: 22px;
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0 auto;
-    }
-    
-    /* Game cards in All Games view */
-    .games-section:not(.hidden) .game-card,
-    .games-section:not(.hidden) .coming-soon-card {
         width: 100%;
         box-sizing: border-box;
         margin: 0 auto;
@@ -1045,8 +1017,39 @@ body {
     }
 
     .nebula {
-        filter: blur(35px);
-        opacity: 0.18;
+        filter: blur(25px);
+        opacity: 0.12;
+        animation: none !important; /* Disable on small devices */
+    }
+    
+    /* Disable animations for better performance */
+    .header h1 {
+        animation: none !important;
+    }
+    
+    .game-countdown-badge {
+        animation: none !important;
+    }
+    
+    .coming-soon-icon {
+        animation: none !important;
+    }
+    
+    /* Reduce backdrop-filter */
+    .category-btn,
+    .game-card,
+    .coming-soon-card {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    
+    /* Simplify shadows */
+    .game-card {
+        box-shadow: 0 2px 10px rgba(0, 255, 255, 0.25);
+    }
+    
+    .category-btn {
+        box-shadow: 0 2px 8px rgba(0, 255, 255, 0.25);
     }
 }
 
@@ -1092,8 +1095,8 @@ body {
     }
 
     .nebula {
-        filter: blur(45px);
-        opacity: 0.25;
+        filter: blur(35px);
+        opacity: 0.2;
     }
 }
 
@@ -1471,60 +1474,6 @@ body {
 /* Hide games by category */
 .games-section.hidden {
     display: none;
-}
-
-/* All Games view - ensure consistent spacing when multiple sections visible */
-.games-section:not(.hidden) {
-    display: block;
-}
-
-/* When All Games is selected, ensure all sections have consistent styling */
-@media (max-width: 768px) {
-    /* All visible sections should have consistent margins */
-    .games-section:not(.hidden) {
-        margin-bottom: 35px;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0;
-    }
-    
-    /* First section in All Games view */
-    .games-section:not(.hidden):first-of-type {
-        margin-top: 0;
-    }
-    
-    /* Last section in All Games view */
-    .games-section:not(.hidden):last-of-type {
-        margin-bottom: 40px;
-    }
-    
-    /* Ensure section titles are consistent in All Games view */
-    .games-section:not(.hidden) .section-title {
-        margin-bottom: 25px;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    
-    /* Ensure games grid is consistent in All Games view */
-    .games-section:not(.hidden) .games-grid {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 15px 0;
-        margin: 0;
-    }
-    
-    /* Ensure game cards are consistent in All Games view */
-    .games-section:not(.hidden) .game-card,
-    .games-section:not(.hidden) .coming-soon-card {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0 auto 0 auto;
-    }
-    
-    /* Consistent spacing between multiple visible sections */
-    .games-section:not(.hidden) + .games-section:not(.hidden) {
-        margin-top: 0;
-    }
 }
 
 /* Security - Prevent right-click and inspect */
@@ -3850,70 +3799,57 @@ body.mobile-device .play-btn:active {
     /* Apply action button style to body/container */
     body {
         background: var(--dark-bg);
-        border: none;
+        border: 2px solid var(--primary-cyan);
         border-radius: 0;
         position: relative;
         overflow-x: hidden;
     }
     
     body::before {
-        display: none;
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid var(--primary-cyan);
+        pointer-events: none;
+        z-index: 9998;
+        box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.3);
     }
     
-    /* Container with action button style */
+    /* Container with action button style - optimized for mobile */
     .container {
         background: var(--card-bg);
         border: 2px solid var(--primary-cyan);
         border-radius: 15px;
         margin: 10px;
         padding: 15px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), var(--glow-cyan);
+        backdrop-filter: none; /* Removed for performance */
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.25);
         position: relative;
         overflow: hidden;
     }
     
     .container::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(0, 255, 255, 0.1);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-        pointer-events: none;
+        display: none; /* Disable for performance */
     }
     
-    /* Header with action style */
+    /* Header with action style - optimized */
     .header {
         background: rgba(0, 0, 0, 0.3);
         border: 2px solid var(--primary-cyan);
         border-radius: 12px;
         padding: 20px 15px;
         margin-bottom: 20px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        backdrop-filter: none; /* Removed for performance */
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         position: relative;
         overflow: hidden;
     }
     
     .header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
-        animation: shimmer 3s infinite;
-    }
-    
-    @keyframes shimmer {
-        0% { left: -100%; }
-        100% { left: 100%; }
+        display: none; /* Disable shimmer animation for performance */
     }
     
     .header h1 {
@@ -3928,15 +3864,15 @@ body.mobile-device .play-btn:active {
         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
     
-    /* Categories with enhanced action style */
+    /* Categories with enhanced action style - optimized */
     .categories {
         background: rgba(0, 0, 0, 0.2);
         border: 2px solid var(--primary-cyan);
         border-radius: 12px;
         padding: 15px;
         margin-bottom: 30px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        backdrop-filter: none; /* Removed for performance */
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
@@ -3968,73 +3904,47 @@ body.mobile-device .play-btn:active {
         border-color: var(--primary-purple);
     }
     
-    /* Game cards with action button style */
+    /* Game cards with action button style - optimized */
     .game-card {
         background: var(--card-bg);
         border: 2px solid var(--primary-cyan);
         border-radius: 12px;
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3), var(--glow-cyan);
-        backdrop-filter: blur(10px);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+        backdrop-filter: none; /* Removed for performance */
         position: relative;
         overflow: hidden;
     }
     
     .game-card::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(0, 255, 255, 0.1), transparent);
-        opacity: 0;
-        transition: opacity 0.4s;
-    }
-    
-    .game-card:active::after {
-        opacity: 1;
+        display: none; /* Disable for performance */
     }
     
     .game-card:active {
         transform: scale(0.98);
-        box-shadow: 0 0 25px rgba(0, 255, 255, 0.5), inset 0 0 30px rgba(0, 255, 255, 0.1);
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
     }
     
-    /* Section titles with action style - All sections consistent */
+    /* Section titles with action style - optimized */
     .section-title {
         background: rgba(0, 0, 0, 0.3);
         border: 2px solid var(--primary-purple);
         border-radius: 10px;
         padding: 18px 15px;
         margin-bottom: 30px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 15px rgba(157, 78, 221, 0.4);
-        text-shadow: 0 0 20px rgba(157, 78, 221, 0.8);
+        backdrop-filter: none; /* Removed for performance */
+        box-shadow: 0 0 10px rgba(157, 78, 221, 0.3);
+        text-shadow: 0 0 10px rgba(157, 78, 221, 0.6);
         text-align: center;
         width: 100%;
         box-sizing: border-box;
     }
     
-    /* All game sections - consistent alignment for both All Games and individual sections */
+    /* All game sections - consistent alignment */
     .games-section {
         width: 100%;
         margin-bottom: 35px;
         box-sizing: border-box;
         padding: 0;
-        display: block;
-    }
-    
-    /* When All Games is selected, ensure all visible sections have consistent styling */
-    .games-section:not(.hidden) {
-        width: 100%;
-        margin-bottom: 35px;
-        box-sizing: border-box;
-        padding: 0;
-    }
-    
-    /* Last visible section in All Games view */
-    .games-section:not(.hidden):last-of-type {
-        margin-bottom: 40px;
     }
     
     .games-section[data-category="action"],
@@ -4050,15 +3960,6 @@ body.mobile-device .play-btn:active {
         width: 100%;
         box-sizing: border-box;
         padding: 15px 0;
-        margin: 0;
-    }
-    
-    /* Games grid in All Games view */
-    .games-section:not(.hidden) .games-grid {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 15px 0;
-        margin: 0;
     }
     
     .game-card,
@@ -4068,98 +3969,58 @@ body.mobile-device .play-btn:active {
         margin: 0 auto;
     }
     
-    /* Game cards in All Games view */
-    .games-section:not(.hidden) .game-card,
-    .games-section:not(.hidden) .coming-soon-card {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0 auto;
-    }
-    
-    /* Section titles in All Games view */
-    .games-section:not(.hidden) .section-title {
-        width: 100%;
-        box-sizing: border-box;
-        margin-bottom: 25px;
-    }
-    
-    /* Play button enhanced */
+    /* Play button enhanced - optimized */
     .play-btn {
         background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
         border: 2px solid var(--primary-cyan);
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), var(--glow-cyan);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
         position: relative;
         overflow: hidden;
     }
     
     .play-btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-    
-    .play-btn:active::before {
-        width: 300px;
-        height: 300px;
+        display: none; /* Disable for performance */
     }
     
     .play-btn:active {
-        transform: scale(0.95);
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.8), inset 0 0 30px rgba(0, 255, 255, 0.2);
+        transform: scale(0.97);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
     }
     
-    /* Auth buttons enhanced */
+    /* Auth buttons enhanced - optimized */
     .auth-btn {
         background: var(--card-bg);
         border: 2px solid var(--primary-cyan);
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.4), var(--glow-cyan);
-        backdrop-filter: blur(10px);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        backdrop-filter: none; /* Removed for performance */
     }
     
     .auth-btn:active {
-        transform: scale(0.95);
-        box-shadow: 0 0 25px rgba(0, 255, 255, 0.6), inset 0 0 20px rgba(0, 255, 255, 0.1);
+        transform: scale(0.97);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
     }
     
-    /* User info bar with action style */
+    /* User info bar with action style - optimized */
     .user-info-bar {
         background: rgba(0, 0, 0, 0.4);
         border: 2px solid var(--primary-cyan);
         border-radius: 12px;
         padding: 10px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), var(--glow-cyan);
+        backdrop-filter: none; /* Removed for performance */
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
     }
     
-    /* Game icon enhanced glow */
+    /* Game icon - simplified for mobile performance */
     .game-icon {
-        filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.8));
-        animation: iconPulse 2s ease-in-out infinite;
+        filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.5));
+        animation: none !important;
     }
     
-    @keyframes iconPulse {
-        0%, 100% {
-            filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.8));
-            transform: scale(1);
-        }
-        50% {
-            filter: drop-shadow(0 0 25px rgba(0, 255, 255, 1));
-            transform: scale(1.05);
-        }
-    }
-    
-    /* Coming soon card with action style */
+    /* Coming soon card with action style - optimized */
     .coming-soon-card {
         border: 2px dashed var(--primary-cyan);
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-        backdrop-filter: blur(10px);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+        backdrop-filter: none; /* Removed for performance */
     }
     
     /* Credits badge with action style */
@@ -4174,28 +4035,46 @@ body.mobile-device .play-btn:active {
         box-shadow: 0 0 10px rgba(157, 78, 221, 0.4);
     }
     
-    /* Space background enhanced for mobile */
+    /* Space background optimized for mobile - reduce complexity */
     #space-background {
-        border: 2px solid rgba(0, 255, 255, 0.2);
+        border: none; /* Remove border for performance */
+        will-change: auto; /* Optimize rendering */
     }
     
-    /* Add pulsing glow to container on mobile */
+    /* Reduce nebula count on mobile - hide some for performance */
+    .nebula-2,
+    .nebula-3 {
+        display: none !important; /* Hide extra nebulas on mobile */
+    }
+    
+    /* Reduce star count by hiding some */
+    .star:nth-child(odd) {
+        display: none; /* Hide every other star on mobile */
+    }
+    
+    /* Disable container glow animation for better performance */
     .container {
-        animation: containerGlow 3s ease-in-out infinite;
+        animation: none !important;
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
     }
     
-    @keyframes containerGlow {
-        0%, 100% {
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), var(--glow-cyan);
-        }
-        50% {
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5), 0 0 40px rgba(157, 78, 221, 0.3);
-        }
-    }
-    
-    /* Enhanced touch feedback */
+    /* Enhanced touch feedback - optimized */
     *:active {
-        transition: all 0.1s ease;
+        transition: transform 0.1s ease, background 0.1s ease;
+    }
+    
+    /* Use GPU acceleration for better performance */
+    .game-card,
+    .category-btn,
+    .play-btn {
+        will-change: transform;
+        transform: translateZ(0); /* Force GPU acceleration */
+    }
+    
+    /* Reduce repaints */
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
     
     /* Text elements with action glow */
