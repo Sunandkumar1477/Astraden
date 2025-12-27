@@ -2753,6 +2753,12 @@ body.mobile-device .play-btn:active {
     animation: pulseGlow 2s ease-in-out infinite;
 }
 
+/* Hide Limited Credits Section - Code kept for future use */
+#creditLimitNotice,
+#mobileCreditLimitNotice {
+    display: none !important;
+}
+
 .credit-timing-notice.unavailable {
     border-color: #ff6b6b;
     background: rgba(255, 107, 107, 0.1);
