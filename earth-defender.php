@@ -813,18 +813,40 @@ $conn->close();
                 text-align: left !important;
                 padding: 20px 15px !important;
                 justify-content: flex-start !important;
+                box-sizing: border-box;
+            }
+            
+            /* Contest Badge - Left Aligned Box */
+            .contest-badge {
+                background: linear-gradient(135deg, #FFD700, #ff8c00);
+                color: #000;
+                padding: 10px 18px;
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 0.85rem;
+                margin: 0 0 15px 0;
+                text-transform: uppercase;
+                box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+                width: calc(100% - 30px);
+                max-width: none;
+                box-sizing: border-box;
+                text-align: center;
             }
             
             .timer-display {
                 font-size: 2rem;
                 margin: 15px 0;
                 text-align: left;
+                width: 100%;
+                box-sizing: border-box;
             }
             
             .status-title {
                 font-size: 1.5rem;
                 text-align: left;
-                margin-bottom: 20px;
+                margin: 0 0 20px 0;
+                width: 100%;
+                box-sizing: border-box;
             }
             
             /* Hide status message on mobile */
@@ -832,19 +854,18 @@ $conn->close();
                 display: none !important;
             }
             
-            /* Mission Rewards Section - Left Aligned */
+            /* Mission Rewards Section - Left Aligned Box */
             .prize-pool {
                 background: rgba(255, 215, 0, 0.1);
-                border: 1px solid #FFD700;
+                border: 2px solid #FFD700;
                 border-radius: 10px;
                 padding: 15px 18px;
-                margin: 15px 0;
-                margin-left: 0;
-                margin-right: auto;
+                margin: 0 0 15px 0;
                 width: calc(100% - 30px);
                 max-width: none;
-                box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+                box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
                 text-align: left;
+                box-sizing: border-box;
             }
             
             .prize-pool > div:first-child {
@@ -870,16 +891,19 @@ $conn->close();
                 border-bottom: none;
             }
             
-            /* Credits Info - Left Aligned */
+            /* Credits Info - Left Aligned Box */
             .credits-info {
                 font-size: 0.95rem;
                 padding: 12px 18px;
-                margin: 15px 0;
-                margin-left: 0;
-                margin-right: auto;
+                margin: 0 0 15px 0;
                 width: calc(100% - 30px);
                 max-width: none;
                 text-align: left;
+                background: rgba(255, 215, 0, 0.1);
+                border: 2px solid rgba(255, 215, 0, 0.3);
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+                box-sizing: border-box;
             }
             
             /* Game Buttons Container - Left Aligned */
@@ -889,14 +913,13 @@ $conn->close();
                 align-items: flex-start;
                 justify-content: flex-start;
                 gap: 12px;
-                margin: 20px 0;
-                margin-left: 0;
-                margin-right: auto;
+                margin: 0;
                 width: calc(100% - 30px);
                 max-width: none;
+                box-sizing: border-box;
             }
             
-            /* All Buttons - Left Aligned with Proper Padding */
+            /* All Buttons - Consistent Box Styling */
             .game-btn, 
             .start-game-btn, 
             .demo-game-btn, 
@@ -905,11 +928,20 @@ $conn->close();
                 max-width: none;
                 padding: 14px 20px;
                 font-size: 0.95rem;
+                font-weight: 700;
                 margin: 0;
                 text-align: left;
                 justify-content: flex-start;
-                border-radius: 8px;
+                border-radius: 10px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+                box-sizing: border-box;
+                border: 2px solid;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }
             
             .game-btn:hover, 
@@ -917,6 +949,7 @@ $conn->close();
             .demo-game-btn:hover, 
             .instructions-toggle-btn:hover {
                 transform: translateX(3px) scale(1.01);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             }
             
             .game-btn:active, 
@@ -926,25 +959,36 @@ $conn->close();
                 transform: translateX(0) scale(0.99);
             }
             
-            /* Game Guide Button */
+            /* Game Guide Button - Consistent Box */
             .instructions-toggle-btn {
-                background: rgba(0, 255, 255, 0.08);
+                background: rgba(0, 255, 255, 0.1);
                 border: 2px solid #00ffff;
                 color: #00ffff;
                 padding: 14px 20px;
                 font-size: 0.95rem;
             }
             
-            /* Play Demo Button */
+            .instructions-toggle-btn:hover {
+                background: rgba(0, 255, 255, 0.2);
+                box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+            }
+            
+            /* Play Demo Button - Consistent Box */
             .demo-game-btn {
-                background: rgba(255, 255, 255, 0.08);
-                border: 2px solid rgba(255, 255, 255, 0.4);
+                background: rgba(255, 255, 255, 0.1);
+                border: 2px solid rgba(255, 255, 255, 0.5);
                 color: white;
                 padding: 14px 20px;
                 font-size: 0.95rem;
             }
             
-            /* Back to Home Button */
+            .demo-game-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.8);
+                box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+            }
+            
+            /* Back to Home Button - Consistent Box */
             .btn-home {
                 background: rgba(157, 78, 221, 0.1);
                 border: 2px solid rgba(157, 78, 221, 0.5);
@@ -956,20 +1000,21 @@ $conn->close();
             .btn-home:hover {
                 background: rgba(157, 78, 221, 0.2);
                 border-color: #9d4edd;
+                box-shadow: 0 4px 15px rgba(157, 78, 221, 0.4);
             }
             
-            /* Claim Section - Left Aligned */
+            /* Claim Section - Left Aligned Box */
             .claim-section {
                 background: rgba(0, 255, 0, 0.1);
                 border: 2px solid #00ff00;
                 border-radius: 10px;
                 padding: 18px;
-                margin: 20px 0;
-                margin-left: 0;
-                margin-right: auto;
+                margin: 15px 0 0 0;
                 width: calc(100% - 30px);
                 max-width: none;
                 text-align: left;
+                box-shadow: 0 2px 10px rgba(0, 255, 0, 0.2);
+                box-sizing: border-box;
             }
             
             .claim-btn {
@@ -978,6 +1023,9 @@ $conn->close();
                 padding: 14px 20px;
                 font-size: 0.95rem;
                 margin: 0;
+                border-radius: 10px;
+                box-sizing: border-box;
+                border: 2px solid #00ff00;
             }
         }
         
