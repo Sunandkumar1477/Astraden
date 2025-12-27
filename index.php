@@ -63,8 +63,68 @@ session_start();
 
     <!-- User Info Bar (shown when logged in) -->
     <div class="user-info-bar hidden" id="userInfoBar">
-        <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
-        <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
+        <!-- Mobile Dropdown Button (shown only on mobile) -->
+        <div class="user-info-container mobile-only">
+            <button class="user-dropdown-btn" id="mobileUserDropdownBtn" onclick="toggleMobileUserDropdown(event)">
+                <div class="user-btn-content">
+                    <span class="user-label">User</span>
+                    <span class="username-display" id="mobileDisplayUsername">User</span>
+                </div>
+                <span class="dropdown-arrow">▼</span>
+            </button>
+            <div class="user-dropdown-content" id="mobileUserDropdown">
+                <div class="dropdown-header">
+                    <div class="user-profile-summary">
+                        <div class="user-profile-icon">👤</div>
+                        <div>
+                            <div class="user-profile-name" id="dropdownDisplayUsername">User</div>
+                            <div class="user-profile-rank" id="dropdownUserRank">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-body">
+                    <!-- Credits Info -->
+                    <div class="menu-item" id="mobileCreditsItem" style="display: none;" onclick="toggleCreditsDropdown(event)">
+                        <div class="item-icon">⚡</div>
+                        <div class="item-info">
+                            <div class="item-label">Credits</div>
+                            <div class="item-value" id="mobileCreditsValue">0</div>
+                        </div>
+                    </div>
+                    <!-- Referral Code Info -->
+                    <div class="menu-item" id="mobileReferralItem" style="display: none;" onclick="toggleReferralDropdown(event)">
+                        <div class="item-icon">🎁</div>
+                        <div class="item-info">
+                            <div class="item-label">Referral Code</div>
+                            <div class="item-value" id="mobileReferralValue">----</div>
+                        </div>
+                    </div>
+                    <!-- Rank Info -->
+                    <div class="menu-item" id="mobileRankItem" style="display: none;" onclick="toggleRankDropdown(event)">
+                        <div class="item-icon">🏆</div>
+                        <div class="item-info">
+                            <div class="item-label">Your Rank</div>
+                            <div class="item-value" id="mobileRankValue">-</div>
+                        </div>
+                    </div>
+                    <!-- Profile Link -->
+                    <a href="view_profile.php" class="menu-item">
+                        <div class="item-icon">🌍</div>
+                        <div class="item-info">
+                            <div class="item-label">Profile</div>
+                            <div class="item-value">View Profile</div>
+                        </div>
+                    </a>
+                    <!-- Logout Link -->
+                    <a href="logout.php" class="logout-link">Logout</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desktop User Info (hidden on mobile) -->
+        <div class="desktop-user-info">
+            <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
+            <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
             <span class="referral-icon">🎁</span>
             <span class="referral-code-value" id="referralCodeValue">----</span>
             <!-- Referral Code Dropdown -->
@@ -160,7 +220,8 @@ session_start();
                 </div>
             </div>
         </div>
-        <a href="logout.php" class="logout-btn">Logout</a>
+            <a href="logout.php" class="logout-btn">Logout</a>
+        </div>
     </div>
 
     <!-- Profile Planet Button -->
@@ -1027,6 +1088,12 @@ session_start();
                         document.getElementById('authButtons').classList.add('hidden');
                         document.getElementById('displayUsername').textContent = data.user.username;
                         
+                        // Update mobile dropdown username
+                        const mobileUsername = document.getElementById('mobileDisplayUsername');
+                        const dropdownUsername = document.getElementById('dropdownDisplayUsername');
+                        if (mobileUsername) mobileUsername.textContent = data.user.username;
+                        if (dropdownUsername) dropdownUsername.textContent = data.user.username;
+                        
                         // Show profile button
                         document.getElementById('profilePlanetBtn').classList.remove('hidden');
                         
@@ -1039,6 +1106,12 @@ session_start();
                             referralElement.style.display = 'flex';
                             referralValueElement.textContent = data.referral_code;
                             referralCodeText.textContent = data.referral_code;
+                            
+                            // Update mobile dropdown referral
+                            const mobileReferralValue = document.getElementById('mobileReferralValue');
+                            const mobileReferralItem = document.getElementById('mobileReferralItem');
+                            if (mobileReferralValue) mobileReferralValue.textContent = data.referral_code;
+                            if (mobileReferralItem) mobileReferralItem.style.display = 'flex';
                         } else {
                             document.getElementById('userReferralCode').style.display = 'none';
                         }
@@ -1078,6 +1151,12 @@ session_start();
                                     creditsValueElement.textContent = data.credits.toLocaleString();
                                     creditsValueElement.style.color = creditsColor; // Gold value
                                     
+                                    // Update mobile dropdown credits
+                                    const mobileCreditsValue = document.getElementById('mobileCreditsValue');
+                                    const mobileCreditsItem = document.getElementById('mobileCreditsItem');
+                                    if (mobileCreditsValue) mobileCreditsValue.textContent = data.credits.toLocaleString();
+                                    if (mobileCreditsItem) mobileCreditsItem.style.display = 'flex';
+                                    
                                     // Ensure power icon stays green (force green color)
                                     const powerIcon = creditsElement.querySelector('.power-icon');
                                     if (powerIcon) {
@@ -1086,6 +1165,10 @@ session_start();
                                     
                                     // Show rank dropdown
                                     document.getElementById('userRank').style.display = 'flex';
+                                    
+                                    // Update mobile dropdown rank
+                                    const mobileRankItem = document.getElementById('mobileRankItem');
+                                    if (mobileRankItem) mobileRankItem.style.display = 'flex';
                                 } else {
                                     document.getElementById('userCredits').style.display = 'none';
                                     document.getElementById('userRank').style.display = 'none';
@@ -1313,6 +1396,24 @@ session_start();
         }
 
         // Rank dropdown functions
+        function toggleMobileUserDropdown(event) {
+            event.stopPropagation();
+            const btn = document.getElementById('mobileUserDropdownBtn');
+            const dropdown = document.getElementById('mobileUserDropdown');
+            btn.classList.toggle('active');
+            dropdown.classList.toggle('show');
+        }
+        
+        // Close mobile dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileDropdown = document.getElementById('mobileUserDropdown');
+            const mobileBtn = document.getElementById('mobileUserDropdownBtn');
+            if (mobileDropdown && mobileBtn && !mobileBtn.contains(event.target) && !mobileDropdown.contains(event.target)) {
+                mobileDropdown.classList.remove('show');
+                mobileBtn.classList.remove('active');
+            }
+        });
+        
         function toggleRankDropdown(event) {
             event.stopPropagation();
             const dropdown = document.getElementById('rankDropdown');
@@ -1348,9 +1449,17 @@ session_start();
                                 <span class="rank-score">${userTotalPoints.toLocaleString()} Total Pts</span>
                             </div>
                         `;
+                        
+                        // Update mobile dropdown rank
+                        const mobileRankValue = document.getElementById('mobileRankValue');
+                        if (mobileRankValue) mobileRankValue.textContent = '#' + data.user_rank;
                     } else {
                         rankValue.textContent = 'N/A';
                         userRankDisplay.innerHTML = '<div class="no-rank-message">Play with credits to get ranked!</div>';
+                        
+                        // Update mobile dropdown rank
+                        const mobileRankValue = document.getElementById('mobileRankValue');
+                        if (mobileRankValue) mobileRankValue.textContent = 'N/A';
                     }
                     
                     if (data.leaderboard && data.leaderboard.length > 0) {

@@ -1585,6 +1585,19 @@ body.mobile-device .play-btn:active {
     display: none !important;
 }
 
+/* Mobile-only dropdown (hidden on desktop) */
+.mobile-only {
+    display: none;
+}
+
+/* Desktop user info (hidden on mobile) */
+.desktop-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
 .user-info-container {
     position: relative;
     min-width: 200px;
@@ -1814,6 +1827,16 @@ body.mobile-device .play-btn:active {
 
 /* Mobile Responsive for User Bar & Auth - Professional Clean Style */
 @media (max-width: 768px) {
+    /* Hide desktop user info on mobile */
+    .desktop-user-info {
+        display: none !important;
+    }
+    
+    /* Show mobile dropdown button */
+    .mobile-only {
+        display: block !important;
+    }
+    
     .user-info-bar,
     .auth-buttons {
         top: 10px;
@@ -4343,6 +4366,20 @@ body.mobile-device .play-btn:active {
     .game-type,
     .game-countdown-badge {
         border: none !important;
+    }
+    
+    /* Ensure referral, credits, and rank dropdowns are accessible on mobile */
+    .referral-dropdown,
+    .credits-dropdown,
+    .rank-dropdown {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        max-width: 90vw !important;
+        max-height: 80vh !important;
+        overflow-y: auto !important;
+        z-index: 10003 !important;
     }
 }
 
