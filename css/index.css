@@ -3638,9 +3638,8 @@ body.mobile-device .play-btn:active {
 
 .modal-header h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.8rem;
-    font-weight: 700;
     color: var(--primary-cyan);
+    font-size: 1.8rem;
     text-transform: uppercase;
     letter-spacing: 5px;
     margin-bottom: 10px;
@@ -3745,7 +3744,7 @@ body.mobile-device .play-btn:active {
 }
 
 .form-group input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(0, 255, 255, 0.4);
 }
 
     .form-group input[type="password"],
@@ -3767,6 +3766,11 @@ body.mobile-device .play-btn:active {
 @media (max-width: 360px) {
     .auth-modal {
         padding: 40px 30px;
+        border-radius: 20px;
+    }
+    
+    .modal-header {
+        margin-bottom: 40px;
     }
     
     .modal-header h2 {
@@ -3775,18 +3779,20 @@ body.mobile-device .play-btn:active {
     }
     
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     
     .form-group input {
-        padding: 12px;
+        padding: 15px;
         font-size: 16px;
+        border-radius: 10px;
     }
     
     .submit-btn {
-        padding: 14px;
+        padding: 16px;
         font-size: 0.9rem;
         letter-spacing: 2px;
+        border-radius: 10px;
     }
 }
 
@@ -3795,28 +3801,18 @@ body.mobile-device .play-btn:active {
     .auth-modal {
         max-width: 450px;
         padding: 50px 40px;
+        border-radius: 20px;
     }
 }
 
-/* Desktop Styles - Enhanced Login Modal */
+/* Desktop Styles - Match Admin Login */
 @media (min-width: 1024px) {
     .auth-modal {
         max-width: 450px;
         padding: 50px 40px;
         border-width: 2px;
+        border-radius: 20px;
         box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
-        animation: modalSlideInDesktop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    
-    @keyframes modalSlideInDesktop {
-        from {
-            opacity: 0;
-            transform: translateY(-80px) scale(0.85) rotateX(10deg);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1) rotateX(0deg);
-        }
     }
     
     .modal-header {
@@ -3835,22 +3831,6 @@ body.mobile-device .play-btn:active {
         color: rgba(255, 255, 255, 0.5);
         text-transform: uppercase;
         letter-spacing: 2px;
-    }
-    
-    .close-modal {
-        width: 40px;
-        height: 40px;
-        font-size: 1.4rem;
-        top: 20px;
-        right: 20px;
-        border-width: 2px;
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-    }
-    
-    .close-modal:hover {
-        background: rgba(0, 255, 255, 0.3);
-        box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
-        transform: rotate(90deg) scale(1.1);
     }
     
     .auth-form {
@@ -4109,49 +4089,55 @@ body.mobile-device .play-btn:active {
     }
     
     .auth-modal {
-        padding: 25px 20px;
+        padding: 40px 30px;
         max-width: 100%;
         width: 100%;
         margin: auto;
         max-height: calc(100vh - 40px);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        border-radius: 12px;
+        border-radius: 20px;
     }
 
     .modal-header {
-        margin-bottom: 20px;
+        margin-bottom: 40px;
     }
 
     .modal-header h2 {
-        font-size: clamp(1.3rem, 5vw, 1.8rem);
-        letter-spacing: 2px;
-        margin-bottom: 8px;
-        line-height: 1.2;
+        font-size: 1.8rem;
+        letter-spacing: 5px;
+        margin-bottom: 10px;
     }
     
     .modal-header p {
-        font-size: clamp(0.8rem, 3vw, 0.9rem);
-        line-height: 1.4;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: rgba(255, 255, 255, 0.5);
     }
 
     .auth-form {
     }
 
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     
     .form-group label {
-        font-size: clamp(0.8rem, 3vw, 0.9rem);
-        margin-bottom: 4px;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        color: var(--primary-purple);
     }
 
     .form-group input {
-        padding: 12px 15px;
+        padding: 15px;
         font-size: 16px !important; /* Prevents zoom on iOS */
         min-height: 44px; /* Better touch target */
         width: 100%;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        color: white;
         box-sizing: border-box;
     }
     
@@ -4166,11 +4152,13 @@ body.mobile-device .play-btn:active {
     }
 
     .submit-btn {
-        padding: 12px 20px;
-        font-size: clamp(0.9rem, 3vw, 1rem);
+        padding: 16px;
+        font-size: 0.9rem;
+        letter-spacing: 2px;
         min-height: 44px;
         width: 100%;
-        margin-top: 5px;
+        margin-top: 10px;
+        border-radius: 10px;
     }
     
     .switch-form {
@@ -4189,11 +4177,26 @@ body.mobile-device .play-btn:active {
     
     .error-message,
     .success-message {
-        font-size: clamp(0.8rem, 3vw, 0.85rem);
-        padding: 10px 12px;
+        font-size: 0.9rem;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        font-weight: 600;
         line-height: 1.4;
         word-wrap: break-word;
         overflow-wrap: break-word;
+    }
+    
+    .error-message {
+        background: rgba(255, 0, 110, 0.1);
+        border: 1px solid #ff006e;
+        color: #ff006e;
+    }
+    
+    .success-message {
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid #00ff00;
+        color: #00ff00;
     }
 }
 
@@ -4207,16 +4210,18 @@ body.mobile-device .play-btn:active {
     
     .auth-modal {
         max-height: 90vh;
-        padding: 20px;
+        padding: 40px 30px;
+        border-radius: 20px;
     }
     
     .form-group {
-        gap: 5px;
+        margin-bottom: 20px;
     }
     
     .form-group input {
-        padding: 10px 12px;
-        min-height: 40px;
+        padding: 15px;
+        min-height: 44px;
+        border-radius: 10px;
     }
 }
 
@@ -4228,45 +4233,48 @@ body.mobile-device .play-btn:active {
     }
     
     .auth-modal {
-        padding: 20px 15px;
-        border-radius: 12px;
+        padding: 40px 30px;
+        border-radius: 20px;
         max-height: calc(100vh - 30px);
     }
 
     .modal-header {
-        margin-bottom: 18px;
+        margin-bottom: 40px;
     }
 
     .modal-header h2 {
-        font-size: clamp(1.2rem, 6vw, 1.5rem);
-        letter-spacing: 1.5px;
-        margin-bottom: 6px;
-        line-height: 1.2;
+        font-size: 1.5rem;
+        letter-spacing: 3px;
+        margin-bottom: 10px;
     }
     
     .modal-header p {
-        font-size: clamp(0.75rem, 3.5vw, 0.85rem);
-        line-height: 1.4;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
     }
 
     .auth-form {
     }
 
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     
     .form-group label {
-        font-size: clamp(0.75rem, 3.5vw, 0.85rem);
+        font-size: 0.8rem;
         letter-spacing: 1px;
         margin-bottom: 10px;
+        color: var(--primary-purple);
     }
 
     .form-group input {
-        padding: 11px 12px;
+        padding: 15px;
         font-size: 16px !important; /* Prevents zoom on iOS */
         min-height: 44px;
-        border-radius: 6px;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        color: white;
         box-sizing: border-box;
     }
     
@@ -4281,10 +4289,11 @@ body.mobile-device .play-btn:active {
     }
     
     .submit-btn {
-        padding: 11px 18px;
-        font-size: clamp(0.85rem, 3.5vw, 0.95rem);
+        padding: 16px;
+        font-size: 0.9rem;
+        letter-spacing: 2px;
         min-height: 44px;
-        letter-spacing: 1px;
+        border-radius: 10px;
         width: 100%;
     }
     
