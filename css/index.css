@@ -694,7 +694,7 @@ body {
     .game-card {
         min-height: 180px;
         padding: 18px;
-        border-width: 2px;
+        border: none;
         width: 100%;
         box-sizing: border-box;
         margin: 0 auto;
@@ -898,6 +898,24 @@ body {
     .category-btn,
     .play-btn {
         transition: transform 0.2s ease, background 0.2s ease;
+    }
+    
+    /* Remove all borders on mobile */
+    body,
+    .container,
+    .header,
+    .categories,
+    .category-btn,
+    .game-card,
+    .coming-soon-card,
+    .section-title,
+    .play-btn,
+    .auth-btn,
+    .user-info-bar,
+    .credits-badge,
+    .game-type,
+    .game-countdown-badge {
+        border: none !important;
     }
 }
 
@@ -3796,10 +3814,10 @@ body.mobile-device .play-btn:active {
    ============================================ */
 
 @media (max-width: 768px) {
-    /* Apply action button style to body/container */
+    /* Apply action button style to body/container - no borders on mobile */
     body {
         background: var(--dark-bg);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         border-radius: 0;
         position: relative;
         overflow-x: hidden;
@@ -3812,16 +3830,16 @@ body.mobile-device .play-btn:active {
         left: 0;
         right: 0;
         bottom: 0;
-        border: 2px solid var(--primary-cyan);
+        border: none;
         pointer-events: none;
         z-index: 9998;
         box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.3);
     }
     
-    /* Container with action button style - optimized for mobile */
+    /* Container with action button style - optimized for mobile - no borders */
     .container {
         background: var(--card-bg);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         border-radius: 15px;
         margin: 10px;
         padding: 15px;
@@ -3835,10 +3853,10 @@ body.mobile-device .play-btn:active {
         display: none; /* Disable for performance */
     }
     
-    /* Header with action style - optimized */
+    /* Header with action style - optimized - no borders */
     .header {
         background: rgba(0, 0, 0, 0.3);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         border-radius: 12px;
         padding: 20px 15px;
         margin-bottom: 20px;
@@ -3864,10 +3882,10 @@ body.mobile-device .play-btn:active {
         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
     
-    /* Categories with enhanced action style - optimized */
+    /* Categories with enhanced action style - optimized - no borders */
     .categories {
         background: rgba(0, 0, 0, 0.2);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         border-radius: 12px;
         padding: 15px;
         margin-bottom: 30px;
@@ -3892,7 +3910,7 @@ body.mobile-device .play-btn:active {
     
     .category-btn {
         background: var(--card-bg);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
         position: relative;
         overflow: hidden;
@@ -3901,13 +3919,13 @@ body.mobile-device .play-btn:active {
     .category-btn.active {
         background: rgba(0, 255, 255, 0.15);
         box-shadow: 0 0 20px rgba(0, 255, 255, 0.6), inset 0 0 20px rgba(0, 255, 255, 0.1);
-        border-color: var(--primary-purple);
+        border: none;
     }
     
-    /* Game cards with action button style - optimized */
+    /* Game cards with action button style - optimized - no borders */
     .game-card {
         background: var(--card-bg);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         border-radius: 12px;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
         backdrop-filter: none; /* Removed for performance */
@@ -3924,10 +3942,10 @@ body.mobile-device .play-btn:active {
         box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
     }
     
-    /* Section titles with action style - optimized */
+    /* Section titles with action style - optimized - no borders */
     .section-title {
         background: rgba(0, 0, 0, 0.3);
-        border: 2px solid var(--primary-purple);
+        border: none;
         border-radius: 10px;
         padding: 18px 15px;
         margin-bottom: 30px;
@@ -3969,10 +3987,10 @@ body.mobile-device .play-btn:active {
         margin: 0 auto;
     }
     
-    /* Play button enhanced - optimized */
+    /* Play button enhanced - optimized - no borders */
     .play-btn {
         background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
-        border: 2px solid var(--primary-cyan);
+        border: none;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
         position: relative;
         overflow: hidden;
@@ -3987,10 +4005,10 @@ body.mobile-device .play-btn:active {
         box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
     }
     
-    /* Auth buttons enhanced - optimized */
+    /* Auth buttons enhanced - optimized - no borders */
     .auth-btn {
         background: var(--card-bg);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
         backdrop-filter: none; /* Removed for performance */
     }
@@ -4000,10 +4018,10 @@ body.mobile-device .play-btn:active {
         box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
     }
     
-    /* User info bar with action style - optimized */
+    /* User info bar with action style - optimized - no borders */
     .user-info-bar {
         background: rgba(0, 0, 0, 0.4);
-        border: 2px solid var(--primary-cyan);
+        border: none;
         border-radius: 12px;
         padding: 10px;
         backdrop-filter: none; /* Removed for performance */
@@ -4016,22 +4034,22 @@ body.mobile-device .play-btn:active {
         animation: none !important;
     }
     
-    /* Coming soon card with action style - optimized */
+    /* Coming soon card with action style - optimized - no borders */
     .coming-soon-card {
-        border: 2px dashed var(--primary-cyan);
+        border: none;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
         backdrop-filter: none; /* Removed for performance */
     }
     
-    /* Credits badge with action style */
+    /* Credits badge with action style - no borders */
     .credits-badge {
-        border: 2px solid #FFD700;
+        border: none;
         box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
     }
     
-    /* Game type badge with action style */
+    /* Game type badge with action style - no borders */
     .game-type {
-        border: 2px solid var(--primary-purple);
+        border: none;
         box-shadow: 0 0 10px rgba(157, 78, 221, 0.4);
     }
     
@@ -4085,14 +4103,41 @@ body.mobile-device .play-btn:active {
     .game-description {
         text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
     }
+    
+    /* Ensure all borders are removed on mobile */
+    body,
+    body::before,
+    .container,
+    .container::before,
+    .header,
+    .header::before,
+    .categories,
+    .category-btn,
+    .category-btn::before,
+    .game-card,
+    .game-card::before,
+    .game-card::after,
+    .coming-soon-card,
+    .section-title,
+    .play-btn,
+    .play-btn::before,
+    .auth-btn,
+    .user-info-bar,
+    .user-info-container,
+    .user-dropdown-btn,
+    .credits-badge,
+    .game-type,
+    .game-countdown-badge {
+        border: none !important;
+    }
 }
 
-/* Extra small mobile devices - even more action style */
+/* Extra small mobile devices - even more action style - no borders */
 @media (max-width: 480px) {
     .container {
         margin: 8px;
         padding: 12px;
-        border-width: 2px;
+        border: none;
         box-shadow: 0 0 25px rgba(0, 255, 255, 0.4), var(--glow-cyan);
         width: calc(100% - 16px);
         box-sizing: border-box;
@@ -4100,7 +4145,7 @@ body.mobile-device .play-btn:active {
     
     .header {
         padding: 18px 12px;
-        border-width: 2px;
+        border: none;
         width: 100%;
         box-sizing: border-box;
     }
@@ -4112,7 +4157,7 @@ body.mobile-device .play-btn:active {
     }
     
     .category-btn {
-        border-width: 2px;
+        border: none;
         box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
         flex: 1 1 calc(50% - 4px);
         min-width: calc(50% - 4px);
@@ -4139,14 +4184,14 @@ body.mobile-device .play-btn:active {
     
     .game-card,
     .coming-soon-card {
-        border-width: 2px;
+        border: none;
         box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), var(--glow-cyan);
         width: 100%;
         box-sizing: border-box;
     }
     
     .play-btn {
-        border-width: 2px;
+        border: none;
         box-shadow: 0 0 25px rgba(0, 255, 255, 0.6), var(--glow-cyan);
         width: 100%;
         box-sizing: border-box;
