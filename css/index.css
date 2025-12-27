@@ -2148,6 +2148,7 @@ body.mobile-device .play-btn:active {
         margin-top: 8px;
         margin-bottom: 8px;
         padding: 12px;
+        padding-top: 35px; /* Add top padding for close button */
         background: rgba(0, 0, 0, 0.4);
         border: 2px solid rgba(0, 255, 255, 0.3);
         border-radius: 10px;
@@ -2155,6 +2156,37 @@ body.mobile-device .play-btn:active {
         animation: none !important;
         will-change: auto;
         transform: translateZ(0);
+        position: relative; /* For close button positioning */
+    }
+    
+    /* Close Button - Right Side */
+    .mobile-credits-close-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 28px;
+        height: 28px;
+        background: rgba(255, 0, 0, 0.2);
+        border: 2px solid rgba(255, 0, 0, 0.5);
+        border-radius: 50%;
+        color: rgba(255, 0, 0, 0.9);
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        z-index: 10;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .mobile-credits-close-btn:active {
+        background: rgba(255, 0, 0, 0.4);
+        border-color: rgba(255, 0, 0, 0.8);
+        transform: scale(0.95);
     }
     
     /* Rotate arrow when credits dropdown is open - Optimized */

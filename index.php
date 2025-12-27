@@ -88,12 +88,14 @@ session_start();
                         <div class="item-icon">⚡</div>
                         <div class="item-info">
                             <div class="item-label">Credits</div>
-                            <div class="item-value" id="mobileCreditsValue">0</div>
+                            <div class="item-value" id="mobileCreditsValue" style="color: #FFD700;">0</div>
                         </div>
                         <span class="dropdown-arrow" style="margin-left: auto; font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); transition: transform 0.3s ease;">▼</span>
                     </div>
                     <!-- Mobile Credits Dropdown -->
                     <div class="mobile-credits-dropdown" id="mobileCreditsDropdown" style="display: none;">
+                        <!-- Close Button - Right Side -->
+                        <button class="mobile-credits-close-btn" onclick="toggleMobileCreditsDropdown(event)" title="Close">×</button>
                         <!-- Credit Timing Notice -->
                         <div id="mobileCreditTimingNotice" class="credit-timing-notice" style="display: none;">
                             <div class="timing-notice-content">
@@ -1316,15 +1318,19 @@ session_start();
                                     const iconColor = '#00ff00'; // Green color for icon
                                     
                                     creditsElement.style.borderColor = iconColor; // Green border
-                                    const creditsAmount = (data.credits !== undefined && data.credits !== null) ? data.credits : 0;
+                                    // Get credits from data (from check_session.php response)
+                                    const creditsAmount = (data.credits !== undefined && data.credits !== null && !isNaN(data.credits)) ? parseInt(data.credits) : 0;
                                     creditsValueElement.textContent = creditsAmount.toLocaleString();
                                     creditsValueElement.style.color = creditsColor; // Gold value
                                     
-                                    // Update mobile dropdown credits
+                                    // Update mobile dropdown credits - ensure proper formatting
                                     const mobileCreditsValue = document.getElementById('mobileCreditsValue');
                                     const mobileCreditsItem = document.getElementById('mobileCreditsItem');
                                     if (mobileCreditsValue) {
-                                        mobileCreditsValue.textContent = creditsAmount.toLocaleString();
+                                        // Format the number properly like desktop version
+                                        const formattedCredits = creditsAmount.toLocaleString('en-US');
+                                        mobileCreditsValue.textContent = formattedCredits;
+                                        mobileCreditsValue.style.color = creditsColor; // Gold color like desktop
                                     }
                                     if (mobileCreditsItem) mobileCreditsItem.style.display = 'flex';
                                     
