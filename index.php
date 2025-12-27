@@ -75,7 +75,7 @@ session_start();
             <div class="user-dropdown-content" id="mobileUserDropdown">
                 <div class="dropdown-header">
                     <div class="user-profile-summary">
-                        <div class="user-profile-icon">👤</div>
+                        <div class="user-profile-icon" id="mobileUserProfileIcon">👤</div>
                         <div>
                             <div class="user-profile-name" id="dropdownDisplayUsername">User</div>
                             <div class="user-profile-rank" id="dropdownUserRank">Loading...</div>
@@ -84,7 +84,7 @@ session_start();
                 </div>
                 <div class="dropdown-body">
                     <!-- Credits Info -->
-                    <div class="menu-item" id="mobileCreditsItem" style="display: none;" onclick="toggleCreditsDropdown(event)">
+                    <div class="menu-item" id="mobileCreditsItem" style="display: none;" onclick="handleMobileCreditsClick(event)">
                         <div class="item-icon">⚡</div>
                         <div class="item-info">
                             <div class="item-label">Credits</div>
@@ -1237,6 +1237,22 @@ session_start();
                                     profileIconElement.textContent = iconEmoji;
                                 }
                                 
+                                // Update mobile dropdown profile icon
+                                const mobileProfileIcon = document.getElementById('mobileUserProfileIcon');
+                                if (mobileProfileIcon) {
+                                    const iconMap = {
+                                        'boy1': '👨',
+                                        'girl1': '👩',
+                                        'beard': '🧔',
+                                        'bald': '👨‍🦲',
+                                        'fashion': '👸',
+                                        'specs': '👨‍💼'
+                                    };
+                                    const profilePhoto = profileData.profile_photo;
+                                    const iconEmoji = (profilePhoto && iconMap[profilePhoto]) ? iconMap[profilePhoto] : '👤';
+                                    mobileProfileIcon.textContent = iconEmoji;
+                                }
+                                
                                 if (profileData.has_profile) {
                                     // Show credits display
                                     const creditsElement = document.getElementById('userCredits');
@@ -1269,9 +1285,16 @@ session_start();
                                     // Update mobile dropdown rank
                                     const mobileRankItem = document.getElementById('mobileRankItem');
                                     if (mobileRankItem) mobileRankItem.style.display = 'flex';
+                                    
+                                    // Load user rank for mobile dropdown
+                                    loadUserRank();
                                 } else {
                                     document.getElementById('userCredits').style.display = 'none';
                                     document.getElementById('userRank').style.display = 'none';
+                                    
+                                    // Still show rank as N/A in mobile dropdown
+                                    const dropdownUserRank = document.getElementById('dropdownUserRank');
+                                    if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: N/A';
                                 }
                             })
                             .catch(error => {
@@ -1553,6 +1576,10 @@ session_start();
                         // Update mobile dropdown rank
                         const mobileRankValue = document.getElementById('mobileRankValue');
                         if (mobileRankValue) mobileRankValue.textContent = '#' + data.user_rank;
+                        
+                        // Update dropdown header rank
+                        const dropdownUserRank = document.getElementById('dropdownUserRank');
+                        if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: #' + data.user_rank;
                     } else {
                         rankValue.textContent = 'N/A';
                         userRankDisplay.innerHTML = '<div class="no-rank-message">Play with credits to get ranked!</div>';
@@ -1560,6 +1587,10 @@ session_start();
                         // Update mobile dropdown rank
                         const mobileRankValue = document.getElementById('mobileRankValue');
                         if (mobileRankValue) mobileRankValue.textContent = 'N/A';
+                        
+                        // Update dropdown header rank
+                        const dropdownUserRank = document.getElementById('dropdownUserRank');
+                        if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: N/A';
                     }
                     
                     if (data.leaderboard && data.leaderboard.length > 0) {
@@ -1584,13 +1615,34 @@ session_start();
                     userRankDisplay.innerHTML = '<div class="no-rank-message">Unable to load rank</div>';
                     leaderboardList.innerHTML = '<div class="no-rank-message">Unable to load leaderboard</div>';
                     console.error('API Error:', data.message || 'Unknown error');
+                    
+                    // Update dropdown header rank
+                    const dropdownUserRank = document.getElementById('dropdownUserRank');
+                    if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: N/A';
                 }
             } catch (error) {
                 console.error('Error loading user rank:', error);
                 rankValue.textContent = 'N/A';
                 userRankDisplay.innerHTML = '<div class="no-rank-message">Error loading rank</div>';
                 leaderboardList.innerHTML = '<div class="no-rank-message">Error loading leaderboard</div>';
+                
+                // Update dropdown header rank
+                const dropdownUserRank = document.getElementById('dropdownUserRank');
+                if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: Error';
             }
+        }
+        
+        // Mobile credits click handler
+        function handleMobileCreditsClick(event) {
+            event.stopPropagation();
+            // Close mobile dropdown first
+            const mobileDropdown = document.getElementById('mobileUserDropdown');
+            const mobileBtn = document.getElementById('mobileUserDropdownBtn');
+            if (mobileDropdown) mobileDropdown.classList.remove('show');
+            if (mobileBtn) mobileBtn.classList.remove('active');
+            
+            // Open claim credits modal
+            checkClaimTimingAndOpen();
         }
 
         // Claim credits handler
