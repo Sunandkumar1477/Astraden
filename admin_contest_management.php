@@ -6,23 +6,43 @@ require_once 'connection.php';
 $message = '';
 $error = '';
 
-// Auto-add missing columns and table
-$conn->query("ALTER TABLE games ADD COLUMN IF NOT EXISTS contest_credits_required INT(11) DEFAULT 30");
-$conn->query("ALTER TABLE contest_scores ADD COLUMN IF NOT EXISTS game_mode ENUM('money', 'credits') DEFAULT 'money'");
-$conn->query("ALTER TABLE game_leaderboard ADD COLUMN IF NOT EXISTS game_mode ENUM('money', 'credits') DEFAULT 'money'");
-$conn->query("CREATE TABLE IF NOT EXISTS contest_history (
-    id INT(11) NOT NULL AUTO_INCREMENT,
-    game_name VARCHAR(50) NOT NULL,
-    game_mode ENUM('money', 'credits') NOT NULL,
-    prize1 INT(11) NOT NULL,
-    prize2 INT(11) NOT NULL,
-    prize3 INT(11) NOT NULL,
-    entry_fee INT(11) NOT NULL,
-    status ENUM('active', 'completed') DEFAULT 'completed',
-    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ended_at TIMESTAMP NULL,
-    PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+// Auto-add missing columns and table (with proper error handling)
+try {
+    // Check and add contest_credits_required column
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_credits_required'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_credits_required INT(11) DEFAULT 30");
+    }
+    
+    // Check and add game_mode column to contest_scores
+    $check_col = $conn->query("SHOW COLUMNS FROM contest_scores LIKE 'game_mode'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE contest_scores ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+    }
+    
+    // Check and add game_mode column to game_leaderboard
+    $check_col = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'game_mode'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+    }
+    
+    // Create contest_history table if not exists
+    $conn->query("CREATE TABLE IF NOT EXISTS contest_history (
+        id INT(11) NOT NULL AUTO_INCREMENT,
+        game_name VARCHAR(50) NOT NULL,
+        game_mode ENUM('money', 'credits') NOT NULL,
+        prize1 INT(11) NOT NULL,
+        prize2 INT(11) NOT NULL,
+        prize3 INT(11) NOT NULL,
+        entry_fee INT(11) NOT NULL,
+        status ENUM('active', 'completed') DEFAULT 'completed',
+        started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ended_at TIMESTAMP NULL,
+        PRIMARY KEY (id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+} catch (Exception $e) {
+    // Silently handle errors - columns might already exist
+}
 
 // Handle Contest Toggle & Mode Updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -36,8 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prize3 = intval($_POST['prize3']);
         $entry_fee = intval($_POST['entry_fee']);
 
-        // Check if status is changing
-        $current = $conn->query("SELECT is_contest_active FROM games WHERE game_name = '$game_name'")->fetch_assoc();
+        // Check if status is changing (using prepared statement)
+        $check_stmt = $conn->prepare("SELECT is_contest_active FROM games WHERE game_name = ?");
+        $check_stmt->bind_param("s", $game_name);
+        $check_stmt->execute();
+        $current = $check_stmt->get_result()->fetch_assoc();
+        $check_stmt->close();
         
         $stmt = $conn->prepare("UPDATE games SET is_contest_active = ?, is_claim_active = ?, game_mode = ?, contest_first_prize = ?, contest_second_prize = ?, contest_third_prize = ?, contest_credits_required = ? WHERE game_name = ?");
         $stmt->bind_param("iisiiiis", $is_contest_active, $is_claim_active, $game_mode, $prize1, $prize2, $prize3, $entry_fee, $game_name);
@@ -48,36 +72,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $hist = $conn->prepare("INSERT INTO contest_history (game_name, game_mode, prize1, prize2, prize3, entry_fee, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
                 $hist->bind_param("ssiiii", $game_name, $game_mode, $prize1, $prize2, $prize3, $entry_fee);
                 $hist->execute();
-            } else if (!$is_contest_active && $current['is_contest_active']) {
+                $hist->close();
+            } else if (!$is_contest_active && $current && $current['is_contest_active']) {
                 // Ending contest
-                $conn->query("UPDATE contest_history SET status = 'completed', ended_at = NOW() WHERE game_name = '$game_name' AND status = 'active'");
+                $end_stmt = $conn->prepare("UPDATE contest_history SET status = 'completed', ended_at = NOW() WHERE game_name = ? AND status = 'active'");
+                $end_stmt->bind_param("s", $game_name);
+                $end_stmt->execute();
+                $end_stmt->close();
             }
 
             $message = "Mission parameters deployed successfully!";
             $admin_id = $_SESSION['admin_id'];
             $admin_user = $_SESSION['admin_username'];
             $desc = "Updated contest for $game_name. Mode: $game_mode, Entry: $entry_fee";
-            $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ($admin_id, '$admin_user', 'contest_update', '$desc', '{$_SERVER['REMOTE_ADDR']}')");
+            $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+            $log_stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES (?, ?, 'contest_update', ?, ?)");
+            $log_stmt->bind_param("isss", $admin_id, $admin_user, $desc, $ip_address);
+            $log_stmt->execute();
+            $log_stmt->close();
         } else {
-            $error = "Failed to update mission data.";
+            $error = "Failed to update mission data: " . $stmt->error;
         }
+        $stmt->close();
     }
 
     if (isset($_POST['clear_scores'])) {
         $game_name = $_POST['game_name'];
-        if ($conn->query("DELETE FROM contest_scores WHERE game_name = '$game_name'")) {
+        $clear_stmt = $conn->prepare("DELETE FROM contest_scores WHERE game_name = ?");
+        $clear_stmt->bind_param("s", $game_name);
+        if ($clear_stmt->execute()) {
             $message = "Mission combat data purged.";
         } else {
-            $error = "Failed to purge data.";
+            $error = "Failed to purge data: " . $clear_stmt->error;
         }
+        $clear_stmt->close();
     }
 }
 
 $game_name = 'earth-defender';
-$game_settings = $conn->query("SELECT * FROM games WHERE game_name = '$game_name'")->fetch_assoc();
+
+// Get game settings using prepared statement
+$game_stmt = $conn->prepare("SELECT * FROM games WHERE game_name = ?");
+$game_stmt->bind_param("s", $game_name);
+$game_stmt->execute();
+$game_result = $game_stmt->get_result();
+$game_settings = $game_result->fetch_assoc();
+$game_stmt->close();
+
+// Set defaults if game_settings is null
+if (!$game_settings) {
+    $game_settings = [
+        'is_contest_active' => 0,
+        'is_claim_active' => 0,
+        'game_mode' => 'money',
+        'contest_first_prize' => 0,
+        'contest_second_prize' => 0,
+        'contest_third_prize' => 0,
+        'contest_credits_required' => 30
+    ];
+}
 
 // Unified Scoring Logic: Sum of scores from game_leaderboard (following Admin Leaderboard logic)
-$scores_sql = "
+$scores_stmt = $conn->prepare("
     SELECT 
         u.username, 
         SUM(gl.score) as score, 
@@ -85,14 +141,20 @@ $scores_sql = "
         MAX(gl.played_at) as updated_at
     FROM game_leaderboard gl
     JOIN users u ON gl.user_id = u.id
-    WHERE gl.game_name = '$game_name' AND gl.credits_used > 0
+    WHERE gl.game_name = ? AND gl.credits_used > 0
     GROUP BY u.id, u.username
     ORDER BY score DESC
     LIMIT 20
-";
-$scores = $conn->query($scores_sql)->fetch_all(MYSQLI_ASSOC);
+");
+$scores_stmt->bind_param("s", $game_name);
+$scores_stmt->execute();
+$scores_result = $scores_stmt->get_result();
+$scores = $scores_result->fetch_all(MYSQLI_ASSOC);
+$scores_stmt->close();
 
-$history = $conn->query("SELECT * FROM contest_history ORDER BY started_at DESC LIMIT 10")->fetch_all(MYSQLI_ASSOC);
+// Get contest history
+$history_result = $conn->query("SELECT * FROM contest_history ORDER BY started_at DESC LIMIT 10");
+$history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
 
 ?>
 <!DOCTYPE html>
@@ -202,6 +264,7 @@ $history = $conn->query("SELECT * FROM contest_history ORDER BY started_at DESC 
         .rank-circle { width: 30px; height: 30px; border: 1px solid var(--primary-cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary-cyan); font-weight: bold; font-family: 'Orbitron'; font-size: 0.8rem; }
 
         .msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(0, 255, 204, 0.1); border: 1px solid #00ffcc; color: #00ffcc; font-weight: bold; }
+        .error-msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(255, 0, 110, 0.1); border: 1px solid #ff006e; color: #ff006e; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -234,7 +297,8 @@ $history = $conn->query("SELECT * FROM contest_history ORDER BY started_at DESC 
     <main class="main-content">
         <h2 class="section-title"><i class="fas fa-trophy ic-contest" style="margin-right:15px;"></i> CONTEST CONTROL</h2>
 
-        <?php if($message): ?><div class="msg"><?php echo $message; ?></div><?php endif; ?>
+        <?php if($message): ?><div class="msg"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
+        <?php if($error): ?><div class="error-msg"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
         <div class="config-card">
             <form method="POST">
@@ -255,11 +319,11 @@ $history = $conn->query("SELECT * FROM contest_history ORDER BY started_at DESC 
                 <div class="form-group" style="margin-bottom:10px;"><label>ACTIVE MISSION REWARD MODE</label></div>
                 <div class="mode-selector">
                     <input type="hidden" name="game_mode" id="game_mode_input" value="<?php echo $game_settings['game_mode'] ?: 'money'; ?>">
-                    <div class="mode-option <?php echo ($game_settings['game_mode'] ?: 'money') === 'money' ? 'active' : ''; ?>" onclick="setMode('money')">
+                    <div class="mode-option <?php echo ($game_settings['game_mode'] ?: 'money') === 'money' ? 'active' : ''; ?>" onclick="setMode('money', this)">
                         <i class="fas fa-indian-rupee-sign"></i>
                         <span>PRIZE MONEY</span>
                     </div>
-                    <div class="mode-option <?php echo $game_settings['game_mode'] === 'credits' ? 'active' : ''; ?>" onclick="setMode('credits')">
+                    <div class="mode-option <?php echo $game_settings['game_mode'] === 'credits' ? 'active' : ''; ?>" onclick="setMode('credits', this)">
                         <i class="fas fa-coins"></i>
                         <span>CREDIT WINNING</span>
                     </div>
@@ -340,11 +404,18 @@ $history = $conn->query("SELECT * FROM contest_history ORDER BY started_at DESC 
     </main>
 
     <script>
-        function setMode(mode) {
+        function setMode(mode, eventElement) {
             document.getElementById('game_mode_input').value = mode;
             document.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('active'));
-            // Use currentTarget if triggered by click, or find by mode if triggered by code
-            const target = event ? event.currentTarget : document.querySelector(`.mode-option i.fa-${mode==='money'?'indian-rupee-sign':'coins'}`).parentElement;
+            // Use eventElement if provided, or find by mode
+            let target = null;
+            if (eventElement) {
+                target = eventElement;
+            } else {
+                const iconClass = mode === 'money' ? 'fa-indian-rupee-sign' : 'fa-coins';
+                const icon = document.querySelector(`.mode-option i.fa-${iconClass}`);
+                if (icon) target = icon.parentElement;
+            }
             if(target) target.classList.add('active');
             
             const suffix = mode === 'money' ? ' (INR)' : ' (CREDITS)';
