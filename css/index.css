@@ -3567,21 +3567,32 @@ body.mobile-device .play-btn:active {
 
 /* Modal Content */
 .auth-modal {
-    background: var(--card-bg);
+    background: rgba(15, 15, 25, 0.95);
     border: 2px solid var(--primary-cyan);
-    border-radius: 15px;
-    padding: 30px;
+    border-radius: 20px;
+    padding: 50px 40px;
     width: 100%;
     max-width: 450px;
     position: relative;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3), var(--glow-cyan);
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
     animation: modalSlideIn 0.3s ease;
     margin: auto;
     max-height: 95vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overflow: hidden;
+}
+
+.auth-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple));
 }
 
 @keyframes modalSlideIn {
@@ -3597,23 +3608,24 @@ body.mobile-device .play-btn:active {
 
 .modal-header {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 40px;
 }
 
 .modal-header h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--primary-cyan);
     text-transform: uppercase;
-    letter-spacing: 3px;
+    letter-spacing: 5px;
     margin-bottom: 10px;
-    text-shadow: var(--glow-cyan);
 }
 
 .modal-header p {
-    color: rgba(0, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.5);
     font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 .close-modal {
@@ -3644,24 +3656,23 @@ body.mobile-device .play-btn:active {
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    margin-bottom: 25px;
 }
 
 .form-group label {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--primary-cyan);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--primary-purple);
     text-transform: uppercase;
     letter-spacing: 1px;
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
 }
 
 .form-group small {
@@ -3676,10 +3687,10 @@ body.mobile-device .play-btn:active {
 
 .form-group input {
     background: rgba(0, 0, 0, 0.5);
-    border: 2px solid var(--primary-cyan);
-    border-radius: 8px;
-    padding: 12px 15px;
-    color: var(--primary-cyan);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    color: white;
     font-family: 'Rajdhani', sans-serif;
     font-size: 16px; /* Prevents zoom on iOS */
     transition: all 0.3s ease;
@@ -3707,9 +3718,9 @@ body.mobile-device .play-btn:active {
 }
 
 .form-group input:focus {
-    border-color: var(--primary-purple);
-    box-shadow: 0 0 15px rgba(157, 78, 221, 0.5);
-    background: rgba(0, 0, 0, 0.7);
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .form-group input::placeholder {
@@ -3734,42 +3745,45 @@ body.mobile-device .play-btn:active {
 /* Very small devices */
 @media (max-width: 360px) {
     .auth-modal {
-        padding: 15px 12px;
+        padding: 40px 30px;
     }
     
     .modal-header h2 {
-        font-size: 1.1rem;
+        font-size: 1.5rem;
+        letter-spacing: 3px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
     }
     
     .form-group input {
-        padding: 10px;
+        padding: 12px;
         font-size: 16px;
     }
     
     .submit-btn {
-        padding: 10px 15px;
-        font-size: 0.85rem;
+        padding: 14px;
+        font-size: 0.9rem;
+        letter-spacing: 2px;
     }
 }
 
 /* Large tablets and small desktops */
 @media (min-width: 769px) and (max-width: 1024px) {
     .auth-modal {
-        max-width: 500px;
-        padding: 35px;
+        max-width: 450px;
+        padding: 50px 40px;
     }
 }
 
 /* Desktop Styles - Enhanced Login Modal */
 @media (min-width: 1024px) {
     .auth-modal {
-        max-width: 520px;
-        padding: 40px 45px;
-        border-width: 3px;
-        box-shadow: 
-            0 15px 50px rgba(0, 255, 255, 0.4),
-            0 0 60px rgba(157, 78, 221, 0.3),
-            inset 0 0 30px rgba(0, 255, 255, 0.05);
+        max-width: 450px;
+        padding: 50px 40px;
+        border-width: 2px;
+        box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
         animation: modalSlideInDesktop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     
@@ -3785,39 +3799,21 @@ body.mobile-device .play-btn:active {
     }
     
     .modal-header {
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid rgba(0, 255, 255, 0.2);
-        position: relative;
-    }
-    
-    .modal-header::after {
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80px;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+        margin-bottom: 40px;
     }
     
     .modal-header h2 {
-        font-size: 2.5rem;
-        letter-spacing: 4px;
-        margin-bottom: 12px;
-        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: none;
-        position: relative;
+        font-size: 1.8rem;
+        letter-spacing: 5px;
+        margin-bottom: 10px;
+        color: var(--primary-cyan);
     }
     
     .modal-header p {
-        font-size: 1rem;
-        color: rgba(0, 255, 255, 0.8);
-        letter-spacing: 1px;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 2px;
     }
     
     .close-modal {
@@ -3836,102 +3832,53 @@ body.mobile-device .play-btn:active {
         transform: rotate(90deg) scale(1.1);
     }
     
-    .auth-form {
-        gap: 25px;
-    }
     
     .form-group {
-        gap: 10px;
-        position: relative;
+        margin-bottom: 25px;
     }
     
     .form-group label {
-        font-size: 1rem;
-        letter-spacing: 1.5px;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .form-group label::before {
-        content: '▸';
-        color: var(--primary-purple);
         font-size: 0.8rem;
-        transition: transform 0.3s ease;
-    }
-    
-    .form-group:focus-within label::before {
-        transform: translateX(5px);
-        color: var(--primary-cyan);
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        color: var(--primary-purple);
     }
     
     .form-group input {
-        padding: 14px 18px;
+        padding: 15px;
         font-size: 1rem;
-        border-width: 2px;
+        border-width: 1px;
+        border-color: rgba(0, 255, 255, 0.3);
         border-radius: 10px;
-        background: rgba(0, 0, 0, 0.6);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .form-group input:hover {
-        background: rgba(0, 0, 0, 0.7);
-        border-color: rgba(0, 255, 255, 0.6);
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        transition: all 0.3s ease;
     }
     
     .form-group input:focus {
-        border-color: var(--primary-purple);
-        box-shadow: 
-            0 0 20px rgba(157, 78, 221, 0.6),
-            inset 0 0 20px rgba(157, 78, 221, 0.1);
-        background: rgba(0, 0, 0, 0.8);
-        transform: translateY(-2px);
+        border-color: var(--primary-cyan);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.5);
     }
     
     .form-group input::placeholder {
-        color: rgba(0, 255, 255, 0.5);
-        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.4);
     }
     
     .submit-btn {
-        padding: 16px 25px;
-        font-size: 1.1rem;
+        padding: 16px;
+        font-size: 1rem;
         letter-spacing: 3px;
         border-radius: 10px;
-        margin-top: 15px;
-        position: relative;
-        overflow: hidden;
+        margin-top: 10px;
         background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
-        box-shadow: 0 5px 25px rgba(0, 255, 255, 0.4);
-    }
-    
-    .submit-btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.2);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-    
-    .submit-btn:hover::before {
-        width: 300px;
-        height: 300px;
+        width: 100%;
     }
     
     .submit-btn:hover {
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 8px 30px rgba(0, 255, 255, 0.6);
-        letter-spacing: 4px;
-    }
-    
-    .submit-btn:active {
-        transform: translateY(-1px) scale(1);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+        filter: brightness(1.1);
     }
     
     .switch-form {
@@ -3971,26 +3918,26 @@ body.mobile-device .play-btn:active {
         text-shadow: 0 0 15px rgba(157, 78, 221, 0.6);
     }
     
-    .error-message,
-    .success-message {
-        padding: 14px 18px;
-        font-size: 0.95rem;
-        border-radius: 8px;
-        border-width: 2px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-    
     .error-message {
-        background: rgba(255, 0, 110, 0.25);
-        border-color: var(--primary-pink);
-        box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+        background: rgba(255, 0, 110, 0.1);
+        border: 1px solid #ff006e;
+        color: #ff006e;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 25px;
     }
     
     .success-message {
-        background: rgba(0, 255, 0, 0.25);
-        border-color: #00ff00;
-        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid #00ff00;
+        color: #00ff00;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 25px;
     }
     
     .modal-overlay {
@@ -4028,14 +3975,16 @@ body.mobile-device .play-btn:active {
 }
 
 .error-message {
-    background: rgba(255, 0, 110, 0.2);
-    border: 1px solid var(--primary-pink);
-    color: var(--primary-pink);
-    padding: 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
+    background: rgba(255, 0, 110, 0.1);
+    border: 1px solid #ff006e;
+    color: #ff006e;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
     display: none;
     text-align: center;
+    margin-bottom: 25px;
 }
 
 .error-message.show {
@@ -4068,13 +4017,15 @@ body.mobile-device .play-btn:active {
     background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
     border: none;
     color: white;
-    padding: 15px;
-    border-radius: 8px;
+    padding: 16px;
+    border-radius: 10px;
     font-family: 'Orbitron', sans-serif;
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    width: 100%;
+    margin-top: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
     margin-top: 10px;
@@ -4085,8 +4036,9 @@ body.mobile-device .play-btn:active {
 }
 
 .submit-btn:hover {
-    transform: scale(1.02);
-    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+    filter: brightness(1.1);
 }
 
 .submit-btn:active {
@@ -4162,11 +4114,10 @@ body.mobile-device .play-btn:active {
     }
 
     .auth-form {
-        gap: 18px;
     }
 
     .form-group {
-        gap: 6px;
+        margin-bottom: 20px;
     }
     
     .form-group label {
@@ -4238,7 +4189,7 @@ body.mobile-device .play-btn:active {
     }
     
     .form-group {
-        gap: 5px;
+        margin-bottom: 20px;
     }
     
     .form-group input {
@@ -4277,17 +4228,16 @@ body.mobile-device .play-btn:active {
     }
 
     .auth-form {
-        gap: 16px;
     }
 
     .form-group {
-        gap: 5px;
+        margin-bottom: 20px;
     }
     
     .form-group label {
         font-size: clamp(0.75rem, 3.5vw, 0.85rem);
         letter-spacing: 0.5px;
-        margin-bottom: 4px;
+        margin-bottom: 10px;
     }
 
     .form-group input {
