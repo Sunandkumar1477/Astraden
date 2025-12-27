@@ -4464,6 +4464,11 @@ body.mobile-device .play-btn:active {
         display: none !important;
     }
     
+    /* Hide status message text in Earth Defender game section on mobile */
+    .game-card[data-game="earth-defender"] .game-timing-badge {
+        display: none !important;
+    }
+    
     /* Game cards with action button style - optimized - no borders */
     .game-card {
         background: var(--card-bg);
