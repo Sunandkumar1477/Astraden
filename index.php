@@ -94,8 +94,6 @@ session_start();
                     </div>
                     <!-- Mobile Credits Dropdown -->
                     <div class="mobile-credits-dropdown" id="mobileCreditsDropdown" style="display: none;">
-                        <!-- Close Button - Right Side -->
-                        <button class="mobile-credits-close-btn" onclick="toggleMobileCreditsDropdown(event)" title="Close">×</button>
                         <!-- Credit Timing Notice -->
                         <div id="mobileCreditTimingNotice" class="credit-timing-notice" style="display: none;">
                             <div class="timing-notice-content">
@@ -1737,19 +1735,23 @@ session_start();
                     if (data.success && data.packages && data.packages.length > 0) {
                         container.innerHTML = data.packages.map((pkg, index) => {
                             const isPopular = index === 0;
+                            // Use credit_amount if available, otherwise use credits
+                            const creditAmount = pkg.credit_amount !== undefined ? pkg.credit_amount : (pkg.credits !== undefined ? pkg.credits : 0);
+                            const packagePrice = pkg.price !== undefined ? pkg.price : 0;
                             return `
-                                <div class="credits-option ${isPopular ? 'selected' : ''}" onclick="selectMobileCreditsOption(event, ${pkg.credits}, ${pkg.price})">
+                                <div class="credits-option ${isPopular ? 'selected' : ''}" onclick="selectMobileCreditsOption(event, ${creditAmount}, ${packagePrice})">
                                     ${isPopular ? '<span class="popular-badge">Popular</span>' : ''}
-                                    <div class="credits-option-title">${pkg.credits} Credits</div>
-                                    <div class="credits-option-price">₹${pkg.price}</div>
+                                    <div class="credits-option-title">${creditAmount.toLocaleString()} Credits</div>
+                                    <div class="credits-option-price">= ₹${Math.round(packagePrice)}/-</div>
                                 </div>
                             `;
                         }).join('');
                         
                         // Set first package as selected by default
                         if (data.packages.length > 0) {
-                            selectedCreditsAmount = data.packages[0].credits;
-                            selectedCreditsPrice = data.packages[0].price;
+                            const firstPkg = data.packages[0];
+                            selectedCreditsAmount = firstPkg.credit_amount !== undefined ? firstPkg.credit_amount : (firstPkg.credits !== undefined ? firstPkg.credits : 0);
+                            selectedCreditsPrice = firstPkg.price !== undefined ? firstPkg.price : 0;
                             document.getElementById('mobileAddCreditsBtn').disabled = false;
                         }
                     } else {
