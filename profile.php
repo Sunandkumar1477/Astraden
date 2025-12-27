@@ -53,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($stmt->execute()) {
         $message = 'Profile updated successfully!';
-        // Redirect to view profile after 2 seconds
         header('refresh:2;url=view_profile.php');
     } else {
         $error = 'Failed to update profile. Please try again.';
@@ -61,547 +60,410 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
 }
 
-// Get user profile
+// Get user data
 $profile_stmt = $conn->prepare("SELECT * FROM user_profile WHERE user_id = ?");
 $profile_stmt->bind_param("i", $user_id);
 $profile_stmt->execute();
-$profile_result = $profile_stmt->get_result();
-$profile = $profile_result->fetch_assoc();
+$profile = $profile_stmt->get_result()->fetch_assoc();
 $profile_stmt->close();
 
-// Get user info
 $user_stmt = $conn->prepare("SELECT username, mobile_number FROM users WHERE id = ?");
 $user_stmt->bind_param("i", $user_id);
 $user_stmt->execute();
-$user_result = $user_stmt->get_result();
-$user = $user_result->fetch_assoc();
+$user = $user_stmt->get_result()->fetch_assoc();
 $user_stmt->close();
 
 $conn->close();
 
-// Indian states list
-$indian_states = [
-    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
-    'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
-    'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
-    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
-    'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu and Kashmir',
-    'Ladakh', 'Puducherry', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli',
-    'Daman and Diu', 'Lakshadweep'
-];
+$indian_states = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Puducherry'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - Space Games Hub</title>
-    <link rel="icon" type="image/svg+xml" href="logo.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Edit Profile - Space Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --cyan: #00ffff;
+            --purple: #9d4edd;
+            --gold: #FFD700;
+            --bg-dark: #050508;
+            --card-bg: rgba(15, 15, 25, 0.9);
+            --glow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
+
         body {
             font-family: 'Rajdhani', sans-serif;
-            background: #0a0a0f;
-            color: #00ffff;
+            background: var(--bg-dark);
+            color: #fff;
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #050508 100%);
+            background-attachment: fixed;
         }
+
+        /* --- HEADER --- */
         .header {
-            max-width: 1200px;
-            margin: 0 auto 30px;
+            max-width: 1100px;
+            margin: 10px auto 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            background: rgba(15, 15, 25, 0.8);
-            border: 2px solid #00ffff;
-            border-radius: 10px;
+            padding: 15px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--cyan);
+            border-radius: 12px;
+            box-shadow: var(--glow);
         }
+
         .header h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
+            font-size: clamp(1rem, 4vw, 1.4rem);
+            color: var(--cyan);
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
         }
+
         .back-btn {
-            background: rgba(0, 255, 255, 0.2);
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            padding: 10px 20px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 8px 15px;
             border-radius: 8px;
             text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
+            font-weight: 700;
+            font-size: 0.8rem;
+            transition: 0.3s;
         }
-        .back-btn:hover {
-            background: rgba(0, 255, 255, 0.4);
-        }
-        .container {
-            max-width: 1200px;
+
+        /* --- LAYOUT --- */
+        .main-wrapper {
+            max-width: 1100px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 30px;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            padding-bottom: 40px;
         }
-        .profile-card {
-            background: rgba(15, 15, 25, 0.8);
-            border: 2px solid #00ffff;
+
+        /* --- LEFT SIDEBAR (Preview) --- */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 255, 255, 0.2);
             border-radius: 15px;
-            padding: 30px;
+            padding: 25px;
             text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .profile-icon-container {
-            position: relative;
-            margin-bottom: 20px;
-        }
+
         .profile-icon-display {
-            width: 150px;
-            height: 150px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
-            border: 3px solid #00ffff;
-            margin: 0 auto;
+            border: 3px solid var(--cyan);
+            margin: 0 auto 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4rem;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            position: relative;
-            overflow: hidden;
+            font-size: 4.5rem;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            background: #111;
         }
-        .icon-selector {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 8px;
-            margin-top: 10px;
-            padding: 8px;
-            background: transparent;
-            border-radius: 0;
-            border: none;
-            justify-content: flex-start;
-            align-items: center;
-        }
-        .icon-option {
-            flex: 0 0 auto;
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
-            min-height: 40px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            transition: all 0.3s;
-            background: transparent;
-            position: relative;
-            overflow: visible;
-            user-select: none;
-            -webkit-user-select: none;
-            padding: 0;
-            margin: 0;
-        }
-        .icon-option > * {
-            position: relative;
-            display: block;
-            line-height: 1;
-        }
-        .icon-option:hover {
-            transform: scale(1.2);
-            opacity: 0.8;
-        }
-        .icon-option input[type="radio"] {
-            display: none;
-        }
-        .icon-option.selected {
-            transform: scale(1.15);
-            opacity: 1;
-            filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.8));
-        }
-        .icon-label {
-            display: none;
-        }
-        /* Remove all backgrounds from icon selector options - show only icons */
-        .icon-selector .icon-boy1,
-        .icon-selector .icon-girl1,
-        .icon-selector .icon-beard,
-        .icon-selector .icon-bald,
-        .icon-selector .icon-fashion,
-        .icon-selector .icon-specs {
-            background: transparent !important;
-        }
-        /* Keep gradients only for profile display */
-        .profile-icon-display.icon-boy1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .profile-icon-display.icon-girl1 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .profile-icon-display.icon-beard { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .profile-icon-display.icon-bald { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-        .profile-icon-display.icon-fashion { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
-        .profile-icon-display.icon-specs { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
-        .credits-display {
-            margin-top: 20px;
+
+        /* Icon Gradients */
+        .icon-boy1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .icon-girl1 { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .icon-beard { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .icon-bald { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .icon-fashion { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+        .icon-specs { background: linear-gradient(135deg, #30cfd0, #330867); }
+
+        .credits-box {
+            border: 1px solid var(--gold);
+            background: rgba(255, 215, 0, 0.05);
             padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
             border-radius: 10px;
-            border: 2px solid;
+            margin: 15px 0;
         }
-        .credits-label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            color: rgba(0, 255, 255, 0.7);
-        }
+
         .credits-value {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
+            font-size: 1.8rem;
+            color: var(--gold);
             font-weight: 900;
         }
-        .form-section {
-            background: rgba(15, 15, 25, 0.8);
-            border: 2px solid #00ffff;
+
+        /* --- RIGHT CONTENT (Form) --- */
+        .content-area {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 255, 255, 0.2);
             border-radius: 15px;
-            padding: 30px;
+            padding: clamp(20px, 5vw, 35px);
         }
-        .form-section h2 {
+
+        .content-area h2 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             margin-bottom: 25px;
+            color: var(--purple);
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 2px solid #00ffff;
+            border-bottom: 1px solid rgba(157, 78, 221, 0.3);
             padding-bottom: 10px;
         }
+
         .form-group {
             margin-bottom: 20px;
         }
-        .form-group:has(.icon-selector) {
-            margin-bottom: 15px;
-        }
+
         .form-group label {
             display: block;
-            color: #00ffff;
-            margin-bottom: 8px;
-            font-weight: 600;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            font-size: 0.9rem;
+            color: var(--cyan);
             letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 700;
         }
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
+
+        .form-control {
             width: 100%;
-            padding: 12px 15px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #00ffff;
-            border-radius: 8px;
-            color: #00ffff;
-            font-family: 'Rajdhani', sans-serif;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-family: inherit;
             font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .form-control:focus {
             outline: none;
-            transition: all 0.3s;
+            border-color: var(--purple);
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.4);
         }
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: #9d4edd;
-            box-shadow: 0 0 15px rgba(157, 78, 221, 0.5);
-        }
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-        .color-picker-group {
+
+        /* --- ICON SELECTOR --- */
+        .icon-grid {
             display: flex;
-            gap: 15px;
-            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 12px;
         }
-        .color-picker {
-            width: 60px;
-            height: 60px;
-            border: 2px solid #00ffff;
-            border-radius: 8px;
+
+        .icon-opt {
             cursor: pointer;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            transition: 0.2s;
         }
-        .color-preview {
-            flex: 1;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #00ffff;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 600;
+
+        .icon-opt input { display: none; }
+        .icon-opt:hover { background: rgba(0, 255, 255, 0.1); transform: scale(1.1); }
+        .icon-opt.selected { 
+            border-color: var(--cyan); 
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 10px var(--cyan);
         }
+
         .submit-btn {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #00ffff, #9d4edd);
+            padding: 16px;
+            background: linear-gradient(90deg, var(--cyan), var(--purple));
             border: none;
-            border-radius: 8px;
-            color: white;
+            border-radius: 10px;
+            color: #fff;
             font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 2px;
             cursor: pointer;
-            transition: all 0.3s;
             margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .submit-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
-        }
-        .message {
-            background: rgba(0, 255, 0, 0.2);
-            border: 1px solid #00ff00;
-            color: #00ff00;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .error {
-            background: rgba(255, 0, 0, 0.2);
-            border: 1px solid #ff0000;
-            color: #ff0000;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .user-info {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 255, 255, 0.2);
-        }
-        .user-info-item {
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-        .user-info-item strong {
-            color: #9d4edd;
-        }
-        @media (max-width: 768px) {
-            .container {
+
+        .submit-btn:active { transform: scale(0.98); }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 850px) {
+            .main-wrapper {
                 grid-template-columns: 1fr;
             }
-            .icon-selector {
-                gap: 6px;
-                padding: 6px;
-                margin-top: 8px;
-            }
-            .icon-option {
-                width: 38px;
-                height: 38px;
-                min-width: 38px;
-                min-height: 38px;
-                font-size: 1.8rem;
-            }
-            .profile-icon-display {
-                width: 120px;
-                height: 120px;
-                font-size: 3rem;
+            .sidebar {
+                order: -1;
             }
         }
-        @media (max-width: 480px) {
-            .icon-selector {
-                gap: 5px;
-                padding: 5px;
-                margin-top: 6px;
-            }
-            .icon-option {
-                width: 36px;
-                height: 36px;
-                min-width: 36px;
-                min-height: 36px;
-                font-size: 1.6rem;
-            }
+
+        @media (max-width: 500px) {
+            body { padding: 8px; }
+            .header { padding: 10px 15px; margin-bottom: 15px; }
+            .content-area { padding: 20px 15px; }
+            .profile-icon-display { width: 100px; height: 100px; font-size: 3rem; }
+            .icon-opt { width: 44px; height: 44px; font-size: 1.5rem; }
         }
+
+        /* Success/Error Alerts */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .alert-success { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
+        .alert-error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🌍 My Profile</h1>
-        <a href="index.php" class="back-btn">← Back to Games</a>
+        <h1>🚀 Space Hub</h1>
+        <a href="index.php" class="back-btn">Exit</a>
     </div>
 
-    <div class="container">
-        <!-- Profile Display Card -->
-        <div class="profile-card">
-            <div class="profile-icon-container">
+    <div class="main-wrapper">
+        <!-- Sidebar: Preview -->
+        <div class="sidebar">
+            <div class="card">
                 <?php 
                 $selected_icon = $profile['profile_photo'] ?? '';
-                $icon_classes = [
-                    'boy1' => '👨',
-                    'girl1' => '👩',
-                    'beard' => '🧔',
-                    'bald' => '👨‍🦲',
-                    'fashion' => '👸',
-                    'specs' => '👨‍💼'
+                $icon_map = [
+                    'boy1' => '👨', 'girl1' => '👩', 'beard' => '🧔', 
+                    'bald' => '👨‍🦲', 'fashion' => '👸', 'specs' => '👨‍💼'
                 ];
-                $icon_class = $selected_icon ? 'icon-' . $selected_icon : '';
-                $icon_emoji = $icon_classes[$selected_icon] ?? '🌍';
+                $current_icon_emoji = $icon_map[$selected_icon] ?? '🌍';
+                $current_icon_class = $selected_icon ? 'icon-' . $selected_icon : '';
                 ?>
-                <div id="profileIconDisplay" class="profile-icon-display <?php echo htmlspecialchars($icon_class); ?>">
-                    <?php echo $icon_emoji; ?>
+                <div id="previewIcon" class="profile-icon-display <?php echo $current_icon_class; ?>">
+                    <?php echo $current_icon_emoji; ?>
                 </div>
-            </div>
-            
-            <h2 style="font-family: 'Orbitron', sans-serif; margin-top: 20px; font-size: 1.5rem;">
-                <?php echo htmlspecialchars($profile['full_name'] ?? $_SESSION['username'] ?? 'User'); ?>
-            </h2>
-            
-            <div class="credits-display" style="border-color: #FFD700;">
-                <div class="credits-label">Credits</div>
-                <div class="credits-value" style="color: #FFD700;">
-                    <?php echo number_format($profile['credits'] ?? 0); ?>
+                
+                <h3 id="previewName" style="font-family:'Orbitron'; font-size: 1.2rem; margin-bottom: 5px;">
+                    <?php echo htmlspecialchars($profile['full_name'] ?? 'Recruit'); ?>
+                </h3>
+                <p style="font-size:0.8rem; color:var(--purple); opacity:0.8; margin-bottom:15px;">
+                    @<?php echo htmlspecialchars($user['username']); ?>
+                </p>
+
+                <div class="credits-box">
+                    <p style="font-size:0.7rem; text-transform:uppercase; color:var(--gold);">Stellar Credits</p>
+                    <div class="credits-value"><?php echo number_format($profile['credits'] ?? 0); ?></div>
                 </div>
-            </div>
-            
-            <div class="user-info">
-                <div class="user-info-item"><strong>Username:</strong> <?php echo htmlspecialchars($user['username']); ?></div>
-                <div class="user-info-item"><strong>Mobile:</strong> <?php echo htmlspecialchars($user['mobile_number']); ?></div>
-                <?php if ($profile && $profile['state']): ?>
-                    <div class="user-info-item"><strong>State:</strong> <?php echo htmlspecialchars($profile['state']); ?></div>
-                <?php endif; ?>
+
+                <div style="text-align: left; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                    <p><strong>Mobile:</strong> <?php echo htmlspecialchars($user['mobile_number']); ?></p>
+                    <p><strong>Region:</strong> <?php echo htmlspecialchars($profile['state'] ?? 'Unmapped'); ?></p>
+                </div>
             </div>
         </div>
 
-        <!-- Profile Form -->
-        <div class="form-section">
-            <h2>Edit Profile</h2>
-            
+        <!-- Main Form -->
+        <div class="content-area">
+            <h2>System Profile Sync</h2>
+
             <?php if ($message): ?>
-                <div class="message"><?php echo htmlspecialchars($message); ?></div>
+                <div class="alert alert-success"><?php echo $message; ?></div>
             <?php endif; ?>
-            
             <?php if ($error): ?>
-                <div class="error"><?php echo htmlspecialchars($error); ?></div>
+                <div class="alert alert-error"><?php echo $error; ?></div>
             <?php endif; ?>
-            
+
             <form method="POST">
                 <div class="form-group">
-                    <label for="full_name">Full Name</label>
-                    <input type="text" id="full_name" name="full_name" value="<?php echo htmlspecialchars($profile['full_name'] ?? ''); ?>" placeholder="Enter your full name">
+                    <label>Full Identity Name</label>
+                    <input type="text" name="full_name" class="form-control" 
+                           value="<?php echo htmlspecialchars($profile['full_name'] ?? ''); ?>" 
+                           placeholder="Enter your legal star-name" onkeyup="syncName(this.value)">
                 </div>
-                
+
                 <div class="form-group">
-                    <label>Choose Profile Icon</label>
-                    <div class="icon-selector">
-                        <!-- Boy -->
-                        <label class="icon-option icon-boy1 <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'boy1') ? 'selected' : ''; ?>">
-                            <input type="radio" name="profile_icon" value="boy1" <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'boy1') ? 'checked' : ''; ?>>
-                            <span style="display: block; font-size: inherit; line-height: 1;">👨</span>
-                        </label>
-                        <!-- Girl -->
-                        <label class="icon-option icon-girl1 <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'girl1') ? 'selected' : ''; ?>">
-                            <input type="radio" name="profile_icon" value="girl1" <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'girl1') ? 'checked' : ''; ?>>
-                            <span style="display: block; font-size: inherit; line-height: 1;">👩</span>
-                        </label>
-                        <!-- Beard Person -->
-                        <label class="icon-option icon-beard <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'beard') ? 'selected' : ''; ?>">
-                            <input type="radio" name="profile_icon" value="beard" <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'beard') ? 'checked' : ''; ?>>
-                            <span style="display: block; font-size: inherit; line-height: 1;">🧔</span>
-                        </label>
-                        <!-- Bald Person -->
-                        <label class="icon-option icon-bald <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'bald') ? 'selected' : ''; ?>">
-                            <input type="radio" name="profile_icon" value="bald" <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'bald') ? 'checked' : ''; ?>>
-                            <span style="display: block; font-size: inherit; line-height: 1;">👨‍🦲</span>
-                        </label>
-                        <!-- Fashion Girl -->
-                        <label class="icon-option icon-fashion <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'fashion') ? 'selected' : ''; ?>">
-                            <input type="radio" name="profile_icon" value="fashion" <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'fashion') ? 'checked' : ''; ?>>
-                            <span style="display: block; font-size: inherit; line-height: 1;">👸</span>
-                        </label>
-                        <!-- Person with Specs -->
-                        <label class="icon-option icon-specs <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'specs') ? 'selected' : ''; ?>">
-                            <input type="radio" name="profile_icon" value="specs" <?php echo (isset($profile['profile_photo']) && $profile['profile_photo'] === 'specs') ? 'checked' : ''; ?>>
-                            <span style="display: block; font-size: inherit; line-height: 1;">👨‍💼</span>
-                        </label>
+                    <label>Avatar Hologram</label>
+                    <div class="icon-grid">
+                        <?php foreach($icon_map as $key => $emoji): ?>
+                            <label class="icon-opt <?php echo ($selected_icon === $key) ? 'selected' : ''; ?>" 
+                                   onclick="updatePreview('<?php echo $key; ?>', '<?php echo $emoji; ?>')">
+                                <input type="radio" name="profile_icon" value="<?php echo $key; ?>" 
+                                       <?php echo ($selected_icon === $key) ? 'checked' : ''; ?>>
+                                <span><?php echo $emoji; ?></span>
+                            </label>
+                        <?php endforeach; ?>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="phone_pay">Phone Pay Number</label>
-                    <input type="text" id="phone_pay" name="phone_pay" value="<?php echo htmlspecialchars($profile['phone_pay_number'] ?? ''); ?>" placeholder="Enter Phone Pay number">
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>PhonePay ID</label>
+                        <input type="text" name="phone_pay" class="form-control" value="<?php echo htmlspecialchars($profile['phone_pay_number'] ?? ''); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>G-Pay ID</label>
+                        <input type="text" name="google_pay" class="form-control" value="<?php echo htmlspecialchars($profile['google_pay_number'] ?? ''); ?>">
+                    </div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="google_pay">Google Pay Number</label>
-                    <input type="text" id="google_pay" name="google_pay" value="<?php echo htmlspecialchars($profile['google_pay_number'] ?? ''); ?>" placeholder="Enter Google Pay number">
-                </div>
-                
-                <div class="form-group">
-                    <label for="state">State</label>
-                    <select id="state" name="state">
-                        <option value="">Select State</option>
-                        <?php foreach ($indian_states as $state_option): ?>
-                            <option value="<?php echo htmlspecialchars($state_option); ?>" <?php echo (isset($profile['state']) && $profile['state'] === $state_option) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($state_option); ?>
+                    <label>Sector / State</label>
+                    <select name="state" class="form-control">
+                        <option value="">Select Territory</option>
+                        <?php foreach ($indian_states as $s): ?>
+                            <option value="<?php echo $s; ?>" <?php echo (isset($profile['state']) && $profile['state'] === $s) ? 'selected' : ''; ?>>
+                                <?php echo $s; ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="bio">Bio</label>
-                    <textarea id="bio" name="bio" placeholder="Tell us about yourself..."><?php echo htmlspecialchars($profile['bio'] ?? ''); ?></textarea>
+                    <label>Bio / Transmission</label>
+                    <textarea name="bio" class="form-control" style="min-height:80px;"><?php echo htmlspecialchars($profile['bio'] ?? ''); ?></textarea>
                 </div>
-                
-                <button type="submit" class="submit-btn">Save Profile</button>
+
+                <button type="submit" class="submit-btn">Authorize Profile Update</button>
             </form>
         </div>
     </div>
 
     <script>
-        // Icon mapping
-        const iconMap = {
-            'boy1': { emoji: '👨', class: 'icon-boy1' },
-            'girl1': { emoji: '👩', class: 'icon-girl1' },
-            'beard': { emoji: '🧔', class: 'icon-beard' },
-            'bald': { emoji: '👨‍🦲', class: 'icon-bald' },
-            'fashion': { emoji: '👸', class: 'icon-fashion' },
-            'specs': { emoji: '👨‍💼', class: 'icon-specs' }
-        };
-        
-        // Icon selection handler
-        const profileIconDisplay = document.getElementById('profileIconDisplay');
-        document.querySelectorAll('.icon-option input[type="radio"]').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                // Update selected state
-                document.querySelectorAll('.icon-option').forEach(function(option) {
-                    option.classList.remove('selected');
-                });
-                if (this.checked) {
-                    this.closest('.icon-option').classList.add('selected');
-                    
-                    // Update profile display icon
-                    const iconValue = this.value;
-                    if (iconMap[iconValue]) {
-                        // Remove all icon classes
-                        profileIconDisplay.className = 'profile-icon-display';
-                        // Add new icon class
-                        profileIconDisplay.classList.add(iconMap[iconValue].class);
-                        // Update emoji
-                        profileIconDisplay.textContent = iconMap[iconValue].emoji;
-                    }
-                }
-            });
-        });
-        
-        // Prevent form resubmission on page refresh
-        if ( window.history.replaceState )
-        {
-            window.history.replaceState( null, null, window.location.href);
+        function updatePreview(iconKey, emoji) {
+            const display = document.getElementById('previewIcon');
+            // Reset classes
+            display.className = 'profile-icon-display icon-' + iconKey;
+            display.textContent = emoji;
+
+            // Highlight selected option
+            document.querySelectorAll('.icon-opt').forEach(opt => opt.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        function syncName(val) {
+            document.getElementById('previewName').innerText = val || 'Recruit';
+        }
+
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
         }
     </script>
 </body>
