@@ -560,7 +560,7 @@ session_start();
     <!-- Claim Credits Modal -->
     <div class="modal-overlay" id="claimCreditsModal">
         <div class="claim-modal">
-            <button class="close-modal" onclick="closeModal('claimCredits')">&times;</button>
+            <button class="close-modal claim-close-modal" onclick="closeModal('claimCredits')">&times;</button>
             <h3>Claim Credits</h3>
             <form id="claimCreditsForm" onsubmit="handleClaimCredits(event)">
                 <div class="error-message" id="claimError"></div>

@@ -3209,6 +3209,13 @@ body.mobile-device .play-btn:active {
     left: 15px !important;
 }
 
+/* Claim Credits Modal Close Button - Position on Left Side */
+.claim-modal .close-modal,
+.claim-close-modal {
+    right: auto !important;
+    left: 15px !important;
+}
+
 /* Verification Info */
 .verification-info {
     margin-top: 20px;
@@ -4172,6 +4179,13 @@ body.mobile-device .play-btn:active {
         right: auto !important;
         left: 12px !important;
     }
+    
+    /* Keep Claim Credits modal close button on left side */
+    .claim-modal .close-modal,
+    .claim-close-modal {
+        right: auto !important;
+        left: 12px !important;
+    }
 
     .submit-btn {
         padding: 16px;
@@ -4313,6 +4327,13 @@ body.mobile-device .play-btn:active {
     /* Keep QR modal close button on left side */
     .qr-modal .close-modal,
     .qr-close-modal {
+        right: auto !important;
+        left: 10px !important;
+    }
+    
+    /* Keep Claim Credits modal close button on left side */
+    .claim-modal .close-modal,
+    .claim-close-modal {
         right: auto !important;
         left: 10px !important;
     }
