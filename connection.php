@@ -58,7 +58,7 @@ if (!$isLoggedIn && isset($_COOKIE['remember_token']) && isset($_COOKIE['user_id
         $table_check = $conn->query("SHOW TABLES LIKE 'user_tokens'");
         if ($table_check && $table_check->num_rows > 0) {
             // Verify the token in database
-            $token_query = "SELECT u.id, u.name, u.email, ut.expires_at 
+            $token_query = "SELECT u.id, u.username, u.mobile_number, u.name, u.email, ut.expires_at 
                             FROM users u 
                             JOIN user_tokens ut ON u.id = ut.user_id 
                             WHERE ut.token = ? AND ut.user_id = ? AND ut.expires_at > NOW()";
@@ -73,6 +73,12 @@ if (!$isLoggedIn && isset($_COOKIE['remember_token']) && isset($_COOKIE['user_id
                     
                     // Restore session
                     $_SESSION['user_id'] = $user_data['id'];
+                    if (isset($user_data['username'])) {
+                        $_SESSION['username'] = $user_data['username'];
+                    }
+                    if (isset($user_data['mobile_number'])) {
+                        $_SESSION['mobile'] = $user_data['mobile_number'];
+                    }
                     if (isset($user_data['name'])) {
                         $_SESSION['user_name'] = $user_data['name'];
                     }

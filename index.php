@@ -2043,7 +2043,18 @@ session_start();
         // Initialize FAB on load
         window.addEventListener('load', function() {
             makeFABDraggable();
+            // Check user session on page load
+            checkSession();
         });
+        
+        // Also check session immediately if DOM is already loaded
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(checkSession, 100);
+        } else {
+            document.addEventListener('DOMContentLoaded', function() {
+                checkSession();
+            });
+        }
         
         // Close FAB menu when clicking outside
         document.addEventListener('click', function(event) {
