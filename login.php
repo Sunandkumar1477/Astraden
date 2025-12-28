@@ -9,8 +9,18 @@ ini_set('display_errors', 0);
 session_start();
 require_once 'connection.php';
 
+// Check database connection
+if (!$conn || $conn->connect_error) {
+    ob_end_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Database connection failed. Please try again later.']);
+    exit;
+}
+
 // Clear any output buffer
-ob_clean();
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
 
 header('Content-Type: application/json');
 
@@ -61,8 +71,20 @@ $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 
 // Check user (can login with username or mobile number)
 $stmt = $conn->prepare("SELECT id, username, mobile_number, password FROM users WHERE username = ? OR mobile_number = ?");
+if (!$stmt) {
+    ob_end_clean();
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
+    exit;
+}
+
 $stmt->bind_param("ss", $username, $username);
-$stmt->execute();
+if (!$stmt->execute()) {
+    ob_end_clean();
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $stmt->error]);
+    $stmt->close();
+    exit;
+}
+
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
@@ -189,9 +211,11 @@ if ($has_session_column && !$force_login) {
 
 // Update last login
 $update_stmt = $conn->prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?");
-$update_stmt->bind_param("i", $user['id']);
-$update_stmt->execute();
-$update_stmt->close();
+if ($update_stmt) {
+    $update_stmt->bind_param("i", $user['id']);
+    $update_stmt->execute();
+    $update_stmt->close();
+}
 
 // Generate unique session token
 $session_token = bin2hex(random_bytes(32)); // 64 character token
@@ -259,7 +283,16 @@ try {
 }
 
 // Ensure we output valid JSON
-ob_end_clean();
+// Clean all output buffers
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
+
+// Set proper headers
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, must-revalidate');
+header('X-Content-Type-Options: nosniff');
+
 try {
     $response = [
         'success' => true,
@@ -271,16 +304,18 @@ try {
     ];
     
     // Output JSON response
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 } catch (Exception $e) {
     // If anything fails, send error response
     echo json_encode([
         'success' => false,
         'message' => 'Login failed. Please try again.'
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }
 
-$stmt->close();
+if (isset($stmt)) {
+    $stmt->close();
+}
 if (isset($conn)) {
     $conn->close();
 }

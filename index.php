@@ -1824,33 +1824,51 @@ session_start();
             // Send request
             fetch('login.php', {
                 method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                // Check content type
+                const contentType = response.headers.get('Content-Type') || '';
+                if (!contentType.includes('application/json')) {
+                    return response.text().then(text => {
+                        console.error('Non-JSON response:', text.substring(0, 200));
+                        throw new Error('Server returned invalid response format');
+                    });
                 }
-                return response.text().then(text => {
-                    try {
-                        return JSON.parse(text);
-                    } catch (e) {
-                        console.error('Invalid JSON response:', text);
-                        throw new Error('Invalid response from server');
-                    }
-                });
+                
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Network response was not ok');
+                    });
+                }
+                
+                return response.json();
             })
             .then(data => {
                 if (data.success) {
-                    successEl.textContent = data.message;
+                    successEl.textContent = data.message || 'Login successful!';
                     successEl.classList.add('show');
                     setTimeout(() => {
                         closeModal('login');
-                        checkSession();
+                        if (typeof checkSession === 'function') {
+                            checkSession();
+                        }
                         location.reload();
                     }, 1000);
                 } else if (data.requires_confirmation) {
                     // Show confirmation modal
-                    showLoginConfirmationModal(data.message, form);
+                    if (typeof showLoginConfirmationModal === 'function') {
+                        showLoginConfirmationModal(data.message, form);
+                    } else {
+                        // Fallback if function doesn't exist
+                        if (confirm(data.message + '\n\nDo you want to continue?')) {
+                            formData.append('force_login', 'true');
+                            handleLogin(e, true);
+                        }
+                    }
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Login';
                 } else {
@@ -1862,7 +1880,7 @@ session_start();
             })
             .catch(error => {
                 console.error('Login error:', error);
-                errorEl.textContent = 'An error occurred. Please try again.';
+                errorEl.textContent = error.message || 'An error occurred. Please try again.';
                 errorEl.classList.add('show');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Login';
