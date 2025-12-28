@@ -2346,11 +2346,21 @@ if (isset($_SESSION['user_id'])) {
                     const paid = urlParams.get('paid') === '1' || state.creditsUsed > 0;
                     
                     if (paid && !state.gameStarted) {
+                        console.log('Start Mission button clicked - starting game');
+                        
+                        // Disable button to prevent double-clicking
+                        newBtn.disabled = true;
+                        
                         // Payment already made, start game directly
                         gameEndedByTime = false;
                         state.gameStarted = true;
                         state.isDemoMode = false;
                         state.isPlaying = true;
+                        
+                        // Reset game state for new game
+                        state.score = 0;
+                        state.health = 100;
+                        state.bombs = 3;
                         
                         // Show EXIT button
                         const exitBtnHud = document.getElementById('exit-game-btn-hud');
@@ -2361,6 +2371,27 @@ if (isset($_SESSION['user_id'])) {
                         // Hide overlay
                         const overlay = document.getElementById('game-status-overlay');
                         if (overlay) overlay.classList.add('hidden');
+                        
+                        // Update HUD displays
+                        if (typeof updateHUD === 'function') {
+                            updateHUD();
+                        } else {
+                            const scoreDisplay = document.getElementById('hud-score');
+                            const healthDisplay = document.getElementById('hud-health');
+                            const bombsDisplay = document.getElementById('hud-bombs');
+                            if (scoreDisplay) scoreDisplay.textContent = '0';
+                            if (healthDisplay) healthDisplay.textContent = '100';
+                            if (bombsDisplay) bombsDisplay.textContent = '3';
+                        }
+                        
+                        // The game loop (animate function) should already be running
+                        // Setting state.isPlaying = true will make it start processing game logic
+                        console.log('Game started - isPlaying:', state.isPlaying, 'gameStarted:', state.gameStarted);
+                        
+                        // Ensure game scene is ready - the animate loop will handle the rest
+                        // The game should start immediately when state.isPlaying becomes true
+                    } else if (state.gameStarted) {
+                        console.log('Game already started');
                     } else {
                         // No payment made - this shouldn't happen, but handle it
                         alert('Payment not found. Please return to the game selection page.');
