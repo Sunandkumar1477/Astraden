@@ -104,45 +104,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Check if status is changing (using prepared statement)
         $check_stmt = $conn->prepare("SELECT is_contest_active FROM games WHERE game_name = ?");
-        $check_stmt->bind_param("s", $game_name);
-        $check_stmt->execute();
-        $current = $check_stmt->get_result()->fetch_assoc();
-        $check_stmt->close();
-        
+        if (!$check_stmt) {
+            $error = "Database error: " . $conn->error;
+        } else {
+            $check_stmt->bind_param("s", $game_name);
+            $check_stmt->execute();
+            $current = $check_stmt->get_result()->fetch_assoc();
+            $check_stmt->close();
+            
             $stmt = $conn->prepare("UPDATE games SET is_contest_active = ?, is_claim_active = ?, game_mode = ?, contest_first_prize = ?, contest_second_prize = ?, contest_third_prize = ?, contest_credits_required = ?, contest_start_datetime = ?, contest_end_datetime = ?, disable_normal_play = ? WHERE game_name = ?");
-            $stmt->bind_param("iisiiiisssis", $is_contest_active, $is_claim_active, $game_mode, $prize1, $prize2, $prize3, $entry_fee, $contest_start_datetime, $contest_end_datetime, $disable_normal_play, $game_name);
-        
-            if ($stmt->execute()) {
-                if ($is_contest_active && (!$current || !$current['is_contest_active'])) {
-                    // Starting new contest
-                    $hist = $conn->prepare("INSERT INTO contest_history (game_name, game_mode, prize1, prize2, prize3, entry_fee, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
-                    $hist->bind_param("ssiiii", $game_name, $game_mode, $prize1, $prize2, $prize3, $entry_fee);
-                    $hist->execute();
-                    $hist->close();
-                } else if (!$is_contest_active && $current && $current['is_contest_active']) {
-                    // Ending contest
-                    $end_stmt = $conn->prepare("UPDATE contest_history SET status = 'completed', ended_at = NOW() WHERE game_name = ? AND status = 'active'");
-                    $end_stmt->bind_param("s", $game_name);
-                    $end_stmt->execute();
-                    $end_stmt->close();
-                }
-
-                $message = "Mission parameters deployed successfully!";
-                $admin_id = $_SESSION['admin_id'];
-                $admin_user = $_SESSION['admin_username'];
-                $desc = "Updated contest for $game_name. Mode: $game_mode, Entry: $entry_fee";
-                if ($disable_normal_play) {
-                    $desc .= ", Normal play disabled";
-                }
-                $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-                $log_stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES (?, ?, 'contest_update', ?, ?)");
-                $log_stmt->bind_param("isss", $admin_id, $admin_user, $desc, $ip_address);
-                $log_stmt->execute();
-                $log_stmt->close();
+            
+            if (!$stmt) {
+                $error = "Database prepare error: " . $conn->error;
             } else {
-                $error = "Failed to update mission data: " . $stmt->error;
+                // Handle NULL datetime values properly
+                $contest_start_datetime_param = !empty($contest_start_datetime) ? $contest_start_datetime : null;
+                $contest_end_datetime_param = !empty($contest_end_datetime) ? $contest_end_datetime : null;
+                // Parameter types: i(is_contest_active), i(is_claim_active), s(game_mode), i(prize1), i(prize2), i(prize3), i(entry_fee), s(start_datetime), s(end_datetime), i(disable_normal_play), s(game_name)
+                if (!$stmt->bind_param("iisiiiissis", $is_contest_active, $is_claim_active, $game_mode, $prize1, $prize2, $prize3, $entry_fee, $contest_start_datetime_param, $contest_end_datetime_param, $disable_normal_play, $game_name)) {
+                    $error = "Database bind error: " . $stmt->error;
+                } else {
+                    if ($stmt->execute()) {
+                        if ($is_contest_active && (!$current || !$current['is_contest_active'])) {
+                            // Starting new contest
+                            $hist = $conn->prepare("INSERT INTO contest_history (game_name, game_mode, prize1, prize2, prize3, entry_fee, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+                            $hist->bind_param("ssiiii", $game_name, $game_mode, $prize1, $prize2, $prize3, $entry_fee);
+                            $hist->execute();
+                            $hist->close();
+                        } else if (!$is_contest_active && $current && $current['is_contest_active']) {
+                            // Ending contest
+                            $end_stmt = $conn->prepare("UPDATE contest_history SET status = 'completed', ended_at = NOW() WHERE game_name = ? AND status = 'active'");
+                            $end_stmt->bind_param("s", $game_name);
+                            $end_stmt->execute();
+                            $end_stmt->close();
+                        }
+
+                        $message = "Mission parameters deployed successfully!";
+                        $admin_id = $_SESSION['admin_id'];
+                        $admin_user = $_SESSION['admin_username'];
+                        $desc = "Updated contest for $game_name. Mode: $game_mode, Entry: $entry_fee";
+                        if ($disable_normal_play) {
+                            $desc .= ", Normal play disabled";
+                        }
+                        $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+                        $log_stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES (?, ?, 'contest_update', ?, ?)");
+                        $log_stmt->bind_param("isss", $admin_id, $admin_user, $desc, $ip_address);
+                        $log_stmt->execute();
+                        $log_stmt->close();
+                    } else {
+                        $error = "Failed to update mission data: " . $stmt->error;
+                    }
+                    $stmt->close();
+                }
             }
-            $stmt->close();
         }
     }
 
