@@ -55,6 +55,69 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
 
+// Ensure game_leaderboard table exists with all required columns
+$conn->query("
+    CREATE TABLE IF NOT EXISTS game_leaderboard (
+        id INT(11) AUTO_INCREMENT PRIMARY KEY,
+        user_id INT(11) NOT NULL,
+        game_name VARCHAR(50) NOT NULL DEFAULT 'earth-defender',
+        score INT(11) NOT NULL DEFAULT 0,
+        credits_used INT(11) NOT NULL DEFAULT 0 COMMENT 'Credits used for this game',
+        played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        session_id INT(11) NULL COMMENT 'Reference to game_sessions',
+        game_mode ENUM('money', 'credits') DEFAULT 'credits',
+        INDEX idx_user_id (user_id),
+        INDEX idx_game_name (game_name),
+        INDEX idx_score (score DESC),
+        INDEX idx_played_at (played_at DESC)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+");
+
+// Ensure user_profile table exists with credits column
+$conn->query("
+    CREATE TABLE IF NOT EXISTS user_profile (
+        id INT(11) AUTO_INCREMENT PRIMARY KEY,
+        user_id INT(11) NOT NULL UNIQUE,
+        credits INT(11) DEFAULT 0,
+        full_name VARCHAR(100) NULL,
+        profile_photo VARCHAR(20) NULL,
+        phone_pay_number VARCHAR(20) NULL,
+        google_pay_number VARCHAR(20) NULL,
+        state VARCHAR(50) NULL,
+        credits_color VARCHAR(20) DEFAULT '#00ffff',
+        bio TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+");
+
+// Add missing columns if they don't exist
+$columns_to_check = [
+    'game_leaderboard' => [
+        'created_at' => "ALTER TABLE game_leaderboard ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER played_at",
+        'game_mode' => "ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'credits' AFTER credits_used"
+    ],
+    'user_profile' => [
+        'credits' => "ALTER TABLE user_profile ADD COLUMN credits INT(11) DEFAULT 0 AFTER user_id"
+    ]
+];
+
+foreach ($columns_to_check as $table => $columns) {
+    $table_check = $conn->query("SHOW TABLES LIKE '$table'");
+    if ($table_check && $table_check->num_rows > 0) {
+        foreach ($columns as $column => $alter_sql) {
+            $col_check = $conn->query("SHOW COLUMNS FROM $table LIKE '$column'");
+            if ($col_check && $col_check->num_rows == 0) {
+                $conn->query($alter_sql);
+            }
+            if ($col_check) $col_check->close();
+        }
+    }
+    if ($table_check) $table_check->close();
+}
+
 // Get prices from database
 $prices_result = $conn->query("SELECT * FROM shop_pricing WHERE is_active = 1 ORDER BY display_order ASC LIMIT 3");
 $shop_prices = [];
@@ -111,11 +174,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             
             try {
                 // Step 1: Add Astrons to user profile (credits column)
+                // First ensure user_profile row exists for this user
+                $check_profile = $conn->prepare("SELECT id, credits FROM user_profile WHERE user_id = ?");
+                $check_profile->bind_param("i", $user_id);
+                $check_profile->execute();
+                $profile_result = $check_profile->get_result();
+                $profile_exists = ($profile_result->num_rows > 0);
+                $check_profile->close();
+                
+                if (!$profile_exists) {
+                    // Create user_profile row if it doesn't exist
+                    $create_profile = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, 0)");
+                    $create_profile->bind_param("i", $user_id);
+                    if (!$create_profile->execute()) {
+                        throw new Exception("Failed to create user profile: " . $create_profile->error);
+                    }
+                    $create_profile->close();
+                }
+                
+                // Update Astrons (credits) in user_profile table - this stores coins per user
                 $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
                 $update_stmt->bind_param("ii", $item_astrons, $user_id);
                 
                 if (!$update_stmt->execute()) {
-                    throw new Exception("Failed to update Astrons");
+                    throw new Exception("Failed to update Astrons in user_profile: " . $update_stmt->error);
                 }
                 
                 $affected_rows = $update_stmt->affected_rows;
@@ -132,12 +214,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 
                 // Step 2: Deduct Fluxon by inserting a negative score entry
                 // This represents the Fluxon spent (negative score will reduce total)
-                $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
+                // Store in game_leaderboard table with user_id to track per user
                 $negative_score = -$item_cost; // Negative score to deduct Fluxon
+                
+                // Check which timestamp columns exist
+                $check_created = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'created_at'");
+                $check_played = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'played_at'");
+                $has_created_at = ($check_created && $check_created->num_rows > 0);
+                $has_played_at = ($check_played && $check_played->num_rows > 0);
+                if ($check_created) $check_created->close();
+                if ($check_played) $check_played->close();
+                
+                // Build INSERT query based on available columns
+                if ($has_created_at && $has_played_at) {
+                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at, played_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW(), NOW())");
+                } else if ($has_played_at) {
+                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, played_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
+                } else if ($has_created_at) {
+                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
+                } else {
+                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode) VALUES (?, 'shop-purchase', ?, 0, 'credits')");
+                }
+                
                 $deduct_stmt->bind_param("ii", $user_id, $negative_score);
                 
                 if (!$deduct_stmt->execute()) {
-                    throw new Exception("Failed to deduct Fluxon");
+                    throw new Exception("Failed to deduct Fluxon: " . $deduct_stmt->error);
                 }
                 
                 $deduct_stmt->close();
