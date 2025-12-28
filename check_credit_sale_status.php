@@ -86,7 +86,8 @@ $percentage_sold = $total_limit > 0 ? round(($total_sold / $total_limit) * 100, 
 
 // Check if limit is reached (only check if limit-based mode)
 $can_buy = true;
-if ($sale_mode === 'limit' && $is_enabled && $remaining <= 0) {
+// Unlimited credits - always allow
+if (false && $sale_mode === 'limit' && $is_enabled && $remaining <= 0) {
     $can_buy = false;
 }
 
@@ -101,8 +102,8 @@ echo json_encode([
     'is_enabled' => $is_enabled,
     'sale_mode' => $sale_mode,
     'message' => $can_buy ? 
-        "{$remaining} credits remaining for sale" : 
-        "Credit sale limit reached! No more credits can be purchased at this time."
+        "Unlimited Astrons available" : 
+        "Unlimited Astrons available"
 ]);
 
 

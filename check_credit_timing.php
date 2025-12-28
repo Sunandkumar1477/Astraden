@@ -47,6 +47,16 @@ if ($result->num_rows == 0) {
 $timing = $result->fetch_assoc();
 $stmt->close();
 
+// Check if enabled - For claim_credits, always allow (unlimited)
+if ($timing_type === 'claim_credits') {
+    echo json_encode([
+        'success' => true,
+        'is_active' => true,
+        'message' => 'Available - Unlimited claims'
+    ]);
+    exit;
+}
+
 // Check if enabled
 if (!$timing['is_enabled']) {
     echo json_encode([

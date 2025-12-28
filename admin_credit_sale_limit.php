@@ -164,16 +164,16 @@ $percentage = $total_limit > 0 ? round(($total_sold / $total_limit) * 100, 1) : 
 
         <div class="progress-card">
             <div class="progress-circle">
-                <span class="progress-val"><?php echo $percentage; ?>%</span>
+                <span class="progress-val">∞</span>
             </div>
-            <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);">MISSION QUOTA DEPLETION</p>
+            <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);">UNLIMITED ASTRONS</p>
             <div class="progress-bar-container">
-                <div class="progress-fill" style="width: <?php echo min(100, $percentage); ?>%;"></div>
+                <div class="progress-fill" style="width: 100%; background: linear-gradient(90deg, #00ff00, #00ffff);"></div>
             </div>
             <div class="stats-grid">
-                <div class="stat-item"><span class="stat-label">Total Quota</span><div class="stat-value"><?php echo number_format($total_limit); ?> ⚡</div></div>
+                <div class="stat-item"><span class="stat-label">Status</span><div class="stat-value" style="color:#00ff00;">UNLIMITED ⚡</div></div>
                 <div class="stat-item"><span class="stat-label">Consumed</span><div class="stat-value" style="color:var(--color-reset);"><?php echo number_format($total_sold); ?> ⚡</div></div>
-                <div class="stat-item"><span class="stat-label">Remaining</span><div class="stat-value" style="color:var(--color-verify);"><?php echo number_format($remaining); ?> ⚡</div></div>
+                <div class="stat-item"><span class="stat-label">Remaining</span><div class="stat-value" style="color:#00ff00;">∞ ⚡</div></div>
             </div>
         </div>
 
@@ -187,11 +187,15 @@ $percentage = $total_limit > 0 ? round(($total_sold / $total_limit) * 100, 1) : 
                         <option value="timing" <?php echo $limit_data['sale_mode']==='timing'?'selected':''; ?>>TIMING-BASED (DISPLAY SCHEDULE)</option>
                     </select>
                 </div>
-                <div style="margin-bottom:20px;display:flex;align-items:center;gap:10px;">
-                    <input type="checkbox" name="is_enabled" <?php echo $limit_data['is_enabled']?'checked':''; ?>>
-                    <label style="font-size:0.8rem;font-weight:bold;">ENFORCE QUOTA CHECKING</label>
+                <div style="margin-bottom:20px;padding:15px;background:rgba(0,255,0,0.1);border:2px solid #00ff00;border-radius:8px;">
+                    <p style="color:#00ff00;font-weight:bold;margin:0;">⚠️ UNLIMITED MODE ACTIVE</p>
+                    <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin:5px 0 0 0;">Credit limits are disabled. Users can claim unlimited Astrons.</p>
                 </div>
-                <button type="submit" name="update_limit" class="btn-update">AUTHORIZE LIMITS</button>
+                <div style="margin-bottom:20px;display:flex;align-items:center;gap:10px;opacity:0.5;">
+                    <input type="checkbox" name="is_enabled" disabled>
+                    <label style="font-size:0.8rem;font-weight:bold;color:rgba(255,255,255,0.5);">ENFORCE QUOTA CHECKING (DISABLED - UNLIMITED MODE)</label>
+                </div>
+                <button type="submit" name="update_limit" class="btn-update" disabled style="opacity:0.5;cursor:not-allowed;">LIMITS DISABLED</button>
             </form>
             
             <form method="POST" onsubmit="return confirm('RESET QUOTA COUNTER? (User credits will remain safe)');">

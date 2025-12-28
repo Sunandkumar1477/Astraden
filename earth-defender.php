@@ -1331,11 +1331,11 @@ $conn->close();
                 </div>
             </div>
             <div class="hud-item">
-                <span>SCORE: <span id="score">0</span></span>
+                <span>FLUXON: <span id="score">0</span></span>
                 <span id="demo-indicator" style="display: none; color: #ffaa00; font-size: 0.8rem; margin-left: 10px;">[DEMO]</span>
             </div>
             <div class="hud-item" id="hud-total-score-item" style="display: none; color: #00ff00;">
-                <span>TOTAL: <span id="hud-total-score">0</span></span>
+                <span>TOTAL FLUXON: <span id="hud-total-score">0</span></span>
             </div>
             <div class="hud-item" style="font-size: 12px; opacity: 0.8; flex-direction: column; align-items: flex-start;">
                 <div>• Drag to Rotate</div>
@@ -1356,8 +1356,8 @@ $conn->close();
             <h1>CRITICAL FAILURE</h1>
             <p>Earth has been compromised.</p>
             <div class="final-stats" style="margin-bottom: 20px;">
-                <p>Final Score: <span id="final-score" style="color: #ff3333; font-weight: bold;">0</span></p>
-                <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 5px;">Total Score: <span id="total-score">0</span></p>
+                <p>Final Fluxon: <span id="final-score" style="color: #ff3333; font-weight: bold;">0</span></p>
+                <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 5px;">Total Fluxon: <span id="total-score">0</span></p>
             </div>
             <div class="game-btn-container">
                 <button class="game-btn btn-primary" onclick="location.reload()">🎮 REBOOT SYSTEM</button>
@@ -1373,7 +1373,7 @@ $conn->close();
                 </div>
                 <div class="modal-body">
                     <p>ARE YOU SURE YOU WANT TO CLOSE THIS GAME?</p>
-                    <p class="modal-warning">Your game will end and your score will be saved automatically.</p>
+                    <p class="modal-warning">Your game will end and your Fluxon will be saved automatically.</p>
                 </div>
                 <div class="modal-footer">
                     <button id="exit-no-btn" class="modal-btn secondary">NO, CONTINUE PLAYING</button>
@@ -1456,8 +1456,8 @@ $conn->close();
                     <h3>💀 GAME OVER</h3>
                     <ul class="points-list">
                         <li>Health reaches <strong>0 HP</strong> = Game Over</li>
-                        <li>Contest time ends = Game Over (score saved)</li>
-                        <li>Final Score = Total points earned</li>
+                        <li>Contest time ends = Game Over (Fluxon saved)</li>
+                        <li>Final Fluxon = Total points earned</li>
                     </ul>
                 </div>
                 
@@ -1920,7 +1920,7 @@ $conn->close();
             
             // Confirm before deducting credits
             const confirmMsg = state.isContestMode 
-                ? `Join the contest? This will deduct ${creditsRequired} Astrons. Your high score will be recorded for prizes!`
+                ? `Join the contest? This will deduct ${creditsRequired} Astrons. Your high Fluxon will be recorded for prizes!`
                 : `This will deduct ${creditsRequired} Astrons from your account. Continue?`;
 
             if (!confirm(confirmMsg)) {
@@ -2036,7 +2036,7 @@ $conn->close();
             // Show message
             setTimeout(function() {
                 if (typeof showMessage === 'function') {
-                    showMessage("DEMO MODE - Score won't be saved - No time limits!");
+                    showMessage("DEMO MODE - Fluxon won't be saved - No time limits!");
                 }
             }, 100);
             
@@ -3008,7 +3008,7 @@ $conn->close();
                     gameOverTitle.style.color = '#ff3333';
                 }
                 if (gameOverSubtitle) {
-                    gameOverSubtitle.textContent = 'The contest time has expired. Your score has been recorded.';
+                    gameOverSubtitle.textContent = 'The contest time has expired. Your Fluxon has been recorded.';
                     gameOverSubtitle.style.color = '#ffaa00';
                 }
             } else {
@@ -3030,7 +3030,7 @@ $conn->close();
                 demoMsg.style.color = '#ffaa00';
                 demoMsg.style.fontWeight = 'bold';
                 demoMsg.style.marginTop = '10px';
-                demoMsg.textContent = 'DEMO MODE - Score not saved to leaderboard';
+                demoMsg.textContent = 'DEMO MODE - Fluxon not saved to leaderboard';
                 const btnContainer = gameOverDiv.querySelector('.game-btn-container');
                 if (btnContainer) {
                     gameOverDiv.insertBefore(demoMsg, btnContainer);
@@ -3039,8 +3039,8 @@ $conn->close();
                 }
             }
             
-            // Save score to database (only if credits were used, NOT in demo mode)
-            // Also save if time's up (even if score is 0, as long as game was started with credits)
+            // Save Fluxon to database (only if credits were used, NOT in demo mode)
+            // Also save if time's up (even if Fluxon is 0, as long as game was started with credits)
             if (state.gameStarted && !state.isDemoMode && state.creditsUsed > 0 && state.gameSessionId) {
                 const finalScore = Math.floor(state.score || 0);
                 console.log("Submitting final score:", finalScore, "for session:", state.gameSessionId);
@@ -3083,7 +3083,7 @@ $conn->close();
                             savedMsg.style.color = '#00ff00';
                             savedMsg.style.fontWeight = 'bold';
                             savedMsg.style.marginTop = '10px';
-                            savedMsg.textContent = '✓ Score saved successfully!';
+                            savedMsg.textContent = '✓ Fluxon saved successfully!';
                             const btnContainer = gameOverDiv.querySelector('.game-btn-container');
                             if (btnContainer) {
                                 gameOverDiv.insertBefore(savedMsg, btnContainer);
