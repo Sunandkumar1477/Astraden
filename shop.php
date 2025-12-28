@@ -26,8 +26,19 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Ensure required tables exist
-$conn->query("
+// Get user's Fluxon (total score from all games, including shop deductions)
+// Shop deductions are negative scores, so we sum all scores (positive and negative)
+$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
+$fluxon_stmt->bind_param("i", $user_id);
+$fluxon_stmt->execute();
+$fluxon_result = $fluxon_stmt->get_result();
+$fluxon_data = $fluxon_result->fetch_assoc();
+$total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
+if ($total_fluxon < 0) $total_fluxon = 0;
+$fluxon_stmt->close();
+
+// Get shop prices from database
+$create_table = $conn->query("
     CREATE TABLE IF NOT EXISTS shop_pricing (
         id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
         fluxon_amount INT(11) NOT NULL COMMENT 'Amount of Fluxon required',
@@ -41,76 +52,19 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
 
-$conn->query("
-    CREATE TABLE IF NOT EXISTS game_leaderboard (
-        id INT(11) AUTO_INCREMENT PRIMARY KEY,
-        user_id INT(11) NOT NULL,
-        game_name VARCHAR(50) NOT NULL DEFAULT 'earth-defender',
-        score INT(11) NOT NULL DEFAULT 0,
-        credits_used INT(11) NOT NULL DEFAULT 0,
-        played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        session_id INT(11) NULL,
-        game_mode ENUM('money', 'credits') DEFAULT 'credits',
-        INDEX idx_user_id (user_id),
-        INDEX idx_game_name (game_name),
-        INDEX idx_score (score DESC)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-");
-
-$conn->query("
-    CREATE TABLE IF NOT EXISTS user_profile (
-        id INT(11) AUTO_INCREMENT PRIMARY KEY,
-        user_id INT(11) NOT NULL UNIQUE,
-        credits INT(11) DEFAULT 0,
-        full_name VARCHAR(100) NULL,
-        profile_photo VARCHAR(20) NULL,
-        phone_pay_number VARCHAR(20) NULL,
-        google_pay_number VARCHAR(20) NULL,
-        state VARCHAR(50) NULL,
-        credits_color VARCHAR(20) DEFAULT '#00ffff',
-        bio TEXT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_user_id (user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-");
-
-// Add missing columns if they don't exist
-$columns_to_check = [
-    'game_leaderboard' => [
-        'created_at' => "ALTER TABLE game_leaderboard ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER played_at",
-        'game_mode' => "ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'credits' AFTER credits_used"
-    ],
-    'user_profile' => [
-        'credits' => "ALTER TABLE user_profile ADD COLUMN credits INT(11) DEFAULT 0 AFTER user_id"
-    ]
-];
-
-foreach ($columns_to_check as $table => $columns) {
-    $table_check = $conn->query("SHOW TABLES LIKE '$table'");
-    if ($table_check && $table_check->num_rows > 0) {
-        foreach ($columns as $column => $alter_sql) {
-            $col_check = $conn->query("SHOW COLUMNS FROM $table LIKE '$column'");
-            if ($col_check && $col_check->num_rows == 0) {
-                $conn->query($alter_sql);
-            }
-            if ($col_check) $col_check->close();
-        }
-    }
-    if ($table_check) $table_check->close();
+// Get prices from database
+$prices_result = $conn->query("SELECT * FROM shop_pricing WHERE is_active = 1 ORDER BY display_order ASC LIMIT 3");
+$shop_prices = [];
+if ($prices_result && $prices_result->num_rows > 0) {
+    $shop_prices = $prices_result->fetch_all(MYSQLI_ASSOC);
+} else {
+    // Default prices if none set
+    $shop_prices = [
+        ['id' => 1, 'fluxon_amount' => 5000, 'astrons_reward' => 10, 'claim_type' => 'Basic Claim'],
+        ['id' => 2, 'fluxon_amount' => 7500, 'astrons_reward' => 20, 'claim_type' => 'Standard Claim'],
+        ['id' => 3, 'fluxon_amount' => 10000, 'astrons_reward' => 30, 'claim_type' => 'Premium Claim']
+    ];
 }
-
-// Get user's Fluxon (total score from all games, including shop deductions)
-// Shop deductions are negative scores, so we sum all scores
-$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
-$fluxon_stmt->bind_param("i", $user_id);
-$fluxon_stmt->execute();
-$fluxon_result = $fluxon_stmt->get_result();
-$fluxon_data = $fluxon_result->fetch_assoc();
-$total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
-if ($total_fluxon < 0) $total_fluxon = 0;
-$fluxon_stmt->close();
 
 // Get user's Astrons
 $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
@@ -120,22 +74,6 @@ $credits_result = $credits_stmt->get_result();
 $credits_data = $credits_result->fetch_assoc();
 $user_astrons = intval($credits_data['credits'] ?? 0);
 $credits_stmt->close();
-
-// Get shop prices from database
-$prices_result = $conn->query("SELECT * FROM shop_pricing WHERE is_active = 1 ORDER BY display_order ASC, fluxon_amount ASC LIMIT 3");
-$shop_prices = [];
-if ($prices_result && $prices_result->num_rows > 0) {
-    $shop_prices = $prices_result->fetch_all(MYSQLI_ASSOC);
-} else {
-    // Insert default prices if none exist
-    $conn->query("INSERT IGNORE INTO shop_pricing (fluxon_amount, astrons_reward, claim_type, display_order) VALUES (5000, 10, 'Basic Claim', 1)");
-    $conn->query("INSERT IGNORE INTO shop_pricing (fluxon_amount, astrons_reward, claim_type, display_order) VALUES (7500, 20, 'Standard Claim', 2)");
-    $conn->query("INSERT IGNORE INTO shop_pricing (fluxon_amount, astrons_reward, claim_type, display_order) VALUES (10000, 30, 'Premium Claim', 3)");
-    $prices_result = $conn->query("SELECT * FROM shop_pricing WHERE is_active = 1 ORDER BY display_order ASC, fluxon_amount ASC LIMIT 3");
-    if ($prices_result && $prices_result->num_rows > 0) {
-        $shop_prices = $prices_result->fetch_all(MYSQLI_ASSOC);
-    }
-}
 
 // Handle purchase
 $message = '';
@@ -328,6 +266,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
 if (!$is_ajax) {
     ob_end_flush();
 }
+
+$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -340,7 +280,6 @@ if (!$is_ajax) {
     <link rel="alternate icon" type="image/png" href="Alogo.svg">
     <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
     <style>
         :root {
@@ -454,7 +393,6 @@ if (!$is_ajax) {
             font-family: 'Orbitron', sans-serif;
             position: relative;
             z-index: 1;
-            transition: all 0.3s ease;
         }
 
         .balance-card.fluxon .balance-value {
@@ -646,9 +584,12 @@ if (!$is_ajax) {
             transform: translateX(-3px);
         }
 
-        .alert {
+        .message {
             max-width: 600px;
             margin: 0 auto 30px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
             padding: 20px;
             border-radius: 15px;
             text-align: center;
@@ -656,30 +597,21 @@ if (!$is_ajax) {
             box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
             position: relative;
             z-index: 2;
-            animation: slideDown 0.5s ease;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .alert-success {
-            background: rgba(0, 255, 0, 0.1);
-            border: 2px solid #00ff00;
-            color: #00ff00;
-        }
-
-        .alert-error {
+        .error {
+            max-width: 600px;
+            margin: 0 auto 30px;
             background: rgba(255, 0, 0, 0.1);
             border: 2px solid #ff0000;
             color: #ff0000;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
         }
 
         @media (max-width: 768px) {
@@ -736,12 +668,12 @@ if (!$is_ajax) {
             </div>
         </div>
         
-        <?php if ($message && !$is_ajax): ?>
-            <div class="alert alert-success">✓ <?php echo htmlspecialchars($message); ?></div>
+        <?php if ($message): ?>
+            <div class="message">✓ <?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
         
-        <?php if ($error && !$is_ajax): ?>
-            <div class="alert alert-error">✗ <?php echo htmlspecialchars($error); ?></div>
+        <?php if ($error): ?>
+            <div class="error">✗ <?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         
         <div class="shop-grid">
@@ -799,6 +731,7 @@ if (!$is_ajax) {
         if (spaceBg && typeof createSpaceBackground === 'function') {
             createSpaceBackground();
         } else {
+            // Fallback if function doesn't exist
             for (let i = 0; i < 100; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
@@ -809,12 +742,14 @@ if (!$is_ajax) {
             }
         }
 
+        // Track processing state to prevent multiple simultaneous requests
+        const processingState = new Set();
+        
         // Animate value function
         function animateValue(element, start, end, duration, callback) {
             const startTime = performance.now();
             const startValue = start;
             const endValue = end;
-            const isDecreasing = start > end;
             
             function update(currentTime) {
                 const elapsed = currentTime - startTime;
@@ -847,11 +782,11 @@ if (!$is_ajax) {
                 
                 if (button && costInput) {
                     const cost = parseInt(costInput.value);
-                    if (currentFluxon >= cost) {
+                    if (currentFluxon >= cost && !processingState.has(itemId)) {
                         button.disabled = false;
                         const astrons = form.querySelector('input[name="item_astrons"]').value;
                         button.textContent = `Claim ${astrons} Astrons`;
-                    } else {
+                    } else if (currentFluxon < cost) {
                         button.disabled = true;
                         button.textContent = 'Insufficient Fluxon';
                     }
@@ -859,11 +794,18 @@ if (!$is_ajax) {
             });
         }
 
-        // Handle purchase with AJAX
+        // Handle purchase with AJAX - SINGLE CLICK ONLY
         async function handlePurchase(event, itemId, fluxonCost, astronsReward) {
+            // Prevent default form submission
             if (event) {
                 event.preventDefault();
                 event.stopPropagation();
+            }
+            
+            // Check if already processing this item
+            if (processingState.has(itemId)) {
+                console.log('Purchase already in progress for item:', itemId);
+                return false;
             }
             
             const form = document.getElementById('purchase-form-' + itemId);
@@ -878,13 +820,11 @@ if (!$is_ajax) {
                 return false;
             }
             
-            if (button.disabled && button.textContent === 'Processing...') {
+            // Check if button is already disabled/processing
+            if (button.disabled && (button.textContent === 'Processing...' || button.textContent.includes('Processing'))) {
+                console.log('Button already processing, preventing duplicate click.');
                 return false;
             }
-            
-            // Disable button
-            button.disabled = true;
-            button.textContent = 'Processing...';
             
             // Get current values
             const currentFluxon = parseInt(fluxonElement.getAttribute('data-value')) || parseInt(fluxonElement.textContent.replace(/,/g, '')) || 0;
@@ -892,11 +832,21 @@ if (!$is_ajax) {
             
             // Validate sufficient Fluxon
             if (currentFluxon < fluxonCost) {
-                button.disabled = false;
-                button.textContent = 'Claim Reward';
                 alert('Insufficient Fluxon Energy!');
                 return false;
             }
+            
+            // Confirm purchase
+            if (!confirm(`Claim ${astronsReward} Astrons for ${fluxonCost.toLocaleString()} Fluxon?`)) {
+                return false;
+            }
+            
+            // Mark as processing
+            processingState.add(itemId);
+            
+            // Disable button immediately
+            button.disabled = true;
+            button.textContent = 'Processing...';
             
             // Create form data
             const formData = new FormData(form);
@@ -920,7 +870,6 @@ if (!$is_ajax) {
                 if (!contentType.includes('application/json')) {
                     const responseText = await response.clone().text();
                     console.error('Expected JSON but got:', contentType);
-                    console.error('Response preview:', responseText.substring(0, 500));
                     throw new Error('Server returned ' + (contentType || 'unknown type') + ' instead of JSON.');
                 }
                 
@@ -972,9 +921,11 @@ if (!$is_ajax) {
                             // Update all purchase buttons
                             updatePurchaseButtons(actualNewFluxon);
                             
-                            // Re-enable button
+                            // Remove from processing state and re-enable button
+                            processingState.delete(itemId);
                             button.disabled = false;
-                            button.textContent = 'Claim Reward';
+                            const astrons = form.querySelector('input[name="item_astrons"]').value;
+                            button.textContent = `Claim ${astrons} Astrons`;
                         });
                     });
                 } else {
@@ -992,17 +943,24 @@ if (!$is_ajax) {
                         setTimeout(() => alertDiv.remove(), 500);
                     }, 3000);
                     
+                    // Remove from processing state and re-enable button
+                    processingState.delete(itemId);
                     button.disabled = false;
-                    button.textContent = 'Claim Reward';
+                    const astrons = form.querySelector('input[name="item_astrons"]').value;
+                    button.textContent = `Claim ${astrons} Astrons`;
                 }
             } catch (error) {
                 console.error('Error during purchase:', error);
                 alert('Error: ' + error.message);
+                
+                // Remove from processing state and re-enable button
+                processingState.delete(itemId);
                 button.disabled = false;
-                button.textContent = 'Claim Reward';
+                const astrons = form.querySelector('input[name="item_astrons"]').value;
+                button.textContent = `Claim ${astrons} Astrons`;
             }
             
-            return false;
+            return false; // Prevent form submission
         }
     </script>
 </body>
