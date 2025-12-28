@@ -2154,6 +2154,11 @@ body.mobile-device .play-btn:active {
         letter-spacing: 0.3px;
     }
     
+    /* Hide rank on mobile */
+    #mobileRankItem {
+        display: none !important;
+    }
+    
     /* Mobile Credits Dropdown */
     .mobile-credits-dropdown {
         margin-top: 8px;
@@ -2961,7 +2966,7 @@ body.mobile-device .play-btn:active {
 
 /* User Rank Display */
 .user-rank {
-    display: flex;
+    display: none !important; /* Hidden for all devices */
     align-items: center;
     gap: 8px;
     padding: 8px 15px;

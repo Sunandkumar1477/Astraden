@@ -78,7 +78,7 @@ session_start();
                         <div class="user-profile-icon" id="mobileUserProfileIcon">👤</div>
                         <div>
                             <div class="user-profile-name" id="dropdownDisplayUsername">User</div>
-                            <div class="user-profile-rank" id="dropdownUserRank" style="display: none;">Loading...</div>
+                            <div class="user-profile-rank" id="dropdownUserRank" style="display: none !important;">Loading...</div>
                         </div>
                     </div>
                 </div>
@@ -107,8 +107,8 @@ session_start();
                             <div class="item-value" id="mobileReferralValue">----</div>
                         </div>
                     </div>
-                    <!-- Rank Info -->
-                    <div class="menu-item" id="mobileRankItem" style="display: none;" onclick="toggleRankDropdown(event)">
+                    <!-- Rank Info - Hidden -->
+                    <div class="menu-item" id="mobileRankItem" style="display: none !important;" onclick="toggleRankDropdown(event)">
                         <div class="item-icon">🏆</div>
                         <div class="item-info">
                             <div class="item-label">Your Rank</div>
@@ -167,7 +167,8 @@ session_start();
                 </div>
             </div>
         </div>
-        <div class="user-rank" id="userRank" style="display: none;" onclick="toggleRankDropdown(event)">
+        <!-- Rank Display - Hidden for all devices -->
+        <div class="user-rank" id="userRank" style="display: none !important;" onclick="toggleRankDropdown(event)">
             <span class="user-rank-label">Your Rank:</span>
             <span class="user-rank-value" id="rankValue">-</span>
             <!-- Rank Dropdown -->
@@ -1171,22 +1172,19 @@ session_start();
                                         powerIcon.style.setProperty('color', '#00ff00', 'important');
                                     }
                                     
-                                    // Show rank dropdown
-                                    document.getElementById('userRank').style.display = 'flex';
+                                    // Rank display is hidden for all devices - do not show
+                                    document.getElementById('userRank').style.display = 'none';
                                     
-                                    // Update mobile dropdown rank
+                                    // Hide mobile dropdown rank
                                     const mobileRankItem = document.getElementById('mobileRankItem');
-                                    if (mobileRankItem) mobileRankItem.style.display = 'flex';
-                                    
-                                    // Load user rank for mobile dropdown
-                                    loadUserRank();
+                                    if (mobileRankItem) mobileRankItem.style.display = 'none';
                                 } else {
                                     document.getElementById('userCredits').style.display = 'none';
                                     document.getElementById('userRank').style.display = 'none';
                                     
-                                    // Still show rank as N/A in mobile dropdown
-                                    const dropdownUserRank = document.getElementById('dropdownUserRank');
-                                    if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: N/A';
+                                    // Hide mobile dropdown rank
+                                    const mobileRankItem = document.getElementById('mobileRankItem');
+                                    if (mobileRankItem) mobileRankItem.style.display = 'none';
                                 }
                             })
                             .catch(error => {
@@ -1199,6 +1197,9 @@ session_start();
                         document.getElementById('userCredits').style.display = 'none';
                         document.getElementById('userReferralCode').style.display = 'none';
                         document.getElementById('userRank').style.display = 'none';
+                        // Hide mobile rank item
+                        const mobileRankItem = document.getElementById('mobileRankItem');
+                        if (mobileRankItem) mobileRankItem.style.display = 'none';
                     }
                 })
                 .catch(error => {
