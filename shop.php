@@ -61,7 +61,12 @@ $user_astrons = intval($credits_data['credits'] ?? 0);
 $credits_stmt->close();
 
 // Handle purchase - Check if it's an AJAX request
-$is_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+// Check multiple ways to detect AJAX requests
+$is_ajax = (
+    (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ||
+    (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+    (!empty($_GET['ajax']) && $_GET['ajax'] == '1')
+);
 $message = '';
 $error = '';
 $purchase_success = false;
@@ -993,7 +998,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 <div>
                     <div class="cost-label">Required Energy: <span class="cost-value"><?php echo number_format($fluxon); ?> Fluxon</span></div>
                     
-                    <form method="POST" id="purchase-form-<?php echo $price['id']; ?>" onsubmit="return handlePurchase(event, <?php echo $price['id']; ?>, <?php echo $fluxon; ?>, <?php echo $astrons; ?>);">
+                    <form method="POST" id="purchase-form-<?php echo $price['id']; ?>" onsubmit="handlePurchase(event, <?php echo $price['id']; ?>, <?php echo $fluxon; ?>, <?php echo $astrons; ?>); return false;">
                         <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
                         <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
                         <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
@@ -1039,7 +1044,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
         
         // Handle purchase with visual effects
         async function handlePurchase(event, itemId, fluxonCost, astronsReward) {
-            event.preventDefault();
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
             
             const form = document.getElementById('purchase-form-' + itemId);
             const button = document.getElementById('purchase-btn-' + itemId);
@@ -1048,6 +1056,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             const fluxonCard = document.getElementById('fluxonCard');
             const astronsCard = document.getElementById('astronsCard');
             
+            // Validate elements exist
+            if (!form || !button || !fluxonElement || !astronsElement) {
+                console.error('Required elements not found');
+                alert('Error: Page elements not found. Please refresh the page.');
+                return false;
+            }
+            
+            // Check if already processing
+            if (button.disabled && button.textContent === 'Processing...') {
+                return false;
+            }
+            
             // Disable button during processing
             button.disabled = true;
             button.textContent = 'Processing...';
@@ -1055,6 +1075,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             // Get current values
             const currentFluxon = parseInt(fluxonElement.textContent.replace(/,/g, '')) || 0;
             const currentAstrons = parseInt(astronsElement.textContent.replace(/,/g, '')) || 0;
+            
+            // Validate sufficient Fluxon
+            if (currentFluxon < fluxonCost) {
+                button.disabled = false;
+                button.textContent = 'Claim Reward';
+                alert('Insufficient Fluxon Energy!');
+                return false;
+            }
             
             // Calculate new values
             const newFluxon = Math.max(0, currentFluxon - fluxonCost);
@@ -1073,8 +1101,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                     body: formData
                 });
                 
-                // Parse JSON response
-                const data = await response.json();
+                // Check if response is OK
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                // Get response text first to check content type
+                const responseText = await response.text();
+                
+                // Debug logging (remove in production if needed)
+                console.log('Response status:', response.status);
+                console.log('Response text length:', responseText.length);
+                console.log('Response preview:', responseText.substring(0, 200));
+                
+                // Try to parse as JSON
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    console.log('Parsed JSON data:', data);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    console.error('Response text:', responseText);
+                    // If not JSON, check if it's HTML (error page)
+                    if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+                        throw new Error('Server returned HTML instead of JSON. The request may not have been recognized as AJAX.');
+                    }
+                    throw new Error('Invalid JSON response from server: ' + parseError.message);
+                }
                 
                 // Check if request was successful
                 if (data.success) {
@@ -1128,13 +1181,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                     });
                 } else {
                     // Show error message
+                    const errorMsg = data.message || 'Transmission Failure. Please try again.';
                     const alertDiv = document.createElement('div');
                     alertDiv.className = 'alert alert-error';
-                    alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + (data.message || 'Transmission Failure. Please try again.');
+                    alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + errorMsg;
                     alertDiv.style.animation = 'slideDown 0.5s ease';
                     const header = document.querySelector('.shop-header');
                     const container = document.querySelector('.shop-container');
-                    container.insertBefore(alertDiv, header.nextSibling);
+                    if (header && container) {
+                        container.insertBefore(alertDiv, header.nextSibling);
+                    } else {
+                        document.body.insertBefore(alertDiv, document.body.firstChild);
+                    }
                     
                     button.disabled = false;
                     button.textContent = 'Claim Reward';
@@ -1150,9 +1208,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-error';
-                alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> An error occurred. Please try again.';
+                alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + (error.message || 'An error occurred. Please try again.');
                 alertDiv.style.animation = 'slideDown 0.5s ease';
-                document.querySelector('.shop-container').insertBefore(alertDiv, document.querySelector('.shop-header').nextSibling);
+                const header = document.querySelector('.shop-header');
+                const container = document.querySelector('.shop-container');
+                if (header && container) {
+                    container.insertBefore(alertDiv, header.nextSibling);
+                } else {
+                    document.body.insertBefore(alertDiv, document.body.firstChild);
+                }
                 
                 setTimeout(function() {
                     alertDiv.remove();

@@ -1665,38 +1665,27 @@ $conn->close();
                     updateContestTimer();
                     contestTimerInterval = setInterval(updateContestTimer, 1000);
                     
-                    if (data.is_active) {
-                        // Game is active - show play buttons
-                        showGameReady();
-                    } else if (data.session && data.session.time_until_start > 0) {
-                        // Game not active but scheduled - show countdown
-                        showCountdown(data.session.time_until_start);
-                    } else {
-                        // No active session - but still show buttons if user is logged in
-                        // Store session data even if not active
-                        if (!gameSession) {
-                            gameSession = { normal_credits_required: normalCost, contest_credits_required: contestCost };
-                        }
-                        showNoSession(data.next_session_date, data.is_contest_active);
-                        hideContestTimers();
-                    }
+                    // Remove all restrictions - always show play buttons
+                    // Games can be played anytime, no session timing required
+                    showGameReady();
                 } else {
-                    // No session - but check if contest is active and show buttons anyway
+                    // No session - but remove all restrictions, always show buttons
                     state.isContestMode = data.is_contest_active || false;
                     state.gameMode = data.game_mode || 'credits';
                     
                     // Create a minimal gameSession object with costs
                     if (!gameSession) {
-                        gameSession = { normal_credits_required: normalCost, contest_credits_required: contestCost };
+                        gameSession = { 
+                            normal_credits_required: normalCost, 
+                            contest_credits_required: contestCost,
+                            id: 0,
+                            start_timestamp: Math.floor(Date.now() / 1000) - 86400,
+                            end_timestamp: Math.floor(Date.now() / 1000) + 86400
+                        };
                     }
                     
-                    // Still show buttons if user is logged in, even without active session
-                    const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-                    if (isLoggedIn) {
-                        showGameReady();
-                    } else {
-                        showNoSession(data.next_session_date, data.is_contest_active);
-                    }
+                    // Always show buttons - no restrictions
+                    showGameReady();
                     hideContestTimers();
                 }
             } catch (error) {
@@ -1885,20 +1874,17 @@ $conn->close();
                 return;
             }
             
+            // Remove all session timing restrictions - games can be played anytime
+            // Create a virtual session if none exists
             if (!gameSession) {
-                alert('No active game session. Please wait for a game session to start.');
-                return;
+                gameSession = {
+                    id: 0,
+                    start_timestamp: Math.floor(Date.now() / 1000) - 86400,
+                    end_timestamp: Math.floor(Date.now() / 1000) + 86400
+                };
             }
             
-            // Double-check session is active before allowing credit deduction
-            const now = Math.floor(Date.now() / 1000);
-            const sessionStart = gameSession.start_timestamp;
-            const sessionEnd = gameSession.end_timestamp;
-            
-            if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
-                alert('Game session is not currently active. Please wait for the scheduled time.');
-                return;
-            }
+            // No timing checks - always allow play
             
             const userCredits = <?php echo $user_credits; ?>;
             

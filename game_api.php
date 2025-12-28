@@ -121,73 +121,50 @@ switch ($action) {
         $stmt->execute();
         $result = $stmt->get_result();
         
+        // Remove all session timing restrictions - games can be played anytime
+        // Try to get a session for reference, but don't require it
+        $session = null;
         if ($result->num_rows > 0) {
             $session = $result->fetch_assoc();
-            
-            // Create DateTime objects in IST timezone
-            $session_datetime_str = $session['session_date'] . ' ' . $session['session_time'];
-            $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
-            $session_start = $session_start_dt->getTimestamp();
-            
-            // Calculate end time
-            $session_end = $session_start + ($session['duration_minutes'] * 60);
-            
-            $is_active = ($now_timestamp >= $session_start && $now_timestamp <= $session_end);
-            $time_until_start = $session_start - $now_timestamp;
-            
-            echo json_encode([
-                'success' => true,
-                'is_active' => $is_active,
-                'is_contest_active' => $is_contest_active,
-                'is_claim_active' => $is_claim_active,
-                'game_mode' => $game_mode,
-                'contest_prizes' => $prizes,
-                'user_total_points' => $user_total_points,
-                'session' => [
-                    'id' => $session['id'],
-                    'date' => $session['session_date'],
-                    'time' => $session['session_time'],
-                    'duration' => $session['duration_minutes'],
-                    'credits_required' => $credits_per_chance,
-                    'start_timestamp' => $session_start,
-                    'end_timestamp' => $session_end,
-                    'time_until_start' => max(0, $time_until_start)
-                ]
-            ]);
-        } else {
-            // No active session - check for future sessions
-            $future_stmt = $conn->prepare("
-                SELECT * FROM game_sessions 
-                WHERE game_name = ? 
-                AND is_active = 1 
-                ORDER BY session_date ASC, session_time ASC 
-                LIMIT 1
-            ");
-            $future_stmt->bind_param("s", $game_name);
-            $future_stmt->execute();
-            $future_result = $future_stmt->get_result();
-            
-            $next_session_date = null;
-            if ($future_result->num_rows > 0) {
-                $future_session = $future_result->fetch_assoc();
-                $next_session_date = $future_session['session_date'];
-            }
-            $future_stmt->close();
-            
-            echo json_encode([
-                'success' => true,
-                'is_active' => false,
-                'is_contest_active' => $is_contest_active,
-                'is_claim_active' => $is_claim_active,
-                'game_mode' => $game_mode,
-                'contest_prizes' => $prizes,
-                'user_total_points' => $user_total_points,
-                'session' => null,
-                'next_session_date' => $next_session_date,
-                'credits_required' => $credits_per_chance,
-                'message' => 'No game session scheduled'
-            ]);
         }
+        
+        // Always allow games to be played - no timing restrictions
+        $is_active = true; // Always active - no restrictions
+        
+        // Create a virtual session if none exists
+        if (!$session) {
+            $session = [
+                'id' => 0,
+                'session_date' => date('Y-m-d'),
+                'session_time' => date('H:i:s'),
+                'duration_minutes' => 1440, // 24 hours
+                'credits_required' => $credits_per_chance
+            ];
+        }
+        
+        // Set timestamps to allow play anytime
+        $session_start = $now_timestamp - 86400; // Start 24 hours ago
+        $session_end = $now_timestamp + 86400; // End 24 hours from now
+        
+        echo json_encode([
+            'success' => true,
+            'is_active' => true, // Always active - no restrictions
+            'is_contest_active' => $is_contest_active,
+            'is_claim_active' => $is_claim_active,
+            'game_mode' => $game_mode,
+            'contest_prizes' => $prizes,
+            'user_total_points' => $user_total_points,
+            'session' => [
+                'id' => $session['id'] ?? 0,
+                'date' => $session['session_date'] ?? date('Y-m-d'),
+                'time' => $session['session_time'] ?? date('H:i:s'),
+                'duration' => $session['duration_minutes'] ?? 1440,
+                'credits_required' => $credits_per_chance,
+                'start_timestamp' => $session_start,
+                'end_timestamp' => $session_end,
+                'time_until_start' => 0 // Always ready
+            ]
+        ]);
         $stmt->close();
         break;
         
@@ -242,25 +219,8 @@ switch ($action) {
         $session = $session_result->fetch_assoc();
         $session_id = $session['id'];
         
-        // Check if session is currently active (within time window)
-        $now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
-        $now_timestamp = $now->getTimestamp();
-        $session_datetime_str = $session['session_date'] . ' ' . $session['session_time'];
-        $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
-        $session_start = $session_start_dt->getTimestamp();
-        $session_end = $session_start + ($session['duration_minutes'] * 60);
-        
-        $is_session_active = ($now_timestamp >= $session_start && $now_timestamp <= $session_end);
-        
-        if (!$is_session_active) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Game session is not currently active. Please wait for the scheduled time.',
-                'session_active' => false
-            ]);
-            $session_stmt->close();
-            exit;
-        }
+        // Remove all session timing restrictions - games can be played anytime
+        // No need to check if session is active - always allow play
         
         // Use credits from games table, not from session
         
