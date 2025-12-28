@@ -19,13 +19,13 @@ $fluxon_data = $fluxon_result->fetch_assoc();
 $total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
 $fluxon_stmt->close();
 
-// Get shop prices from database
-$create_table = $conn->query("
+// Ensure shop_pricing table exists
+$conn->query("
     CREATE TABLE IF NOT EXISTS shop_pricing (
         id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        fluxon_amount INT(11) NOT NULL COMMENT 'Amount of Fluxon required',
-        astrons_reward INT(11) NOT NULL COMMENT 'Astrons user gets',
-        claim_type VARCHAR(50) NOT NULL COMMENT 'Type name',
+        fluxon_amount INT(11) NOT NULL,
+        astrons_reward INT(11) NOT NULL,
+        claim_type VARCHAR(50) NOT NULL,
         is_active TINYINT(1) DEFAULT 1,
         display_order INT(11) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -42,9 +42,9 @@ if ($prices_result && $prices_result->num_rows > 0) {
 } else {
     // Default prices if none set
     $shop_prices = [
-        ['id' => 1, 'fluxon_amount' => 5000, 'astrons_reward' => 10, 'claim_type' => 'Basic Claim'],
-        ['id' => 2, 'fluxon_amount' => 7500, 'astrons_reward' => 20, 'claim_type' => 'Standard Claim'],
-        ['id' => 3, 'fluxon_amount' => 10000, 'astrons_reward' => 30, 'claim_type' => 'Premium Claim']
+        ['id' => 1, 'fluxon_amount' => 5000, 'astrons_reward' => 10, 'claim_type' => 'Basic Access'],
+        ['id' => 2, 'fluxon_amount' => 7500, 'astrons_reward' => 20, 'claim_type' => 'Standard Pack'],
+        ['id' => 3, 'fluxon_amount' => 10000, 'astrons_reward' => 30, 'claim_type' => 'Elite Reserve']
     ];
 }
 
@@ -57,7 +57,7 @@ $credits_data = $credits_result->fetch_assoc();
 $user_astrons = intval($credits_data['credits'] ?? 0);
 $credits_stmt->close();
 
-// Handle purchase with discount system
+// Handle purchase
 $message = '';
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
@@ -67,510 +67,352 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
     
     if ($item_id > 0 && $item_cost > 0 && $item_astrons > 0) {
         if ($total_fluxon >= $item_cost) {
-            // Add Astrons based on discount rate
             $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
             $update_stmt->bind_param("ii", $item_astrons, $user_id);
             
             if ($update_stmt->execute()) {
-                $message = "Successfully claimed {$item_astrons} Astrons using {$item_cost} Fluxon!";
-                // Refresh user data
-                $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
-                $credits_stmt->bind_param("i", $user_id);
-                $credits_stmt->execute();
-                $credits_result = $credits_stmt->get_result();
-                $credits_data = $credits_result->fetch_assoc();
-                $user_astrons = intval($credits_data['credits'] ?? 0);
-                $credits_stmt->close();
-                // Refresh Fluxon (it doesn't change, but refresh to be sure)
-                $fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ? AND credits_used > 0");
-                $fluxon_stmt->bind_param("i", $user_id);
-                $fluxon_stmt->execute();
-                $fluxon_result = $fluxon_stmt->get_result();
-                $fluxon_data = $fluxon_result->fetch_assoc();
-                $total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
-                $fluxon_stmt->close();
+                $message = "Nexus Link Established! Claimed {$item_astrons} Astrons.";
+                header('refresh:2;url=aetheric_mandala.php');
             } else {
-                $error = "Failed to process purchase. Please try again.";
+                $error = "Transmission Failure. Try again.";
             }
             $update_stmt->close();
         } else {
-            $error = "Insufficient Fluxon! You need {$item_cost} Fluxon to claim this item.";
+            $error = "Insufficient Fluxon Energy!";
         }
     }
 }
-
 $conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop - Astra Den</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fluxon Shop - Space Hub</title>
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="alternate icon" type="image/png" href="Alogo.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-cyan: #00ffff;
-            --primary-purple: #9d4edd;
-            --primary-pink: #ff006e;
-            --dark-bg: #0a0a0f;
+            --cyan: #00ffff;
+            --purple: #9d4edd;
+            --gold: #FFD700;
+            --bg-dark: #050508;
             --card-bg: rgba(15, 15, 25, 0.85);
+            --neon-glow: 0 0 15px rgba(0, 255, 255, 0.4);
         }
 
-        .shop-page {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: #fff;
             min-height: 100vh;
-            position: relative;
-            padding: 120px 20px 50px;
-            z-index: 1;
+            padding-bottom: 50px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(157, 78, 221, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* --- NAVIGATION --- */
+        .nav-bar {
+            max-width: 1000px;
+            margin: 15px auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--cyan);
+            border-radius: 50px;
+            color: var(--cyan);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 255, 0.15);
+            box-shadow: var(--neon-glow);
+        }
+
+        /* --- HEADER --- */
+        .shop-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
 
         .shop-header {
             text-align: center;
-            margin-bottom: 50px;
-            position: relative;
-            z-index: 2;
+            margin: 20px 0 40px;
         }
 
         .shop-header h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            color: var(--primary-cyan);
-            text-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
-            margin-bottom: 15px;
-            letter-spacing: 3px;
-            font-weight: 900;
+            font-size: clamp(1.8rem, 8vw, 3rem);
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            margin-bottom: 10px;
         }
 
         .shop-header p {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.1rem;
-            margin-top: 10px;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 2px;
         }
 
-        .balance-section {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 50px;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 2;
+        /* --- BALANCE DASHBOARD --- */
+        .user-balance {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 40px;
         }
 
         .balance-card {
             background: var(--card-bg);
-            border: 2px solid var(--primary-cyan);
-            border-radius: 20px;
-            padding: 25px 40px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 16px;
             text-align: center;
-            min-width: 250px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .balance-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(0, 255, 255, 0.1), transparent);
-            animation: rotate 10s linear infinite;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .balance-card.fluxon {
-            border-color: #00ff00;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
-        }
-
-        .balance-card.astrons {
-            border-color: #FFD700;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-        }
-
-        .balance-label {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 600;
-        }
-
-        .balance-value {
-            font-size: 2.5rem;
-            font-weight: 900;
-            font-family: 'Orbitron', sans-serif;
-            position: relative;
-            z-index: 1;
-        }
-
-        .balance-card.fluxon .balance-value {
-            color: #00ff00;
-            text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
-        }
-
-        .balance-card.astrons .balance-value {
-            color: #FFD700;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
-        }
-
-        .shop-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 30px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .shop-item {
-            background: var(--card-bg);
-            border: 2px solid var(--primary-purple);
-            border-radius: 25px;
-            padding: 35px;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(10px);
         }
 
-        .shop-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.05), rgba(157, 78, 221, 0.05));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
+        .balance-card.fluxon-card { border-color: var(--purple); }
+        .balance-card.astron-card { border-color: var(--gold); }
 
-        .shop-item:hover {
-            transform: translateY(-10px) scale(1.02);
-            border-color: var(--primary-cyan);
-            box-shadow: 0 15px 50px rgba(0, 255, 255, 0.4);
-        }
-
-        .shop-item:hover::before {
-            opacity: 1;
-        }
-
-        .item-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
+        .balance-label {
             font-size: 0.75rem;
-            font-weight: 700;
-            font-family: 'Orbitron', sans-serif;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .item-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px currentColor);
+        .balance-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.2rem, 5vw, 2.2rem);
+            font-weight: 900;
+        }
+
+        .fluxon-card .balance-value { color: var(--purple); }
+        .astron-card .balance-value { color: var(--gold); }
+
+        /* --- SHOP GRID --- */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .shop-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
-            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .shop-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--cyan);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .item-visual {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
         }
 
         .item-name {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            color: var(--primary-cyan);
-            margin-bottom: 15px;
+            font-size: 1.4rem;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .item-details {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            position: relative;
-            z-index: 1;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             margin-bottom: 10px;
-            font-size: 0.95rem;
+            color: #fff;
         }
 
-        .detail-row:last-child {
-            margin-bottom: 0;
+        .conversion-pill {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--cyan);
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
         }
 
-        .detail-label {
-            color: rgba(255, 255, 255, 0.6);
+        .reward-area {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 215, 0, 0.1);
         }
 
-        .detail-value {
-            color: #FFD700;
-            font-weight: 700;
-            font-family: 'Orbitron', sans-serif;
-        }
+        .reward-label { font-size: 0.7rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); }
+        .reward-value { font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--gold); font-weight: 800; }
 
-        .conversion-rate {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.85rem;
-            margin-top: 10px;
-            font-style: italic;
-        }
+        .cost-label { color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-bottom: 15px; font-weight: 600; }
+        .cost-value { color: var(--purple); font-weight: 800; }
 
         .purchase-btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+            border-radius: 10px;
             border: none;
-            border-radius: 12px;
-            color: white;
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            position: relative;
-            z-index: 1;
-            margin-top: 20px;
-        }
-
-        .purchase-btn:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
-        }
-
-        .purchase-btn:active:not(:disabled) {
-            transform: scale(0.98);
-        }
-
-        .purchase-btn:disabled {
-            background: rgba(100, 100, 100, 0.3);
+            cursor: pointer;
+            transition: 0.3s;
+            background: linear-gradient(90deg, #1e293b, #0f172a);
             color: rgba(255, 255, 255, 0.4);
-            cursor: not-allowed;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .back-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 12px 25px;
-            background: var(--card-bg);
-            border: 2px solid var(--primary-cyan);
-            border-radius: 10px;
-            color: var(--primary-cyan);
-            text-decoration: none;
-            font-family: 'Orbitron', sans-serif;
+        .purchase-btn.active {
+            background: linear-gradient(90deg, var(--cyan), var(--purple));
+            color: #fff;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .purchase-btn.active:hover {
+            transform: scale(1.02);
+            box-shadow: var(--neon-glow);
+        }
+
+        /* --- ALERTS --- */
+        .alert {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
             font-weight: 700;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            animation: slideDown 0.5s ease;
+        }
+        .alert-success { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
+        .alert-error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        .back-btn:hover {
-            background: rgba(0, 255, 255, 0.1);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            transform: translateX(-3px);
-        }
-
-        .message {
-            max-width: 600px;
-            margin: 0 auto 30px;
-            background: rgba(0, 255, 0, 0.1);
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            font-weight: 600;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-            position: relative;
-            z-index: 2;
-        }
-
-        .error {
-            max-width: 600px;
-            margin: 0 auto 30px;
-            background: rgba(255, 0, 0, 0.1);
-            border: 2px solid #ff0000;
-            color: #ff0000;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            font-weight: 600;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
-            position: relative;
-            z-index: 2;
-        }
-
-        @media (max-width: 768px) {
-            .shop-page {
-                padding: 100px 15px 30px;
-            }
-
-            .balance-section {
-                gap: 20px;
-            }
-
-            .balance-card {
-                min-width: 100%;
-                padding: 20px 30px;
-            }
-
-            .shop-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .back-btn {
-                top: 15px;
-                left: 15px;
-                padding: 10px 20px;
-                font-size: 0.9rem;
-            }
+        /* --- MOBILE OPTIMIZATION --- */
+        @media (max-width: 650px) {
+            .nav-bar { justify-content: center; }
+            .user-balance { grid-template-columns: 1fr; gap: 10px; }
+            .shop-header h1 { font-size: 2.2rem; }
+            .shop-card { padding: 20px; }
+            .reward-value { font-size: 1.6rem; }
         }
     </style>
 </head>
-<body class="no-select" oncontextmenu="return false;">
-    <!-- Space Background -->
-    <div id="space-background"></div>
+<body class="no-select">
+    <div class="nav-bar">
+        <a href="index.php" class="back-btn"><i class="fas fa-arrow-left"></i> Games Hub</a>
+    </div>
     
-    <a href="index.php" class="back-btn">
-        <span>←</span>
-        <span>Back</span>
-    </a>
-    
-    <div class="shop-page">
+    <div class="shop-container">
         <div class="shop-header">
-            <h1>🛒 FLUXON SHOP</h1>
-            <p>Convert your game scores into Astrons</p>
-        </div>
-        
-        <div class="balance-section">
-            <div class="balance-card fluxon">
-                <div class="balance-label">Total Fluxon</div>
-                <div class="balance-value" id="fluxonBalance"><?php echo number_format($total_fluxon); ?></div>
-            </div>
-            <div class="balance-card astrons">
-                <div class="balance-label">Your Astrons</div>
-                <div class="balance-value" id="astronsBalance"><?php echo number_format($user_astrons); ?></div>
-            </div>
+            <h1>Aether Shop</h1>
+            <p>Convert Game Energy into Stellar Credits</p>
         </div>
         
         <?php if ($message): ?>
-            <div class="message">✓ <?php echo htmlspecialchars($message); ?></div>
+            <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?php echo $message; ?></div>
         <?php endif; ?>
         
         <?php if ($error): ?>
-            <div class="error">✗ <?php echo htmlspecialchars($error); ?></div>
+            <div class="alert alert-error"><i class="fas fa-exclamation-triangle"></i> <?php echo $error; ?></div>
         <?php endif; ?>
+
+        <div class="user-balance">
+            <div class="balance-card fluxon-card">
+                <div class="balance-label">Total Fluxon Energy</div>
+                <div class="balance-value"><?php echo number_format($total_fluxon); ?></div>
+            </div>
+            <div class="balance-card astron-card">
+                <div class="balance-label">Available Astrons</div>
+                <div class="balance-value"><?php echo number_format($user_astrons); ?></div>
+            </div>
+        </div>
         
         <div class="shop-grid">
             <?php 
-            $colors = ['#00ffff', '#9d4edd', '#FFD700'];
-            $icons = ['⚡', '⚡⚡', '⚡⚡⚡'];
-            $badges = ['BASIC', 'STANDARD', 'PREMIUM'];
+            $icons = ['<i class="fas fa-bolt" style="color:#00ffff"></i>', 
+                      '<i class="fas fa-satellite-dish" style="color:#9d4edd"></i>', 
+                      '<i class="fas fa-meteor" style="color:#FFD700"></i>'];
+            
             foreach ($shop_prices as $index => $price): 
                 $fluxon = intval($price['fluxon_amount']);
                 $astrons = intval($price['astrons_reward']);
-                $type = htmlspecialchars($price['claim_type']);
-                $color = $colors[$index] ?? '#00ffff';
-                $icon = $icons[$index] ?? '⚡';
-                $badge = $badges[$index] ?? 'CLAIM';
-                $ratio = round($fluxon / $astrons, 0);
-                $can_afford = $total_fluxon >= $fluxon;
+                $can_afford = ($total_fluxon >= $fluxon);
             ?>
-            <div class="shop-item" style="border-color: <?php echo $color; ?>;">
-                <div class="item-badge" style="background: linear-gradient(135deg, <?php echo $color; ?>, <?php echo $index == 2 ? '#FFA500' : $color; ?>);">
-                    <?php echo $badge; ?>
-                </div>
-                <div class="item-icon" style="color: <?php echo $color; ?>;"><?php echo $icon; ?></div>
-                <div class="item-name" style="color: <?php echo $color; ?>;"><?php echo $type; ?></div>
-                
-                <div class="item-details">
-                    <div class="detail-row">
-                        <span class="detail-label">Cost:</span>
-                        <span class="detail-value"><?php echo number_format($fluxon); ?> Fluxon</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Reward:</span>
-                        <span class="detail-value"><?php echo $astrons; ?> Astrons</span>
-                    </div>
-                    <div class="conversion-rate">
-                        <?php echo number_format($ratio); ?> Fluxon per Astron
+            <div class="shop-card" style="<?php echo $index === 2 ? 'border-color: var(--gold); background: rgba(255,215,0,0.03);' : ''; ?>">
+                <div>
+                    <div class="item-visual"><?php echo $icons[$index] ?? $icons[0]; ?></div>
+                    <div class="item-name"><?php echo htmlspecialchars($price['claim_type']); ?></div>
+                    <div class="conversion-pill">Rate: 1 Astron / <?php echo number_format($fluxon / $astrons); ?> Fluxon</div>
+                    
+                    <div class="reward-area">
+                        <div class="reward-label">Payload Amount</div>
+                        <div class="reward-value"><?php echo $astrons; ?> <small style="font-size:0.8rem">Astrons</small></div>
                     </div>
                 </div>
-                
-                <form method="POST" onsubmit="return confirm('Claim <?php echo $astrons; ?> Astrons for <?php echo number_format($fluxon); ?> Fluxon?');">
-                    <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
-                    <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
-                    <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
-                    <button type="submit" name="purchase_item" class="purchase-btn" <?php echo !$can_afford ? 'disabled' : ''; ?>>
-                        <?php echo $can_afford ? "Claim {$astrons} Astrons" : "Insufficient Fluxon"; ?>
-                    </button>
-                </form>
+
+                <div>
+                    <div class="cost-label">Required Energy: <span class="cost-value"><?php echo number_format($fluxon); ?> Fluxon</span></div>
+                    
+                    <form method="POST" onsubmit="return confirm('Initiate sync for <?php echo $astrons; ?> Astrons?');">
+                        <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
+                        <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
+                        <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
+                        <button type="submit" name="purchase_item" 
+                                class="purchase-btn <?php echo $can_afford ? 'active' : ''; ?>" 
+                                <?php echo !$can_afford ? 'disabled' : ''; ?>>
+                            <?php echo $can_afford ? 'Claim Reward' : 'Insufficient Energy'; ?>
+                        </button>
+                    </form>
+                </div>
             </div>
             <?php endforeach; ?>
         </div>
     </div>
-    
-    <script>
-        // Initialize space background
-        const spaceBg = document.getElementById('space-background');
-        if (spaceBg && typeof createSpaceBackground === 'function') {
-            createSpaceBackground();
-        } else {
-            // Fallback if function doesn't exist
-            for (let i = 0; i < 100; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 3 + 's';
-                spaceBg.appendChild(star);
-            }
-        }
-
-        // Auto-refresh balance after purchase
-        <?php if ($message): ?>
-        setTimeout(function() {
-            location.reload();
-        }, 2000);
-        <?php endif; ?>
-    </script>
 </body>
 </html>
