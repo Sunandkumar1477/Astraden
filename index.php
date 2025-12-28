@@ -485,9 +485,6 @@ session_start();
             <button class="category-btn" data-category="action">Action</button>
             <button class="category-btn" data-category="defense">Defense</button>
             <button class="category-btn" data-category="arcade">Arcade</button>
-            <a href="shop.php" class="category-btn" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2)); border-color: #FFD700; color: #FFD700;">
-                🛒 Shop
-            </a>
         </div>
         
         <!-- Mobile Assist Button -->

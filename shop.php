@@ -107,215 +107,440 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop - Astra Den</title>
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
     <link rel="alternate icon" type="image/png" href="Alogo.svg">
     <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/index.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .shop-container {
-            max-width: 1200px;
-            margin: 100px auto 50px;
-            padding: 20px;
+        :root {
+            --primary-cyan: #00ffff;
+            --primary-purple: #9d4edd;
+            --primary-pink: #ff006e;
+            --dark-bg: #0a0a0f;
+            --card-bg: rgba(15, 15, 25, 0.85);
         }
+
+        .shop-page {
+            min-height: 100vh;
+            position: relative;
+            padding: 120px 20px 50px;
+            z-index: 1;
+        }
+
         .shop-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 2;
         }
+
         .shop-header h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
+            font-size: clamp(2rem, 5vw, 3.5rem);
             color: var(--primary-cyan);
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+            font-weight: 900;
         }
-        .user-balance {
+
+        .shop-header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        .balance-section {
             display: flex;
             justify-content: center;
             gap: 30px;
-            margin-bottom: 30px;
+            margin-bottom: 50px;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
         }
+
         .balance-card {
-            background: rgba(0, 0, 0, 0.5);
+            background: var(--card-bg);
             border: 2px solid var(--primary-cyan);
-            border-radius: 15px;
-            padding: 20px 30px;
+            border-radius: 20px;
+            padding: 25px 40px;
             text-align: center;
-            min-width: 200px;
-        }
-        .balance-label {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 10px;
-        }
-        .balance-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #FFD700;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .shop-items {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        .shop-item {
-            background: rgba(15, 15, 25, 0.9);
-            border: 2px solid var(--primary-purple);
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
+            min-width: 250px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
             transition: all 0.3s ease;
             position: relative;
+            overflow: hidden;
         }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1), transparent);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .balance-card.fluxon {
+            border-color: #00ff00;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+
+        .balance-card.astrons {
+            border-color: #FFD700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .balance-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-card.fluxon .balance-value {
+            color: #00ff00;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+        }
+
+        .balance-card.astrons .balance-value {
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .shop-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .shop-item {
+            background: var(--card-bg);
+            border: 2px solid var(--primary-purple);
+            border-radius: 25px;
+            padding: 35px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .shop-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.05), rgba(157, 78, 221, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
         .shop-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(157, 78, 221, 0.5);
+            transform: translateY(-10px) scale(1.02);
             border-color: var(--primary-cyan);
+            box-shadow: 0 15px 50px rgba(0, 255, 255, 0.4);
         }
+
+        .shop-item:hover::before {
+            opacity: 1;
+        }
+
+        .item-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         .item-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
+            font-size: 4rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px currentColor);
+            position: relative;
+            z-index: 1;
         }
+
         .item-name {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             color: var(--primary-cyan);
-            margin-bottom: 10px;
-        }
-        .item-description {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 20px;
-            min-height: 40px;
-        }
-        .item-cost {
-            font-size: 1.1rem;
-            color: #FFD700;
-            font-weight: bold;
             margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
         }
+
+        .item-details {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .detail-value {
+            color: #FFD700;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .conversion-rate {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
         .purchase-btn {
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2));
-            border: 2px solid var(--primary-cyan);
-            border-radius: 8px;
-            color: var(--primary-cyan);
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+            border: none;
+            border-radius: 12px;
+            color: white;
             font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
+            font-weight: 700;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+            margin-top: 20px;
         }
+
         .purchase-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(157, 78, 221, 0.4));
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
         }
+
+        .purchase-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
         .purchase-btn:disabled {
-            opacity: 0.5;
+            background: rgba(100, 100, 100, 0.3);
+            color: rgba(255, 255, 255, 0.4);
             cursor: not-allowed;
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
-        .message {
-            background: rgba(0, 255, 0, 0.2);
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .error {
-            background: rgba(255, 0, 0, 0.2);
-            border: 2px solid #ff0000;
-            color: #ff0000;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+
         .back-btn {
             position: fixed;
             top: 20px;
             left: 20px;
-            padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 25px;
+            background: var(--card-bg);
             border: 2px solid var(--primary-cyan);
-            border-radius: 8px;
+            border-radius: 10px;
             color: var(--primary-cyan);
             text-decoration: none;
             font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
             transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
         .back-btn:hover {
-            background: rgba(0, 255, 255, 0.2);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            transform: translateX(-3px);
+        }
+
+        .message {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .error {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff0000;
+            color: #ff0000;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        @media (max-width: 768px) {
+            .shop-page {
+                padding: 100px 15px 30px;
+            }
+
+            .balance-section {
+                gap: 20px;
+            }
+
+            .balance-card {
+                min-width: 100%;
+                padding: 20px 30px;
+            }
+
+            .shop-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .back-btn {
+                top: 15px;
+                left: 15px;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body class="no-select" oncontextmenu="return false;">
-    <a href="index.php" class="back-btn">← Back to Games</a>
+    <!-- Space Background -->
+    <div id="space-background"></div>
     
-    <div class="shop-container">
+    <a href="index.php" class="back-btn">
+        <span>←</span>
+        <span>Back</span>
+    </a>
+    
+    <div class="shop-page">
         <div class="shop-header">
             <h1>🛒 FLUXON SHOP</h1>
-            <p style="color: rgba(255, 255, 255, 0.7);">Claim Astrons using your Fluxon (Game Score)</p>
-            <p style="color: rgba(0, 255, 255, 0.7); font-size: 0.9rem; margin-top: 10px;">Your total Fluxon from all games: <strong style="color: #FFD700;"><?php echo number_format($total_fluxon); ?></strong></p>
+            <p>Convert your game scores into Astrons</p>
         </div>
         
-        <div class="user-balance">
-            <div class="balance-card" style="border-color: #00ff00;">
-                <div class="balance-label">Your Total Fluxon</div>
-                <div class="balance-value" id="fluxonBalance" style="color: #00ff00;"><?php echo number_format($total_fluxon); ?></div>
-                <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-top: 5px;">Available to Claim</div>
+        <div class="balance-section">
+            <div class="balance-card fluxon">
+                <div class="balance-label">Total Fluxon</div>
+                <div class="balance-value" id="fluxonBalance"><?php echo number_format($total_fluxon); ?></div>
             </div>
-            <div class="balance-card">
+            <div class="balance-card astrons">
                 <div class="balance-label">Your Astrons</div>
                 <div class="balance-value" id="astronsBalance"><?php echo number_format($user_astrons); ?></div>
             </div>
         </div>
         
         <?php if ($message): ?>
-            <div class="message"><?php echo htmlspecialchars($message); ?></div>
+            <div class="message">✓ <?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
         
         <?php if ($error): ?>
-            <div class="error"><?php echo htmlspecialchars($error); ?></div>
+            <div class="error">✗ <?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         
-        <div class="shop-items">
+        <div class="shop-grid">
             <?php 
-            $colors = ['var(--primary-cyan)', '#9d4edd', '#FFD700'];
+            $colors = ['#00ffff', '#9d4edd', '#FFD700'];
             $icons = ['⚡', '⚡⚡', '⚡⚡⚡'];
-            $shadows = ['', '', 'box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);'];
+            $badges = ['BASIC', 'STANDARD', 'PREMIUM'];
             foreach ($shop_prices as $index => $price): 
                 $fluxon = intval($price['fluxon_amount']);
                 $astrons = intval($price['astrons_reward']);
                 $type = htmlspecialchars($price['claim_type']);
                 $color = $colors[$index] ?? '#00ffff';
                 $icon = $icons[$index] ?? '⚡';
-                $shadow = $shadows[$index] ?? '';
-                $ratio = $fluxon / $astrons;
+                $badge = $badges[$index] ?? 'CLAIM';
+                $ratio = round($fluxon / $astrons, 0);
+                $can_afford = $total_fluxon >= $fluxon;
             ?>
-            <div class="shop-item" style="border-color: <?php echo $color; ?>; <?php echo $shadow; ?>">
-                <div class="item-icon"><?php echo $icon; ?></div>
-                <div class="item-name" style="color: <?php echo $color; ?>;"><?php echo $type; ?></div>
-                <div class="item-description">Conversion rate: <?php echo number_format($ratio); ?> Fluxon per Astron</div>
-                <div style="margin: 15px 0; padding: 10px; background: rgba(<?php echo $index == 0 ? '0, 255, 255' : ($index == 1 ? '157, 78, 221' : '255, 215, 0'); ?>, 0.1); border-radius: 8px;">
-                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 5px;">Conversion Rate:</div>
-                    <div style="font-size: 1.1rem; color: #FFD700; font-weight: bold;"><?php echo number_format($fluxon); ?> Fluxon = <?php echo $astrons; ?> Astrons</div>
+            <div class="shop-item" style="border-color: <?php echo $color; ?>;">
+                <div class="item-badge" style="background: linear-gradient(135deg, <?php echo $color; ?>, <?php echo $index == 2 ? '#FFA500' : $color; ?>);">
+                    <?php echo $badge; ?>
                 </div>
-                <div class="item-cost">Cost: <?php echo number_format($fluxon); ?> Fluxon</div>
-                <div style="color: #00ff00; font-weight: bold; margin-bottom: 15px;">You Get: <?php echo $astrons; ?> Astrons</div>
+                <div class="item-icon" style="color: <?php echo $color; ?>;"><?php echo $icon; ?></div>
+                <div class="item-name" style="color: <?php echo $color; ?>;"><?php echo $type; ?></div>
+                
+                <div class="item-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Cost:</span>
+                        <span class="detail-value"><?php echo number_format($fluxon); ?> Fluxon</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Reward:</span>
+                        <span class="detail-value"><?php echo $astrons; ?> Astrons</span>
+                    </div>
+                    <div class="conversion-rate">
+                        <?php echo number_format($ratio); ?> Fluxon per Astron
+                    </div>
+                </div>
+                
                 <form method="POST" onsubmit="return confirm('Claim <?php echo $astrons; ?> Astrons for <?php echo number_format($fluxon); ?> Fluxon?');">
                     <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
                     <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
                     <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
-                    <button type="submit" name="purchase_item" class="purchase-btn" style="border-color: <?php echo $color; ?>; color: <?php echo $color; ?>; <?php echo $index == 2 ? 'background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));' : ''; ?>" <?php echo $total_fluxon < $fluxon ? 'disabled' : ''; ?>>
-                        <?php echo $total_fluxon < $fluxon ? 'Insufficient Fluxon' : "Claim {$astrons} Astrons"; ?>
+                    <button type="submit" name="purchase_item" class="purchase-btn" <?php echo !$can_afford ? 'disabled' : ''; ?>>
+                        <?php echo $can_afford ? "Claim {$astrons} Astrons" : "Insufficient Fluxon"; ?>
                     </button>
                 </form>
             </div>
@@ -324,6 +549,22 @@ $conn->close();
     </div>
     
     <script>
+        // Initialize space background
+        const spaceBg = document.getElementById('space-background');
+        if (spaceBg && typeof createSpaceBackground === 'function') {
+            createSpaceBackground();
+        } else {
+            // Fallback if function doesn't exist
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                spaceBg.appendChild(star);
+            }
+        }
+
         // Auto-refresh balance after purchase
         <?php if ($message): ?>
         setTimeout(function() {
@@ -333,4 +574,3 @@ $conn->close();
     </script>
 </body>
 </html>
-
