@@ -210,14 +210,15 @@ $conn->close();
             }
 
             #bomb-btn {
-                padding: 10px 20px;
-                font-size: 1rem;
-                max-width: 200px;
+                padding: 8px 16px;
+                font-size: 0.75rem;
+                max-width: 150px;
+                letter-spacing: 1px;
             }
 
             #bomb-count-display {
-                font-size: 0.9rem;
-                padding: 4px 12px;
+                font-size: 0.8rem;
+                padding: 3px 10px;
             }
         }
 
@@ -548,13 +549,13 @@ $conn->close();
             margin: 0;
         }
 
-        .game-btn:hover, .start-game-btn:hover, .demo-game-btn:hover, .instructions-toggle-btn:hover {
+        .game-btn:hover, .start-game-btn:hover, .instructions-toggle-btn:hover {
             transform: translateY(-5px) scale(1.03);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
             filter: brightness(1.2);
         }
 
-        .game-btn:active, .start-game-btn:active, .demo-game-btn:active, .instructions-toggle-btn:active {
+        .game-btn:active, .start-game-btn:active, .instructions-toggle-btn:active {
             transform: translateY(2px) scale(0.98);
         }
 
@@ -568,7 +569,7 @@ $conn->close();
                 margin: 40px auto;
             }
             
-            .game-btn, .start-game-btn, .demo-game-btn, .instructions-toggle-btn {
+            .game-btn, .start-game-btn, .instructions-toggle-btn {
                 flex: 0 1 340px; /* Force uniform sizing on desktop */
             }
             
@@ -598,40 +599,6 @@ $conn->close();
             box-shadow: none !important;
         }
 
-        .demo-game-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            color: white;
-            padding: 16px 32px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            border-radius: 12px;
-            cursor: pointer !important;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: auto !important;
-            z-index: 1002 !important;
-            position: relative !important;
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-            visibility: visible !important;
-            width: 100%;
-            max-width: 380px;
-            font-family: 'Orbitron', sans-serif;
-            box-sizing: border-box;
-        }
-
-        .demo-game-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: #fff;
-            transform: translateY(-5px) scale(1.03);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
-        }
-        .demo-game-btn:active {
-            transform: scale(0.98);
-        }
 
         /* Custom Modal Styles */
         .custom-modal {
@@ -922,7 +889,6 @@ $conn->close();
             /* All Buttons - Consistent Box Styling */
             .game-btn, 
             .start-game-btn, 
-            .demo-game-btn, 
             .instructions-toggle-btn {
                 width: 100%;
                 max-width: none;
@@ -946,7 +912,6 @@ $conn->close();
             
             .game-btn:hover, 
             .start-game-btn:hover, 
-            .demo-game-btn:hover, 
             .instructions-toggle-btn:hover {
                 transform: translateX(3px) scale(1.01);
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
@@ -954,7 +919,6 @@ $conn->close();
             
             .game-btn:active, 
             .start-game-btn:active, 
-            .demo-game-btn:active, 
             .instructions-toggle-btn:active {
                 transform: translateX(0) scale(0.99);
             }
@@ -973,20 +937,6 @@ $conn->close();
                 box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
             }
             
-            /* Play Demo Button - Consistent Box */
-            .demo-game-btn {
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid rgba(255, 255, 255, 0.5);
-                color: white;
-                padding: 14px 20px;
-                font-size: 0.95rem;
-            }
-            
-            .demo-game-btn:hover {
-                background: rgba(255, 255, 255, 0.2);
-                border-color: rgba(255, 255, 255, 0.8);
-                box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
-            }
             
             /* Back to Home Button - Consistent Box */
             .btn-home {
@@ -1306,7 +1256,6 @@ $conn->close();
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
             <button id="start-game-btn" class="start-game-btn" style="display: none;"></button>
-            <button id="demo-game-btn" class="demo-game-btn" onclick="window.handleDemoClick(); return false;" style="display: flex !important;">PLAY DEMO</button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
         </div>
 
@@ -1332,7 +1281,6 @@ $conn->close();
             </div>
             <div class="hud-item">
                 <span>FLUXON: <span id="score">0</span></span>
-                <span id="demo-indicator" style="display: none; color: #ffaa00; font-size: 0.8rem; margin-left: 10px;">[DEMO]</span>
             </div>
             <div class="hud-item" id="hud-total-score-item" style="display: none; color: #00ff00;">
                 <span>TOTAL FLUXON: <span id="hud-total-score">0</span></span>
@@ -1483,19 +1431,8 @@ $conn->close();
         }
     </script>
 
-    <!-- Non-module script for demo button and instructions - must be outside module scope -->
+    <!-- Non-module script for instructions - must be outside module scope -->
     <script>
-        // Global demo button handler - works immediately
-        window.handleDemoClick = function() {
-            console.log('Demo button clicked from global handler');
-            // This will be called from the module script
-            if (window.startDemoGameFromModule) {
-                window.startDemoGameFromModule();
-            } else {
-                console.log('Waiting for module to load...');
-                setTimeout(window.handleDemoClick, 100);
-            }
-        };
         
         // Global instructions toggle handler - works immediately
         window.toggleInstructions = function(e) {
@@ -1541,7 +1478,7 @@ $conn->close();
             gameSessionId: null,
             creditsUsed: 0,
             gameStarted: false,
-            isDemoMode: false, // Track if playing in demo mode
+            isDemoMode: false,
             isContestMode: false, // Track if contest mode is active
             gameMode: 'credits' // Track game mode (credits only)
         };
@@ -1563,8 +1500,8 @@ $conn->close();
         }
 
         function updateContestTimer() {
-            // Hide contest timer in demo mode - demo has no time limits
-            if (state.isDemoMode) {
+                // Hide contest timer
+                if (false) {
                 hideContestTimers();
                 return;
             }
@@ -1591,9 +1528,8 @@ $conn->close();
                 }
                 clearInterval(contestTimerInterval);
                 
-                // If game is currently playing (and NOT in demo mode), end it automatically
-                // Demo mode has no time limits, so never auto-end demo games
-                if (state.isPlaying && !gameEndedByTime && !state.isDemoMode) {
+                // If game is currently playing, end it automatically
+                if (state.isPlaying && !gameEndedByTime) {
                     gameEndedByTime = true;
                     gameOver(true); // Pass true to indicate time's up
                 }
@@ -1634,29 +1570,10 @@ $conn->close();
             }
         }
         
-        // Ensure demo button is always visible and enabled on page load
-        function ensureDemoButtonReady() {
-            const demoBtn = document.getElementById('demo-game-btn');
-            if (demoBtn) {
-                demoBtn.style.display = 'block';
-                demoBtn.disabled = false;
-                demoBtn.style.pointerEvents = 'auto';
-                demoBtn.style.cursor = 'pointer';
-            }
-        }
-        
-        // Run immediately and on DOM ready
-        ensureDemoButtonReady();
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', ensureDemoButtonReady);
-        } else {
-            ensureDemoButtonReady();
-        }
         
         // Check game status
         async function checkGameStatus() {
             // Always ensure demo button is visible - demo has no restrictions, play anytime
-            const demoBtn = document.getElementById('demo-game-btn');
             if (demoBtn) {
                 demoBtn.style.display = 'block';
                 demoBtn.style.visibility = 'visible';
@@ -1731,13 +1648,6 @@ $conn->close();
                 console.error('Error checking game status:', error);
                 showNoSession(null);
                 hideContestTimers();
-                // Ensure demo button is always visible even on error
-                if (demoBtn) {
-                    demoBtn.style.display = 'block';
-                    demoBtn.style.visibility = 'visible';
-                    demoBtn.disabled = false;
-                    demoBtn.style.pointerEvents = 'auto';
-                }
             }
         }
         
@@ -1746,7 +1656,6 @@ $conn->close();
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
             const startBtn = document.getElementById('start-game-btn');
-            const demoBtn = document.getElementById('demo-game-btn');
             
             timerDisplay.textContent = 'GAME READY!';
             const creditsRequired = gameSession.credits_required || 30;
@@ -1758,7 +1667,7 @@ $conn->close();
                 startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
                 startBtn.style.color = '#000';
             } else {
-                statusMessage.textContent = `Choose your mode: Demo (always free) or Real Game (${creditsRequired} Astrons)`;
+                statusMessage.textContent = `Play for ${creditsRequired} Astrons`;
                 startBtn.style.display = 'flex';
                 startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
                 startBtn.style.background = ''; // Reset to CSS default
@@ -1766,28 +1675,22 @@ $conn->close();
             }
             startBtn.disabled = false;
             
-            // Always show demo button - demo can be played ANYTIME, no restrictions
-            if (demoBtn) {
-                demoBtn.style.display = 'flex';
-                demoBtn.disabled = false;
-            }
-            
             // Check if user is logged in
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             const userCredits = <?php echo $user_credits; ?>;
             
             if (!isLoggedIn) {
-                // User not logged in - hide start button, show demo only
+                // User not logged in - hide start button
                 startBtn.style.display = 'none';
                 if (state.isContestMode) {
                     statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} Astrons required).`;
-                    } else {
-                    statusMessage.textContent = `Demo mode is free and always available! Login to play for real (${creditsRequired} Astrons required).`;
+                } else {
+                    statusMessage.textContent = `Login to play (${creditsRequired} Astrons required).`;
                 }
             } else if (userCredits < creditsRequired) {
                 startBtn.disabled = true;
                 startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                statusMessage.textContent = `Demo mode is always available (free, no restrictions)! Or add ${creditsRequired} Astrons to play for real.`;
+                statusMessage.textContent = `Insufficient Astrons! You need ${creditsRequired} Astrons to play.`;
             }
         }
         
@@ -1796,14 +1699,8 @@ $conn->close();
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
             const startBtn = document.getElementById('start-game-btn');
-            const demoBtn = document.getElementById('demo-game-btn');
             
             startBtn.style.display = 'none';
-            // Always show demo button - demo can be played ANYTIME, no restrictions
-            if (demoBtn) {
-                demoBtn.style.display = 'block';
-                demoBtn.disabled = false;
-            }
             
             function updateCountdown() {
                 const now = Math.floor(Date.now() / 1000);
@@ -1824,9 +1721,9 @@ $conn->close();
                 
                 // Show contest message if contest is active
                 if (state.isContestMode) {
-                    statusMessage.textContent = `🏆 Contest is active! Game will start soon. Demo mode is always available (free, no restrictions)!`;
+                    statusMessage.textContent = `🏆 Contest is active! Game will start soon.`;
                 } else {
-                    statusMessage.textContent = 'Game will start soon. Demo mode is always available (free, no restrictions)!';
+                    statusMessage.textContent = 'Game will start soon.';
                 }
             }
             
@@ -1839,7 +1736,6 @@ $conn->close();
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
             const startBtn = document.getElementById('start-game-btn');
-            const demoBtn = document.getElementById('demo-game-btn');
             
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             
@@ -1876,11 +1772,6 @@ $conn->close();
             
             statusMessage.textContent = message;
             startBtn.style.display = 'none';
-            // Demo can be played ANYTIME - always visible and enabled
-            if (demoBtn) {
-                demoBtn.style.display = 'block';
-                demoBtn.disabled = false;
-            }
         }
         
         // Start game button handler (with credits)
@@ -1890,13 +1781,13 @@ $conn->close();
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             
             if (!isLoggedIn) {
-                alert('Please login to play for real. Demo mode is always available!');
+                alert('Please login to play. Login required to play this game.');
                 window.location.href = 'index.php';
                 return;
             }
             
             if (!gameSession) {
-                alert('No active game session. Please try demo mode.');
+                alert('No active game session. Please wait for a game session to start.');
                 return;
             }
             
@@ -1906,7 +1797,7 @@ $conn->close();
             const sessionEnd = gameSession.end_timestamp;
             
             if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
-                alert('Game session is not currently active. Astrons will not be deducted. Please wait for the scheduled time or try demo mode.');
+                alert('Game session is not currently active. Please wait for the scheduled time.');
                 return;
             }
             
@@ -1914,7 +1805,7 @@ $conn->close();
             const userCredits = <?php echo $user_credits; ?>;
             
             if (userCredits < creditsRequired) {
-                alert(`Insufficient Astrons! You need ${creditsRequired} Astrons to play. Try demo mode instead.`);
+                alert(`Insufficient Astrons! You need ${creditsRequired} Astrons to play.`);
                 return;
             }
             
@@ -1969,147 +1860,6 @@ $conn->close();
             }
         });
         
-        // Demo game button handler - Simple and direct approach
-        function startDemoGame() {
-            console.log('=== startDemoGame called ===');
-            
-            if (state.gameStarted) {
-                console.log('Game already started');
-                return;
-            }
-            
-            // Set game state
-            gameEndedByTime = false;
-            state.gameStarted = true;
-            state.isDemoMode = true;
-            state.creditsUsed = 0;
-            state.gameSessionId = null;
-            state.isPlaying = true;
-            // Show EXIT button
-            const exitBtnHud = document.getElementById('exit-game-btn-hud');
-            if (exitBtnHud) exitBtnHud.style.display = 'block';
-            
-            preventExitDuringGame();
-            state.score = 0;
-            state.health = 100;
-            state.bombs = 3;
-            
-            console.log('Game state set:', {
-                gameStarted: state.gameStarted,
-                isPlaying: state.isPlaying,
-                isDemoMode: state.isDemoMode
-            });
-            
-            // Hide overlay with multiple methods - CRITICAL
-            const overlay = document.getElementById('game-status-overlay');
-            if (overlay) {
-                overlay.classList.add('hidden');
-                overlay.style.display = 'none';
-                overlay.style.visibility = 'hidden';
-                overlay.style.pointerEvents = 'none';
-                overlay.style.opacity = '0';
-                overlay.style.zIndex = '-1';
-                overlay.style.position = 'absolute';
-                console.log('Overlay hidden');
-            } else {
-                console.error('Overlay element not found!');
-            }
-            
-            // Hide contest timer
-            const contestTimer = document.getElementById('contest-timer');
-            if (contestTimer) {
-                contestTimer.style.display = 'none';
-            }
-            
-            // Stop contest timer interval
-            if (typeof contestTimerInterval !== 'undefined' && contestTimerInterval) {
-                clearInterval(contestTimerInterval);
-                contestTimerInterval = null;
-            }
-            
-            // Show demo indicator
-            const demoIndicator = document.getElementById('demo-indicator');
-            if (demoIndicator) {
-                demoIndicator.style.display = 'inline';
-            }
-            
-            // Show message
-            setTimeout(function() {
-                if (typeof showMessage === 'function') {
-                    showMessage("DEMO MODE - Fluxon won't be saved - No time limits!");
-                }
-            }, 100);
-            
-            // Update HUD
-            setTimeout(function() {
-                if (typeof updateHUD === 'function') {
-                    updateHUD();
-                }
-            }, 100);
-            
-            console.log('=== Demo game started! isPlaying:', state.isPlaying, '===');
-        }
-        
-        // Make startDemoGame globally available
-        window.startDemoGame = startDemoGame;
-        window.startDemoGameFromModule = startDemoGame;
-        
-        // Attach demo button handler - multiple methods to ensure it works
-        function attachDemoButton() {
-            const demoBtn = document.getElementById('demo-game-btn');
-            if (!demoBtn) {
-                console.log('Demo button not found, retrying...');
-                setTimeout(attachDemoButton, 50);
-                return;
-            }
-            
-            // Remove any existing handlers first
-            const newBtn = demoBtn.cloneNode(true);
-            demoBtn.parentNode.replaceChild(newBtn, demoBtn);
-            
-            // Use onclick for maximum compatibility
-            newBtn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Demo button clicked via onclick');
-                startDemoGame();
-                return false;
-            };
-            
-            // Also add event listener for click
-            newBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Demo button clicked via addEventListener');
-                startDemoGame();
-                return false;
-            }, false);
-            
-            // Also add event listener for touch
-            newBtn.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Demo button touched');
-                startDemoGame();
-                return false;
-            }, { passive: false });
-            
-            console.log('Demo button handler attached successfully');
-        }
-        
-        // Attach immediately and on DOM ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                attachDemoButton();
-            });
-        } else {
-            attachDemoButton();
-        }
-        
-        // Also try after delays to catch any late loading
-        setTimeout(attachDemoButton, 100);
-        setTimeout(attachDemoButton, 500);
-        setTimeout(attachDemoButton, 1000);
         
         // Initialize
         checkGameStatus();
@@ -2458,6 +2208,26 @@ $conn->close();
         const projectileGeometry = new THREE.SphereGeometry(0.1, 8, 8);
         const projectileMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
 
+        // BULLET TRAIL EFFECT
+        const bulletTrails = [];
+        function createBulletTrail(startPos, endPos) {
+            const trailGeometry = new THREE.BufferGeometry();
+            const points = [startPos.clone(), endPos.clone()];
+            trailGeometry.setFromPoints(points);
+            
+            const trailMaterial = new THREE.LineBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.8,
+                linewidth: 2
+            });
+            
+            const trail = new THREE.Line(trailGeometry, trailMaterial);
+            trail.userData = { life: 0.2, startPos: startPos.clone(), endPos: endPos.clone() };
+            scene.add(trail);
+            bulletTrails.push(trail);
+        }
+
         function shoot(targetPoint) {
             if(!state.isPlaying) return;
             
@@ -2470,6 +2240,10 @@ $conn->close();
             mesh.userData = { velocity: velocity, life: 100 };
             scene.add(mesh);
             projectiles.push(mesh);
+            
+            // Create bullet trail effect
+            const trailEnd = startPos.clone().add(velocity.clone().multiplyScalar(2));
+            createBulletTrail(startPos, trailEnd);
             
             // Play shooting sound
             SoundManager.playShoot();
@@ -2589,9 +2363,9 @@ $conn->close();
             const moveX = Math.abs(x - pointerDownX);
             const moveY = Math.abs(y - pointerDownY);
 
-            // If moved less than 10 pixels, consider it a TAP/CLICK (Shoot)
+            // If moved less than 15 pixels, consider it a TAP/CLICK (Shoot)
             // If moved more, it was a camera rotation (ignore shoot)
-            if (moveX < 10 && moveY < 10) {
+            if (moveX < 15 && moveY < 15) {
                 
                 // Convert to Normalized Device Coordinates
                 mouse.x = (x / window.innerWidth) * 2 - 1;
@@ -2599,13 +2373,28 @@ $conn->close();
 
                 raycaster.setFromCamera(mouse, camera);
 
-                // Check for Asteroid hit (generous hitbox)
-                raycaster.params.Points.threshold = 1; // Increase threshold if needed
-                const intersects = raycaster.intersectObjects(asteroids);
+                // Check for Asteroid hit - use Mesh intersection (asteroids are Meshes, not Points)
+                // Increase threshold for better detection
+                raycaster.params.Mesh = { threshold: 2.0 }; // Larger threshold for easier hits
+                const intersects = raycaster.intersectObjects(asteroids, true);
 
                 if (intersects.length > 0) {
-                    // Shoot directly at clicked asteroid
-                    shoot(intersects[0].object.position);
+                    // Find closest asteroid
+                    const closestAsteroid = intersects[0].object;
+                    // Shoot directly at clicked asteroid with visual feedback
+                    const asteroidPos = closestAsteroid.position.clone();
+                    shoot(asteroidPos);
+                    
+                    // Add visual feedback - flash the asteroid briefly
+                    const originalEmissive = closestAsteroid.material.emissive.clone();
+                    closestAsteroid.material.emissive.setHex(0xffffff);
+                    closestAsteroid.material.emissiveIntensity = 1.0;
+                    setTimeout(() => {
+                        if (closestAsteroid.material) {
+                            closestAsteroid.material.emissive.copy(originalEmissive);
+                            closestAsteroid.material.emissiveIntensity = 0.8;
+                        }
+                    }, 100);
                 } else {
                     // Shoot into space at cursor direction
                     const target = new THREE.Vector3();
@@ -2833,6 +2622,18 @@ $conn->close();
                 }
             }
             
+            // Update Bullet Trails
+            for (let i = bulletTrails.length - 1; i >= 0; i--) {
+                const trail = bulletTrails[i];
+                trail.userData.life -= frameDelta;
+                trail.material.opacity = Math.max(0, trail.userData.life / 0.2);
+                
+                if (trail.userData.life <= 0) {
+                    scene.remove(trail);
+                    bulletTrails.splice(i, 1);
+                }
+            }
+            
             // Update Projectiles (velocities are per-frame)
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i];
@@ -3024,24 +2825,9 @@ $conn->close();
             }
             
             // Show demo mode message if applicable
-            if (state.isDemoMode) {
-                const demoMsg = document.createElement('p');
-                demoMsg.className = 'demo-msg';
-                demoMsg.style.color = '#ffaa00';
-                demoMsg.style.fontWeight = 'bold';
-                demoMsg.style.marginTop = '10px';
-                demoMsg.textContent = 'DEMO MODE - Fluxon not saved to leaderboard';
-                const btnContainer = gameOverDiv.querySelector('.game-btn-container');
-                if (btnContainer) {
-                    gameOverDiv.insertBefore(demoMsg, btnContainer);
-                } else {
-                    gameOverDiv.appendChild(demoMsg);
-                }
-            }
-            
-            // Save Fluxon to database (only if credits were used, NOT in demo mode)
+            // Save Fluxon to database (only if credits were used)
             // Also save if time's up (even if Fluxon is 0, as long as game was started with credits)
-            if (state.gameStarted && !state.isDemoMode && state.creditsUsed > 0 && state.gameSessionId) {
+            if (state.gameStarted && state.creditsUsed > 0 && state.gameSessionId) {
                 const finalScore = Math.floor(state.score || 0);
                 console.log("Submitting final score:", finalScore, "for session:", state.gameSessionId);
                 
@@ -3051,7 +2837,7 @@ $conn->close();
                     formData.append('session_id', state.gameSessionId);
                     formData.append('credits_used', state.creditsUsed);
                     formData.append('game_name', 'earth-defender');
-                    formData.append('is_demo', 'false'); // Explicitly mark as not demo
+                    formData.append('is_demo', 'false');
                     
                     const response = await fetch('game_api.php?action=save_score', {
                         method: 'POST',

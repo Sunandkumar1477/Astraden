@@ -333,13 +333,483 @@ $conn->close();
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* --- MOBILE OPTIMIZATION --- */
-        @media (max-width: 650px) {
-            .nav-bar { justify-content: center; }
-            .user-balance { grid-template-columns: 1fr; gap: 10px; }
-            .shop-header h1 { font-size: 2.2rem; }
-            .shop-card { padding: 20px; }
-            .reward-value { font-size: 1.6rem; }
+        /* --- COMPREHENSIVE MOBILE MEDIA QUERIES --- */
+        
+        /* Extra Large Devices (Large Desktops) - 1200px and up */
+        @media (min-width: 1200px) {
+            .shop-container {
+                max-width: 1200px;
+            }
+            .shop-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 30px;
+            }
+        }
+
+        /* Large Devices (Desktops) - 992px to 1199px */
+        @media (max-width: 1199px) and (min-width: 992px) {
+            .shop-container {
+                max-width: 960px;
+            }
+            .shop-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 25px;
+            }
+        }
+
+        /* Medium Devices (Tablets) - 768px to 991px */
+        @media (max-width: 991px) and (min-width: 768px) {
+            .shop-container {
+                max-width: 100%;
+                padding: 0 30px;
+            }
+            .nav-bar {
+                padding: 0 30px;
+            }
+            .shop-header {
+                margin: 30px 0 50px;
+            }
+            .shop-header h1 {
+                font-size: 2.5rem;
+                letter-spacing: 3px;
+            }
+            .shop-header p {
+                font-size: 1.1rem;
+            }
+            .user-balance {
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 50px;
+            }
+            .balance-card {
+                padding: 25px;
+            }
+            .balance-label {
+                font-size: 0.8rem;
+            }
+            .balance-value {
+                font-size: 2rem;
+            }
+            .shop-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 25px;
+            }
+            .shop-card {
+                padding: 25px;
+            }
+            .item-visual {
+                font-size: 3rem;
+            }
+            .item-name {
+                font-size: 1.3rem;
+            }
+            .reward-area {
+                padding: 18px;
+            }
+            .reward-value {
+                font-size: 1.8rem;
+            }
+            .purchase-btn {
+                padding: 14px;
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Small Devices (Large Phones) - 650px to 767px */
+        @media (max-width: 767px) and (min-width: 651px) {
+            .shop-container {
+                max-width: 100%;
+                padding: 0 25px;
+            }
+            .nav-bar {
+                padding: 0 25px;
+                margin: 20px auto;
+            }
+            .back-btn {
+                padding: 12px 22px;
+                font-size: 0.9rem;
+            }
+            .shop-header {
+                margin: 25px 0 45px;
+            }
+            .shop-header h1 {
+                font-size: 2.3rem;
+                letter-spacing: 3px;
+                margin-bottom: 12px;
+            }
+            .shop-header p {
+                font-size: 1rem;
+                letter-spacing: 1.5px;
+            }
+            .user-balance {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-bottom: 45px;
+            }
+            .balance-card {
+                padding: 22px;
+                border-radius: 14px;
+            }
+            .balance-label {
+                font-size: 0.75rem;
+                margin-bottom: 10px;
+            }
+            .balance-value {
+                font-size: 1.8rem;
+            }
+            .shop-grid {
+                grid-template-columns: 1fr;
+                gap: 22px;
+            }
+            .shop-card {
+                padding: 28px;
+                border-radius: 18px;
+            }
+            .item-visual {
+                font-size: 3.2rem;
+                margin-bottom: 18px;
+            }
+            .item-name {
+                font-size: 1.35rem;
+                margin-bottom: 12px;
+            }
+            .conversion-pill {
+                padding: 7px 18px;
+                font-size: 0.85rem;
+                margin-bottom: 22px;
+            }
+            .reward-area {
+                padding: 20px;
+                margin-bottom: 22px;
+            }
+            .reward-label {
+                font-size: 0.75rem;
+            }
+            .reward-value {
+                font-size: 1.9rem;
+            }
+            .cost-label {
+                font-size: 0.95rem;
+                margin-bottom: 18px;
+            }
+            .purchase-btn {
+                padding: 16px;
+                font-size: 0.95rem;
+            }
+            .alert {
+                padding: 18px;
+                margin-bottom: 35px;
+            }
+        }
+
+        /* Extra Small Devices (Phones) - 481px to 650px */
+        @media (max-width: 650px) and (min-width: 481px) {
+            .shop-container {
+                max-width: 100%;
+                padding: 0 20px;
+            }
+            .nav-bar {
+                padding: 0 20px;
+                margin: 15px auto;
+                justify-content: center;
+            }
+            .back-btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+                gap: 6px;
+            }
+            .shop-header {
+                margin: 20px 0 35px;
+            }
+            .shop-header h1 {
+                font-size: 2rem;
+                letter-spacing: 2px;
+                margin-bottom: 10px;
+            }
+            .shop-header p {
+                font-size: 0.95rem;
+                letter-spacing: 1px;
+            }
+            .user-balance {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 35px;
+            }
+            .balance-card {
+                padding: 20px;
+                border-radius: 14px;
+            }
+            .balance-label {
+                font-size: 0.7rem;
+                margin-bottom: 8px;
+            }
+            .balance-value {
+                font-size: 1.7rem;
+            }
+            .shop-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .shop-card {
+                padding: 25px;
+                border-radius: 16px;
+            }
+            .item-visual {
+                font-size: 3rem;
+                margin-bottom: 15px;
+            }
+            .item-name {
+                font-size: 1.25rem;
+                margin-bottom: 10px;
+            }
+            .conversion-pill {
+                padding: 6px 16px;
+                font-size: 0.8rem;
+                margin-bottom: 20px;
+            }
+            .reward-area {
+                padding: 18px;
+                margin-bottom: 20px;
+            }
+            .reward-label {
+                font-size: 0.7rem;
+            }
+            .reward-value {
+                font-size: 1.7rem;
+            }
+            .reward-value small {
+                font-size: 0.75rem;
+            }
+            .cost-label {
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+            .purchase-btn {
+                padding: 15px;
+                font-size: 0.9rem;
+            }
+            .alert {
+                padding: 15px;
+                margin-bottom: 30px;
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Very Small Devices (Small Phones) - 320px to 480px */
+        @media (max-width: 480px) {
+            body {
+                padding-bottom: 30px;
+            }
+            .shop-container {
+                max-width: 100%;
+                padding: 0 15px;
+            }
+            .nav-bar {
+                padding: 0 15px;
+                margin: 12px auto;
+                justify-content: center;
+            }
+            .back-btn {
+                padding: 9px 18px;
+                font-size: 0.8rem;
+                gap: 5px;
+                letter-spacing: 0.5px;
+            }
+            .back-btn i {
+                font-size: 0.85rem;
+            }
+            .shop-header {
+                margin: 15px 0 30px;
+            }
+            .shop-header h1 {
+                font-size: 1.75rem;
+                letter-spacing: 1.5px;
+                margin-bottom: 8px;
+                line-height: 1.2;
+            }
+            .shop-header p {
+                font-size: 0.85rem;
+                letter-spacing: 0.5px;
+                padding: 0 10px;
+            }
+            .user-balance {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                margin-bottom: 30px;
+            }
+            .balance-card {
+                padding: 18px 15px;
+                border-radius: 12px;
+            }
+            .balance-label {
+                font-size: 0.65rem;
+                margin-bottom: 6px;
+                letter-spacing: 1.5px;
+            }
+            .balance-value {
+                font-size: 1.5rem;
+                word-break: break-word;
+            }
+            .shop-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+            .shop-card {
+                padding: 20px 18px;
+                border-radius: 14px;
+            }
+            .item-visual {
+                font-size: 2.5rem;
+                margin-bottom: 12px;
+            }
+            .item-visual i {
+                font-size: 2.5rem;
+            }
+            .item-name {
+                font-size: 1.1rem;
+                margin-bottom: 8px;
+                line-height: 1.3;
+            }
+            .conversion-pill {
+                padding: 5px 14px;
+                font-size: 0.75rem;
+                margin-bottom: 18px;
+                line-height: 1.4;
+            }
+            .reward-area {
+                padding: 15px;
+                margin-bottom: 18px;
+                border-radius: 10px;
+            }
+            .reward-label {
+                font-size: 0.65rem;
+                margin-bottom: 5px;
+            }
+            .reward-value {
+                font-size: 1.5rem;
+                line-height: 1.2;
+            }
+            .reward-value small {
+                font-size: 0.7rem;
+            }
+            .cost-label {
+                font-size: 0.85rem;
+                margin-bottom: 12px;
+                line-height: 1.4;
+            }
+            .cost-value {
+                display: block;
+                margin-top: 3px;
+                font-size: 1rem;
+            }
+            .purchase-btn {
+                padding: 14px;
+                font-size: 0.85rem;
+                letter-spacing: 0.5px;
+                border-radius: 8px;
+            }
+            .alert {
+                padding: 12px 15px;
+                margin-bottom: 25px;
+                border-radius: 10px;
+                font-size: 0.85rem;
+            }
+            .alert i {
+                font-size: 0.9rem;
+                margin-right: 6px;
+            }
+        }
+
+        /* Ultra Small Devices (Very Small Phones) - 320px and below */
+        @media (max-width: 320px) {
+            .shop-container {
+                padding: 0 12px;
+            }
+            .nav-bar {
+                padding: 0 12px;
+                margin: 10px auto;
+            }
+            .back-btn {
+                padding: 8px 15px;
+                font-size: 0.75rem;
+            }
+            .shop-header h1 {
+                font-size: 1.5rem;
+                letter-spacing: 1px;
+            }
+            .shop-header p {
+                font-size: 0.8rem;
+            }
+            .balance-card {
+                padding: 15px 12px;
+            }
+            .balance-label {
+                font-size: 0.6rem;
+            }
+            .balance-value {
+                font-size: 1.3rem;
+            }
+            .shop-card {
+                padding: 18px 15px;
+            }
+            .item-visual {
+                font-size: 2.2rem;
+            }
+            .item-name {
+                font-size: 1rem;
+            }
+            .conversion-pill {
+                font-size: 0.7rem;
+                padding: 4px 12px;
+            }
+            .reward-value {
+                font-size: 1.3rem;
+            }
+            .purchase-btn {
+                padding: 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Landscape Orientation for Mobile */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .shop-header {
+                margin: 15px 0 25px;
+            }
+            .shop-header h1 {
+                font-size: 2rem;
+            }
+            .user-balance {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+            .shop-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+        }
+
+        /* Touch Device Optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .back-btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            .purchase-btn {
+                min-height: 48px;
+            }
+            .shop-card {
+                -webkit-tap-highlight-color: rgba(0, 255, 255, 0.1);
+            }
+        }
+
+        /* High DPI Displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .balance-card,
+            .shop-card {
+                border-width: 0.5px;
+            }
         }
     </style>
 </head>
