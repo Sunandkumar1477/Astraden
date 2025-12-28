@@ -226,17 +226,9 @@ if (count($prices) >= 3) $price3 = $prices[2];
             <a href="admin_view_all_users.php" class="menu-item"><i class="fas fa-users"></i> <span>User Directory</span></a>
             <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key"></i> <span>Reset Requests</span></a>
             <div class="menu-category">Financials</div>
-            <a href="admin_transaction_codes.php" class="menu-item"><i class="fas fa-qrcode"></i> <span>Verify Payments</span></a>
-            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins"></i> <span>Manual Astrons</span></a>
-            <a href="admin_credit_pricing.php" class="menu-item"><i class="fas fa-tags"></i> <span>Pricing Plans</span></a>
-            <a href="admin_credit_timing.php" class="menu-item"><i class="fas fa-clock"></i> <span>Purchase Timing</span></a>
-            <a href="admin_credit_sale_limit.php" class="menu-item"><i class="fas fa-gauge-high"></i> <span>Sale Limits</span></a>
             <a href="admin_shop_pricing.php" class="menu-item active"><i class="fas fa-store"></i> <span>Shop Pricing</span></a>
             <div class="menu-category">Game Operations</div>
-            <a href="admin_game_timing.php" class="menu-item"><i class="fas fa-calendar-check"></i> <span>Game Sessions</span></a>
-            <a href="admin_contest_management.php" class="menu-item"><i class="fas fa-trophy"></i> <span>Contest Control</span></a>
             <a href="admin_game_credits.php" class="menu-item"><i class="fas fa-gamepad"></i> <span>Play Costs</span></a>
-            <a href="admin_game_prizes.php" class="menu-item"><i class="fas fa-award"></i> <span>Prize Setup</span></a>
             <a href="admin_game_leaderboard.php" class="menu-item"><i class="fas fa-ranking-star"></i> <span>Leaderboards</span></a>
         </div>
         <div class="sidebar-footer"><a href="admin_logout.php" class="logout-btn"><i class="fas fa-power-off"></i> <span>Exit</span></a></div>
