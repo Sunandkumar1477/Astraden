@@ -1770,8 +1770,23 @@ if (isset($_SESSION['user_id'])) {
             
             if (alreadyPaid && state.creditsUsed > 0) {
                 // Payment already made - buttons are already set by startGame function
-                // Just ensure overlay is visible
+                // Just ensure overlay is visible and Start Mission button is shown
                 if (overlay) overlay.classList.remove('hidden');
+                
+                // Ensure Start Mission button is visible
+                const startMissionBtn = document.getElementById('start-mission-btn');
+                if (startMissionBtn && state.creditsUsed > 0) {
+                    startMissionBtn.style.display = 'flex';
+                    startMissionBtn.textContent = state.isContestMode ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
+                    startMissionBtn.disabled = false;
+                }
+                
+                // Hide normal/contest buttons
+                const normalBtn = document.getElementById('normal-play-btn');
+                const contestBtn = document.getElementById('contest-play-btn');
+                if (normalBtn) normalBtn.style.display = 'none';
+                if (contestBtn) contestBtn.style.display = 'none';
+                
                 return;
             }
             
@@ -2052,6 +2067,14 @@ if (isset($_SESSION['user_id'])) {
                 state.isContestMode = isContestMode;
                 state.gameSessionId = gameSession.id || 0;
                 
+                // Immediately show Start Mission button
+                const startMissionBtnImmediate = document.getElementById('start-mission-btn');
+                if (startMissionBtnImmediate) {
+                    startMissionBtnImmediate.style.display = 'flex';
+                    startMissionBtnImmediate.textContent = isContestMode ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
+                    startMissionBtnImmediate.disabled = false;
+                }
+                
                 // Show game status overlay with game name and buttons
                 const overlay = document.getElementById('game-status-overlay');
                 if (overlay) {
@@ -2177,6 +2200,7 @@ if (isset($_SESSION['user_id'])) {
         // Check if payment was already made on page load
         const urlParamsOnLoad = new URLSearchParams(window.location.search);
         const paidOnLoad = urlParamsOnLoad.get('paid') === '1';
+        const modeOnLoad = urlParamsOnLoad.get('mode');
         
         // Initialize
         if (paidOnLoad) {
@@ -2185,6 +2209,26 @@ if (isset($_SESSION['user_id'])) {
             if (overlay) {
                 overlay.classList.remove('hidden');
             }
+            
+            // Set contest mode if specified
+            if (modeOnLoad === 'contest') {
+                state.isContestMode = true;
+            }
+            
+            // Show Start Mission button immediately
+            const startMissionBtn = document.getElementById('start-mission-btn');
+            if (startMissionBtn) {
+                startMissionBtn.style.display = 'flex';
+                const isContest = modeOnLoad === 'contest';
+                startMissionBtn.textContent = isContest ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
+                startMissionBtn.disabled = false;
+            }
+            
+            // Hide normal/contest buttons
+            const normalBtn = document.getElementById('normal-play-btn');
+            const contestBtn = document.getElementById('contest-play-btn');
+            if (normalBtn) normalBtn.style.display = 'none';
+            if (contestBtn) contestBtn.style.display = 'none';
         }
         
         // Always check game status to get session info
