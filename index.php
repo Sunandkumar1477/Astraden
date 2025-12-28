@@ -800,7 +800,8 @@ session_start();
                         if (earthDefenderData.success) {
                             const normalCost = earthDefenderData.normal_credits_required || earthDefenderData.credits_per_chance || 30;
                             const contestCost = earthDefenderData.contest_credits_required || 30;
-                            const isContestActive = earthDefenderData.is_contest_active || false;
+                            const isContestActive = earthDefenderData.is_contest_active || false; // Contest within time window
+                            const isContestEnabled = earthDefenderData.is_contest_enabled || false; // Contest setting (not time-dependent)
                             const disableNormalPlay = earthDefenderData.disable_normal_play || false;
                             
                             // Update normal play button cost
@@ -815,13 +816,24 @@ session_start();
                                 contestCostElement.textContent = `${contestCost} Astrons`;
                             }
                             
-                            // Hide normal play button if contest is active and normal play is disabled
+                            // Normal play button - always show (not affected by contest timing)
+                            // Only hide if contest is currently active (in time window) AND disable_normal_play is ON
                             const normalPlayBtn = document.getElementById('normal-play-btn-earth-defender');
                             if (normalPlayBtn) {
                                 if (isContestActive && disableNormalPlay) {
                                     normalPlayBtn.style.display = 'none';
                                 } else {
                                     normalPlayBtn.style.display = 'flex';
+                                }
+                            }
+                            
+                            // Contest play button - only show when contest is active (within time window)
+                            const contestPlayBtn = document.getElementById('contest-play-btn-earth-defender');
+                            if (contestPlayBtn) {
+                                if (isContestActive) {
+                                    contestPlayBtn.style.display = 'flex';
+                                } else {
+                                    contestPlayBtn.style.display = 'none';
                                 }
                             }
                         }

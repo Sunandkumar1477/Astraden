@@ -42,16 +42,20 @@ if ($game_name) {
         $contest_start_datetime = $game['contest_start_datetime'] ?? null;
         $contest_end_datetime = $game['contest_end_datetime'] ?? null;
         
-        // Check if contest is within time range
+        // Check if contest is within time range (only for contest play, not normal play)
+        $is_contest_in_time_window = false;
         if ($is_contest && $contest_start_datetime && $contest_end_datetime) {
             $now = time();
             $start_ts = strtotime($contest_start_datetime);
             $end_ts = strtotime($contest_end_datetime);
             
             // Contest is only active if current time is within the range
-            if ($now < $start_ts || $now > $end_ts) {
-                $is_contest = 0; // Contest not in active time window
+            if ($now >= $start_ts && $now <= $end_ts) {
+                $is_contest_in_time_window = true;
             }
+        } else if ($is_contest) {
+            // If contest is active but no timing set, consider it always active
+            $is_contest_in_time_window = true;
         }
         
         echo json_encode([
@@ -60,7 +64,8 @@ if ($game_name) {
             'credits_per_chance' => $final_credits,
             'normal_credits_required' => $normal_cost,
             'contest_credits_required' => $contest_cost,
-            'is_contest_active' => $is_contest,
+            'is_contest_active' => $is_contest_in_time_window, // Only true if within time window
+            'is_contest_enabled' => $is_contest, // Original contest setting (not time-dependent)
             'disable_normal_play' => $disable_normal_play,
             'game_mode' => $game['game_mode'] ?? 'credits',
             'contest_prizes' => [
@@ -101,23 +106,28 @@ if ($game_name) {
         $contest_start_datetime = $g['contest_start_datetime'] ?? null;
         $contest_end_datetime = $g['contest_end_datetime'] ?? null;
         
-        // Check if contest is within time range
+        // Check if contest is within time range (only for contest play, not normal play)
+        $is_contest_in_time_window = false;
         if ($is_contest && $contest_start_datetime && $contest_end_datetime) {
             $now = time();
             $start_ts = strtotime($contest_start_datetime);
             $end_ts = strtotime($contest_end_datetime);
             
             // Contest is only active if current time is within the range
-            if ($now < $start_ts || $now > $end_ts) {
-                $is_contest = 0; // Contest not in active time window
+            if ($now >= $start_ts && $now <= $end_ts) {
+                $is_contest_in_time_window = true;
             }
+        } else if ($is_contest) {
+            // If contest is active but no timing set, consider it always active
+            $is_contest_in_time_window = true;
         }
         
         $response[$g['game_name']] = [
             'credits_per_chance' => $final_credits,
             'normal_credits_required' => $normal_cost,
             'contest_credits_required' => $contest_cost,
-            'is_contest_active' => $is_contest,
+            'is_contest_active' => $is_contest_in_time_window, // Only true if within time window
+            'is_contest_enabled' => $is_contest, // Original contest setting (not time-dependent)
             'disable_normal_play' => $disable_normal_play,
             'game_mode' => $g['game_mode'] ?? 'credits',
             'contest_prizes' => [

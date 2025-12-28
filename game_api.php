@@ -108,17 +108,24 @@ switch ($action) {
                 $contest_end_datetime = $game_data['contest_end_datetime'] ?? null;
                 $disable_normal_play = intval($game_data['disable_normal_play'] ?? 0);
                 
-                // If contest is active, check if current time is within contest window
+                // Check if contest is within time range (only for contest play, not normal play)
+                $is_contest_in_time_window = false;
                 if ($is_contest_active && $contest_start_datetime && $contest_end_datetime) {
                     $now = time();
                     $start_ts = strtotime($contest_start_datetime);
                     $end_ts = strtotime($contest_end_datetime);
                     
                     // Contest is only active if current time is within the range
-                    if ($now < $start_ts || $now > $end_ts) {
-                        $is_contest_active = 0; // Contest not in active time window
+                    if ($now >= $start_ts && $now <= $end_ts) {
+                        $is_contest_in_time_window = true;
                     }
+                } else if ($is_contest_active) {
+                    // If contest is active but no timing set, consider it always active
+                    $is_contest_in_time_window = true;
                 }
+                
+                // Update is_contest_active to reflect time window
+                $is_contest_active = $is_contest_in_time_window;
             } else {
                 $disable_normal_play = 0;
                 $contest_start_datetime = null;
