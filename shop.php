@@ -63,62 +63,99 @@ $credits_stmt->close();
 // Handle purchase
 $message = '';
 $error = '';
+$purchase_success = false;
+$new_fluxon = $total_fluxon;
+$new_astrons = $user_astrons;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
     $item_id = intval($_POST['item_id'] ?? 0);
     $item_cost = intval($_POST['item_cost'] ?? 0);
     $item_astrons = intval($_POST['item_astrons'] ?? 0);
     
     if ($item_id > 0 && $item_cost > 0 && $item_astrons > 0) {
-        if ($total_fluxon >= $item_cost) {
-            // Start transaction
+        // Re-check Fluxon balance before transaction (in case it changed)
+        $fluxon_check_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
+        $fluxon_check_stmt->bind_param("i", $user_id);
+        $fluxon_check_stmt->execute();
+        $fluxon_check_result = $fluxon_check_stmt->get_result();
+        $fluxon_check_data = $fluxon_check_result->fetch_assoc();
+        $current_fluxon = intval($fluxon_check_data['total_fluxon'] ?? 0);
+        if ($current_fluxon < 0) $current_fluxon = 0;
+        $fluxon_check_stmt->close();
+        
+        if ($current_fluxon >= $item_cost) {
+            // Start transaction for atomic operation
             $conn->begin_transaction();
             
             try {
-                // Add Astrons to user profile
+                // Step 1: Add Astrons to user profile (credits column)
                 $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
                 $update_stmt->bind_param("ii", $item_astrons, $user_id);
-                $update_stmt->execute();
+                
+                if (!$update_stmt->execute()) {
+                    throw new Exception("Failed to update Astrons");
+                }
+                
+                $affected_rows = $update_stmt->affected_rows;
                 $update_stmt->close();
                 
-                // Deduct Fluxon by inserting a negative score entry
+                // Verify Astrons were added
+                $verify_astrons_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
+                $verify_astrons_stmt->bind_param("i", $user_id);
+                $verify_astrons_stmt->execute();
+                $verify_astrons_result = $verify_astrons_stmt->get_result();
+                $verify_astrons_data = $verify_astrons_result->fetch_assoc();
+                $new_astrons = intval($verify_astrons_data['credits'] ?? 0);
+                $verify_astrons_stmt->close();
+                
+                // Step 2: Deduct Fluxon by inserting a negative score entry
                 // This represents the Fluxon spent (negative score will reduce total)
-                $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode) VALUES (?, 'shop-purchase', ?, 0, 'credits')");
+                $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
                 $negative_score = -$item_cost; // Negative score to deduct Fluxon
                 $deduct_stmt->bind_param("ii", $user_id, $negative_score);
-                $deduct_stmt->execute();
+                
+                if (!$deduct_stmt->execute()) {
+                    throw new Exception("Failed to deduct Fluxon");
+                }
+                
                 $deduct_stmt->close();
                 
-                // Recalculate total Fluxon after deduction
+                // Step 3: Recalculate and verify total Fluxon after deduction
                 $fluxon_recalc_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
                 $fluxon_recalc_stmt->bind_param("i", $user_id);
                 $fluxon_recalc_stmt->execute();
                 $fluxon_recalc_result = $fluxon_recalc_stmt->get_result();
                 $fluxon_recalc_data = $fluxon_recalc_result->fetch_assoc();
-                $total_fluxon = intval($fluxon_recalc_data['total_fluxon'] ?? 0);
-                if ($total_fluxon < 0) $total_fluxon = 0;
+                $new_fluxon = intval($fluxon_recalc_data['total_fluxon'] ?? 0);
+                if ($new_fluxon < 0) $new_fluxon = 0;
                 $fluxon_recalc_stmt->close();
                 
-                // Commit transaction
+                // Verify the deduction worked correctly
+                $expected_fluxon = $current_fluxon - $item_cost;
+                if ($new_fluxon != $expected_fluxon && $new_fluxon != max(0, $expected_fluxon)) {
+                    throw new Exception("Fluxon deduction verification failed");
+                }
+                
+                // Commit transaction - all operations successful
                 $conn->commit();
                 
-                // Total Fluxon already recalculated above
-                
-                $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
-                $credits_stmt->bind_param("i", $user_id);
-                $credits_stmt->execute();
-                $credits_result = $credits_stmt->get_result();
-                $credits_data = $credits_result->fetch_assoc();
-                $user_astrons = intval($credits_data['credits'] ?? 0);
-                $credits_stmt->close();
-                
+                // Update variables for display
+                $total_fluxon = $new_fluxon;
+                $user_astrons = $new_astrons;
+                $purchase_success = true;
                 $message = "Nexus Link Established! Claimed {$item_astrons} Astrons.";
+                
             } catch (Exception $e) {
+                // Rollback on any error
                 $conn->rollback();
-                $error = "Transmission Failure. Try again.";
+                $error = "Transmission Failure: " . $e->getMessage() . ". Please try again.";
+                error_log("Shop purchase error for user {$user_id}: " . $e->getMessage());
             }
         } else {
-            $error = "Insufficient Fluxon Energy!";
+            $error = "Insufficient Fluxon Energy! You have " . number_format($current_fluxon) . " Fluxon, but need " . number_format($item_cost) . ".";
         }
+    } else {
+        $error = "Invalid purchase request. Please try again.";
     }
 }
 ?>
@@ -873,11 +910,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
         <div class="user-balance">
             <div class="balance-card fluxon-card" id="fluxonCard">
                 <div class="balance-label">Total Fluxon Energy</div>
-                <div class="balance-value" id="fluxonBalance"><?php echo number_format($total_fluxon); ?></div>
+                <div class="balance-value" id="fluxonBalance" data-value="<?php echo $total_fluxon; ?>"><?php echo number_format($total_fluxon); ?></div>
             </div>
             <div class="balance-card astron-card" id="astronsCard">
                 <div class="balance-label">Available Astrons</div>
-                <div class="balance-value" id="astronsBalance"><?php echo number_format($user_astrons); ?></div>
+                <div class="balance-value" id="astronsBalance" data-value="<?php echo $user_astrons; ?>"><?php echo number_format($user_astrons); ?></div>
             </div>
         </div>
         
@@ -987,32 +1024,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 
                 // Check if response contains success message
                 if (responseText.includes('Nexus Link Established') || responseText.includes('Claimed')) {
-                    // Animate Fluxon decrease
-                    animateValue(fluxonElement, currentFluxon, newFluxon, 1000, function() {
-                        // Animate Astrons increase
-                        animateValue(astronsElement, currentAstrons, newAstrons, 1000, function() {
-                            // Reload page after animations complete to show updated values
+                    // Fetch updated values from server to ensure accuracy
+                    const updateResponse = await fetch('shop.php');
+                    const updateText = await updateResponse.text();
+                    
+                    // Extract updated values from the page (they're in data-value attributes)
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = updateText;
+                    const updatedFluxonEl = tempDiv.querySelector('#fluxonBalance');
+                    const updatedAstronsEl = tempDiv.querySelector('#astronsBalance');
+                    
+                    // Get actual database values
+                    const actualNewFluxon = updatedFluxonEl ? parseInt(updatedFluxonEl.getAttribute('data-value') || updatedFluxonEl.textContent.replace(/,/g, '')) : newFluxon;
+                    const actualNewAstrons = updatedAstronsEl ? parseInt(updatedAstronsEl.getAttribute('data-value') || updatedAstronsEl.textContent.replace(/,/g, '')) : newAstrons;
+                    
+                    // Add pulse animation to cards
+                    fluxonCard.classList.add('animating');
+                    astronsCard.classList.add('animating');
+                    
+                    // Animate Fluxon decrease with actual database value
+                    animateValue(fluxonElement, currentFluxon, actualNewFluxon, 1200, function() {
+                        // Update data-value attribute
+                        fluxonElement.setAttribute('data-value', actualNewFluxon);
+                        fluxonCard.classList.remove('animating');
+                        
+                        // Animate Astrons increase with actual database value
+                        animateValue(astronsElement, currentAstrons, actualNewAstrons, 1200, function() {
+                            // Update data-value attribute
+                            astronsElement.setAttribute('data-value', actualNewAstrons);
+                            astronsCard.classList.remove('animating');
+                            
+                            // Show success message
+                            const alertDiv = document.createElement('div');
+                            alertDiv.className = 'alert alert-success';
+                            alertDiv.innerHTML = '<i class="fas fa-check-circle"></i> Nexus Link Established! Claimed ' + astronsReward + ' Astrons. Database updated successfully.';
+                            alertDiv.style.animation = 'slideDown 0.5s ease';
+                            const header = document.querySelector('.shop-header');
+                            header.parentNode.insertBefore(alertDiv, header.nextSibling);
+                            
+                            // Reload page after delay to ensure all values are synced
                             setTimeout(function() {
                                 window.location.reload();
-                            }, 500);
+                            }, 2000);
                         });
                     });
-                    
-                    // Show success message
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-success';
-                    alertDiv.innerHTML = '<i class="fas fa-check-circle"></i> Nexus Link Established! Claimed ' + astronsReward + ' Astrons.';
-                    alertDiv.style.animation = 'slideDown 0.5s ease';
-                    document.querySelector('.shop-container').insertBefore(alertDiv, document.querySelector('.shop-header').nextSibling);
-                    
-                    // Remove alert after 3 seconds
-                    setTimeout(function() {
-                        alertDiv.style.opacity = '0';
-                        alertDiv.style.transition = 'opacity 0.5s';
-                        setTimeout(function() {
-                            alertDiv.remove();
-                        }, 500);
-                    }, 3000);
                 } else {
                     // Show error message
                     const alertDiv = document.createElement('div');
