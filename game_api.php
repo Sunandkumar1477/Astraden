@@ -84,7 +84,7 @@ switch ($action) {
         $prizes = ['1st' => 0, '2nd' => 0, '3rd' => 0];
 
         $check_games_table = $conn->query("SHOW TABLES LIKE 'games'");
-        $game_mode = 'money'; // Default game mode
+        $game_mode = 'credits'; // Default game mode
         if ($check_games_table->num_rows > 0) {
             // Remove is_active requirement - we need contest settings even if game is not marked active
             $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, is_claim_active, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, game_mode FROM games WHERE game_name = ?");
@@ -96,7 +96,7 @@ switch ($action) {
                 $is_contest_active = intval($game_data['is_contest_active']);
                 $credits_per_chance = $is_contest_active ? intval($game_data['contest_credits_required']) : intval($game_data['credits_per_chance']);
                 $is_claim_active = intval($game_data['is_claim_active']);
-                $game_mode = $game_data['game_mode'] ?: 'money';
+                $game_mode = $game_data['game_mode'] ?: 'credits';
                 $prizes = [
                     '1st' => intval($game_data['contest_first_prize']),
                     '2nd' => intval($game_data['contest_second_prize']),
@@ -315,7 +315,7 @@ switch ($action) {
 
         // Check if contest mode is active
         $is_contest_active = 0;
-        $game_mode = 'money';
+        $game_mode = 'credits';
         $contest_stmt = $conn->prepare("SELECT is_contest_active, game_mode FROM games WHERE game_name = ?");
         $contest_stmt->bind_param("s", $game_name);
         $contest_stmt->execute();
@@ -323,7 +323,7 @@ switch ($action) {
         if ($contest_res->num_rows > 0) {
             $row = $contest_res->fetch_assoc();
             $is_contest_active = intval($row['is_contest_active']);
-            $game_mode = $row['game_mode'] ?: 'money';
+            $game_mode = $row['game_mode'] ?: 'credits';
         }
         $contest_stmt->close();
         
@@ -551,7 +551,7 @@ switch ($action) {
         try {
             // 1. Get current contest status for UI labeling only
             $is_contest = 0;
-            $game_mode = 'money';
+            $game_mode = 'credits';
             $g_stmt = $conn->prepare("SELECT is_contest_active, game_mode FROM games WHERE game_name = ?");
             $g_stmt->bind_param("s", $game_name);
             $g_stmt->execute();
@@ -559,7 +559,7 @@ switch ($action) {
             if ($g_res->num_rows > 0) {
                 $g_data = $g_res->fetch_assoc();
                 $is_contest = intval($g_data['is_contest_active']);
-                $game_mode = $g_data['game_mode'] ?: 'money';
+                $game_mode = $g_data['game_mode'] ?: 'credits';
             }
             $g_stmt->close();
 

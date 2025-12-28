@@ -508,21 +508,6 @@ session_start();
                             <span id="credits-amount-earth-defender">30</span> Credits
                         </span>
                     </div>
-                    <!-- Prizes Display -->
-                    <div class="game-prizes" id="prizes-earth-defender" style="margin-top: 15px; display: none;">
-                        <div class="prize-item">
-                            <span class="prize-medal">🥇</span>
-                            <span class="prize-text">1st: ₹<span id="first-prize-earth-defender">0</span></span>
-                        </div>
-                        <div class="prize-item">
-                            <span class="prize-medal">🥈</span>
-                            <span class="prize-text">2nd: ₹<span id="second-prize-earth-defender">0</span></span>
-                        </div>
-                        <div class="prize-item">
-                            <span class="prize-medal">🥉</span>
-                            <span class="prize-text">3rd: ₹<span id="third-prize-earth-defender">0</span></span>
-                        </div>
-                    </div>
                     <!-- Game Timing Badge -->
                     <div class="game-timing-badge" id="timing-badge-earth-defender" style="display: none;">
                         <div class="timing-item">
@@ -647,10 +632,6 @@ session_start();
                                 badgeElement.textContent = creditsAmount;
                             }
                             
-                            // Update prizes if available
-                            if (typeof gameData === 'object' && gameData.first_prize !== undefined) {
-                                updateGamePrizes(gameName, gameData.first_prize, gameData.second_prize, gameData.third_prize);
-                            }
                         });
                     } else if (data.success && data.game_name) {
                         // Single game response
@@ -659,36 +640,12 @@ session_start();
                             badgeElement.textContent = data.credits_per_chance;
                         }
                         
-                        // Update prizes if available
-                        if (data.first_prize !== undefined) {
-                            updateGamePrizes(data.game_name, data.first_prize, data.second_prize, data.third_prize);
-                        }
                     }
                 } catch (error) {
                     console.error('Error loading game credits:', error);
                 }
             }
 
-            // Update game prizes display
-            function updateGamePrizes(gameName, firstPrize, secondPrize, thirdPrize) {
-                const prizesContainer = document.getElementById(`prizes-${gameName}`);
-                if (!prizesContainer) return;
-                
-                // Only show if at least one prize is set
-                if (firstPrize > 0 || secondPrize > 0 || thirdPrize > 0) {
-                    prizesContainer.style.display = 'flex';
-                    
-                    const firstPrizeEl = document.getElementById(`first-prize-${gameName}`);
-                    const secondPrizeEl = document.getElementById(`second-prize-${gameName}`);
-                    const thirdPrizeEl = document.getElementById(`third-prize-${gameName}`);
-                    
-                    if (firstPrizeEl) firstPrizeEl.textContent = Math.round(firstPrize).toLocaleString();
-                    if (secondPrizeEl) secondPrizeEl.textContent = Math.round(secondPrize).toLocaleString();
-                    if (thirdPrizeEl) thirdPrizeEl.textContent = Math.round(thirdPrize).toLocaleString();
-                } else {
-                    prizesContainer.style.display = 'none';
-                }
-            }
 
             // Countdown timer data
             let gameCountdownData = {
@@ -2105,8 +2062,8 @@ session_start();
             <!-- About Section -->
             <div class="footer-section">
                 <h3>About Astra Den</h3>
-                <p>Astra Den is your ultimate destination for exciting space-themed gaming adventures. Experience thrilling games, compete for real prizes, and join a community of passionate gamers.</p>
-                <p>Play, compete, and win real cash prizes in our exciting gaming tournaments. Join thousands of players in the galaxy's most thrilling gaming experience!</p>
+                <p>Astra Den is your ultimate destination for exciting space-themed gaming adventures. Experience thrilling games, compete for rankings, and join a community of passionate gamers.</p>
+                <p>Play, compete, and climb the leaderboards in our exciting gaming tournaments. Join thousands of players in the galaxy's most thrilling gaming experience!</p>
             </div>
             
             <!-- Features Section -->
@@ -2119,7 +2076,7 @@ session_start();
                     </div>
                     <div class="footer-feature-item">
                         <i class="fas fa-trophy"></i>
-                        <span>Real Cash Prize Contests</span>
+                        <span>Leaderboard Rankings</span>
                     </div>
                     <div class="footer-feature-item">
                         <i class="fas fa-coins"></i>
@@ -2178,7 +2135,7 @@ session_start();
                 </p>
                 <p style="margin-top: 15px;"><strong>Game Credits:</strong></p>
                 <p style="font-size: 0.85rem; margin-top: 5px;">
-                    Claim credits to play games and compete for real cash prizes. Credits are non-refundable but can be used for all games.
+                    Claim credits to play games and compete on leaderboards. Credits are non-refundable but can be used for all games.
                 </p>
             </div>
             

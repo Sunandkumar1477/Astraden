@@ -31,7 +31,7 @@ if ($game_name) {
             'game_name' => $game['game_name'],
             'credits_per_chance' => $final_credits,
             'is_contest_active' => $is_contest,
-            'game_mode' => $game['game_mode'] ?: 'money',
+            'game_mode' => $game['game_mode'] ?: 'credits';
             'contest_prizes' => [
                 '1st' => intval($game['contest_first_prize']),
                 '2nd' => intval($game['contest_second_prize']),
@@ -56,7 +56,7 @@ if ($game_name) {
         $response[$g['game_name']] = [
             'credits_per_chance' => $final_credits,
             'is_contest_active' => $is_contest,
-            'game_mode' => $g['game_mode'] ?: 'money',
+            'game_mode' => $g['game_mode'] ?: 'credits';
             'contest_prizes' => [
                 '1st' => intval($g['contest_first_prize']),
                 '2nd' => intval($g['contest_second_prize']),

@@ -124,7 +124,7 @@ if (!$game_settings) {
     $game_settings = [
         'is_contest_active' => 0,
         'is_claim_active' => 0,
-        'game_mode' => 'money',
+        'game_mode' => 'credits',
         'contest_first_prize' => 0,
         'contest_second_prize' => 0,
         'contest_third_prize' => 0,
@@ -318,14 +318,10 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
 
                 <div class="form-group" style="margin-bottom:10px;"><label>ACTIVE MISSION REWARD MODE</label></div>
                 <div class="mode-selector">
-                    <input type="hidden" name="game_mode" id="game_mode_input" value="<?php echo $game_settings['game_mode'] ?: 'money'; ?>">
-                    <div class="mode-option <?php echo ($game_settings['game_mode'] ?: 'money') === 'money' ? 'active' : ''; ?>" onclick="setMode('money', this)">
-                        <i class="fas fa-indian-rupee-sign"></i>
-                        <span>PRIZE MONEY</span>
-                    </div>
-                    <div class="mode-option <?php echo $game_settings['game_mode'] === 'credits' ? 'active' : ''; ?>" onclick="setMode('credits', this)">
+                    <input type="hidden" name="game_mode" id="game_mode_input" value="credits">
+                    <div class="mode-option active">
                         <i class="fas fa-coins"></i>
-                        <span>CREDIT WINNING</span>
+                        <span>CREDIT REWARDS</span>
                     </div>
                 </div>
 
@@ -392,7 +388,7 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
                         <td style="font-family:'Orbitron';color:var(--color-credits);"><?php echo number_format($s['score']); ?></td>
                         <td>
                             <span style="font-size:0.7rem;padding:3px 8px;border-radius:4px;background:rgba(0,255,255,0.1);color:var(--primary-cyan);font-weight:bold;text-transform:uppercase;">
-                                <?php echo ($s['game_mode'] ?? 'money') === 'money' ? '💰 Money' : '⚡ Credits'; ?>
+                                ⚡ Credits
                             </span>
                         </td>
                         <td style="font-size:0.8rem;color:rgba(255,255,255,0.4);"><?php echo date('M d, H:i', strtotime($s['updated_at'])); ?></td>
@@ -404,26 +400,6 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
     </main>
 
     <script>
-        function setMode(mode, eventElement) {
-            document.getElementById('game_mode_input').value = mode;
-            document.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('active'));
-            // Use eventElement if provided, or find by mode
-            let target = null;
-            if (eventElement) {
-                target = eventElement;
-            } else {
-                const iconClass = mode === 'money' ? 'fa-indian-rupee-sign' : 'fa-coins';
-                const icon = document.querySelector(`.mode-option i.fa-${iconClass}`);
-                if (icon) target = icon.parentElement;
-            }
-            if(target) target.classList.add('active');
-            
-            const suffix = mode === 'money' ? ' (INR)' : ' (CREDITS)';
-            document.getElementById('prize1_label').textContent = '1ST RANK REWARD' + suffix;
-            document.getElementById('prize2_label').textContent = '2ND RANK REWARD' + suffix;
-            document.getElementById('prize3_label').textContent = '3RD RANK REWARD' + suffix;
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.getElementById('sidebarMenu');
             const savedScroll = localStorage.getItem('sidebar_scroll');
@@ -433,8 +409,10 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
             const activeItem = sidebar.querySelector('.menu-item.active');
             if (activeItem) activeItem.scrollIntoView({ block: 'center' });
 
-            const currentMode = document.getElementById('game_mode_input').value;
-            setMode(currentMode);
+            // Set labels to credits only
+            document.getElementById('prize1_label').textContent = '1ST RANK REWARD (CREDITS)';
+            document.getElementById('prize2_label').textContent = '2ND RANK REWARD (CREDITS)';
+            document.getElementById('prize3_label').textContent = '3RD RANK REWARD (CREDITS)';
         });
     </script>
 </body>

@@ -234,11 +234,11 @@ session_start();
             <p>Astraden is a gaming contest platform that provides:</p>
             <ul>
                 <li>Access to various space-themed games and contests</li>
-                <li>Real money prize competitions</li>
+                <li>Credit-based competitions and leaderboards</li>
                 <li>Credit-based entry system for contests</li>
-                <li>Real money transfer services for prize distribution</li>
+                <li>Credit rewards for top performers</li>
             </ul>
-            <p><strong>We are solely a contest platform provider.</strong> We facilitate contests and distribute real prize money. We do not provide any other services, guarantees, warranties, or assume any responsibilities beyond contest facilitation and prize distribution.</p>
+            <p><strong>We are solely a contest platform provider.</strong> We facilitate contests and distribute credit rewards. We do not provide any other services, guarantees, warranties, or assume any responsibilities beyond contest facilitation and credit distribution.</p>
             
             <h2>3. USER RESPONSIBILITIES AND DEVICE USAGE</h2>
             <h3>3.1 Mobile Device Usage</h3>
@@ -287,39 +287,36 @@ session_start();
                 <p>We reserve the right to modify, suspend, or discontinue any feature at any time without notice or liability.</p>
             </div>
             
-            <h2>5. CONTESTS AND REAL MONEY TRANSFERS</h2>
+            <h2>5. CONTESTS AND CREDIT REWARDS</h2>
             <h3>5.1 Contest Participation</h3>
             <p>By participating in contests on Astraden:</p>
             <ul>
-                <li>You acknowledge that contests involve real money entry fees</li>
-                <li>You understand that prizes are awarded based on contest rules and leaderboard rankings</li>
+                <li>You acknowledge that contests involve credit entry fees</li>
+                <li>You understand that credit rewards are awarded based on contest rules and leaderboard rankings</li>
                 <li>You agree that contest results are final and binding</li>
                 <li>You accept that we reserve the right to disqualify any participant for violations of terms</li>
             </ul>
             
-            <h3>5.2 Real Money Transfers</h3>
+            <h3>5.2 Credit Rewards</h3>
             <div class="disclaimer-box">
-                <strong>REAL MONEY TRANSFER DISCLAIMER</strong>
-                <p>Astraden provides genuine real money transfer services for prize distribution. However:</p>
+                <strong>CREDIT REWARD DISCLAIMER</strong>
+                <p>Astraden provides credit rewards for top performers in contests. However:</p>
                 <ul>
-                    <li>We are NOT responsible for delays in prize transfers due to banking systems, payment processors, or third-party services</li>
-                    <li>We are NOT responsible for any fees, charges, or taxes imposed by banks, payment processors, or government authorities</li>
-                    <li>We are NOT responsible for incorrect account information provided by users</li>
-                    <li>We are NOT responsible for currency conversion rates or fluctuations</li>
-                    <li>We are NOT responsible for any restrictions or limitations imposed by financial institutions</li>
-                    <li>Prize transfers are subject to verification and may take 24-72 hours or longer</li>
-                    <li>Users are responsible for providing accurate payment information</li>
-                    <li>Users are responsible for any tax obligations related to prize winnings</li>
+                    <li>Credit rewards are added to your account balance and cannot be converted to cash</li>
+                    <li>Credit rewards are subject to verification and may take time to process</li>
+                    <li>We are NOT responsible for any delays in credit distribution</li>
+                    <li>Credit rewards are non-transferable and cannot be exchanged for real money</li>
+                    <li>Users are responsible for maintaining accurate account information</li>
                 </ul>
-                <p><strong>We provide real money transfers in good faith, but we are not liable for any issues beyond our direct control in the transfer process.</strong></p>
+                <p><strong>Credit rewards are provided in good faith, but we are not liable for any issues beyond our direct control in the credit distribution process.</strong></p>
             </div>
             
             <h3>5.3 Credit System</h3>
-            <p>Credits purchased on the Platform:</p>
+            <p>Credits on the Platform:</p>
             <ul>
                 <li>Are non-refundable except as required by law</li>
-                <li>Cannot be exchanged for cash except as prize winnings</li>
-                <li>Are valid only for contest entry fees</li>
+                <li>Cannot be exchanged for cash or real money</li>
+                <li>Are valid only for contest entry fees and in-game use</li>
                 <li>May expire according to Platform policies</li>
                 <li>Are subject to Platform terms and conditions</li>
             </ul>
@@ -334,7 +331,7 @@ session_start();
                     <li>Personal injury or property damage</li>
                     <li>Emotional distress or mental anguish</li>
                     <li>Any damages resulting from use or inability to use the Platform</li>
-                    <li>Any damages resulting from contests, prize distribution, or money transfers</li>
+                    <li>Any damages resulting from contests or credit distribution</li>
                     <li>Any damages resulting from mobile device usage</li>
                     <li>Any damages resulting from third-party services or products</li>
                     <li>Any damages resulting from unauthorized access or security breaches</li>

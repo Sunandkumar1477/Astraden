@@ -196,8 +196,7 @@ $selected_user = $user_id ? $conn->query("SELECT u.*, up.* FROM users u LEFT JOI
             </select>
             
             <select onchange="const urlParams = new URLSearchParams(window.location.search); urlParams.set('mode_view', this.value); window.location.search = urlParams.toString();">
-                <option value="all" <?php echo $selected_mode==='all'?'selected':''; ?>>ALL MODES (MONEY + CREDITS)</option>
-                <option value="money" <?php echo $selected_mode==='money'?'selected':''; ?>>💰 MONEY CONTESTS ONLY</option>
+                <option value="all" <?php echo $selected_mode==='all'?'selected':''; ?>>ALL CONTESTS</option>
                 <option value="credits" <?php echo $selected_mode==='credits'?'selected':''; ?>>⚡ CREDITS CONTESTS ONLY</option>
             </select>
         </div>

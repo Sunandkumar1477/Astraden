@@ -17,12 +17,12 @@ $credits_color = '#FFD700'; // Gold color
 $game_stmt = $conn->prepare("SELECT is_contest_active, is_claim_active, game_mode, contest_first_prize, contest_second_prize, contest_third_prize FROM games WHERE game_name = 'earth-defender'");
 $game_stmt->execute();
 $game_res = $game_stmt->get_result();
-$game_mode = 'money';
+$game_mode = 'credits';
 if ($game_res->num_rows > 0) {
     $g_data = $game_res->fetch_assoc();
     $is_contest_active = (int)$g_data['is_contest_active'];
     $is_claim_active = (int)$g_data['is_claim_active'];
-    $game_mode = $g_data['game_mode'] ?: 'money';
+    $game_mode = $g_data['game_mode'] ?: 'credits';
     $prizes = [
         '1st' => (int)$g_data['contest_first_prize'],
         '2nd' => (int)$g_data['contest_second_prize'],
@@ -1288,16 +1288,12 @@ $conn->close();
         <div class="status-title">🛡️ Earth Defender</div>
         
         <?php if ($is_contest_active): ?>
-            <div class="contest-badge">🏆 <?php echo $game_mode === 'money' ? 'CASH CONTEST' : 'CREDIT CONTEST'; ?> 🏆</div>
+            <div class="contest-badge">🏆 CREDIT CONTEST 🏆</div>
             <div class="prize-pool">
                 <div style="color: #FFD700; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Mission Rewards</div>
-                <?php 
-                $unit = $game_mode === 'money' ? '₹' : '';
-                $suffix = $game_mode === 'money' ? '' : ' Credits';
-                ?>
-                <div class="prize-item"><span>🥇 1st Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['1st']) . $suffix; ?></span></div>
-                <div class="prize-item"><span>🥈 2nd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['2nd']) . $suffix; ?></span></div>
-                <div class="prize-item"><span>🥉 3rd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['3rd']) . $suffix; ?></span></div>
+                <div class="prize-item"><span>🥇 1st Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['1st']); ?> Credits</span></div>
+                <div class="prize-item"><span>🥈 2nd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['2nd']); ?> Credits</span></div>
+                <div class="prize-item"><span>🥉 3rd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['3rd']); ?> Credits</span></div>
             </div>
         <?php endif; ?>
 
@@ -1316,9 +1312,9 @@ $conn->close();
 
         <?php if ($is_claim_active && $is_logged_in): ?>
             <div class="claim-section">
-                <div style="color: #00ff00; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">🎁 Claim Your Prize</div>
+                <div style="color: #00ff00; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">🎁 Claim Your Credits</div>
                 <p style="font-size: 0.85rem; margin-bottom: 15px; color: #ccc;">If you ranked in the top 3, claim your credits now!</p>
-                <button id="claim-prize-btn" class="claim-btn">Claim Prize</button>
+                <button id="claim-prize-btn" class="claim-btn">Claim Credits</button>
                 <div id="claim-message" style="font-size: 0.85rem; margin-top: 10px; display: none;"></div>
             </div>
         <?php endif; ?>
@@ -1547,7 +1543,7 @@ $conn->close();
             gameStarted: false,
             isDemoMode: false, // Track if playing in demo mode
             isContestMode: false, // Track if contest mode is active
-            gameMode: 'money' // Track game mode (money or credits)
+            gameMode: 'credits' // Track game mode (credits only)
         };
 
         // --- Game Session Management ---
@@ -1704,7 +1700,7 @@ $conn->close();
                     gameSession = data.session;
                     state.gameSessionId = gameSession.id || null;
                     state.isContestMode = data.is_contest_active || false;
-                    state.gameMode = data.game_mode || 'money';
+                    state.gameMode = data.game_mode || 'credits';
                     
                     // Start contest timer
                     if (contestTimerInterval) {
@@ -1727,7 +1723,7 @@ $conn->close();
                 } else {
                     // No session - but check if contest is active
                     state.isContestMode = data.is_contest_active || false;
-                    state.gameMode = data.game_mode || 'money';
+                    state.gameMode = data.game_mode || 'credits';
                     showNoSession(data.next_session_date, data.is_contest_active);
                     hideContestTimers();
                 }
@@ -1756,7 +1752,7 @@ $conn->close();
             const creditsRequired = gameSession.credits_required || 30;
             
             if (state.isContestMode) {
-                statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
+                statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win credits!`;
                 startBtn.style.display = 'flex';
                 startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
                 startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
