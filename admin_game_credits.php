@@ -6,24 +6,37 @@ require_once 'connection.php';
 $message = '';
 $error = '';
 
+// Ensure contest_credits_required column exists
+try {
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_credits_required'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_credits_required INT(11) DEFAULT 30");
+    }
+} catch (Exception $e) {
+    // Column might already exist
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_credits'])) {
     $game_name = trim($_POST['game_name'] ?? '');
     $credits_per_chance = intval($_POST['credits_per_chance'] ?? 30);
+    $contest_credits_required = intval($_POST['contest_credits_required'] ?? 30);
     
     if (!empty($game_name)) {
         $display_name = $game_name === 'earth-defender' ? 'Earth Defender' : ucfirst(str_replace('-', ' ', $game_name));
-        $stmt = $conn->prepare("INSERT INTO games (game_name, display_name, credits_per_chance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE credits_per_chance = ?, updated_at = NOW()");
-        $stmt->bind_param("ssii", $game_name, $display_name, $credits_per_chance, $credits_per_chance);
+        $stmt = $conn->prepare("INSERT INTO games (game_name, display_name, credits_per_chance, contest_credits_required) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE credits_per_chance = ?, contest_credits_required = ?, updated_at = NOW()");
+        $stmt->bind_param("ssiiii", $game_name, $display_name, $credits_per_chance, $contest_credits_required, $credits_per_chance, $contest_credits_required);
         
         if ($stmt->execute()) {
-            $desc = "Updated play cost for {$display_name} to {$credits_per_chance} ⚡";
+            $desc = "Updated play costs for {$display_name}: Normal={$credits_per_chance} ⚡, Contest={$contest_credits_required} ⚡";
             $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'update_game_credits', '$desc', '{$_SERVER['REMOTE_ADDR']}')");
-            $message = "Play cost updated for {$display_name}!";
+            $message = "Play costs updated for {$display_name}!";
         }
+        $stmt->close();
     }
 }
 
-$games = $conn->query("SELECT * FROM games ORDER BY display_name ASC")->fetch_all(MYSQLI_ASSOC);
+// Ensure contest_credits_required is included in the query
+$games = $conn->query("SELECT game_name, display_name, credits_per_chance, COALESCE(contest_credits_required, 30) as contest_credits_required, is_contest_active, updated_at FROM games ORDER BY display_name ASC")->fetch_all(MYSQLI_ASSOC);
 $available_games = ['earth-defender' => '🛡️ Earth Defender'];
 ?>
 <!DOCTYPE html>
@@ -142,13 +155,21 @@ $available_games = ['earth-defender' => '🛡️ Earth Defender'];
             <form method="POST">
                 <div class="form-group">
                     <label>SELECT OPERATION TARGET</label>
-                    <select name="game_name">
+                    <select name="game_name" id="game-select" onchange="loadGameCosts()">
                         <?php foreach($available_games as $k=>$v): ?><option value="<?php echo $k; ?>"><?php echo $v; ?></option><?php endforeach; ?>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>CREDITS PER MISSION CHANCE</label>
-                    <input type="number" name="credits_per_chance" value="30" min="1" max="1000" required>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label>NORMAL PLAY COST (Astrons)</label>
+                        <input type="number" name="credits_per_chance" id="normal-cost" value="30" min="1" max="1000" required>
+                        <small style="color: rgba(255,255,255,0.5); font-size: 0.75rem; display: block; margin-top: 5px;">Used when contest is not active</small>
+                    </div>
+                    <div class="form-group">
+                        <label>CONTEST PLAY COST (Astrons)</label>
+                        <input type="number" name="contest_credits_required" id="contest-cost" value="30" min="1" max="1000" required>
+                        <small style="color: rgba(255,255,255,0.5); font-size: 0.75rem; display: block; margin-top: 5px;">Used when contest is active</small>
+                    </div>
                 </div>
                 <button type="submit" name="update_credits" class="btn-update">SYNC MISSION COSTS</button>
             </form>
@@ -156,19 +177,56 @@ $available_games = ['earth-defender' => '🛡️ Earth Defender'];
 
         <div class="table-card">
             <table>
-                <thead><tr><th>Target Module</th><th>Play Cost</th><th>Operation Status</th><th>Last Updated</th></tr></thead>
+                <thead><tr><th>Target Module</th><th>Normal Cost</th><th>Contest Cost</th><th>Operation Status</th><th>Last Updated</th></tr></thead>
                 <tbody>
-                    <?php foreach($games as $g): ?>
+                    <?php foreach($games as $g): 
+                        $normal_cost = $g['credits_per_chance'] ?? 30;
+                        $contest_cost = $g['contest_credits_required'] ?? 30;
+                        $is_contest = isset($g['is_contest_active']) ? intval($g['is_contest_active']) : 0;
+                    ?>
                     <tr>
                         <td><strong style="color:var(--primary-cyan);"><?php echo $g['display_name']; ?></strong></td>
-                        <td><span class="cost-badge"><?php echo $g['credits_per_chance']; ?> ⚡</span></td>
-                        <td><span style="color:#00ffcc;font-weight:bold;font-size:0.75rem;">ONLINE</span></td>
-                        <td style="font-size:0.8rem;color:rgba(255,255,255,0.4);"><?php echo date('M d, H:i', strtotime($g['updated_at'])); ?></td>
+                        <td><span class="cost-badge" style="background: linear-gradient(135deg, #00ffff, #0099cc);"><?php echo $normal_cost; ?> ⚡</span></td>
+                        <td><span class="cost-badge" style="background: linear-gradient(135deg, #FFD700, #FFA500);"><?php echo $contest_cost; ?> ⚡</span></td>
+                        <td>
+                            <?php if ($is_contest): ?>
+                                <span style="color:#FFD700;font-weight:bold;font-size:0.75rem;">CONTEST ACTIVE</span>
+                            <?php else: ?>
+                                <span style="color:#00ffcc;font-weight:bold;font-size:0.75rem;">NORMAL MODE</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="font-size:0.8rem;color:rgba(255,255,255,0.4);"><?php echo isset($g['updated_at']) ? date('M d, H:i', strtotime($g['updated_at'])) : 'N/A'; ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
+        
+        <script>
+            const gamesData = <?php echo json_encode($games); ?>;
+            
+            function loadGameCosts() {
+                const gameSelect = document.getElementById('game-select');
+                const gameName = gameSelect.value;
+                
+                // Find the game in the games array
+                const game = gamesData.find(g => g.game_name === gameName);
+                
+                if (game) {
+                    document.getElementById('normal-cost').value = game.credits_per_chance || 30;
+                    document.getElementById('contest-cost').value = game.contest_credits_required || 30;
+                } else {
+                    // Default values if game not found
+                    document.getElementById('normal-cost').value = 30;
+                    document.getElementById('contest-cost').value = 30;
+                }
+            }
+            
+            // Load costs on page load and when game selection changes
+            document.addEventListener('DOMContentLoaded', function() {
+                loadGameCosts();
+            });
+        </script>
     </main>
 </body>
 </html>
