@@ -7,44 +7,91 @@ $message = '';
 $error = '';
 
 // Auto-add missing columns
-$conn->query("ALTER TABLE game_leaderboard ADD COLUMN IF NOT EXISTS game_mode ENUM('money', 'credits') DEFAULT 'money'");
+$check_column = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'game_mode'");
+if ($check_column->num_rows == 0) {
+    $conn->query("ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+}
+$check_column->close();
 
 $available_games = ['earth-defender' => '🛡️ Earth Defender'];
 $selected_game_view = $_GET['game_view'] ?? 'all';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_all_scores'])) {
     if (($_POST['confirm_text'] ?? '') === 'CLEAR ALL') {
-        $game_clear = $_POST['game_name_clear'];
-        $conn->query("DELETE FROM game_leaderboard WHERE game_name = '$game_clear'");
-        $message = "Leaderboard purged for " . ($available_games[$game_clear] ?? $game_clear);
+        $game_clear = $_POST['game_name_clear'] ?? '';
+        // Validate game name
+        if (array_key_exists($game_clear, $available_games)) {
+            $clear_stmt = $conn->prepare("DELETE FROM game_leaderboard WHERE game_name = ?");
+            $clear_stmt->bind_param("s", $game_clear);
+            if ($clear_stmt->execute()) {
+                $message = "Leaderboard purged for " . $available_games[$game_clear];
+            } else {
+                $error = "Failed to purge leaderboard: " . $clear_stmt->error;
+            }
+            $clear_stmt->close();
+        } else {
+            $error = "Invalid game name";
+        }
     }
 }
 
 // Get Leaderboard Data
 $selected_mode = $_GET['mode_view'] ?? 'all';
 
-$where_clauses = ["gl.credits_used > 0"];
-if ($selected_game_view !== 'all') {
-    $where_clauses[] = "gl.game_name = '$selected_game_view'";
-}
-if ($selected_mode !== 'all') {
-    $where_clauses[] = "gl.game_mode = '$selected_mode'";
+// Build query conditions safely
+$where_conditions = ["gl.credits_used > 0"];
+$params = [];
+$types = "";
+
+if ($selected_game_view !== 'all' && array_key_exists($selected_game_view, $available_games)) {
+    $where_conditions[] = "gl.game_name = ?";
+    $params[] = $selected_game_view;
+    $types .= "s";
 }
 
-$where_sql = implode(" AND ", $where_clauses);
+if ($selected_mode !== 'all' && in_array($selected_mode, ['money', 'credits'])) {
+    $where_conditions[] = "gl.game_mode = ?";
+    $params[] = $selected_mode;
+    $types .= "s";
+}
 
+$where_sql = implode(" AND ", $where_conditions);
+
+// Build the SQL query - use WHERE clause instead of JOIN conditions
 $sql = "SELECT u.id, u.username, up.full_name, COALESCE(SUM(gl.score), 0) as total_points, COUNT(gl.id) as games_played, COALESCE(up.credits, 0) as credits 
         FROM users u
         LEFT JOIN user_profile up ON u.id = up.user_id
-        LEFT JOIN game_leaderboard gl ON u.id = gl.user_id AND $where_sql 
-        GROUP BY u.id 
+        LEFT JOIN game_leaderboard gl ON u.id = gl.user_id
+        WHERE " . $where_sql . "
+        GROUP BY u.id, u.username, up.full_name, up.credits
         HAVING total_points > 0
         ORDER BY total_points DESC";
 
-$leaderboard = $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
+// Execute query with prepared statement
+$stmt = $conn->prepare($sql);
+if ($stmt) {
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $leaderboard = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    $stmt->close();
+} else {
+    $error = "Query preparation failed: " . $conn->error;
+    $leaderboard = [];
+}
 
 $user_id = intval($_GET['user_id'] ?? 0);
-$selected_user = $user_id ? $conn->query("SELECT u.*, up.* FROM users u LEFT JOIN user_profile up ON u.id = up.user_id WHERE u.id = $user_id")->fetch_assoc() : null;
+$selected_user = null;
+if ($user_id > 0) {
+    $user_stmt = $conn->prepare("SELECT u.*, up.* FROM users u LEFT JOIN user_profile up ON u.id = up.user_id WHERE u.id = ?");
+    $user_stmt->bind_param("i", $user_id);
+    $user_stmt->execute();
+    $user_result = $user_stmt->get_result();
+    $selected_user = $user_result->fetch_assoc();
+    $user_stmt->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -169,7 +216,8 @@ $selected_user = $user_id ? $conn->query("SELECT u.*, up.* FROM users u LEFT JOI
     <main class="main-content">
         <h2 class="section-title"><i class="fas fa-star ic-leaderboard" style="margin-right:15px;"></i> LEADERBOARDS</h2>
 
-        <?php if($message): ?><div class="msg"><?php echo $message; ?></div><?php endif; ?>
+        <?php if($message): ?><div class="msg"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
+        <?php if($error): ?><div class="msg" style="background: rgba(255, 0, 0, 0.1); border-color: #ff0000; color: #ff0000;"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
         <div class="config-card">
             <h3>PURGE LEADERBOARD DATA</h3>
@@ -198,16 +246,24 @@ $selected_user = $user_id ? $conn->query("SELECT u.*, up.* FROM users u LEFT JOI
         <table>
                 <thead><tr><th>Rank</th><th>Player Identity</th><th>Combat Score</th><th>Missions</th><th>Balance</th><th>Details</th></tr></thead>
             <tbody>
+                    <?php if (empty($leaderboard)): ?>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.3);">
+                            No leaderboard data found
+                        </td>
+                    </tr>
+                    <?php else: ?>
                     <?php $rank=1; foreach($leaderboard as $l): ?>
                     <tr>
                         <td><div class="rank-id"><?php echo $rank++; ?></div></td>
-                        <td><strong style="color:var(--primary-cyan);"><?php echo htmlspecialchars($l['username']); ?></strong><br><small style="color:rgba(255,255,255,0.4);"><?php echo htmlspecialchars($l['full_name']); ?></small></td>
-                        <td class="points-val"><?php echo number_format($l['total_points']); ?></td>
-                        <td><?php echo $l['games_played']; ?></td>
-                        <td style="color:#FFD700;font-weight:bold;"><?php echo number_format($l['credits']); ?> ⚡</td>
-                        <td><a href="?user_id=<?php echo $l['id']; ?>&game_view=<?php echo $selected_game_view; ?>" class="view-btn">VIEW INTEL</a></td>
+                        <td><strong style="color:var(--primary-cyan);"><?php echo htmlspecialchars($l['username'] ?? 'Unknown'); ?></strong><br><small style="color:rgba(255,255,255,0.4);"><?php echo htmlspecialchars($l['full_name'] ?? ''); ?></small></td>
+                        <td class="points-val"><?php echo number_format($l['total_points'] ?? 0); ?></td>
+                        <td><?php echo $l['games_played'] ?? 0; ?></td>
+                        <td style="color:#FFD700;font-weight:bold;"><?php echo number_format($l['credits'] ?? 0); ?> ⚡</td>
+                        <td><a href="?user_id=<?php echo $l['id']; ?>&game_view=<?php echo htmlspecialchars($selected_game_view); ?>&mode_view=<?php echo htmlspecialchars($selected_mode); ?>" class="view-btn">VIEW INTEL</a></td>
                     </tr>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
             </tbody>
         </table>
     </div>

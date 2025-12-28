@@ -1160,16 +1160,16 @@ session_start();
                                     mobileProfileIcon.textContent = iconEmoji;
                                 }
                                 
+                                // Show shop button for all logged in users
+                                const shopElement = document.getElementById('userShop');
+                                if (shopElement) shopElement.style.display = 'flex';
+                                
                                 if (profileData.has_profile) {
                                     // Show credits display
                                     const creditsElement = document.getElementById('userCredits');
                                     const creditsValueElement = document.getElementById('creditsValue');
                                     
                                     creditsElement.style.display = 'flex';
-                                    
-                                    // Show shop button
-                                    const shopElement = document.getElementById('userShop');
-                                    if (shopElement) shopElement.style.display = 'flex';
                                     
                                     const creditsColor = '#FFD700'; // Gold color for value
                                     const iconColor = '#00ff00'; // Green color for icon

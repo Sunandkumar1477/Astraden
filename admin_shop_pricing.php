@@ -70,103 +70,58 @@ if (count($prices) >= 3) $price3 = $prices[2];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop Pricing - Astraden Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-cyan: #00ffff;
+            --primary-purple: #9d4edd;
+            --sidebar-width: 280px;
+            --dark-bg: #05050a;
+            --card-bg: rgba(15, 15, 25, 0.95);
+            
+            /* Icon Colors */
+            --color-overview: #00ffff;
+            --color-users: #4cc9f0;
+            --color-reset: #f72585;
+            --color-shop: #f97316;
+            --color-costs: #ec4899;
+            --color-leaderboard: #10b981;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0a0f;
-            color: #fff;
-            padding: 20px;
-        }
-        .space-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 100%);
-            z-index: -1;
-        }
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 250px;
-            height: 100vh;
-            background: rgba(15, 15, 25, 0.95);
-            border-right: 2px solid rgba(0, 255, 255, 0.3);
-            padding: 20px;
-            overflow-y: auto;
-        }
-        .sidebar-header h1 {
-            color: var(--primary-cyan, #00ffff);
-            font-size: 1.5rem;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .menu-category {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            margin: 20px 0 10px;
-            letter-spacing: 1px;
-        }
-        .menu-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            transition: all 0.3s;
-        }
-        .menu-item:hover, .menu-item.active {
-            background: rgba(0, 255, 255, 0.1);
-            color: var(--primary-cyan, #00ffff);
-        }
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-        }
-        .section-title {
-            font-size: 1.8rem;
-            color: var(--primary-cyan, #00ffff);
-            margin-bottom: 20px;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .config-card {
-            background: rgba(15, 15, 25, 0.8);
-            border: 2px solid rgba(0, 255, 255, 0.3);
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            color: var(--primary-cyan, #00ffff);
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(0, 255, 255, 0.3);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 1rem;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary-cyan, #00ffff);
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-        }
+        body { font-family: 'Rajdhani', sans-serif; background: var(--dark-bg); color: white; min-height: 100vh; display: flex; }
+        .space-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #05050a 100%); z-index: -1; }
+
+        .sidebar { width: var(--sidebar-width); background: var(--card-bg); border-right: 1px solid rgba(0, 255, 255, 0.2); height: 100vh; position: fixed; left: 0; top: 0; display: flex; flex-direction: column; z-index: 1001; }
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(0, 255, 255, 0.1); }
+        .sidebar-header h1 { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; color: var(--primary-cyan); text-transform: uppercase; }
+        .sidebar-menu { flex: 1; overflow-y: auto; padding: 20px 0; }
+        .menu-category { padding: 15px 25px 10px; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px; font-weight: 900; }
+        .menu-item { padding: 12px 25px; display: flex; align-items: center; gap: 15px; text-decoration: none; color: rgba(255, 255, 255, 0.7); font-weight: 500; transition: 0.3s; border-left: 3px solid transparent; }
+        .menu-item i { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border-radius: 6px; background: rgba(255,255,255,0.05); }
+        
+        .ic-overview { color: var(--color-overview); text-shadow: 0 0 10px var(--color-overview); }
+        .ic-users { color: var(--color-users); text-shadow: 0 0 10px var(--color-users); }
+        .ic-reset { color: var(--color-reset); text-shadow: 0 0 10px var(--color-reset); }
+        .ic-shop { color: var(--color-shop); text-shadow: 0 0 10px var(--color-shop); }
+        .ic-costs { color: var(--color-costs); text-shadow: 0 0 10px var(--color-costs); }
+        .ic-leaderboard { color: var(--color-leaderboard); text-shadow: 0 0 10px var(--color-leaderboard); }
+
+        .menu-item:hover, .menu-item.active { background: rgba(255, 255, 255, 0.05); color: white; border-left-color: var(--primary-cyan); }
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(0, 255, 255, 0.1); }
+        .logout-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: rgba(255, 0, 110, 0.1); border: 1px solid #ff006e; color: #ff006e; text-decoration: none; border-radius: 8px; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: 700; }
+
+        .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 40px; }
+        .section-title { font-family: 'Orbitron', sans-serif; color: var(--primary-cyan); margin-bottom: 30px; letter-spacing: 3px; }
+
+        .config-card { background: var(--card-bg); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 20px; padding: 35px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: var(--primary-purple); font-weight: 700; font-size: 0.8rem; margin-bottom: 8px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,255,255,0.3); border-radius: 8px; color: white; outline: none; }
+
+        .btn-update { background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); border: none; color: white; padding: 15px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 900; width: 100%; cursor: pointer; transition: all 0.3s; }
+        .btn-update:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4); }
+
         .price-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -177,41 +132,9 @@ if (count($prices) >= 3) $price3 = $prices[2];
             border-radius: 10px;
             border: 1px solid rgba(0, 255, 255, 0.2);
         }
-        .btn-update {
-            padding: 15px 30px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2));
-            border: 2px solid var(--primary-cyan, #00ffff);
-            border-radius: 8px;
-            color: var(--primary-cyan, #00ffff);
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        .btn-update:hover {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.4), rgba(157, 78, 221, 0.4));
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-        }
-        .msg {
-            background: rgba(0, 255, 0, 0.2);
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .error-msg {
-            background: rgba(255, 0, 0, 0.2);
-            border: 2px solid #ff0000;
-            color: #ff0000;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        :root {
-            --primary-cyan: #00ffff;
-            --primary-purple: #9d4edd;
-        }
+
+        .msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(0, 255, 204, 0.1); border: 1px solid #00ffcc; color: #00ffcc; font-weight: bold; }
+        .error-msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(255, 0, 0, 0.1); border: 1px solid #ff0000; color: #ff0000; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -221,21 +144,21 @@ if (count($prices) >= 3) $price3 = $prices[2];
         <div class="sidebar-header"><h1>Astraden</h1></div>
         <div class="sidebar-menu">
             <div class="menu-category">General</div>
-            <a href="admin_dashboard.php" class="menu-item"><i class="fas fa-chart-line"></i> <span>Overview</span></a>
+            <a href="admin_dashboard.php" class="menu-item"><i class="fas fa-chart-line ic-overview"></i> <span>Overview</span></a>
             <div class="menu-category">User Control</div>
-            <a href="admin_view_all_users.php" class="menu-item"><i class="fas fa-users"></i> <span>User Directory</span></a>
-            <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key"></i> <span>Reset Requests</span></a>
+            <a href="admin_view_all_users.php" class="menu-item"><i class="fas fa-users ic-users"></i> <span>User Directory</span></a>
+            <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key ic-reset"></i> <span>Reset Requests</span></a>
             <div class="menu-category">Financials</div>
-            <a href="admin_shop_pricing.php" class="menu-item active"><i class="fas fa-store"></i> <span>Shop Pricing</span></a>
+            <a href="admin_shop_pricing.php" class="menu-item active"><i class="fas fa-store ic-shop"></i> <span>Shop Pricing</span></a>
             <div class="menu-category">Game Operations</div>
-            <a href="admin_game_credits.php" class="menu-item"><i class="fas fa-gamepad"></i> <span>Play Costs</span></a>
-            <a href="admin_game_leaderboard.php" class="menu-item"><i class="fas fa-ranking-star"></i> <span>Leaderboards</span></a>
+            <a href="admin_game_credits.php" class="menu-item"><i class="fas fa-gamepad ic-costs"></i> <span>Play Costs</span></a>
+            <a href="admin_game_leaderboard.php" class="menu-item"><i class="fas fa-ranking-star ic-leaderboard"></i> <span>Leaderboards</span></a>
         </div>
-        <div class="sidebar-footer"><a href="admin_logout.php" class="logout-btn"><i class="fas fa-power-off"></i> <span>Exit</span></a></div>
+        <div class="sidebar-footer"><a href="admin_logout.php" class="logout-btn"><i class="fas fa-power-off"></i> <span>Authorization Exit</span></a></div>
     </nav>
 
     <main class="main-content">
-        <h2 class="section-title"><i class="fas fa-store" style="margin-right:15px;"></i> SHOP PRICING</h2>
+        <h2 class="section-title"><i class="fas fa-store ic-shop" style="margin-right:15px;"></i> SHOP PRICING</h2>
 
         <?php if($message): ?><div class="msg"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
         <?php if($error): ?><div class="error-msg"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
