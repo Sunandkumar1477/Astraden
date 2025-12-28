@@ -19,6 +19,35 @@ $fluxon_data = $fluxon_result->fetch_assoc();
 $total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
 $fluxon_stmt->close();
 
+// Get shop prices from database
+$create_table = $conn->query("
+    CREATE TABLE IF NOT EXISTS shop_pricing (
+        id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        fluxon_amount INT(11) NOT NULL COMMENT 'Amount of Fluxon required',
+        astrons_reward INT(11) NOT NULL COMMENT 'Astrons user gets',
+        claim_type VARCHAR(50) NOT NULL COMMENT 'Type name',
+        is_active TINYINT(1) DEFAULT 1,
+        display_order INT(11) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_fluxon (fluxon_amount)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+");
+
+// Get prices from database
+$prices_result = $conn->query("SELECT * FROM shop_pricing WHERE is_active = 1 ORDER BY display_order ASC LIMIT 3");
+$shop_prices = [];
+if ($prices_result && $prices_result->num_rows > 0) {
+    $shop_prices = $prices_result->fetch_all(MYSQLI_ASSOC);
+} else {
+    // Default prices if none set
+    $shop_prices = [
+        ['id' => 1, 'fluxon_amount' => 5000, 'astrons_reward' => 10, 'claim_type' => 'Basic Claim'],
+        ['id' => 2, 'fluxon_amount' => 7500, 'astrons_reward' => 20, 'claim_type' => 'Standard Claim'],
+        ['id' => 3, 'fluxon_amount' => 10000, 'astrons_reward' => 30, 'claim_type' => 'Premium Claim']
+    ];
+}
+
 // Get user's Astrons
 $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
 $credits_stmt->bind_param("i", $user_id);
@@ -258,70 +287,39 @@ $conn->close();
         <?php endif; ?>
         
         <div class="shop-items">
-            <!-- Type 1: Basic Claim - 1000:1 ratio (1000 Fluxon = 1 Astron) -->
-            <div class="shop-item" style="border-color: var(--primary-cyan);">
-                <div class="item-icon">⚡</div>
-                <div class="item-name" style="color: var(--primary-cyan);">Basic Claim</div>
-                <div class="item-description">Standard conversion rate</div>
-                <div style="margin: 15px 0; padding: 10px; background: rgba(0, 255, 255, 0.1); border-radius: 8px;">
+            <?php 
+            $colors = ['var(--primary-cyan)', '#9d4edd', '#FFD700'];
+            $icons = ['⚡', '⚡⚡', '⚡⚡⚡'];
+            $shadows = ['', '', 'box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);'];
+            foreach ($shop_prices as $index => $price): 
+                $fluxon = intval($price['fluxon_amount']);
+                $astrons = intval($price['astrons_reward']);
+                $type = htmlspecialchars($price['claim_type']);
+                $color = $colors[$index] ?? '#00ffff';
+                $icon = $icons[$index] ?? '⚡';
+                $shadow = $shadows[$index] ?? '';
+                $ratio = $fluxon / $astrons;
+            ?>
+            <div class="shop-item" style="border-color: <?php echo $color; ?>; <?php echo $shadow; ?>">
+                <div class="item-icon"><?php echo $icon; ?></div>
+                <div class="item-name" style="color: <?php echo $color; ?>;"><?php echo $type; ?></div>
+                <div class="item-description">Conversion rate: <?php echo number_format($ratio); ?> Fluxon per Astron</div>
+                <div style="margin: 15px 0; padding: 10px; background: rgba(<?php echo $index == 0 ? '0, 255, 255' : ($index == 1 ? '157, 78, 221' : '255, 215, 0'); ?>, 0.1); border-radius: 8px;">
                     <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 5px;">Conversion Rate:</div>
-                    <div style="font-size: 1.1rem; color: #FFD700; font-weight: bold;">1000 Fluxon = 1 Astron</div>
+                    <div style="font-size: 1.1rem; color: #FFD700; font-weight: bold;"><?php echo number_format($fluxon); ?> Fluxon = <?php echo $astrons; ?> Astrons</div>
                 </div>
-                <div class="item-cost">Cost: 10,000 Fluxon</div>
-                <div style="color: #00ff00; font-weight: bold; margin-bottom: 15px;">You Get: 10 Astrons</div>
-                <form method="POST" onsubmit="return confirm('Claim 10 Astrons for 10,000 Fluxon?');">
-                    <input type="hidden" name="item_id" value="1">
-                    <input type="hidden" name="item_cost" value="10000">
-                    <input type="hidden" name="item_astrons" value="10">
-                    <button type="submit" name="purchase_item" class="purchase-btn" <?php echo $total_fluxon < 10000 ? 'disabled' : ''; ?>>
-                        <?php echo $total_fluxon < 10000 ? 'Insufficient Fluxon' : 'Claim 10 Astrons'; ?>
+                <div class="item-cost">Cost: <?php echo number_format($fluxon); ?> Fluxon</div>
+                <div style="color: #00ff00; font-weight: bold; margin-bottom: 15px;">You Get: <?php echo $astrons; ?> Astrons</div>
+                <form method="POST" onsubmit="return confirm('Claim <?php echo $astrons; ?> Astrons for <?php echo number_format($fluxon); ?> Fluxon?');">
+                    <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
+                    <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
+                    <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
+                    <button type="submit" name="purchase_item" class="purchase-btn" style="border-color: <?php echo $color; ?>; color: <?php echo $color; ?>; <?php echo $index == 2 ? 'background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));' : ''; ?>" <?php echo $total_fluxon < $fluxon ? 'disabled' : ''; ?>>
+                        <?php echo $total_fluxon < $fluxon ? 'Insufficient Fluxon' : "Claim {$astrons} Astrons"; ?>
                     </button>
                 </form>
             </div>
-            
-            <!-- Type 2: Standard Claim - 800:1 ratio (800 Fluxon = 1 Astron) - 20% discount -->
-            <div class="shop-item" style="border-color: #9d4edd;">
-                <div class="item-icon">⚡⚡</div>
-                <div class="item-name" style="color: #9d4edd;">Standard Claim</div>
-                <div class="item-description">Better conversion rate - 20% discount</div>
-                <div style="margin: 15px 0; padding: 10px; background: rgba(157, 78, 221, 0.1); border-radius: 8px;">
-                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 5px;">Conversion Rate:</div>
-                    <div style="font-size: 1.1rem; color: #FFD700; font-weight: bold;">800 Fluxon = 1 Astron</div>
-                    <div style="font-size: 0.8rem; color: #00ff00; margin-top: 5px;">✨ 20% Better Rate</div>
-                </div>
-                <div class="item-cost">Cost: 8,000 Fluxon</div>
-                <div style="color: #00ff00; font-weight: bold; margin-bottom: 15px;">You Get: 10 Astrons</div>
-                <form method="POST" onsubmit="return confirm('Claim 10 Astrons for 8,000 Fluxon? (Better rate!)');">
-                    <input type="hidden" name="item_id" value="2">
-                    <input type="hidden" name="item_cost" value="8000">
-                    <input type="hidden" name="item_astrons" value="10">
-                    <button type="submit" name="purchase_item" class="purchase-btn" style="border-color: #9d4edd; color: #9d4edd;" <?php echo $total_fluxon < 8000 ? 'disabled' : ''; ?>>
-                        <?php echo $total_fluxon < 8000 ? 'Insufficient Fluxon' : 'Claim 10 Astrons'; ?>
-                    </button>
-                </form>
-            </div>
-            
-            <!-- Type 3: Premium Claim - 500:1 ratio (500 Fluxon = 1 Astron) - 50% discount -->
-            <div class="shop-item" style="border-color: #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);">
-                <div class="item-icon">⚡⚡⚡</div>
-                <div class="item-name" style="color: #FFD700;">Premium Claim</div>
-                <div class="item-description">Best conversion rate - 50% discount</div>
-                <div style="margin: 15px 0; padding: 10px; background: rgba(255, 215, 0, 0.1); border-radius: 8px;">
-                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 5px;">Conversion Rate:</div>
-                    <div style="font-size: 1.1rem; color: #FFD700; font-weight: bold;">500 Fluxon = 1 Astron</div>
-                    <div style="font-size: 0.8rem; color: #00ff00; margin-top: 5px;">⭐ 50% Better Rate</div>
-                </div>
-                <div class="item-cost">Cost: 5,000 Fluxon</div>
-                <div style="color: #00ff00; font-weight: bold; margin-bottom: 15px;">You Get: 10 Astrons</div>
-                <form method="POST" onsubmit="return confirm('Claim 10 Astrons for 5,000 Fluxon? (Best rate!)');">
-                    <input type="hidden" name="item_id" value="3">
-                    <input type="hidden" name="item_cost" value="5000">
-                    <input type="hidden" name="item_astrons" value="10">
-                    <button type="submit" name="purchase_item" class="purchase-btn" style="border-color: #FFD700; color: #FFD700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));" <?php echo $total_fluxon < 5000 ? 'disabled' : ''; ?>>
-                        <?php echo $total_fluxon < 5000 ? 'Insufficient Fluxon' : 'Claim 10 Astrons'; ?>
-                    </button>
-                </form>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
     

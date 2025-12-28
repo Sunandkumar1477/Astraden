@@ -169,6 +169,10 @@ session_start();
                 </div>
             </div>
         </div>
+        <a href="shop.php" class="user-credits" id="userShop" style="display: none; align-items: center; gap: 8px; padding: 8px 15px; background: rgba(0, 0, 0, 0.3); border: 2px solid #FFD700; border-radius: 8px; cursor: pointer; text-decoration: none; transition: all 0.3s ease;" title="Shop">
+            <span style="font-size: 1.2rem;">🛒</span>
+            <span style="font-family: 'Orbitron', sans-serif; color: #FFD700; font-weight: bold;">Shop</span>
+        </a>
         <div class="user-credits" id="userCredits" style="display: none;" onclick="toggleCreditsDropdown(event)" title="Astrons">
             <span class="power-icon">⚡</span>
             <span class="user-credits-value" id="creditsValue">0</span>
@@ -1163,6 +1167,10 @@ session_start();
                                     
                                     creditsElement.style.display = 'flex';
                                     
+                                    // Show shop button
+                                    const shopElement = document.getElementById('userShop');
+                                    if (shopElement) shopElement.style.display = 'flex';
+                                    
                                     const creditsColor = '#FFD700'; // Gold color for value
                                     const iconColor = '#00ff00'; // Green color for icon
                                     
@@ -1214,6 +1222,9 @@ session_start();
                         document.getElementById('userCredits').style.display = 'none';
                         document.getElementById('userReferralCode').style.display = 'none';
                         document.getElementById('userRank').style.display = 'none';
+                        // Hide shop button
+                        const shopElement = document.getElementById('userShop');
+                        if (shopElement) shopElement.style.display = 'none';
                         // Hide mobile rank item
                         const mobileRankItem = document.getElementById('mobileRankItem');
                         if (mobileRankItem) mobileRankItem.style.display = 'none';
