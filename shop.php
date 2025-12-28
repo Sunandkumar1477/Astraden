@@ -60,7 +60,8 @@ $credits_data = $credits_result->fetch_assoc();
 $user_astrons = intval($credits_data['credits'] ?? 0);
 $credits_stmt->close();
 
-// Handle purchase
+// Handle purchase - Check if it's an AJAX request
+$is_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 $message = '';
 $error = '';
 $purchase_success = false;
@@ -145,17 +146,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 $purchase_success = true;
                 $message = "Nexus Link Established! Claimed {$item_astrons} Astrons.";
                 
+                // If AJAX request, return JSON response
+                if ($is_ajax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $message,
+                        'new_fluxon' => $new_fluxon,
+                        'new_astrons' => $new_astrons,
+                        'fluxon_deducted' => $item_cost,
+                        'astrons_added' => $item_astrons
+                    ]);
+                    $conn->close();
+                    exit;
+                }
+                
             } catch (Exception $e) {
                 // Rollback on any error
                 $conn->rollback();
                 $error = "Transmission Failure: " . $e->getMessage() . ". Please try again.";
                 error_log("Shop purchase error for user {$user_id}: " . $e->getMessage());
+                
+                // If AJAX request, return JSON error
+                if ($is_ajax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $error
+                    ]);
+                    $conn->close();
+                    exit;
+                }
             }
         } else {
             $error = "Insufficient Fluxon Energy! You have " . number_format($current_fluxon) . " Fluxon, but need " . number_format($item_cost) . ".";
+            
+            // If AJAX request, return JSON error
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => $error
+                ]);
+                $conn->close();
+                exit;
+            }
         }
     } else {
         $error = "Invalid purchase request. Please try again.";
+        
+        // If AJAX request, return JSON error
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => $error
+            ]);
+            $conn->close();
+            exit;
+        }
     }
 }
 ?>
@@ -996,6 +1045,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             const button = document.getElementById('purchase-btn-' + itemId);
             const fluxonElement = document.getElementById('fluxonBalance');
             const astronsElement = document.getElementById('astronsBalance');
+            const fluxonCard = document.getElementById('fluxonCard');
+            const astronsCard = document.getElementById('astronsCard');
             
             // Disable button during processing
             button.disabled = true;
@@ -1013,32 +1064,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             const formData = new FormData(form);
             
             try {
-                // Submit the form
+                // Submit the form with AJAX header
                 const response = await fetch('shop.php', {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     body: formData
                 });
                 
-                // Parse response
-                const responseText = await response.text();
+                // Parse JSON response
+                const data = await response.json();
                 
-                // Check if response contains success message
-                if (responseText.includes('Nexus Link Established') || responseText.includes('Claimed')) {
-                    // Fetch updated values from server to ensure accuracy
-                    const updateResponse = await fetch('shop.php');
-                    const updateText = await updateResponse.text();
-                    
-                    // Extract updated values from the page (they're in data-value attributes)
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = updateText;
-                    const updatedFluxonEl = tempDiv.querySelector('#fluxonBalance');
-                    const updatedAstronsEl = tempDiv.querySelector('#astronsBalance');
-                    
-                    // Get actual database values
-                    const actualNewFluxon = updatedFluxonEl ? parseInt(updatedFluxonEl.getAttribute('data-value') || updatedFluxonEl.textContent.replace(/,/g, '')) : newFluxon;
-                    const actualNewAstrons = updatedAstronsEl ? parseInt(updatedAstronsEl.getAttribute('data-value') || updatedAstronsEl.textContent.replace(/,/g, '')) : newAstrons;
+                // Check if request was successful
+                if (data.success) {
+                    // Get actual database values from response
+                    const actualNewFluxon = data.new_fluxon || newFluxon;
+                    const actualNewAstrons = data.new_astrons || newAstrons;
                     
                     // Add pulse animation to cards
+                    const fluxonCard = document.getElementById('fluxonCard');
+                    const astronsCard = document.getElementById('astronsCard');
                     fluxonCard.classList.add('animating');
                     astronsCard.classList.add('animating');
                     
@@ -1057,24 +1103,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                             // Show success message
                             const alertDiv = document.createElement('div');
                             alertDiv.className = 'alert alert-success';
-                            alertDiv.innerHTML = '<i class="fas fa-check-circle"></i> Nexus Link Established! Claimed ' + astronsReward + ' Astrons. Database updated successfully.';
+                            alertDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
                             alertDiv.style.animation = 'slideDown 0.5s ease';
                             const header = document.querySelector('.shop-header');
-                            header.parentNode.insertBefore(alertDiv, header.nextSibling);
+                            const container = document.querySelector('.shop-container');
+                            container.insertBefore(alertDiv, header.nextSibling);
                             
-                            // Reload page after delay to ensure all values are synced
+                            // Remove alert after 3 seconds
                             setTimeout(function() {
-                                window.location.reload();
-                            }, 2000);
+                                alertDiv.style.opacity = '0';
+                                alertDiv.style.transition = 'opacity 0.5s';
+                                setTimeout(function() {
+                                    alertDiv.remove();
+                                }, 500);
+                            }, 3000);
+                            
+                            // Update button state
+                            button.disabled = false;
+                            button.textContent = 'Claim Reward';
+                            
+                            // Update all purchase buttons based on new Fluxon balance
+                            updatePurchaseButtons(actualNewFluxon);
                         });
                     });
                 } else {
                     // Show error message
                     const alertDiv = document.createElement('div');
                     alertDiv.className = 'alert alert-error';
-                    alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Transmission Failure. Please try again.';
+                    alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + (data.message || 'Transmission Failure. Please try again.');
                     alertDiv.style.animation = 'slideDown 0.5s ease';
-                    document.querySelector('.shop-container').insertBefore(alertDiv, document.querySelector('.shop-header').nextSibling);
+                    const header = document.querySelector('.shop-header');
+                    const container = document.querySelector('.shop-container');
+                    container.insertBefore(alertDiv, header.nextSibling);
                     
                     button.disabled = false;
                     button.textContent = 'Claim Reward';
@@ -1100,15 +1160,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             }
         }
         
+        // Function to update purchase buttons based on available Fluxon
+        function updatePurchaseButtons(availableFluxon) {
+            document.querySelectorAll('.shop-card').forEach(function(card) {
+                const costElement = card.querySelector('.cost-value');
+                if (costElement) {
+                    const costText = costElement.textContent.replace(/,/g, '').replace(' Fluxon', '').trim();
+                    const cost = parseInt(costText) || 0;
+                    const canAfford = availableFluxon >= cost;
+                    const button = card.querySelector('.purchase-btn');
+                    if (button) {
+                        if (canAfford) {
+                            button.disabled = false;
+                            button.classList.add('active');
+                            button.textContent = 'Claim Reward';
+                        } else {
+                            button.disabled = true;
+                            button.classList.remove('active');
+                            button.textContent = 'Insufficient Energy';
+                        }
+                    }
+                }
+            });
+        }
+        
         // Add pulse animation for balance cards when values change
         const style = document.createElement('style');
         style.textContent = `
             @keyframes pulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.05); }
+                0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+                50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(0, 255, 255, 0.6); }
             }
             .balance-card.animating {
-                animation: pulse 0.5s ease;
+                animation: pulse 0.6s ease;
+            }
+            .fluxon-card.animating {
+                box-shadow: 0 0 30px rgba(157, 78, 221, 0.6) !important;
+            }
+            .astron-card.animating {
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.6) !important;
             }
         `;
         document.head.appendChild(style);

@@ -1643,8 +1643,17 @@ $conn->close();
                     data.session.credits_required = data.is_contest_active ? contestCost : normalCost;
                 }
                 
+                // Store costs globally for use in showGameReady
+                window.gameCosts = {
+                    normal: normalCost,
+                    contest: contestCost
+                };
+                
                 if (data.success && data.session) {
                     gameSession = data.session;
+                    // Ensure costs are stored in gameSession
+                    gameSession.normal_credits_required = normalCost;
+                    gameSession.contest_credits_required = contestCost;
                     state.gameSessionId = gameSession.id || null;
                     state.isContestMode = data.is_contest_active || false;
                     state.gameMode = data.game_mode || 'credits';
@@ -1657,21 +1666,37 @@ $conn->close();
                     contestTimerInterval = setInterval(updateContestTimer, 1000);
                     
                     if (data.is_active) {
-                        // Game is active - show start button
+                        // Game is active - show play buttons
                         showGameReady();
                     } else if (data.session && data.session.time_until_start > 0) {
                         // Game not active but scheduled - show countdown
                         showCountdown(data.session.time_until_start);
                     } else {
-                        // No active session - show message with next session date if available
+                        // No active session - but still show buttons if user is logged in
+                        // Store session data even if not active
+                        if (!gameSession) {
+                            gameSession = { normal_credits_required: normalCost, contest_credits_required: contestCost };
+                        }
                         showNoSession(data.next_session_date, data.is_contest_active);
                         hideContestTimers();
                     }
                 } else {
-                    // No session - but check if contest is active
+                    // No session - but check if contest is active and show buttons anyway
                     state.isContestMode = data.is_contest_active || false;
                     state.gameMode = data.game_mode || 'credits';
-                    showNoSession(data.next_session_date, data.is_contest_active);
+                    
+                    // Create a minimal gameSession object with costs
+                    if (!gameSession) {
+                        gameSession = { normal_credits_required: normalCost, contest_credits_required: contestCost };
+                    }
+                    
+                    // Still show buttons if user is logged in, even without active session
+                    const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+                    if (isLoggedIn) {
+                        showGameReady();
+                    } else {
+                        showNoSession(data.next_session_date, data.is_contest_active);
+                    }
                     hideContestTimers();
                 }
             } catch (error) {
@@ -1688,44 +1713,80 @@ $conn->close();
             const normalBtn = document.getElementById('normal-play-btn');
             const contestBtn = document.getElementById('contest-play-btn');
             
+            if (!normalBtn || !contestBtn) {
+                console.error('Play buttons not found in DOM');
+                return;
+            }
+            
             timerDisplay.textContent = 'GAME READY!';
             
-            // Get costs from game data
-            const normalCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
-            const contestCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
-            
-            // Check if user is logged in
-            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-            const userCredits = <?php echo $user_credits; ?>;
-            
-            if (!isLoggedIn) {
-                // User not logged in - hide both buttons
-                normalBtn.style.display = 'none';
-                contestBtn.style.display = 'none';
-                statusMessage.textContent = `Login to play. Normal: ${normalCost} Astrons | Contest: ${contestCost} Astrons`;
-            } else {
-                // Show both buttons
-                statusMessage.textContent = 'Choose your play mode:';
-                
-                // Normal Play Button
-                normalBtn.style.display = 'flex';
-                normalBtn.innerHTML = `NORMAL PLAY &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${normalCost}`;
-                normalBtn.disabled = userCredits < normalCost;
-                
-                // Contest Play Button
-                contestBtn.style.display = 'flex';
-                contestBtn.innerHTML = `🏆 PARTICIPATE IN CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${contestCost}`;
-                contestBtn.disabled = userCredits < contestCost;
-                
-                // Show lock message if insufficient credits
-                if (userCredits < normalCost && userCredits < contestCost) {
-                    statusMessage.textContent = `Insufficient Astrons! You need at least ${Math.min(normalCost, contestCost)} Astrons to play.`;
-                } else if (userCredits < normalCost) {
-                    statusMessage.textContent = `Insufficient Astrons for normal play. Contest requires ${contestCost} Astrons.`;
-                } else if (userCredits < contestCost) {
-                    statusMessage.textContent = `Insufficient Astrons for contest. Normal play requires ${normalCost} Astrons.`;
-                }
-            }
+            // Fetch costs from get_game_credits.php to ensure we have the latest values
+            fetch('get_game_credits.php?game=earth-defender')
+                .then(response => response.json())
+                .then(creditsData => {
+                    // Get costs from API response or fallback to gameSession or default
+                    let normalCost = 30;
+                    let contestCost = 30;
+                    
+                    if (creditsData.success) {
+                        normalCost = creditsData.normal_credits_required || creditsData.credits_per_chance || 30;
+                        contestCost = creditsData.contest_credits_required || creditsData.credits_per_chance || 30;
+                    } else if (gameSession) {
+                        normalCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
+                        contestCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
+                    }
+                    
+                    // Check if user is logged in
+                    const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+                    const userCredits = <?php echo $user_credits; ?>;
+                    
+                    if (!isLoggedIn) {
+                        // User not logged in - hide both buttons
+                        normalBtn.style.display = 'none';
+                        contestBtn.style.display = 'none';
+                        statusMessage.textContent = `Login to play. Normal: ${normalCost} Astrons | Contest: ${contestCost} Astrons`;
+                    } else {
+                        // Show both buttons
+                        statusMessage.textContent = 'Choose your play mode:';
+                        
+                        // Normal Play Button
+                        normalBtn.style.display = 'flex';
+                        normalBtn.innerHTML = `NORMAL PLAY &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${normalCost}`;
+                        normalBtn.disabled = userCredits < normalCost;
+                        
+                        // Contest Play Button
+                        contestBtn.style.display = 'flex';
+                        contestBtn.innerHTML = `🏆 PARTICIPATE IN CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${contestCost}`;
+                        contestBtn.disabled = userCredits < contestCost;
+                        
+                        // Show lock message if insufficient credits
+                        if (userCredits < normalCost && userCredits < contestCost) {
+                            statusMessage.textContent = `Insufficient Astrons! You need at least ${Math.min(normalCost, contestCost)} Astrons to play.`;
+                        } else if (userCredits < normalCost) {
+                            statusMessage.textContent = `Insufficient Astrons for normal play. Contest requires ${contestCost} Astrons.`;
+                        } else if (userCredits < contestCost) {
+                            statusMessage.textContent = `Insufficient Astrons for contest. Normal play requires ${normalCost} Astrons.`;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching game costs:', error);
+                    // Fallback to default costs
+                    const normalCost = gameSession?.normal_credits_required || gameSession?.credits_required || 30;
+                    const contestCost = gameSession?.contest_credits_required || gameSession?.credits_required || 30;
+                    const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+                    const userCredits = <?php echo $user_credits; ?>;
+                    
+                    if (isLoggedIn) {
+                        normalBtn.style.display = 'flex';
+                        normalBtn.innerHTML = `NORMAL PLAY &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${normalCost}`;
+                        normalBtn.disabled = userCredits < normalCost;
+                        
+                        contestBtn.style.display = 'flex';
+                        contestBtn.innerHTML = `🏆 PARTICIPATE IN CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${contestCost}`;
+                        contestBtn.disabled = userCredits < contestCost;
+                    }
+                });
         }
         
         function showCountdown(secondsUntilStart) {
