@@ -1,6 +1,12 @@
 <?php
 // Start output buffering at the very beginning for AJAX requests
-ob_start();
+if (ob_get_level() == 0) {
+    ob_start();
+}
+
+// Suppress any warnings/notices that might output HTML
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
 
 session_start();
 require_once 'connection.php';
@@ -12,13 +18,38 @@ $is_ajax = (
     (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
 );
 
+// Helper function to send JSON response and exit
+function sendJsonResponse($success, $message, $data = []) {
+    // Clean all output buffers
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    
+    // Set headers
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-cache, must-revalidate');
+    header('X-Content-Type-Options: nosniff');
+    
+    // Build response
+    $response = [
+        'success' => $success,
+        'message' => $message
+    ];
+    
+    // Merge additional data
+    if (!empty($data)) {
+        $response = array_merge($response, $data);
+    }
+    
+    // Output JSON and exit
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     if ($is_ajax) {
-        ob_end_clean();
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['success' => false, 'message' => 'Please login first'], JSON_UNESCAPED_UNICODE);
-        exit;
+        sendJsonResponse(false, 'Please login first');
     }
     header('Location: index.php');
     exit;
@@ -83,12 +114,6 @@ $new_fluxon = $total_fluxon;
 $new_astrons = $user_astrons;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
-    // For AJAX requests, clean output buffer immediately
-    if ($is_ajax) {
-        ob_end_clean();
-        ob_start();
-    }
-    
     $item_id = intval($_POST['item_id'] ?? 0);
     $item_cost = intval($_POST['item_cost'] ?? 0);
     $item_astrons = intval($_POST['item_astrons'] ?? 0);
@@ -101,19 +126,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
         $verify_item_result = $verify_item_stmt->get_result();
         
         if ($verify_item_result->num_rows === 0) {
-            $error = "Invalid offer or offer is no longer available.";
             $verify_item_stmt->close();
-            
             if ($is_ajax) {
-                ob_end_clean();
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode([
-                    'success' => false,
-                    'message' => $error
-                ], JSON_UNESCAPED_UNICODE);
-                $conn->close();
-                exit;
+                sendJsonResponse(false, "Invalid offer or offer is no longer available.");
             }
+            $error = "Invalid offer or offer is no longer available.";
         } else {
             $item_data = $verify_item_result->fetch_assoc();
             $db_fluxon = intval($item_data['fluxon_amount']);
@@ -122,18 +139,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             
             // Verify prices match database (prevent price manipulation)
             if ($item_cost !== $db_fluxon || $item_astrons !== $db_astrons) {
-                $error = "Price mismatch detected. Please refresh the page and try again.";
-                
                 if ($is_ajax) {
-                    ob_end_clean();
-                    header('Content-Type: application/json; charset=utf-8');
-                    echo json_encode([
-                        'success' => false,
-                        'message' => $error
-                    ], JSON_UNESCAPED_UNICODE);
-                    $conn->close();
-                    exit;
+                    sendJsonResponse(false, "Price mismatch detected. Please refresh the page and try again.");
                 }
+                $error = "Price mismatch detected. Please refresh the page and try again.";
             } else {
                 // Use verified database values
                 $item_cost = $db_fluxon;
@@ -244,22 +253,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                         
                         // If AJAX request, return JSON response
                         if ($is_ajax) {
-                            ob_end_clean();
-                            header('Content-Type: application/json; charset=utf-8');
-                            header('Cache-Control: no-cache, must-revalidate');
-                            header('X-Content-Type-Options: nosniff');
-                            echo json_encode([
-                                'success' => true,
-                                'message' => $message,
+                            sendJsonResponse(true, $message, [
                                 'new_fluxon' => $new_fluxon,
                                 'new_astrons' => $final_astrons,
                                 'fluxon_deducted' => $item_cost,
                                 'astrons_added' => $item_astrons,
                                 'previous_fluxon' => $current_fluxon,
                                 'previous_astrons' => $previous_astrons
-                            ], JSON_UNESCAPED_UNICODE);
-                            $conn->close();
-                            exit;
+                            ]);
                         }
                         
                     } catch (Exception $e) {
@@ -267,28 +268,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                         $error = "Transaction failed: " . $e->getMessage();
                         
                         if ($is_ajax) {
-                            ob_end_clean();
-                            header('Content-Type: application/json; charset=utf-8');
-                            echo json_encode([
-                                'success' => false,
-                                'message' => $error
-                            ], JSON_UNESCAPED_UNICODE);
-                            $conn->close();
-                            exit;
+                            sendJsonResponse(false, $error);
                         }
                     }
                 } else {
                     $error = "Insufficient Fluxon! You need {$item_cost} Fluxon to claim this item.";
                     
                     if ($is_ajax) {
-                        ob_end_clean();
-                        header('Content-Type: application/json; charset=utf-8');
-                        echo json_encode([
-                            'success' => false,
-                            'message' => $error
-                        ], JSON_UNESCAPED_UNICODE);
-                        $conn->close();
-                        exit;
+                        sendJsonResponse(false, $error);
                     }
                 }
             }
@@ -297,14 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
         $error = "Invalid purchase data.";
         
         if ($is_ajax) {
-            ob_end_clean();
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode([
-                'success' => false,
-                'message' => $error
-            ], JSON_UNESCAPED_UNICODE);
-            $conn->close();
-            exit;
+            sendJsonResponse(false, $error);
         }
     }
 }
@@ -914,13 +894,23 @@ $conn->close();
                 }
                 
                 const contentType = response.headers.get('Content-Type') || '';
-                if (!contentType.includes('application/json')) {
-                    const responseText = await response.clone().text();
-                    console.error('Expected JSON but got:', contentType);
-                    throw new Error('Server returned ' + (contentType || 'unknown type') + ' instead of JSON.');
-                }
+                let data;
                 
-                const data = await response.json();
+                if (!contentType.includes('application/json')) {
+                    // Try to parse as JSON anyway (in case header is wrong)
+                    const responseText = await response.text();
+                    console.error('Expected JSON but got:', contentType);
+                    console.error('Response text:', responseText.substring(0, 200));
+                    
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (e) {
+                        // If parsing fails, show user-friendly error
+                        throw new Error('Server error: Unable to process your request. Please try again later.');
+                    }
+                } else {
+                    data = await response.json();
+                }
                 
                 if (data.success) {
                     const actualNewFluxon = parseInt(data.new_fluxon) || 0;
@@ -953,17 +943,18 @@ $conn->close();
                             
                             // Show success message
                             const alertDiv = document.createElement('div');
-                            alertDiv.className = 'alert alert-success';
-                            alertDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                            alertDiv.className = 'message';
+                            alertDiv.innerHTML = '✓ ' + data.message;
                             const header = document.querySelector('.shop-header');
                             const container = document.querySelector('.shop-page');
-                            container.insertBefore(alertDiv, header.nextSibling);
-                            
-                            setTimeout(function() {
-                                alertDiv.style.opacity = '0';
-                                alertDiv.style.transition = 'opacity 0.5s';
-                                setTimeout(() => alertDiv.remove(), 500);
-                            }, 3000);
+                            if (header && container) {
+                                container.insertBefore(alertDiv, header.nextSibling);
+                                setTimeout(function() {
+                                    alertDiv.style.opacity = '0';
+                                    alertDiv.style.transition = 'opacity 0.5s';
+                                    setTimeout(() => alertDiv.remove(), 500);
+                                }, 3000);
+                            }
                             
                             // Update all purchase buttons
                             updatePurchaseButtons(actualNewFluxon);
@@ -976,19 +967,25 @@ $conn->close();
                         });
                     });
                 } else {
-                    // Show error message
+                    // Show error message in alert
+                    const errorMsg = data.message || 'Purchase failed. Please try again.';
+                    alert('Error: ' + errorMsg);
+                    
+                    // Also show error message on page
                     const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-error';
-                    alertDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (data.message || 'Purchase failed');
+                    alertDiv.className = 'error';
+                    alertDiv.style.cssText = 'max-width: 600px; margin: 20px auto; padding: 15px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff0000; color: #ff0000; border-radius: 10px; text-align: center;';
+                    alertDiv.innerHTML = '✗ ' + errorMsg;
                     const header = document.querySelector('.shop-header');
                     const container = document.querySelector('.shop-page');
-                    container.insertBefore(alertDiv, header.nextSibling);
-                    
-                    setTimeout(function() {
-                        alertDiv.style.opacity = '0';
-                        alertDiv.style.transition = 'opacity 0.5s';
-                        setTimeout(() => alertDiv.remove(), 500);
-                    }, 3000);
+                    if (header && container) {
+                        container.insertBefore(alertDiv, header.nextSibling);
+                        setTimeout(function() {
+                            alertDiv.style.opacity = '0';
+                            alertDiv.style.transition = 'opacity 0.5s';
+                            setTimeout(() => alertDiv.remove(), 500);
+                        }, 5000);
+                    }
                     
                     // Remove from processing state and re-enable button
                     processingState.delete(itemId);
@@ -998,7 +995,26 @@ $conn->close();
                 }
             } catch (error) {
                 console.error('Error during purchase:', error);
-                alert('Error: ' + error.message);
+                
+                // Show user-friendly error message
+                const errorMessage = error.message || 'An unexpected error occurred. Please try again.';
+                alert('Error: ' + errorMessage);
+                
+                // Also show error message on page
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'error';
+                alertDiv.style.cssText = 'max-width: 600px; margin: 20px auto; padding: 15px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff0000; color: #ff0000; border-radius: 10px; text-align: center;';
+                alertDiv.innerHTML = '✗ ' + errorMessage;
+                const header = document.querySelector('.shop-header');
+                const container = document.querySelector('.shop-page');
+                if (header && container) {
+                    container.insertBefore(alertDiv, header.nextSibling);
+                    setTimeout(function() {
+                        alertDiv.style.opacity = '0';
+                        alertDiv.style.transition = 'opacity 0.5s';
+                        setTimeout(() => alertDiv.remove(), 500);
+                    }, 5000);
+                }
                 
                 // Remove from processing state and re-enable button
                 processingState.delete(itemId);
