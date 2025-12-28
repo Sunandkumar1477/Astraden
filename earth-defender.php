@@ -1318,7 +1318,7 @@ if (isset($_SESSION['user_id'])) {
 
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
-            <button id="start-mission-btn" class="start-mission-btn" style="display: none; visibility: hidden;">🚀 START MISSION</button>
+            <button id="start-mission-btn" class="start-mission-btn" style="display: none; visibility: hidden;" onclick="if(typeof window.startMissionClick === 'function') { window.startMissionClick(event); } return false;">🚀 START MISSION</button>
             <button id="normal-play-btn" class="normal-play-btn" style="display: none;"></button>
             <button id="contest-play-btn" class="contest-play-btn" style="display: none;"></button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
@@ -2328,88 +2328,178 @@ if (isset($_SESSION['user_id'])) {
             }
         }, 1500);
         
-        // Start Mission button handler - set up with multiple attempts
+        // Start Mission button handler - simplified and more reliable
         function setupStartMissionButtonHandler() {
             const startMissionBtnEl = document.getElementById('start-mission-btn');
-            if (startMissionBtnEl) {
-                // Remove existing listeners by cloning
-                const newBtn = startMissionBtnEl.cloneNode(true);
-                startMissionBtnEl.parentNode.replaceChild(newBtn, startMissionBtnEl);
-                
-                // Add click handler
-                newBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Check if payment was already made
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const paid = urlParams.get('paid') === '1' || state.creditsUsed > 0;
-                    
-                    if (paid && !state.gameStarted) {
-                        console.log('Start Mission button clicked - starting game');
-                        
-                        // Disable button to prevent double-clicking
-                        newBtn.disabled = true;
-                        
-                        // Payment already made, start game directly
-                        gameEndedByTime = false;
-                        state.gameStarted = true;
-                        state.isDemoMode = false;
-                        state.isPlaying = true;
-                        
-                        // Reset game state for new game
-                        state.score = 0;
-                        state.health = 100;
-                        state.bombs = 3;
-                        
-                        // Show EXIT button
-                        const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                        if (exitBtnHud) exitBtnHud.style.display = 'block';
-                        
-                        preventExitDuringGame();
-                        
-                        // Hide overlay
-                        const overlay = document.getElementById('game-status-overlay');
-                        if (overlay) overlay.classList.add('hidden');
-                        
-                        // Update HUD displays
-                        if (typeof updateHUD === 'function') {
-                            updateHUD();
-                        } else {
-                            const scoreDisplay = document.getElementById('hud-score');
-                            const healthDisplay = document.getElementById('hud-health');
-                            const bombsDisplay = document.getElementById('hud-bombs');
-                            if (scoreDisplay) scoreDisplay.textContent = '0';
-                            if (healthDisplay) healthDisplay.textContent = '100';
-                            if (bombsDisplay) bombsDisplay.textContent = '3';
-                        }
-                        
-                        // The game loop (animate function) should already be running
-                        // Setting state.isPlaying = true will make it start processing game logic
-                        console.log('Game started - isPlaying:', state.isPlaying, 'gameStarted:', state.gameStarted);
-                        
-                        // Ensure game scene is ready - the animate loop will handle the rest
-                        // The game should start immediately when state.isPlaying becomes true
-                    } else if (state.gameStarted) {
-                        console.log('Game already started');
-                    } else {
-                        // No payment made - this shouldn't happen, but handle it
-                        alert('Payment not found. Please return to the game selection page.');
-                    }
-                });
-                
-                console.log('Start Mission button handler set up successfully');
-                return true;
-            } else {
-                console.error('Start Mission button not found for handler setup');
+            if (!startMissionBtnEl) {
+                console.error('Start Mission button not found');
                 return false;
             }
+            
+            // Remove all existing event listeners by replacing the button
+            const newBtn = startMissionBtnEl.cloneNode(true);
+            startMissionBtnEl.parentNode.replaceChild(newBtn, startMissionBtnEl);
+            
+            // Add click handler directly
+            newBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('Start Mission button clicked');
+                
+                // Check if payment was already made
+                const urlParams = new URLSearchParams(window.location.search);
+                const paid = urlParams.get('paid') === '1' || state.creditsUsed > 0;
+                
+                if (!paid) {
+                    alert('Payment not found. Please return to the game selection page.');
+                    return false;
+                }
+                
+                if (state.gameStarted) {
+                    console.log('Game already started');
+                    return false;
+                }
+                
+                console.log('Starting game...');
+                
+                // Disable button to prevent double-clicking
+                newBtn.disabled = true;
+                newBtn.style.opacity = '0.5';
+                
+                // Payment already made, start game directly
+                gameEndedByTime = false;
+                state.gameStarted = true;
+                state.isDemoMode = false;
+                state.isPlaying = true;
+                
+                // Reset game state for new game
+                state.score = 0;
+                state.health = 100;
+                state.bombs = 3;
+                
+                // Show EXIT button
+                const exitBtnHud = document.getElementById('exit-game-btn-hud');
+                if (exitBtnHud) exitBtnHud.style.display = 'block';
+                
+                preventExitDuringGame();
+                
+                // Hide overlay
+                const overlay = document.getElementById('game-status-overlay');
+                if (overlay) {
+                    overlay.classList.add('hidden');
+                    console.log('Overlay hidden');
+                }
+                
+                // Update HUD displays
+                if (typeof updateHUD === 'function') {
+                    updateHUD();
+                    console.log('HUD updated');
+                }
+                
+                // Force update HUD elements directly
+                const scoreEl = document.getElementById('score');
+                const healthFill = document.getElementById('health-fill');
+                const bombCount = document.getElementById('bomb-count');
+                if (scoreEl) scoreEl.textContent = '0';
+                if (healthFill) healthFill.style.width = '100%';
+                if (bombCount) bombCount.textContent = '3';
+                
+                console.log('Game started - isPlaying:', state.isPlaying, 'gameStarted:', state.gameStarted);
+                
+                // The animate() function is already running and will detect state.isPlaying = true
+                // This should start the game immediately
+                
+                return false;
+            };
+            
+            console.log('Start Mission button handler set up successfully');
+            return true;
         }
         
-        // Set up handler immediately and with delays
-        setupStartMissionButtonHandler();
-        setTimeout(setupStartMissionButtonHandler, 100);
-        setTimeout(setupStartMissionButtonHandler, 500);
+        // Global function for inline onclick handler (backup)
+        window.startMissionClick = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            console.log('Start Mission clicked (inline handler)');
+            
+            // Check if payment was already made
+            const urlParams = new URLSearchParams(window.location.search);
+            const paid = urlParams.get('paid') === '1' || state.creditsUsed > 0;
+            
+            if (!paid) {
+                alert('Payment not found. Please return to the game selection page.');
+                return false;
+            }
+            
+            if (state.gameStarted) {
+                console.log('Game already started');
+                return false;
+            }
+            
+            console.log('Starting game from inline handler...');
+            
+            // Disable button
+            const btn = document.getElementById('start-mission-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            }
+            
+            // Start game
+            gameEndedByTime = false;
+            state.gameStarted = true;
+            state.isDemoMode = false;
+            state.isPlaying = true;
+            
+            // Reset game state
+            state.score = 0;
+            state.health = 100;
+            state.bombs = 3;
+            
+            // Show EXIT button
+            const exitBtnHud = document.getElementById('exit-game-btn-hud');
+            if (exitBtnHud) exitBtnHud.style.display = 'block';
+            
+            preventExitDuringGame();
+            
+            // Hide overlay
+            const overlay = document.getElementById('game-status-overlay');
+            if (overlay) overlay.classList.add('hidden');
+            
+            // Update HUD
+            if (typeof updateHUD === 'function') {
+                updateHUD();
+            }
+            
+            // Force update HUD elements directly
+            const scoreEl = document.getElementById('score');
+            const healthFill = document.getElementById('health-fill');
+            const bombCount = document.getElementById('bomb-count');
+            if (scoreEl) scoreEl.textContent = '0';
+            if (healthFill) healthFill.style.width = '100%';
+            if (bombCount) bombCount.textContent = '3';
+            
+            console.log('Game started - isPlaying:', state.isPlaying);
+            
+            return false;
+        };
+        
+        // Set up handler immediately and with delays to ensure it works
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setupStartMissionButtonHandler();
+                setTimeout(setupStartMissionButtonHandler, 100);
+                setTimeout(setupStartMissionButtonHandler, 500);
+            });
+        } else {
+            setupStartMissionButtonHandler();
+            setTimeout(setupStartMissionButtonHandler, 100);
+            setTimeout(setupStartMissionButtonHandler, 500);
+        }
         
         // Set up guide start button handler (accessible from module scope)
         window.startGameFromGuide = function() {
