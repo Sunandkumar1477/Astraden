@@ -94,132 +94,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
     $item_astrons = intval($_POST['item_astrons'] ?? 0);
     
     if ($item_id > 0 && $item_cost > 0 && $item_astrons > 0) {
-        // Re-check Fluxon balance before transaction
-        $fluxon_check_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
-        $fluxon_check_stmt->bind_param("i", $user_id);
-        $fluxon_check_stmt->execute();
-        $fluxon_check_result = $fluxon_check_stmt->get_result();
-        $fluxon_check_data = $fluxon_check_result->fetch_assoc();
-        $current_fluxon = intval($fluxon_check_data['total_fluxon'] ?? 0);
-        if ($current_fluxon < 0) $current_fluxon = 0;
-        $fluxon_check_stmt->close();
+        // CRITICAL: Verify the item exists in database and prices match admin settings
+        $verify_item_stmt = $conn->prepare("SELECT id, fluxon_amount, astrons_reward, is_active FROM shop_pricing WHERE id = ? AND is_active = 1");
+        $verify_item_stmt->bind_param("i", $item_id);
+        $verify_item_stmt->execute();
+        $verify_item_result = $verify_item_stmt->get_result();
         
-        if ($current_fluxon >= $item_cost) {
-            // Start transaction for atomic operation
-            $conn->begin_transaction();
+        if ($verify_item_result->num_rows === 0) {
+            $error = "Invalid offer or offer is no longer available.";
+            $verify_item_stmt->close();
             
-            try {
-                // Step 1: Ensure user_profile row exists
-                $check_profile = $conn->prepare("SELECT id, credits FROM user_profile WHERE user_id = ?");
-                $check_profile->bind_param("i", $user_id);
-                $check_profile->execute();
-                $profile_result = $check_profile->get_result();
-                $profile_exists = ($profile_result->num_rows > 0);
-                $previous_astrons = 0;
-                if ($profile_exists) {
-                    $profile_data = $profile_result->fetch_assoc();
-                    $previous_astrons = intval($profile_data['credits'] ?? 0);
-                }
-                $check_profile->close();
-                
-                if (!$profile_exists) {
-                    $create_profile = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, 0)");
-                    $create_profile->bind_param("i", $user_id);
-                    if (!$create_profile->execute()) {
-                        throw new Exception("Failed to create user profile: " . $create_profile->error);
-                    }
-                    $create_profile->close();
-                }
-                
-                // Step 2: Add Astrons to user profile
-                $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
-                $update_stmt->bind_param("ii", $item_astrons, $user_id);
-                
-                if (!$update_stmt->execute()) {
-                    throw new Exception("Failed to update Astrons: " . $update_stmt->error);
-                }
-                $update_stmt->close();
-                
-                // Step 3: Deduct Fluxon by inserting negative score entry
-                $negative_score = -$item_cost;
-                
-                // Check which timestamp columns exist
-                $check_created = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'created_at'");
-                $check_played = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'played_at'");
-                $has_created_at = ($check_created && $check_created->num_rows > 0);
-                $has_played_at = ($check_played && $check_played->num_rows > 0);
-                if ($check_created) $check_created->close();
-                if ($check_played) $check_played->close();
-                
-                // Build INSERT query based on available columns
-                if ($has_created_at && $has_played_at) {
-                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at, played_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW(), NOW())");
-                } else if ($has_played_at) {
-                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, played_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
-                } else if ($has_created_at) {
-                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
-                } else {
-                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode) VALUES (?, 'shop-purchase', ?, 0, 'credits')");
-                }
-                
-                $deduct_stmt->bind_param("ii", $user_id, $negative_score);
-                
-                if (!$deduct_stmt->execute()) {
-                    throw new Exception("Failed to deduct Fluxon: " . $deduct_stmt->error);
-                }
-                $deduct_stmt->close();
-                
-                // Step 4: Recalculate total Fluxon after deduction
-                $fluxon_recalc_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
-                $fluxon_recalc_stmt->bind_param("i", $user_id);
-                $fluxon_recalc_stmt->execute();
-                $fluxon_recalc_result = $fluxon_recalc_stmt->get_result();
-                $fluxon_recalc_data = $fluxon_recalc_result->fetch_assoc();
-                $new_fluxon = intval($fluxon_recalc_data['total_fluxon'] ?? 0);
-                if ($new_fluxon < 0) $new_fluxon = 0;
-                $fluxon_recalc_stmt->close();
-                
-                // Step 5: Re-fetch Astrons to get final value
-                $final_astrons_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
-                $final_astrons_stmt->bind_param("i", $user_id);
-                $final_astrons_stmt->execute();
-                $final_astrons_result = $final_astrons_stmt->get_result();
-                $final_astrons_data = $final_astrons_result->fetch_assoc();
-                $final_astrons = intval($final_astrons_data['credits'] ?? 0);
-                $final_astrons_stmt->close();
-                
-                // Commit transaction
-                $conn->commit();
-                
-                // Update variables
-                $total_fluxon = $new_fluxon;
-                $user_astrons = $final_astrons;
-                $purchase_success = true;
-                $message = "Nexus Link Established! Claimed {$item_astrons} Astrons.";
-                
-                // If AJAX request, return JSON response
-                if ($is_ajax) {
-                    ob_end_clean();
-                    header('Content-Type: application/json; charset=utf-8');
-                    header('Cache-Control: no-cache, must-revalidate');
-                    header('X-Content-Type-Options: nosniff');
-                    echo json_encode([
-                        'success' => true,
-                        'message' => $message,
-                        'new_fluxon' => $new_fluxon,
-                        'new_astrons' => $final_astrons,
-                        'fluxon_deducted' => $item_cost,
-                        'astrons_added' => $item_astrons,
-                        'previous_fluxon' => $current_fluxon,
-                        'previous_astrons' => $previous_astrons
-                    ], JSON_UNESCAPED_UNICODE);
-                    $conn->close();
-                    exit;
-                }
-                
-            } catch (Exception $e) {
-                $conn->rollback();
-                $error = "Transaction failed: " . $e->getMessage();
+            if ($is_ajax) {
+                ob_end_clean();
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => false,
+                    'message' => $error
+                ], JSON_UNESCAPED_UNICODE);
+                $conn->close();
+                exit;
+            }
+        } else {
+            $item_data = $verify_item_result->fetch_assoc();
+            $db_fluxon = intval($item_data['fluxon_amount']);
+            $db_astrons = intval($item_data['astrons_reward']);
+            $verify_item_stmt->close();
+            
+            // Verify prices match database (prevent price manipulation)
+            if ($item_cost !== $db_fluxon || $item_astrons !== $db_astrons) {
+                $error = "Price mismatch detected. Please refresh the page and try again.";
                 
                 if ($is_ajax) {
                     ob_end_clean();
@@ -231,19 +134,163 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                     $conn->close();
                     exit;
                 }
-            }
-        } else {
-            $error = "Insufficient Fluxon! You need {$item_cost} Fluxon to claim this item.";
-            
-            if ($is_ajax) {
-                ob_end_clean();
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode([
-                    'success' => false,
-                    'message' => $error
-                ], JSON_UNESCAPED_UNICODE);
-                $conn->close();
-                exit;
+            } else {
+                // Use verified database values
+                $item_cost = $db_fluxon;
+                $item_astrons = $db_astrons;
+                
+                // Re-check Fluxon balance before transaction
+                $fluxon_check_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
+                $fluxon_check_stmt->bind_param("i", $user_id);
+                $fluxon_check_stmt->execute();
+                $fluxon_check_result = $fluxon_check_stmt->get_result();
+                $fluxon_check_data = $fluxon_check_result->fetch_assoc();
+                $current_fluxon = intval($fluxon_check_data['total_fluxon'] ?? 0);
+                if ($current_fluxon < 0) $current_fluxon = 0;
+                $fluxon_check_stmt->close();
+                
+                if ($current_fluxon >= $item_cost) {
+                    // Start transaction for atomic operation
+                    $conn->begin_transaction();
+                    
+                    try {
+                        // Step 1: Ensure user_profile row exists
+                        $check_profile = $conn->prepare("SELECT id, credits FROM user_profile WHERE user_id = ?");
+                        $check_profile->bind_param("i", $user_id);
+                        $check_profile->execute();
+                        $profile_result = $check_profile->get_result();
+                        $profile_exists = ($profile_result->num_rows > 0);
+                        $previous_astrons = 0;
+                        if ($profile_exists) {
+                            $profile_data = $profile_result->fetch_assoc();
+                            $previous_astrons = intval($profile_data['credits'] ?? 0);
+                        }
+                        $check_profile->close();
+                        
+                        if (!$profile_exists) {
+                            $create_profile = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, 0)");
+                            $create_profile->bind_param("i", $user_id);
+                            if (!$create_profile->execute()) {
+                                throw new Exception("Failed to create user profile: " . $create_profile->error);
+                            }
+                            $create_profile->close();
+                        }
+                        
+                        // Step 2: Add Astrons to user profile
+                        $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
+                        $update_stmt->bind_param("ii", $item_astrons, $user_id);
+                        
+                        if (!$update_stmt->execute()) {
+                            throw new Exception("Failed to update Astrons: " . $update_stmt->error);
+                        }
+                        $update_stmt->close();
+                        
+                        // Step 3: Deduct Fluxon by inserting negative score entry
+                        $negative_score = -$item_cost;
+                        
+                        // Check which timestamp columns exist
+                        $check_created = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'created_at'");
+                        $check_played = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'played_at'");
+                        $has_created_at = ($check_created && $check_created->num_rows > 0);
+                        $has_played_at = ($check_played && $check_played->num_rows > 0);
+                        if ($check_created) $check_created->close();
+                        if ($check_played) $check_played->close();
+                        
+                        // Build INSERT query based on available columns
+                        if ($has_created_at && $has_played_at) {
+                            $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at, played_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW(), NOW())");
+                        } else if ($has_played_at) {
+                            $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, played_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
+                        } else if ($has_created_at) {
+                            $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
+                        } else {
+                            $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode) VALUES (?, 'shop-purchase', ?, 0, 'credits')");
+                        }
+                        
+                        $deduct_stmt->bind_param("ii", $user_id, $negative_score);
+                        
+                        if (!$deduct_stmt->execute()) {
+                            throw new Exception("Failed to deduct Fluxon: " . $deduct_stmt->error);
+                        }
+                        $deduct_stmt->close();
+                        
+                        // Step 4: Recalculate total Fluxon after deduction
+                        $fluxon_recalc_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
+                        $fluxon_recalc_stmt->bind_param("i", $user_id);
+                        $fluxon_recalc_stmt->execute();
+                        $fluxon_recalc_result = $fluxon_recalc_stmt->get_result();
+                        $fluxon_recalc_data = $fluxon_recalc_result->fetch_assoc();
+                        $new_fluxon = intval($fluxon_recalc_data['total_fluxon'] ?? 0);
+                        if ($new_fluxon < 0) $new_fluxon = 0;
+                        $fluxon_recalc_stmt->close();
+                        
+                        // Step 5: Re-fetch Astrons to get final value
+                        $final_astrons_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
+                        $final_astrons_stmt->bind_param("i", $user_id);
+                        $final_astrons_stmt->execute();
+                        $final_astrons_result = $final_astrons_stmt->get_result();
+                        $final_astrons_data = $final_astrons_result->fetch_assoc();
+                        $final_astrons = intval($final_astrons_data['credits'] ?? 0);
+                        $final_astrons_stmt->close();
+                        
+                        // Commit transaction
+                        $conn->commit();
+                        
+                        // Update variables
+                        $total_fluxon = $new_fluxon;
+                        $user_astrons = $final_astrons;
+                        $purchase_success = true;
+                        $message = "Nexus Link Established! Claimed {$item_astrons} Astrons.";
+                        
+                        // If AJAX request, return JSON response
+                        if ($is_ajax) {
+                            ob_end_clean();
+                            header('Content-Type: application/json; charset=utf-8');
+                            header('Cache-Control: no-cache, must-revalidate');
+                            header('X-Content-Type-Options: nosniff');
+                            echo json_encode([
+                                'success' => true,
+                                'message' => $message,
+                                'new_fluxon' => $new_fluxon,
+                                'new_astrons' => $final_astrons,
+                                'fluxon_deducted' => $item_cost,
+                                'astrons_added' => $item_astrons,
+                                'previous_fluxon' => $current_fluxon,
+                                'previous_astrons' => $previous_astrons
+                            ], JSON_UNESCAPED_UNICODE);
+                            $conn->close();
+                            exit;
+                        }
+                        
+                    } catch (Exception $e) {
+                        $conn->rollback();
+                        $error = "Transaction failed: " . $e->getMessage();
+                        
+                        if ($is_ajax) {
+                            ob_end_clean();
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode([
+                                'success' => false,
+                                'message' => $error
+                            ], JSON_UNESCAPED_UNICODE);
+                            $conn->close();
+                            exit;
+                        }
+                    }
+                } else {
+                    $error = "Insufficient Fluxon! You need {$item_cost} Fluxon to claim this item.";
+                    
+                    if ($is_ajax) {
+                        ob_end_clean();
+                        header('Content-Type: application/json; charset=utf-8');
+                        echo json_encode([
+                            'success' => false,
+                            'message' => $error
+                        ], JSON_UNESCAPED_UNICODE);
+                        $conn->close();
+                        exit;
+                    }
+                }
             }
         }
     } else {
