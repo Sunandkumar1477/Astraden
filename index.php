@@ -94,52 +94,8 @@ session_start();
                     </div>
                     <!-- Mobile Credits Dropdown -->
                     <div class="mobile-credits-dropdown" id="mobileCreditsDropdown" style="display: none;">
-                        <!-- Credit Timing Notice -->
-                        <div id="mobileCreditTimingNotice" class="credit-timing-notice" style="display: none;">
-                            <div class="timing-notice-content">
-                                <div class="timing-icon">⏰</div>
-                                <div class="timing-text">
-                                    <div class="timing-title" id="mobileTimingTitle">Credits Available</div>
-                                    <div class="timing-message" id="mobileTimingMessage"></div>
-                                    <div class="timing-info">
-                                        <div class="timing-item">
-                                            <span class="timing-label">Buy:</span>
-                                            <span class="timing-countdown" id="mobileAddTimingCountdown">--</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Times Up Message -->
-                        <div id="mobileTimesUpMessage" class="times-up-message" style="display: none;">
-                            <div class="times-up-content">
-                                <div class="times-up-icon">⏰</div>
-                                <div class="times-up-text">
-                                    <div class="times-up-title">Times Up!</div>
-                                    <div class="times-up-desc">Credit purchase period has ended. Claim credits is always available.</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Credit Limit Notice -->
-                        <div id="mobileCreditLimitNotice" class="credit-timing-notice" style="display: none;">
-                            <div class="timing-notice-content">
-                                <div class="timing-icon">📊</div>
-                                <div class="timing-text">
-                                    <div class="timing-title" id="mobileLimitTitle">Limited Credits</div>
-                                    <div class="timing-message" id="mobileLimitMessage">Limited credits available for sale</div>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- Credits Options -->
                         <div id="mobileCreditsOptionsWrapper">
-                            <div id="mobileCreditsOptionsContainer">
-                                <!-- Credit packages will be loaded dynamically here -->
-                                <div style="text-align: center; padding: 15px; color: rgba(0, 255, 255, 0.6); font-size: 0.85rem;">Loading credit packages...</div>
-                            </div>
-                            <button class="mobile-add-credits-btn" onclick="handleMobileAddCredits(event)" disabled id="mobileAddCreditsBtn">Add Credits</button>
                             <button class="mobile-claim-credits-btn" onclick="handleMobileClaimCredits(event)" id="mobileClaimCreditsBtn">Claim Credits</button>
                         </div>
                     </div>
@@ -191,7 +147,7 @@ session_start();
                             </button>
                         </div>
                         <div class="referral-message">
-                            <p>💰 Share your code with friends and earn <strong>10% credits</strong> when they purchase credits for the first time!</p>
+                            <p>💰 Share your code with friends and earn <strong>10% credits</strong> when they claim credits for the first time!</p>
                             <p style="margin-top: 8px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);">
                                 They can enter your code during registration.
                             </p>
@@ -205,52 +161,8 @@ session_start();
             <span class="user-credits-value" id="creditsValue">0</span>
             <!-- Credits Dropdown -->
             <div class="credits-dropdown" id="creditsDropdown">
-                <!-- Credit Timing Notice -->
-                <div id="creditTimingNotice" class="credit-timing-notice" style="display: none;">
-                    <div class="timing-notice-content">
-                        <div class="timing-icon">⏰</div>
-                        <div class="timing-text">
-                            <div class="timing-title" id="timingTitle">Credits Available</div>
-                            <div class="timing-message" id="timingMessage"></div>
-                            <div class="timing-info">
-                                <div class="timing-item">
-                                    <span class="timing-label">Buy:</span>
-                                    <span class="timing-countdown" id="addTimingCountdown">--</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Times Up Message -->
-                <div id="timesUpMessage" class="times-up-message" style="display: none;">
-                    <div class="times-up-content">
-                        <div class="times-up-icon">⏰</div>
-                        <div class="times-up-text">
-                            <div class="times-up-title">Times Up!</div>
-                            <div class="times-up-desc">Credit purchase period has ended. Claim credits is always available.</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Credit Limit Notice (shown when sale_mode is 'limit') -->
-                <div id="creditLimitNotice" class="credit-timing-notice" style="display: none;">
-                    <div class="timing-notice-content">
-                        <div class="timing-icon">📊</div>
-                        <div class="timing-text">
-                            <div class="timing-title" id="limitTitle">Limited Credits</div>
-                            <div class="timing-message" id="limitMessage">Limited credits available for sale</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Credits Options (Claim Credits is always available) -->
+                <!-- Credits Options (Claim Credits only) -->
                 <div id="creditsOptionsWrapper">
-                    <div id="creditsOptionsContainer">
-                        <!-- Credit packages will be loaded dynamically here -->
-                        <div style="text-align: center; padding: 20px; color: rgba(0, 255, 255, 0.6);">Loading credit packages...</div>
-                    </div>
-                    <button class="add-credits-btn" onclick="showQRCode(event)" disabled id="addCreditsBtn">Add Credits</button>
                     <button class="claim-credits-btn" onclick="checkClaimTimingAndOpen()" id="claimCreditsBtn" style="display: block !important;">Claim Credits</button>
                 </div>
             </div>
@@ -351,7 +263,7 @@ session_start();
                            maxlength="4" pattern="[A-Z0-9]{4}" title="Enter 4 alphanumeric characters"
                            style="text-transform: uppercase;">
                     <small style="color: rgba(0, 255, 255, 0.7); font-size: 0.8rem; display: block; margin-top: 5px;">
-                        💰 Earn 10% credits when your friend purchases credits for the first time!
+                        💰 Earn 10% credits when your friend claims credits for the first time!
                     </small>
                 </div>
                 
@@ -519,39 +431,6 @@ session_start();
                 <div style="display: flex; gap: 15px; justify-content: center;">
                     <button type="button" class="submit-btn" id="loginConfirmBtn" style="flex: 1; background: linear-gradient(135deg, #00ffff, #9d4edd);">Continue on This Device</button>
                     <button type="button" class="submit-btn" id="loginCancelBtn" style="flex: 1; background: rgba(0, 255, 255, 0.2); border: 2px solid #00ffff; color: #00ffff;">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- QR Code Modal -->
-    <div class="modal-overlay" id="qrModal">
-        <div class="qr-modal">
-            <button class="close-modal qr-close-modal" onclick="closeModal('qr')">&times;</button>
-            <h3>Payment QR Code</h3>
-            <div class="amount" id="qrAmount">Amount: ₹150/-</div>
-            <img src="WhatsApp Image 2025-12-18 at 4.25.46 PM.jpeg" alt="Payment QR Code">
-            <p style="color: rgba(0, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 15px;">Scan the QR code to make payment</p>
-            
-            <!-- Verification Info -->
-            <div class="verification-info">
-                <div class="verification-message">
-                    <div class="verification-icon">⏰</div>
-                    <div class="verification-text">
-                        <p class="verification-main">Your credits will be added after payment is successful within <strong>120 minutes</strong> for verification.</p>
-                        <p class="verification-fast">Want credits faster? Get verified in <strong>30 minutes</strong> by sending your payment transaction via WhatsApp!</p>
-                        <p class="verification-whatsapp">WhatsApp verification will take before <strong>50 minutes</strong>.</p>
-                    </div>
-                </div>
-                <a href="https://wa.me/917842108868?text=Hi,%20I%20just%20made%20a%20payment%20for%20credits.%20Please%20send%20screenshot%20transaction%20screenshot%20to%20verify%20my%20transaction." target="_blank" rel="noopener" class="whatsapp-verify-btn">
-                    <i class="fab fa-whatsapp"></i>
-                    <span>Send Payment Screenshot via WhatsApp</span>
-                </a>
-                <div class="refund-notice">
-                    <div class="refund-icon">💰</div>
-                    <div class="refund-text">
-                        <p>If you don't get credits, please contact us via WhatsApp. Your money will be refunded within <strong>24 hours</strong>.</p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1227,9 +1106,6 @@ session_start();
         // ============================================
 
         // Check session on page load
-        let selectedCreditsAmount = 0; // Will be set when packages load
-        let selectedCreditsPrice = 0; // Will be set when packages load
-        let creditPackages = []; // Store loaded packages
 
         function checkSession() {
             fetch('check_session.php')
@@ -1434,147 +1310,11 @@ session_start();
             event.stopPropagation();
             const dropdown = document.getElementById('creditsDropdown');
             dropdown.classList.toggle('show');
-            
-            // Refresh timing when dropdown opens
-            if (dropdown.classList.contains('show')) {
-                checkCreditTiming();
-            }
-        }
-
-        function selectCreditsOption(event, amount, price) {
-            event.stopPropagation();
-            selectedCreditsAmount = amount;
-            selectedCreditsPrice = price;
-            
-            // Update selected state
-            document.querySelectorAll('.credits-option').forEach(opt => opt.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            
-            // Enable add credits button
-            document.getElementById('addCreditsBtn').disabled = false;
-        }
-
-        function showQRCode(event) {
-            event.stopPropagation();
-            
-            // Check credit sale limit first
-            fetch('check_credit_sale_status.php')
-                .then(response => response.json())
-                .then(saleData => {
-                    if (!saleData.can_buy) {
-                        alert('Credit Sale Limit Reached!\n\n' + saleData.message + '\n\nPlease try again later or contact support.');
-                        return;
-                    }
-                    
-                    // If limit-based mode, skip timing check
-                    if (saleData.sale_mode === 'limit') {
-                        if (selectedCreditsPrice > 0) {
-                            document.getElementById('qrAmount').textContent = `Amount: ₹${Math.round(selectedCreditsPrice)}/-`;
-                        } else {
-                            document.getElementById('qrAmount').textContent = `Amount: ₹${selectedCreditsAmount}/-`;
-                        }
-                        openModal('qr');
-                        return;
-                    }
-                    
-                    // Timing-based mode: Check if add credits is currently available
-                    fetch('check_credit_timing.php?type=add_credits')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success && data.is_active) {
-                                if (selectedCreditsPrice > 0) {
-                                    document.getElementById('qrAmount').textContent = `Amount: ₹${Math.round(selectedCreditsPrice)}/-`;
-                                } else {
-                                    document.getElementById('qrAmount').textContent = `Amount: ₹${selectedCreditsAmount}/-`;
-                                }
-                                openModal('qr');
-                            } else {
-                                alert('Add Credits is not available at this time.\n\n' + (data.message || 'Please try again later.'));
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error checking timing:', error);
-                            // Allow if check fails (fallback)
-                            if (selectedCreditsPrice > 0) {
-                                document.getElementById('qrAmount').textContent = `Amount: ₹${Math.round(selectedCreditsPrice)}/-`;
-                            } else {
-                                document.getElementById('qrAmount').textContent = `Amount: ₹${selectedCreditsAmount}/-`;
-                            }
-                            openModal('qr');
-                        });
-                })
-                .catch(error => {
-                    console.error('Error checking credit sale status:', error);
-                    // Fallback: check timing only
-                    fetch('check_credit_timing.php?type=add_credits')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success && data.is_active) {
-                                if (selectedCreditsPrice > 0) {
-                                    document.getElementById('qrAmount').textContent = `Amount: ₹${Math.round(selectedCreditsPrice)}/-`;
-                                } else {
-                                    document.getElementById('qrAmount').textContent = `Amount: ₹${selectedCreditsAmount}/-`;
-                                }
-                                openModal('qr');
-                            } else {
-                                alert('Add Credits is not available at this time.\n\n' + (data.message || 'Please try again later.'));
-                            }
-                        });
-                });
         }
         
         function checkClaimTimingAndOpen() {
             // Claim credits is always available (no timing restrictions)
             openModal('claimCredits');
-        }
-
-        // Load credit packages from API
-        function loadCreditPackages() {
-            fetch('get_credit_packages.php')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.packages && data.packages.length > 0) {
-                        creditPackages = data.packages;
-                        const container = document.getElementById('creditsOptionsContainer');
-                        container.innerHTML = '';
-                        
-                        // Find the first popular package, or first package as default
-                        let defaultPackage = data.packages.find(p => p.is_popular) || data.packages[0];
-                        selectedCreditsAmount = defaultPackage.credit_amount;
-                        selectedCreditsPrice = defaultPackage.price;
-                        
-                        data.packages.forEach((package, index) => {
-                            const optionDiv = document.createElement('div');
-                            optionDiv.className = 'credits-option';
-                            if (package.is_popular || (index === 0 && !defaultPackage.is_popular)) {
-                                optionDiv.classList.add('selected');
-                            }
-                            
-                            optionDiv.onclick = function(e) {
-                                selectCreditsOption(e, package.credit_amount, package.price);
-                            };
-                            
-                            optionDiv.innerHTML = `
-                                <div class="credits-option-title">${package.credit_amount.toLocaleString()} Credits</div>
-                                <div class="credits-option-price">= ₹${Math.round(package.price)}/-</div>
-                                ${package.is_popular ? '<span class="popular-badge">Most Popular</span>' : ''}
-                            `;
-                            
-                            container.appendChild(optionDiv);
-                        });
-                        
-                        // Enable add credits button if default package is selected
-                        document.getElementById('addCreditsBtn').disabled = false;
-                    } else {
-                        const container = document.getElementById('creditsOptionsContainer');
-                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 0, 0, 0.6);">No credit packages available. Please contact administrator.</div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading credit packages:', error);
-                    const container = document.getElementById('creditsOptionsContainer');
-                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 0, 0, 0.6);">Error loading credit packages. Please refresh the page.</div>';
-                });
         }
 
         // Rank dropdown functions
@@ -1712,148 +1452,9 @@ session_start();
                         }
                     }
                     
-                    // If opening, load credit packages and check timing (async to prevent lag)
-                    if (!isVisible) {
-                        // Load packages immediately but check timing after a small delay
-                        loadMobileCreditPackages();
-                        setTimeout(() => {
-                            checkMobileCreditTiming();
-                        }, 50);
-                    }
+                    // Dropdown opened
                 });
             }
-        }
-        
-        // Load credit packages for mobile dropdown
-        function loadMobileCreditPackages() {
-            fetch('get_credit_packages.php')
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById('mobileCreditsOptionsContainer');
-                    if (!container) return;
-                    
-                    if (data.success && data.packages && data.packages.length > 0) {
-                        container.innerHTML = data.packages.map((pkg, index) => {
-                            const isPopular = index === 0;
-                            // Use credit_amount if available, otherwise use credits
-                            const creditAmount = pkg.credit_amount !== undefined ? pkg.credit_amount : (pkg.credits !== undefined ? pkg.credits : 0);
-                            const packagePrice = pkg.price !== undefined ? pkg.price : 0;
-                            return `
-                                <div class="credits-option ${isPopular ? 'selected' : ''}" onclick="selectMobileCreditsOption(event, ${creditAmount}, ${packagePrice})">
-                                    ${isPopular ? '<span class="popular-badge">Popular</span>' : ''}
-                                    <div class="credits-option-title">${creditAmount.toLocaleString()} Credits</div>
-                                    <div class="credits-option-price">= ₹${Math.round(packagePrice)}/-</div>
-                                </div>
-                            `;
-                        }).join('');
-                        
-                        // Set first package as selected by default
-                        if (data.packages.length > 0) {
-                            const firstPkg = data.packages[0];
-                            selectedCreditsAmount = firstPkg.credit_amount !== undefined ? firstPkg.credit_amount : (firstPkg.credits !== undefined ? firstPkg.credits : 0);
-                            selectedCreditsPrice = firstPkg.price !== undefined ? firstPkg.price : 0;
-                            document.getElementById('mobileAddCreditsBtn').disabled = false;
-                        }
-                    } else {
-                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 0, 0, 0.6);">No credit packages available. Please contact administrator.</div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading credit packages:', error);
-                    const container = document.getElementById('mobileCreditsOptionsContainer');
-                    if (container) {
-                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 0, 0, 0.6);">Error loading credit packages. Please refresh the page.</div>';
-                    }
-                });
-        }
-        
-        // Select mobile credits option
-        function selectMobileCreditsOption(event, amount, price) {
-            event.stopPropagation();
-            selectedCreditsAmount = amount;
-            selectedCreditsPrice = price;
-            
-            // Update selected state
-            const container = document.getElementById('mobileCreditsOptionsContainer');
-            if (container) {
-                container.querySelectorAll('.credits-option').forEach(opt => opt.classList.remove('selected'));
-                event.currentTarget.classList.add('selected');
-            }
-            
-            // Enable add credits button
-            const addBtn = document.getElementById('mobileAddCreditsBtn');
-            if (addBtn) addBtn.disabled = false;
-        }
-        
-        // Check mobile credit timing
-        function checkMobileCreditTiming() {
-            fetch('check_credit_sale_status.php')
-                .then(response => response.json())
-                .then(saleData => {
-                    const timingNotice = document.getElementById('mobileCreditTimingNotice');
-                    const timesUpMessage = document.getElementById('mobileTimesUpMessage');
-                    const limitNotice = document.getElementById('mobileCreditLimitNotice');
-                    const addBtn = document.getElementById('mobileAddCreditsBtn');
-                    
-                    if (saleData.sale_mode === 'limit') {
-                        // Limit-based mode
-                        if (timingNotice) timingNotice.style.display = 'none';
-                        if (timesUpMessage) timesUpMessage.style.display = 'none';
-                        if (limitNotice) {
-                            limitNotice.style.display = 'block';
-                            document.getElementById('mobileLimitTitle').textContent = 'Limited Credits';
-                            document.getElementById('mobileLimitMessage').textContent = saleData.message || 'Limited credits available for sale';
-                        }
-                        if (addBtn && saleData.can_buy) {
-                            addBtn.disabled = false;
-                        } else if (addBtn) {
-                            addBtn.disabled = true;
-                        }
-                    } else {
-                        // Timing-based mode
-                        if (limitNotice) limitNotice.style.display = 'none';
-                        fetch('check_credit_timing.php?type=add_credits')
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success && data.is_active) {
-                                    if (timingNotice) {
-                                        timingNotice.style.display = 'block';
-                                        timingNotice.classList.remove('unavailable');
-                                        timingNotice.classList.add('available');
-                                        document.getElementById('mobileTimingTitle').textContent = 'Credits Available Now';
-                                        document.getElementById('mobileTimingMessage').textContent = 'You can purchase credits right now!';
-                                    }
-                                    if (timesUpMessage) timesUpMessage.style.display = 'none';
-                                    if (addBtn) addBtn.disabled = false;
-                                } else {
-                                    if (timingNotice) timingNotice.style.display = 'none';
-                                    if (timesUpMessage) timesUpMessage.style.display = 'block';
-                                    if (addBtn) addBtn.disabled = true;
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error checking credit timing:', error);
-                            });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking credit sale status:', error);
-                });
-        }
-        
-        // Handle mobile add credits
-        function handleMobileAddCredits(event) {
-            event.stopPropagation();
-            // Close mobile dropdown
-            const mobileCreditsDropdown = document.getElementById('mobileCreditsDropdown');
-            const mobileDropdown = document.getElementById('mobileUserDropdown');
-            const mobileBtn = document.getElementById('mobileUserDropdownBtn');
-            if (mobileCreditsDropdown) mobileCreditsDropdown.style.display = 'none';
-            if (mobileDropdown) mobileDropdown.classList.remove('show');
-            if (mobileBtn) mobileBtn.classList.remove('active');
-            
-            // Use the same showQRCode function
-            showQRCode(event);
         }
         
         // Handle mobile claim credits
@@ -2218,363 +1819,6 @@ session_start();
             }
         }
 
-        // Format time remaining
-        function formatTimeRemaining(seconds) {
-            if (!seconds || seconds <= 0) return '0 sec';
-            
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            
-            if (hours > 0) {
-                return `${hours} hr`;
-            } else if (minutes > 0) {
-                return `${minutes} min ${secs} sec`;
-            } else {
-                return `${secs} sec`;
-            }
-        }
-        
-        // Credit sale status data
-        let creditSaleStatus = null;
-        
-        // Update timing notice display
-        function updateTimingNotice() {
-            const notice = document.getElementById('creditTimingNotice');
-            const limitNotice = document.getElementById('creditLimitNotice');
-            const timesUpMsg = document.getElementById('timesUpMessage');
-            const creditsWrapper = document.getElementById('creditsOptionsWrapper');
-            const title = document.getElementById('timingTitle');
-            const message = document.getElementById('timingMessage');
-            const addCountdown = document.getElementById('addTimingCountdown');
-            const claimCountdown = document.getElementById('claimTimingCountdown');
-            
-            if (!notice || !limitNotice || !timesUpMsg || !creditsWrapper) return;
-            
-            // Check sale mode first
-            if (creditSaleStatus && creditSaleStatus.sale_mode === 'limit') {
-                // Limit-based mode: Hide timing notice, show limit notice
-                notice.style.display = 'none';
-                timesUpMsg.style.display = 'none';
-                
-                // Update limit notice
-                const limitTitle = document.getElementById('limitTitle');
-                const limitMessage = document.getElementById('limitMessage');
-                
-                if (limitTitle && limitMessage) {
-                    if (creditSaleStatus.remaining > 0) {
-                        limitNotice.style.display = 'block';
-                        limitNotice.className = 'credit-timing-notice available';
-                        limitTitle.textContent = 'Limited Credits';
-                        limitMessage.textContent = 'Limited credits available for sale';
-                    } else {
-                        limitNotice.style.display = 'block';
-                        limitNotice.className = 'credit-timing-notice unavailable';
-                        limitTitle.textContent = 'Limited Credits';
-                        limitMessage.textContent = 'Credit sale limit reached';
-                    }
-                    // Always show credits wrapper - claim credits is always available
-                    creditsWrapper.style.display = 'block';
-                }
-                return;
-            }
-            
-            // Timing-based mode: Show timing notice, hide limit notice
-            limitNotice.style.display = 'none';
-            
-            if (!title || !message || !addCountdown || !claimCountdown) return;
-            
-            // Check if we have timing data (only for add credits, claim credits is always available)
-            const hasAddTiming = addCreditsTiming && addCreditsTiming.success && addCreditsTiming.from && addCreditsTiming.to;
-            
-            if (!hasAddTiming) {
-                notice.style.display = 'none';
-                timesUpMsg.style.display = 'none';
-                // Always show credits wrapper - claim credits is always available
-                creditsWrapper.style.display = 'block';
-                return;
-            }
-            
-            // Check if add credits timing has ended (claim credits is always available)
-            const addEnded = hasAddTiming && !addCreditsTiming.is_active && !addCreditsTiming.time_until_start;
-            
-            if (addEnded) {
-                // Show Times Up message for buy credits only, but keep claim credits available
-                notice.style.display = 'none';
-                timesUpMsg.style.display = 'block';
-                // Always show credits wrapper - claim credits is always available
-                creditsWrapper.style.display = 'block';
-                // Ensure claim credits button is always visible and enabled
-                const claimBtn = document.getElementById('claimCreditsBtn');
-                if (claimBtn) {
-                    claimBtn.style.display = 'block';
-                    claimBtn.disabled = false;
-                    claimBtn.style.opacity = '1';
-                    claimBtn.style.cursor = 'pointer';
-                }
-                return;
-            }
-            
-            // Show normal timing notice and options
-            notice.style.display = 'block';
-            timesUpMsg.style.display = 'none';
-            creditsWrapper.style.display = 'block';
-            
-            let addMessage = '';
-            let claimMessage = '';
-            
-            // Update Add Credits timing
-            if (hasAddTiming) {
-                if (addCreditsTiming.is_active) {
-                    addCountdown.textContent = addCreditsTiming.time_remaining ? formatTimeRemaining(addCreditsTiming.time_remaining) : 'Now';
-                    addCountdown.style.color = '#51cf66';
-                    addMessage = 'Available';
-                } else if (addCreditsTiming.time_until_start) {
-                    addCountdown.textContent = formatTimeRemaining(addCreditsTiming.time_until_start);
-                    addCountdown.style.color = '#ff6b6b';
-                    addMessage = 'Starts in';
-                } else {
-                    addCountdown.textContent = 'Ended';
-                    addCountdown.style.color = '#ff6b6b';
-                    addMessage = 'Ended';
-                }
-            } else {
-                addCountdown.textContent = 'Always';
-                addCountdown.style.color = '#51cf66';
-                addMessage = 'Available';
-            }
-            
-            // Update Claim Credits timing
-            if (hasClaimTiming) {
-                if (claimCreditsTiming.is_active) {
-                    claimCountdown.textContent = claimCreditsTiming.time_remaining ? formatTimeRemaining(claimCreditsTiming.time_remaining) : 'Now';
-                    claimCountdown.style.color = '#51cf66';
-                    claimMessage = 'Available';
-                } else if (claimCreditsTiming.time_until_start) {
-                    claimCountdown.textContent = formatTimeRemaining(claimCreditsTiming.time_until_start);
-                    claimCountdown.style.color = '#ff6b6b';
-                    claimMessage = 'Starts in';
-                } else {
-                    claimCountdown.textContent = 'Ended';
-                    claimCountdown.style.color = '#ff6b6b';
-                    claimMessage = 'Ended';
-                }
-            } else {
-                claimCountdown.textContent = 'Always';
-                claimCountdown.style.color = '#51cf66';
-                claimMessage = 'Available';
-            }
-            
-            // Update notice style and message based on availability
-            const addAvailable = hasAddTiming ? addCreditsTiming.is_active : true;
-            // Claim credits is always available
-            
-            if (addAvailable) {
-                notice.className = 'credit-timing-notice available';
-                title.textContent = 'Credits Available';
-                message.textContent = 'You can buy or claim credits now';
-            } else {
-                notice.className = 'credit-timing-notice unavailable';
-                title.textContent = 'Buy Credits Unavailable';
-                
-                // Build message based on status (claim credits is always available)
-                if (hasAddTiming && addCreditsTiming.time_until_start) {
-                    message.textContent = `You can't buy credits now. Buy starts in ${formatTimeRemaining(addCreditsTiming.time_until_start)}. Claim credits is always available.`;
-                } else {
-                    message.textContent = 'You can\'t buy credits now. Buy timing ended. Claim credits is always available.';
-                }
-            }
-        }
-        
-        // Credit timing data storage
-        let addCreditsTiming = null;
-        let claimCreditsTiming = null;
-        let timingUpdateInterval = null;
-        
-        // Update countdown timers
-        function updateTimingCountdowns() {
-            let needsRefresh = false;
-            
-            // Update add credits timing
-            if (addCreditsTiming && addCreditsTiming.success) {
-                if (addCreditsTiming.is_active && addCreditsTiming.time_remaining) {
-                    addCreditsTiming.time_remaining--;
-                    if (addCreditsTiming.time_remaining <= 0) {
-                        addCreditsTiming.is_active = false;
-                        needsRefresh = true;
-                    }
-                } else if (!addCreditsTiming.is_active && addCreditsTiming.time_until_start) {
-                    addCreditsTiming.time_until_start--;
-                    if (addCreditsTiming.time_until_start <= 0) {
-                        needsRefresh = true;
-                    }
-                }
-            }
-            
-            // Claim credits timing removed - always available
-            
-            updateTimingNotice();
-            
-            if (needsRefresh) {
-                checkCreditTiming(); // Refresh timing when countdown reaches zero
-            }
-        }
-        
-        // Check credit timing availability
-        function checkCreditTiming() {
-            let addTimingLoaded = false;
-            let claimTimingLoaded = false;
-            
-            // Check credit sale limit first
-            fetch('check_credit_sale_status.php')
-                .then(response => response.json())
-                .then(saleData => {
-                    creditSaleStatus = saleData;
-                    
-                    // If limit-based mode, skip timing checks
-                    if (saleData.sale_mode === 'limit') {
-                        const addBtn = document.getElementById('addCreditsBtn');
-                        if (addBtn) {
-                            if (!saleData.can_buy) {
-                                addBtn.disabled = true;
-                                addBtn.style.opacity = '0.5';
-                                addBtn.title = saleData.message || 'Credit sale limit reached';
-                            } else {
-                                addBtn.disabled = false;
-                                addBtn.style.opacity = '1';
-                                addBtn.title = '';
-                            }
-                        }
-                        updateTimingNotice();
-                        return;
-                    }
-                    
-                    // Timing-based mode: Check add credits timing
-                    fetch('check_credit_timing.php?type=add_credits')
-                        .then(response => response.json())
-                        .then(data => {
-                            addCreditsTiming = data;
-                            addTimingLoaded = true;
-                            const addBtn = document.getElementById('addCreditsBtn');
-                            if (addBtn && data.success) {
-                                // Disable if timing not active OR sale limit reached
-                                if (!data.is_active || !saleData.can_buy) {
-                                    addBtn.disabled = true;
-                                    addBtn.textContent = 'Add Credits';
-                                    addBtn.style.opacity = '0.5';
-                                    if (!saleData.can_buy) {
-                                        addBtn.title = saleData.message || 'Credit sale limit reached';
-                                    } else {
-                                        addBtn.title = data.message || 'Add Credits is not available at this time';
-                                    }
-                                } else {
-                                    addBtn.disabled = false;
-                                    addBtn.textContent = 'Add Credits';
-                                    addBtn.style.opacity = '1';
-                                    addBtn.title = '';
-                                }
-                            }
-                            
-                            if (claimTimingLoaded) {
-                                updateTimingNotice();
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error checking add credits timing:', error);
-                            addTimingLoaded = true;
-                            if (claimTimingLoaded) {
-                                updateTimingNotice();
-                            }
-                        });
-                })
-                .catch(error => {
-                    console.error('Error checking credit sale status:', error);
-                    // Fallback: check timing only
-                    fetch('check_credit_timing.php?type=add_credits')
-                        .then(response => response.json())
-                        .then(data => {
-                            addCreditsTiming = data;
-                            addTimingLoaded = true;
-                            const addBtn = document.getElementById('addCreditsBtn');
-                            if (addBtn && data.success) {
-                                if (!data.is_active) {
-                                    addBtn.disabled = true;
-                                    addBtn.textContent = 'Add Credits';
-                                    addBtn.style.opacity = '0.5';
-                                    addBtn.title = data.message || 'Add Credits is not available at this time';
-                                } else {
-                                    addBtn.disabled = false;
-                                    addBtn.textContent = 'Add Credits';
-                                    addBtn.style.opacity = '1';
-                                    addBtn.title = '';
-                                }
-                            }
-                            
-                            if (claimTimingLoaded) {
-                                updateTimingNotice();
-                            }
-                        });
-                });
-            
-            // Claim credits is always available (no timing check needed)
-            claimTimingLoaded = true;
-            const claimBtn = document.getElementById('claimCreditsBtn');
-            if (claimBtn) {
-                claimBtn.disabled = false;
-                claimBtn.style.opacity = '1';
-                claimBtn.style.cursor = 'pointer';
-                claimBtn.style.display = 'block';
-                claimBtn.textContent = 'Claim Credits';
-                claimBtn.title = '';
-            }
-            
-            if (addTimingLoaded) {
-                updateTimingNotice();
-            }
-        }
-        
-        // Check session on page load
-        window.addEventListener('load', function() {
-            checkSession();
-            loadCreditPackages(); // Load credit packages on page load
-            checkCreditTiming(); // Check credit timing availability
-            
-            // Update countdown every second
-            timingUpdateInterval = setInterval(updateTimingCountdowns, 1000);
-            
-            // Refresh timing data every minute
-            setInterval(checkCreditTiming, 60000);
-            
-            // Also check credit sale status periodically
-            setInterval(function() {
-                fetch('check_credit_sale_status.php')
-                    .then(response => response.json())
-                    .then(data => {
-                        creditSaleStatus = data;
-                        const addBtn = document.getElementById('addCreditsBtn');
-                        if (addBtn) {
-                            if (!data.can_buy) {
-                                addBtn.disabled = true;
-                                addBtn.style.opacity = '0.5';
-                                addBtn.title = data.message || 'Credit sale limit reached';
-                            } else if (data.sale_mode === 'limit') {
-                                addBtn.disabled = false;
-                                addBtn.style.opacity = '1';
-                                addBtn.title = '';
-                            }
-                        }
-                        updateTimingNotice();
-                    })
-                    .catch(error => console.error('Error checking credit sale status:', error));
-            }, 60000);
-        });
-        
-        // Clear interval on page unload
-        window.addEventListener('beforeunload', function() {
-            if (timingUpdateInterval) {
-                clearInterval(timingUpdateInterval);
-            }
-        });
 
         // Make functions globally available
         window.openModal = openModal;
@@ -2585,13 +1829,9 @@ session_start();
         window.handleLogin = handleLogin;
         window.handleForgotPassword = handleForgotPassword;
         window.toggleCreditsDropdown = toggleCreditsDropdown;
-        window.selectCreditsOption = selectCreditsOption;
-        window.showQRCode = showQRCode;
         window.toggleRankDropdown = toggleRankDropdown;
         window.handleClaimCredits = handleClaimCredits;
         window.toggleMobileCreditsDropdown = toggleMobileCreditsDropdown;
-        window.selectMobileCreditsOption = selectMobileCreditsOption;
-        window.handleMobileAddCredits = handleMobileAddCredits;
         window.handleMobileClaimCredits = handleMobileClaimCredits;
         
         // Forgot Password handler
@@ -2938,7 +2178,7 @@ session_start();
                 </p>
                 <p style="margin-top: 15px;"><strong>Game Credits:</strong></p>
                 <p style="font-size: 0.85rem; margin-top: 5px;">
-                    Purchase credits to play games and compete for real cash prizes. Credits are non-refundable but can be used for all games.
+                    Claim credits to play games and compete for real cash prizes. Credits are non-refundable but can be used for all games.
                 </p>
             </div>
             
