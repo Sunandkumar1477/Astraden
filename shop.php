@@ -98,7 +98,7 @@ try {
 // Shop pricing table is managed by admin only
 // No trading functionality on this page
 
-// Get user's Astrons
+// Get user's Astrons - create user_profile if it doesn't exist
 try {
     if (!$credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?")) {
         throw new Exception("Database error: " . $conn->error);
@@ -109,7 +109,19 @@ try {
     }
     $credits_result = $credits_stmt->get_result();
     $credits_data = $credits_result->fetch_assoc();
-    $user_astrons = intval($credits_data['credits'] ?? 0);
+    
+    if ($credits_data === null) {
+        // Create user_profile if it doesn't exist
+        $create_profile = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, 0) ON DUPLICATE KEY UPDATE credits = credits");
+        if ($create_profile) {
+            $create_profile->bind_param("i", $user_id);
+            $create_profile->execute();
+            $create_profile->close();
+        }
+        $user_astrons = 0;
+    } else {
+        $user_astrons = intval($credits_data['credits'] ?? 0);
+    }
     $credits_stmt->close();
 } catch (Exception $e) {
     if ($is_ajax) {
@@ -127,7 +139,8 @@ if (!$is_ajax) {
     ob_end_flush();
 }
 
-$conn->close();
+// Don't close connection here - it might be needed by included files or AJAX requests
+// Connection will be closed automatically at script end
 ?>
 <!DOCTYPE html>
 <html lang="en">

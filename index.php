@@ -662,67 +662,63 @@ session_start();
                     gameCost = 30;
                 }
 
-                    // Check if user has sufficient Astrons
-                    if (currentCredits < gameCost) {
-                        alert(`Insufficient Astrons! You need ${gameCost} Astrons to play this game.\n\nYour current balance: ${currentCredits} Astrons`);
-                        return;
-                    }
+                // Check if user has sufficient Astrons
+                if (currentCredits < gameCost) {
+                    alert(`Insufficient Astrons! You need ${gameCost} Astrons to play this game.\n\nYour current balance: ${currentCredits} Astrons`);
+                    return;
+                }
 
-                    // Confirm payment
-                    const confirmMsg = `This will deduct ${gameCost} Astrons from your account to play this game.\n\nYour balance after payment: ${currentCredits - gameCost} Astrons\n\nContinue?`;
-                    if (!confirm(confirmMsg)) {
-                        return;
-                    }
+                // Confirm payment
+                const confirmMsg = `This will deduct ${gameCost} Astrons from your account to play this game.\n\nYour balance after payment: ${currentCredits - gameCost} Astrons\n\nContinue?`;
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
 
-                    // Show loading
-                    const loading = document.getElementById('loading');
-                    if (loading) loading.classList.add('show');
+                // Show loading
+                const loading = document.getElementById('loading');
+                if (loading) loading.classList.add('show');
 
-                    // Deduct Astrons before launching game
-                    try {
-                        const formData = new FormData();
-                        formData.append('game_name', sanitized);
-                        formData.append('play_mode', 'normal');
-                        formData.append('credits_amount', gameCost);
-                        formData.append('session_id', 0); // Will be handled by API
+                // Deduct Astrons before launching game
+                try {
+                    const formData = new FormData();
+                    formData.append('game_name', sanitized);
+                    formData.append('play_mode', 'normal');
+                    formData.append('credits_amount', gameCost);
+                    formData.append('session_id', 0); // Will be handled by API
 
-                        const paymentResponse = await fetch('game_api.php?action=deduct_credits', {
-                            method: 'POST',
-                            body: formData
-                        });
+                    const paymentResponse = await fetch('game_api.php?action=deduct_credits', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                        const paymentData = await paymentResponse.json();
+                    const paymentData = await paymentResponse.json();
 
-                        if (paymentData.success) {
-                            // Update credits display
-                            if (creditsElement) {
-                                const newBalance = paymentData.credits_remaining || (currentCredits - gameCost);
-                                creditsElement.textContent = newBalance.toLocaleString();
-                                
-                                // Update mobile credits display
-                                const mobileCreditsValue = document.getElementById('mobileCreditsValue');
-                                if (mobileCreditsValue) {
-                                    mobileCreditsValue.textContent = newBalance.toLocaleString();
-                                }
+                    if (paymentData.success) {
+                        // Update credits display
+                        if (creditsElement) {
+                            const newBalance = paymentData.credits_remaining || (currentCredits - gameCost);
+                            creditsElement.textContent = newBalance.toLocaleString();
+                            
+                            // Update mobile credits display
+                            const mobileCreditsValue = document.getElementById('mobileCreditsValue');
+                            if (mobileCreditsValue) {
+                                mobileCreditsValue.textContent = newBalance.toLocaleString();
                             }
-
-                            // Redirect to game after successful payment (with payment flag)
-                            setTimeout(() => {
-                                window.location.href = gamePaths[sanitized] + '?paid=1';
-                            }, 500);
-                        } else {
-                            // Hide loading on error
-                            if (loading) loading.classList.remove('show');
-                            alert(paymentData.message || 'Failed to process payment. Please try again.');
                         }
-                    } catch (error) {
-                        console.error('Payment error:', error);
+
+                        // Redirect to game after successful payment (with payment flag)
+                        setTimeout(() => {
+                            window.location.href = gamePaths[sanitized] + '?paid=1';
+                        }, 500);
+                    } else {
+                        // Hide loading on error
                         if (loading) loading.classList.remove('show');
-                        alert('An error occurred while processing payment. Please try again.');
+                        alert(paymentData.message || 'Failed to process payment. Please try again.');
                     }
                 } catch (error) {
-                    console.error('Error loading game credits:', error);
-                    alert('Unable to load game information. Please try again.');
+                    console.error('Payment error:', error);
+                    if (loading) loading.classList.remove('show');
+                    alert('An error occurred while processing payment. Please try again.');
                 }
             }
 

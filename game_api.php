@@ -184,17 +184,22 @@ switch ($action) {
         $normal_cost = 30; // Default fallback
         $contest_cost = 30; // Default fallback
         $check_games_table = $conn->query("SHOW TABLES LIKE 'games'");
-        if ($check_games_table->num_rows > 0) {
+        if ($check_games_table && $check_games_table->num_rows > 0) {
             $games_stmt = $conn->prepare("SELECT credits_per_chance, contest_credits_required FROM games WHERE game_name = ?");
-            $games_stmt->bind_param("s", $game_name);
-            $games_stmt->execute();
-            $games_result = $games_stmt->get_result();
-            if ($games_result->num_rows > 0) {
-                $game_data = $games_result->fetch_assoc();
-                $normal_cost = intval($game_data['credits_per_chance'] ?? 30);
-                $contest_cost = intval($game_data['contest_credits_required'] ?? 30);
+            if ($games_stmt) {
+                $games_stmt->bind_param("s", $game_name);
+                $games_stmt->execute();
+                $games_result = $games_stmt->get_result();
+                if ($games_result && $games_result->num_rows > 0) {
+                    $game_data = $games_result->fetch_assoc();
+                    $normal_cost = intval($game_data['credits_per_chance'] ?? 30);
+                    $contest_cost = intval($game_data['contest_credits_required'] ?? 30);
+                }
+                $games_stmt->close();
             }
-            $games_stmt->close();
+        }
+        if ($check_games_table) {
+            $check_games_table->close();
         }
         
         // Use the amount passed from frontend, or determine based on play mode

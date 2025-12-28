@@ -15,35 +15,48 @@ $credits_color = '#FFD700'; // Gold color
 
 // Fetch game settings
 $game_stmt = $conn->prepare("SELECT is_contest_active, is_claim_active, game_mode, contest_first_prize, contest_second_prize, contest_third_prize FROM games WHERE game_name = 'earth-defender'");
-$game_stmt->execute();
-$game_res = $game_stmt->get_result();
-$game_mode = 'credits';
-if ($game_res->num_rows > 0) {
-    $g_data = $game_res->fetch_assoc();
-    $is_contest_active = (int)$g_data['is_contest_active'];
-    $is_claim_active = (int)$g_data['is_claim_active'];
-    $game_mode = $g_data['game_mode'] ?: 'credits';
-    $prizes = [
-        '1st' => (int)$g_data['contest_first_prize'],
-        '2nd' => (int)$g_data['contest_second_prize'],
-        '3rd' => (int)$g_data['contest_third_prize']
-    ];
+if ($game_stmt) {
+    $game_stmt->execute();
+    $game_res = $game_stmt->get_result();
+    $game_mode = 'credits';
+    if ($game_res && $game_res->num_rows > 0) {
+        $g_data = $game_res->fetch_assoc();
+        $is_contest_active = (int)($g_data['is_contest_active'] ?? 0);
+        $is_claim_active = (int)($g_data['is_claim_active'] ?? 0);
+        $game_mode = $g_data['game_mode'] ?? 'credits';
+        $prizes = [
+            '1st' => (int)($g_data['contest_first_prize'] ?? 0),
+            '2nd' => (int)($g_data['contest_second_prize'] ?? 0),
+            '3rd' => (int)($g_data['contest_third_prize'] ?? 0)
+        ];
+    }
+    $game_stmt->close();
 }
-$game_stmt->close();
 
 if (isset($_SESSION['user_id'])) {
     $is_logged_in = true;
     $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
-    $credits_stmt->bind_param("i", $_SESSION['user_id']);
-    $credits_stmt->execute();
-    $credits_result = $credits_stmt->get_result();
-    if ($credits_result->num_rows > 0) {
-        $credits_data = $credits_result->fetch_assoc();
-        $user_credits = $credits_data['credits'] ?? 0;
+    if ($credits_stmt) {
+        $credits_stmt->bind_param("i", $_SESSION['user_id']);
+        $credits_stmt->execute();
+        $credits_result = $credits_stmt->get_result();
+        if ($credits_result && $credits_result->num_rows > 0) {
+            $credits_data = $credits_result->fetch_assoc();
+            $user_credits = $credits_data['credits'] ?? 0;
+        } else {
+            // Create user_profile if it doesn't exist
+            $create_profile = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, 0) ON DUPLICATE KEY UPDATE credits = credits");
+            if ($create_profile) {
+                $create_profile->bind_param("i", $_SESSION['user_id']);
+                $create_profile->execute();
+                $create_profile->close();
+            }
+            $user_credits = 0;
+        }
+        $credits_stmt->close();
     }
-    $credits_stmt->close();
 }
-$conn->close();
+// Don't close connection here - it might be needed by included files
 ?>
 <!DOCTYPE html>
 <html lang="en">

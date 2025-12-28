@@ -8,10 +8,12 @@ $game_name = $_GET['game'] ?? null;
 
 // Check if games table exists
 $check_table = $conn->query("SHOW TABLES LIKE 'games'");
-if ($check_table->num_rows == 0) {
+if ($check_table && $check_table->num_rows == 0) {
+    if ($check_table) $check_table->close();
     echo json_encode(['success' => true, 'game_name' => $game_name, 'credits_per_chance' => 30]);
     exit;
 }
+if ($check_table) $check_table->close();
 
 // Columns to fetch
 $cols = "game_name, credits_per_chance, is_active, is_contest_active, game_mode, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, first_prize, second_prize, third_prize";
