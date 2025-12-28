@@ -13,7 +13,12 @@ session_start();
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0f">
     <title>Astra Den - Select Your Game</title>
-    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <!-- Favicon - Must be early in head for proper display -->
+    <link rel="icon" type="image/svg+xml" href="Alogo.svg">
+    <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
+    <link rel="alternate icon" type="image/png" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="Alogo.svg">
     
     <!-- Google Fonts - Space Theme -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,6 +120,14 @@ session_start();
                             <div class="item-value" id="mobileRankValue">-</div>
                         </div>
                     </div>
+                    <!-- Shop Link -->
+                    <a href="shop.php" class="menu-item">
+                        <div class="item-icon">🛒</div>
+                        <div class="item-info">
+                            <div class="item-label">Shop</div>
+                            <div class="item-value">Claim Astrons</div>
+                        </div>
+                    </a>
                     <!-- Profile Link -->
                     <a href="view_profile.php" class="menu-item">
                         <div class="item-icon">🌍</div>
