@@ -170,6 +170,11 @@ switch ($action) {
         
     case 'deduct_credits':
         // Deduct credits when user starts game
+        if (!$user_id) {
+            echo json_encode(['success' => false, 'message' => 'Please login first']);
+            exit;
+        }
+        
         $session_id = intval($_POST['session_id'] ?? 0);
         $game_name = $_POST['game_name'] ?? 'earth-defender';
         $play_mode = $_POST['play_mode'] ?? 'normal'; // 'normal' or 'contest'
@@ -202,26 +207,33 @@ switch ($action) {
         // Get active session (if session_id not provided, get latest active)
         // Allow payment even if no session exists (for pre-launch payment)
         $session = null;
+        $session_stmt = null;
         if ($session_id > 0) {
             $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ? AND is_active = 1");
-            $session_stmt->bind_param("i", $session_id);
-            $session_stmt->execute();
-            $session_result = $session_stmt->get_result();
-            if ($session_result->num_rows > 0) {
-                $session = $session_result->fetch_assoc();
-                $session_id = $session['id'];
+            if ($session_stmt) {
+                $session_stmt->bind_param("i", $session_id);
+                $session_stmt->execute();
+                $session_result = $session_stmt->get_result();
+                if ($session_result->num_rows > 0) {
+                    $session = $session_result->fetch_assoc();
+                    $session_id = $session['id'];
+                }
+                $session_stmt->close();
+                $session_stmt = null;
             }
-            $session_stmt->close();
         } else {
             $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE game_name = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1");
-            $session_stmt->bind_param("s", $game_name);
-            $session_stmt->execute();
-            $session_result = $session_stmt->get_result();
-            if ($session_result->num_rows > 0) {
-                $session = $session_result->fetch_assoc();
-                $session_id = $session['id'];
+            if ($session_stmt) {
+                $session_stmt->bind_param("s", $game_name);
+                $session_stmt->execute();
+                $session_result = $session_stmt->get_result();
+                if ($session_result->num_rows > 0) {
+                    $session = $session_result->fetch_assoc();
+                    $session_id = $session['id'];
+                }
+                $session_stmt->close();
+                $session_stmt = null;
             }
-            $session_stmt->close();
         }
         
         // If no session exists, create a virtual session ID (0) - payment can still proceed
@@ -234,13 +246,32 @@ switch ($action) {
         
         // Use credits from games table, not from session
         
-        // Check user credits
+        // Check user credits - ensure user_profile exists
         $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
+        if (!$credits_stmt) {
+            echo json_encode(['success' => false, 'message' => 'Database error: Unable to check credits']);
+            if ($session_stmt) {
+                $session_stmt->close();
+            }
+            exit;
+        }
+        
         $credits_stmt->bind_param("i", $user_id);
         $credits_stmt->execute();
         $credits_result = $credits_stmt->get_result();
         $credits_data = $credits_result->fetch_assoc();
         $current_credits = $credits_data['credits'] ?? 0;
+        
+        // If user_profile doesn't exist, create it
+        if ($credits_data === null) {
+            $create_profile = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, 0)");
+            if ($create_profile) {
+                $create_profile->bind_param("i", $user_id);
+                $create_profile->execute();
+                $create_profile->close();
+            }
+            $current_credits = 0;
+        }
         
         if ($current_credits < $credits_required) {
             echo json_encode([
@@ -250,27 +281,41 @@ switch ($action) {
                 'required' => $credits_required
             ]);
             $credits_stmt->close();
-            $session_stmt->close();
+            if ($session_stmt) {
+                $session_stmt->close();
+            }
             exit;
         }
         
         // Deduct credits
         $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits - ? WHERE user_id = ?");
+        if (!$update_stmt) {
+            echo json_encode(['success' => false, 'message' => 'Database error: Unable to deduct credits']);
+            $credits_stmt->close();
+            if ($session_stmt) {
+                $session_stmt->close();
+            }
+            exit;
+        }
+        
         $update_stmt->bind_param("ii", $credits_required, $user_id);
         
         if ($update_stmt->execute()) {
+            $new_balance = max(0, $current_credits - $credits_required);
             echo json_encode([
                 'success' => true,
                 'message' => 'Astrons deducted successfully',
-                'credits_remaining' => $current_credits - $credits_required,
+                'credits_remaining' => $new_balance,
                 'session_id' => $session_id
             ]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to deduct Astrons']);
+            echo json_encode(['success' => false, 'message' => 'Failed to deduct Astrons: ' . $update_stmt->error]);
         }
         $update_stmt->close();
         $credits_stmt->close();
-        $session_stmt->close();
+        if ($session_stmt) {
+            $session_stmt->close();
+        }
         break;
         
     case 'save_score':
