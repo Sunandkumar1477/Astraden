@@ -245,7 +245,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                             $create_profile->close();
                         }
                         
-                        // Step 2: Add Astrons to user profile
+                        // Step 2: Add Astrons to user profile (adds to existing balance)
+                        // Example: If user has 10 Astrons and gets 10 more, total becomes 20
                         $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
                         $update_stmt->bind_param("ii", $item_astrons, $user_id);
                         
@@ -254,7 +255,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                         }
                         $update_stmt->close();
                         
-                        // Step 3: Deduct Fluxon by inserting negative score entry
+                        // Step 3: Deduct Fluxon by inserting negative score entry in game_leaderboard
+                        // This tracks the purchase/spending for record-keeping
                         $negative_score = -$item_cost;
                         
                         // Check which timestamp columns exist
@@ -282,8 +284,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                             throw new Exception("Failed to deduct Fluxon: " . $deduct_stmt->error);
                         }
                         $deduct_stmt->close();
+                        // Purchase is now tracked in game_leaderboard with negative score
                         
-                        // Step 4: Update total_score in users table (subtract the cost)
+                        // Step 4: Update total_score in users table (subtract the cost spent)
+                        // This deducts the Fluxon that was spent on the purchase
                         $update_total_stmt = $conn->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
                         $update_total_stmt->bind_param("ii", $negative_score, $user_id);
                         if (!$update_total_stmt->execute()) {
@@ -317,7 +321,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                         $total_fluxon = $new_fluxon;
                         $user_astrons = $final_astrons;
                         $purchase_success = true;
-                        $message = "Nexus Link Established! Claimed {$item_astrons} Astrons.";
+                        $message = "Trade Successful! Spent {$item_cost} Fluxon, received {$item_astrons} Astrons. Your new balance: {$final_astrons} Astrons.";
                         
                         // If AJAX request, return JSON response
                         if ($is_ajax) {
@@ -962,7 +966,22 @@ $conn->close();
             <div class="error">✗ <?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         
-        <h2 style="text-align: center; color: var(--primary-cyan); margin: 40px 0 20px; font-family: 'Orbitron', sans-serif;">Forward Trading: Fluxon → Astrons</h2>
+        <div style="text-align: center; margin: 40px 0 30px; padding: 20px; background: rgba(0, 255, 255, 0.1); border: 2px solid var(--primary-cyan); border-radius: 15px; max-width: 800px; margin-left: auto; margin-right: auto;">
+            <h2 style="color: var(--primary-cyan); margin-bottom: 15px; font-family: 'Orbitron', sans-serif;">💰 Trading: Fluxon → Astrons</h2>
+            <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.1rem;">
+                You have <strong style="color: #00ff00;"><?php echo number_format($total_fluxon); ?> Fluxon</strong> 
+                <?php if ($total_fluxon > 0): ?>
+                    - You can trade for Astrons using the options below
+                <?php else: ?>
+                    - Play games to earn Fluxon first!
+                <?php endif; ?>
+            </p>
+            <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; margin-top: 10px;">
+                Current Astrons: <strong style="color: #FFD700;"><?php echo number_format($user_astrons); ?></strong>
+            </p>
+        </div>
+        
+        <h2 style="text-align: center; color: var(--primary-cyan); margin: 20px 0 20px; font-family: 'Orbitron', sans-serif; font-size: 1.3rem;">Available Trades</h2>
         <div class="shop-grid">
             <?php 
             $colors = ['#00ffff', '#9d4edd', '#FFD700'];
@@ -987,15 +1006,25 @@ $conn->close();
                 
                 <div class="item-details">
                     <div class="detail-row">
-                        <span class="detail-label">Cost:</span>
-                        <span class="detail-value"><?php echo number_format($fluxon); ?> Fluxon</span>
+                        <span class="detail-label">You Pay:</span>
+                        <span class="detail-value" style="color: #ff6b6b;"><?php echo number_format($fluxon); ?> Fluxon</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Reward:</span>
-                        <span class="detail-value"><?php echo $astrons; ?> Astrons</span>
+                        <span class="detail-label">You Get:</span>
+                        <span class="detail-value" style="color: #51cf66;">+<?php echo $astrons; ?> Astrons</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Your Balance After:</span>
+                        <span class="detail-value" style="color: #ffd43b;">
+                            <?php 
+                            $remaining_fluxon = max(0, $total_fluxon - $fluxon);
+                            $new_total_astrons = $user_astrons + $astrons;
+                            echo number_format($remaining_fluxon) . " Fluxon, " . $new_total_astrons . " Astrons";
+                            ?>
+                        </span>
                     </div>
                     <div class="conversion-rate">
-                        <?php echo number_format($ratio); ?> Fluxon per Astron
+                        Rate: <?php echo number_format($ratio); ?> Fluxon = 1 Astron
                     </div>
                 </div>
                 
@@ -1004,7 +1033,13 @@ $conn->close();
                     <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
                     <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
                     <button type="submit" name="purchase_item" id="purchase-btn-<?php echo $price['id']; ?>" class="purchase-btn" <?php echo !$can_afford ? 'disabled' : ''; ?>>
-                        <?php echo $can_afford ? "Claim {$astrons} Astrons" : "Insufficient Fluxon"; ?>
+                        <?php 
+                        if ($can_afford) {
+                            echo "Trade {$fluxon} Fluxon → Get {$astrons} Astrons";
+                        } else {
+                            echo "Need " . number_format($fluxon - $total_fluxon) . " more Fluxon";
+                        }
+                        ?>
                     </button>
                 </form>
             </div>
