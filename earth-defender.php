@@ -1959,48 +1959,11 @@ if (isset($_SESSION['user_id'])) {
         }
         
         function showNoSession(nextSessionDate = null, isContestActive = false) {
-            const overlay = document.getElementById('game-status-overlay');
-            const timerDisplay = document.getElementById('timer-display');
-            const statusMessage = document.getElementById('status-message');
-            const normalBtn = document.getElementById('normal-play-btn');
-            const contestBtn = document.getElementById('contest-play-btn');
-            
-            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-            
-            timerDisplay.textContent = 'NO SESSION';
-            
-            // Hide play buttons when no session is active
-            normalBtn.style.display = 'none';
-            contestBtn.style.display = 'none';
-            
-            // Build message based on whether next session date is available and contest status
-            let message = '';
-            if (isContestActive) {
-                if (nextSessionDate) {
-                    const dateObj = new Date(nextSessionDate + 'T00:00:00');
-                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                    const formattedDate = dateObj.toLocaleDateString('en-IN', options);
-                    message = `🏆 Contest is active! Game session will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
-                } else {
-                    message = '🏆 Contest is active! Wait for the game session to start. Demo mode is always available (free, no restrictions)!';
-                }
-            } else {
-                if (nextSessionDate) {
-                    const dateObj = new Date(nextSessionDate + 'T00:00:00');
-                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                    const formattedDate = dateObj.toLocaleDateString('en-IN', options);
-                    message = `This game will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
-                } else {
-                    message = 'This game does not start every day. For updates, follow our YouTube and Instagram. Demo mode is always available (free, no restrictions)!';
-                }
-            }
-            
-            if (!isLoggedIn) {
-                message = message.replace('Demo mode', 'Demo mode is free and always available! Login to play for real when sessions are active.');
-            }
-            
-            statusMessage.textContent = message;
-            startBtn.style.display = 'none';
+            // NO RESTRICTIONS FOR NORMAL PLAY - Always show game ready
+            // Normal play is available anytime, any date - no session timing required
+            // Just call showGameReady() to show the play buttons
+            showGameReady();
+            return;
         }
         
         // Common function to start game with specified cost and mode
@@ -3212,15 +3175,17 @@ if (isset($_SESSION['user_id'])) {
         function updateGameLogic(delta) {
             if (!state.isPlaying) return;
             
-            // Check if session has ended (only for real games, NOT demo mode)
-            if (!state.isDemoMode && gameSession && gameSession.end_timestamp) {
-                const now = Math.floor(Date.now() / 1000);
-                if (now > gameSession.end_timestamp && !gameEndedByTime) {
-                    gameEndedByTime = true;
-                    gameOver(true);
-                    return;
-                }
-            }
+            // NO TIME RESTRICTIONS FOR NORMAL PLAY - Users can play anytime
+            // Only check time restrictions for contest mode if needed
+            // For normal play, remove all time-based game ending
+            // if (!state.isDemoMode && !state.isContestMode && gameSession && gameSession.end_timestamp) {
+            //     const now = Math.floor(Date.now() / 1000);
+            //     if (now > gameSession.end_timestamp && !gameEndedByTime) {
+            //         gameEndedByTime = true;
+            //         gameOver(true);
+            //         return;
+            //     }
+            // }
             
             // Convert delta to frame-equivalent (assuming 60fps baseline)
             // At 60fps, delta ≈ 0.0167 seconds per frame
