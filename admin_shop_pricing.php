@@ -12,6 +12,8 @@ $create_table = $conn->query("
         id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
         fluxon_amount INT(11) NOT NULL COMMENT 'Amount of Fluxon required',
         astrons_reward INT(11) NOT NULL COMMENT 'Astrons user gets',
+        astrons_cost INT(11) NOT NULL DEFAULT 0 COMMENT 'Amount of Astrons required for reverse trade',
+        fluxon_reward INT(11) NOT NULL DEFAULT 0 COMMENT 'Fluxon user gets from reverse trade',
         claim_type VARCHAR(50) NOT NULL COMMENT 'Type name',
         is_active TINYINT(1) DEFAULT 1,
         display_order INT(11) DEFAULT 0,
@@ -21,9 +23,19 @@ $create_table = $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
 
+// Add reverse trading columns if they don't exist
+$check_reverse = $conn->query("SHOW COLUMNS FROM shop_pricing LIKE 'astrons_cost'");
+if ($check_reverse && $check_reverse->num_rows == 0) {
+    $conn->query("ALTER TABLE shop_pricing 
+                  ADD COLUMN astrons_cost INT(11) NOT NULL DEFAULT 0 COMMENT 'Amount of Astrons required for reverse trade' AFTER astrons_reward,
+                  ADD COLUMN fluxon_reward INT(11) NOT NULL DEFAULT 0 COMMENT 'Fluxon user gets from reverse trade' AFTER astrons_cost");
+}
+if ($check_reverse) $check_reverse->close();
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_prices'])) {
+        // Forward trading (Fluxon to Astrons)
         $price1_fluxon = intval($_POST['price1_fluxon'] ?? 5000);
         $price1_astrons = intval($_POST['price1_astrons'] ?? 10);
         $price2_fluxon = intval($_POST['price2_fluxon'] ?? 7500);
@@ -31,19 +43,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $price3_fluxon = intval($_POST['price3_fluxon'] ?? 10000);
         $price3_astrons = intval($_POST['price3_astrons'] ?? 30);
         
-        // Update or insert prices
-        $stmt1 = $conn->prepare("INSERT INTO shop_pricing (id, fluxon_amount, astrons_reward, claim_type, display_order) VALUES (1, ?, ?, 'Basic Claim', 1) ON DUPLICATE KEY UPDATE fluxon_amount = VALUES(fluxon_amount), astrons_reward = VALUES(astrons_reward)");
-        $stmt1->bind_param("ii", $price1_fluxon, $price1_astrons);
+        // Reverse trading (Astrons to Fluxon)
+        $price1_astrons_cost = intval($_POST['price1_astrons_cost'] ?? 10);
+        $price1_fluxon_reward = intval($_POST['price1_fluxon_reward'] ?? 5000);
+        $price2_astrons_cost = intval($_POST['price2_astrons_cost'] ?? 20);
+        $price2_fluxon_reward = intval($_POST['price2_fluxon_reward'] ?? 7500);
+        $price3_astrons_cost = intval($_POST['price3_astrons_cost'] ?? 30);
+        $price3_fluxon_reward = intval($_POST['price3_fluxon_reward'] ?? 10000);
+        
+        // Update or insert prices (forward trading)
+        $stmt1 = $conn->prepare("INSERT INTO shop_pricing (id, fluxon_amount, astrons_reward, astrons_cost, fluxon_reward, claim_type, display_order) VALUES (1, ?, ?, ?, ?, 'Basic Claim', 1) ON DUPLICATE KEY UPDATE fluxon_amount = VALUES(fluxon_amount), astrons_reward = VALUES(astrons_reward), astrons_cost = VALUES(astrons_cost), fluxon_reward = VALUES(fluxon_reward)");
+        $stmt1->bind_param("iiii", $price1_fluxon, $price1_astrons, $price1_astrons_cost, $price1_fluxon_reward);
         $stmt1->execute();
         $stmt1->close();
         
-        $stmt2 = $conn->prepare("INSERT INTO shop_pricing (id, fluxon_amount, astrons_reward, claim_type, display_order) VALUES (2, ?, ?, 'Standard Claim', 2) ON DUPLICATE KEY UPDATE fluxon_amount = VALUES(fluxon_amount), astrons_reward = VALUES(astrons_reward)");
-        $stmt2->bind_param("ii", $price2_fluxon, $price2_astrons);
+        $stmt2 = $conn->prepare("INSERT INTO shop_pricing (id, fluxon_amount, astrons_reward, astrons_cost, fluxon_reward, claim_type, display_order) VALUES (2, ?, ?, ?, ?, 'Standard Claim', 2) ON DUPLICATE KEY UPDATE fluxon_amount = VALUES(fluxon_amount), astrons_reward = VALUES(astrons_reward), astrons_cost = VALUES(astrons_cost), fluxon_reward = VALUES(fluxon_reward)");
+        $stmt2->bind_param("iiii", $price2_fluxon, $price2_astrons, $price2_astrons_cost, $price2_fluxon_reward);
         $stmt2->execute();
         $stmt2->close();
         
-        $stmt3 = $conn->prepare("INSERT INTO shop_pricing (id, fluxon_amount, astrons_reward, claim_type, display_order) VALUES (3, ?, ?, 'Premium Claim', 3) ON DUPLICATE KEY UPDATE fluxon_amount = VALUES(fluxon_amount), astrons_reward = VALUES(astrons_reward)");
-        $stmt3->bind_param("ii", $price3_fluxon, $price3_astrons);
+        $stmt3 = $conn->prepare("INSERT INTO shop_pricing (id, fluxon_amount, astrons_reward, astrons_cost, fluxon_reward, claim_type, display_order) VALUES (3, ?, ?, ?, ?, 'Premium Claim', 3) ON DUPLICATE KEY UPDATE fluxon_amount = VALUES(fluxon_amount), astrons_reward = VALUES(astrons_reward), astrons_cost = VALUES(astrons_cost), fluxon_reward = VALUES(fluxon_reward)");
+        $stmt3->bind_param("iiii", $price3_fluxon, $price3_astrons, $price3_astrons_cost, $price3_fluxon_reward);
         $stmt3->execute();
         $stmt3->close();
         
@@ -55,13 +75,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $prices = $conn->query("SELECT * FROM shop_pricing ORDER BY display_order ASC")->fetch_all(MYSQLI_ASSOC);
 
 // Set defaults if no prices exist
-$price1 = ['fluxon_amount' => 5000, 'astrons_reward' => 10];
-$price2 = ['fluxon_amount' => 7500, 'astrons_reward' => 20];
-$price3 = ['fluxon_amount' => 10000, 'astrons_reward' => 30];
+$price1 = ['fluxon_amount' => 5000, 'astrons_reward' => 10, 'astrons_cost' => 10, 'fluxon_reward' => 5000];
+$price2 = ['fluxon_amount' => 7500, 'astrons_reward' => 20, 'astrons_cost' => 20, 'fluxon_reward' => 7500];
+$price3 = ['fluxon_amount' => 10000, 'astrons_reward' => 30, 'astrons_cost' => 30, 'fluxon_reward' => 10000];
 
-if (count($prices) >= 1) $price1 = $prices[0];
-if (count($prices) >= 2) $price2 = $prices[1];
-if (count($prices) >= 3) $price3 = $prices[2];
+if (count($prices) >= 1) $price1 = array_merge($price1, $prices[0]);
+if (count($prices) >= 2) $price2 = array_merge($price2, $prices[1]);
+if (count($prices) >= 3) $price3 = array_merge($price3, $prices[2]);
 
 ?>
 <!DOCTYPE html>
@@ -165,38 +185,75 @@ if (count($prices) >= 3) $price3 = $prices[2];
 
         <div class="config-card">
             <form method="POST">
-                <h3 style="color: var(--primary-cyan); margin-bottom: 20px;">Set Fluxon to Astrons Conversion Rates</h3>
+                <h3 style="color: var(--primary-cyan); margin-bottom: 20px;">Set Fluxon ↔ Astrons Trading Rates</h3>
+                
+                <h4 style="color: var(--primary-purple); margin: 30px 0 15px; border-bottom: 2px solid rgba(157, 78, 221, 0.3); padding-bottom: 10px;">Forward Trading: Fluxon → Astrons</h4>
                 
                 <div class="price-row">
                     <div class="form-group">
-                        <label>Claim Type 1 - Fluxon Amount</label>
+                        <label>Type 1 - Fluxon Cost</label>
                         <input type="number" name="price1_fluxon" value="<?php echo $price1['fluxon_amount']; ?>" required min="1">
                     </div>
                     <div class="form-group">
-                        <label>Claim Type 1 - Astrons Reward</label>
+                        <label>Type 1 - Astrons Reward</label>
                         <input type="number" name="price1_astrons" value="<?php echo $price1['astrons_reward']; ?>" required min="1">
                     </div>
                 </div>
                 
                 <div class="price-row">
                     <div class="form-group">
-                        <label>Claim Type 2 - Fluxon Amount</label>
+                        <label>Type 2 - Fluxon Cost</label>
                         <input type="number" name="price2_fluxon" value="<?php echo $price2['fluxon_amount']; ?>" required min="1">
                     </div>
                     <div class="form-group">
-                        <label>Claim Type 2 - Astrons Reward</label>
+                        <label>Type 2 - Astrons Reward</label>
                         <input type="number" name="price2_astrons" value="<?php echo $price2['astrons_reward']; ?>" required min="1">
                     </div>
                 </div>
                 
                 <div class="price-row">
                     <div class="form-group">
-                        <label>Claim Type 3 - Fluxon Amount</label>
+                        <label>Type 3 - Fluxon Cost</label>
                         <input type="number" name="price3_fluxon" value="<?php echo $price3['fluxon_amount']; ?>" required min="1">
                     </div>
                     <div class="form-group">
-                        <label>Claim Type 3 - Astrons Reward</label>
+                        <label>Type 3 - Astrons Reward</label>
                         <input type="number" name="price3_astrons" value="<?php echo $price3['astrons_reward']; ?>" required min="1">
+                    </div>
+                </div>
+                
+                <h4 style="color: var(--primary-purple); margin: 30px 0 15px; border-bottom: 2px solid rgba(157, 78, 221, 0.3); padding-bottom: 10px;">Reverse Trading: Astrons → Fluxon</h4>
+                
+                <div class="price-row">
+                    <div class="form-group">
+                        <label>Type 1 - Astrons Cost</label>
+                        <input type="number" name="price1_astrons_cost" value="<?php echo $price1['astrons_cost'] ?? 10; ?>" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Type 1 - Fluxon Reward</label>
+                        <input type="number" name="price1_fluxon_reward" value="<?php echo $price1['fluxon_reward'] ?? 5000; ?>" required min="1">
+                    </div>
+                </div>
+                
+                <div class="price-row">
+                    <div class="form-group">
+                        <label>Type 2 - Astrons Cost</label>
+                        <input type="number" name="price2_astrons_cost" value="<?php echo $price2['astrons_cost'] ?? 20; ?>" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Type 2 - Fluxon Reward</label>
+                        <input type="number" name="price2_fluxon_reward" value="<?php echo $price2['fluxon_reward'] ?? 7500; ?>" required min="1">
+                    </div>
+                </div>
+                
+                <div class="price-row">
+                    <div class="form-group">
+                        <label>Type 3 - Astrons Cost</label>
+                        <input type="number" name="price3_astrons_cost" value="<?php echo $price3['astrons_cost'] ?? 30; ?>" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Type 3 - Fluxon Reward</label>
+                        <input type="number" name="price3_fluxon_reward" value="<?php echo $price3['fluxon_reward'] ?? 10000; ?>" required min="1">
                     </div>
                 </div>
                 

@@ -101,6 +101,8 @@ $create_table = $conn->query("
         id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
         fluxon_amount INT(11) NOT NULL COMMENT 'Amount of Fluxon required',
         astrons_reward INT(11) NOT NULL COMMENT 'Astrons user gets',
+        astrons_cost INT(11) NOT NULL DEFAULT 0 COMMENT 'Amount of Astrons required for reverse trade',
+        fluxon_reward INT(11) NOT NULL DEFAULT 0 COMMENT 'Fluxon user gets from reverse trade',
         claim_type VARCHAR(50) NOT NULL COMMENT 'Type name',
         is_active TINYINT(1) DEFAULT 1,
         display_order INT(11) DEFAULT 0,
@@ -109,6 +111,15 @@ $create_table = $conn->query("
         UNIQUE KEY unique_fluxon (fluxon_amount)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
+
+// Add reverse trading columns if they don't exist
+$check_reverse = $conn->query("SHOW COLUMNS FROM shop_pricing LIKE 'astrons_cost'");
+if ($check_reverse && $check_reverse->num_rows == 0) {
+    $conn->query("ALTER TABLE shop_pricing 
+                  ADD COLUMN astrons_cost INT(11) NOT NULL DEFAULT 0 COMMENT 'Amount of Astrons required for reverse trade' AFTER astrons_reward,
+                  ADD COLUMN fluxon_reward INT(11) NOT NULL DEFAULT 0 COMMENT 'Fluxon user gets from reverse trade' AFTER astrons_cost");
+}
+if ($check_reverse) $check_reverse->close();
 
 // Get prices from database
 $prices_result = $conn->query("SELECT * FROM shop_pricing WHERE is_active = 1 ORDER BY display_order ASC LIMIT 3");
@@ -151,6 +162,7 @@ $purchase_success = false;
 $new_fluxon = $total_fluxon;
 $new_astrons = $user_astrons;
 
+// Handle forward trading (Fluxon → Astrons)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
     // Wrap entire purchase handling in try-catch for AJAX requests
     try {
@@ -352,6 +364,176 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
         }
     } catch (Error $e) {
         // Catch fatal errors (PHP 7+)
+        if ($is_ajax) {
+            sendJsonResponse(false, "A system error occurred. Please try again later.");
+        } else {
+            $error = "A system error occurred. Please try again later.";
+        }
+    }
+}
+
+// Handle reverse trading (Astrons → Fluxon)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['trade_astrons'])) {
+    try {
+        $item_id = intval($_POST['item_id'] ?? 0);
+        $item_astrons_cost = intval($_POST['item_astrons_cost'] ?? 0);
+        $item_fluxon_reward = intval($_POST['item_fluxon_reward'] ?? 0);
+        
+        if ($item_id > 0 && $item_astrons_cost > 0 && $item_fluxon_reward > 0) {
+            // Verify the item exists and prices match
+            if (!$verify_item_stmt = $conn->prepare("SELECT id, astrons_cost, fluxon_reward, is_active FROM shop_pricing WHERE id = ? AND is_active = 1")) {
+                throw new Exception("Database error: " . $conn->error);
+            }
+            $verify_item_stmt->bind_param("i", $item_id);
+            if (!$verify_item_stmt->execute()) {
+                throw new Exception("Database error: " . $verify_item_stmt->error);
+            }
+            $verify_item_result = $verify_item_stmt->get_result();
+            
+            if ($verify_item_result->num_rows === 0) {
+                $verify_item_stmt->close();
+                if ($is_ajax) {
+                    sendJsonResponse(false, "Invalid offer or offer is no longer available.");
+                }
+                $error = "Invalid offer or offer is no longer available.";
+            } else {
+                $item_data = $verify_item_result->fetch_assoc();
+                $db_astrons_cost = intval($item_data['astrons_cost'] ?? 0);
+                $db_fluxon_reward = intval($item_data['fluxon_reward'] ?? 0);
+                $verify_item_stmt->close();
+                
+                // Verify prices match
+                if ($item_astrons_cost !== $db_astrons_cost || $item_fluxon_reward !== $db_fluxon_reward) {
+                    if ($is_ajax) {
+                        sendJsonResponse(false, "Price mismatch detected. Please refresh the page and try again.");
+                    }
+                    $error = "Price mismatch detected. Please refresh the page and try again.";
+                } else {
+                    // Use verified values
+                    $item_astrons_cost = $db_astrons_cost;
+                    $item_fluxon_reward = $db_fluxon_reward;
+                    
+                    // Check Astrons balance
+                    if (!$astrons_check_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?")) {
+                        throw new Exception("Database error: " . $conn->error);
+                    }
+                    $astrons_check_stmt->bind_param("i", $user_id);
+                    if (!$astrons_check_stmt->execute()) {
+                        throw new Exception("Database error: " . $astrons_check_stmt->error);
+                    }
+                    $astrons_check_result = $astrons_check_stmt->get_result();
+                    $astrons_check_data = $astrons_check_result->fetch_assoc();
+                    $current_astrons = intval($astrons_check_data['credits'] ?? 0);
+                    $astrons_check_stmt->close();
+                    
+                    if ($current_astrons >= $item_astrons_cost) {
+                        $conn->begin_transaction();
+                        
+                        try {
+                            // Step 1: Deduct Astrons
+                            $deduct_astrons_stmt = $conn->prepare("UPDATE user_profile SET credits = credits - ? WHERE user_id = ?");
+                            $deduct_astrons_stmt->bind_param("ii", $item_astrons_cost, $user_id);
+                            if (!$deduct_astrons_stmt->execute()) {
+                                throw new Exception("Failed to deduct Astrons: " . $deduct_astrons_stmt->error);
+                            }
+                            $deduct_astrons_stmt->close();
+                            
+                            // Step 2: Add Fluxon by inserting positive score entry
+                            $check_created = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'created_at'");
+                            $check_played = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'played_at'");
+                            $has_created_at = ($check_created && $check_created->num_rows > 0);
+                            $has_played_at = ($check_played && $check_played->num_rows > 0);
+                            if ($check_created) $check_created->close();
+                            if ($check_played) $check_played->close();
+                            
+                            if ($has_created_at && $has_played_at) {
+                                $add_fluxon_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at, played_at) VALUES (?, 'shop-trade', ?, 0, 'credits', NOW(), NOW())");
+                            } else if ($has_played_at) {
+                                $add_fluxon_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, played_at) VALUES (?, 'shop-trade', ?, 0, 'credits', NOW())");
+                            } else if ($has_created_at) {
+                                $add_fluxon_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at) VALUES (?, 'shop-trade', ?, 0, 'credits', NOW())");
+                            } else {
+                                $add_fluxon_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode) VALUES (?, 'shop-trade', ?, 0, 'credits')");
+                            }
+                            
+                            $add_fluxon_stmt->bind_param("ii", $user_id, $item_fluxon_reward);
+                            if (!$add_fluxon_stmt->execute()) {
+                                throw new Exception("Failed to add Fluxon: " . $add_fluxon_stmt->error);
+                            }
+                            $add_fluxon_stmt->close();
+                            
+                            // Step 3: Update total_score in users table
+                            $update_total_stmt = $conn->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
+                            $update_total_stmt->bind_param("ii", $item_fluxon_reward, $user_id);
+                            if (!$update_total_stmt->execute()) {
+                                throw new Exception("Failed to update total score: " . $update_total_stmt->error);
+                            }
+                            $update_total_stmt->close();
+                            
+                            // Step 4: Get updated values
+                            $final_fluxon_stmt = $conn->prepare("SELECT total_score FROM users WHERE id = ?");
+                            $final_fluxon_stmt->bind_param("i", $user_id);
+                            $final_fluxon_stmt->execute();
+                            $final_fluxon_result = $final_fluxon_stmt->get_result();
+                            $final_fluxon_data = $final_fluxon_result->fetch_assoc();
+                            $new_fluxon = intval($final_fluxon_data['total_score'] ?? 0);
+                            if ($new_fluxon < 0) $new_fluxon = 0;
+                            $final_fluxon_stmt->close();
+                            
+                            $final_astrons_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
+                            $final_astrons_stmt->bind_param("i", $user_id);
+                            $final_astrons_stmt->execute();
+                            $final_astrons_result = $final_astrons_stmt->get_result();
+                            $final_astrons_data = $final_astrons_result->fetch_assoc();
+                            $new_astrons = intval($final_astrons_data['credits'] ?? 0);
+                            $final_astrons_stmt->close();
+                            
+                            $conn->commit();
+                            
+                            $total_fluxon = $new_fluxon;
+                            $user_astrons = $new_astrons;
+                            $purchase_success = true;
+                            $message = "Trade successful! Received {$item_fluxon_reward} Fluxon.";
+                            
+                            if ($is_ajax) {
+                                sendJsonResponse(true, $message, [
+                                    'new_fluxon' => $new_fluxon,
+                                    'new_astrons' => $new_astrons,
+                                    'fluxon_added' => $item_fluxon_reward,
+                                    'astrons_deducted' => $item_astrons_cost,
+                                    'previous_fluxon' => $total_fluxon,
+                                    'previous_astrons' => $current_astrons
+                                ]);
+                            }
+                            
+                        } catch (Exception $e) {
+                            $conn->rollback();
+                            $error = "Transaction failed: " . $e->getMessage();
+                            if ($is_ajax) {
+                                sendJsonResponse(false, $error);
+                            }
+                        }
+                    } else {
+                        $error = "Insufficient Astrons! You need {$item_astrons_cost} Astrons for this trade.";
+                        if ($is_ajax) {
+                            sendJsonResponse(false, $error);
+                        }
+                    }
+                }
+            }
+        } else {
+            $error = "Invalid trade data.";
+            if ($is_ajax) {
+                sendJsonResponse(false, $error);
+            }
+        }
+    } catch (Exception $e) {
+        if ($is_ajax) {
+            sendJsonResponse(false, "An error occurred: " . $e->getMessage());
+        } else {
+            $error = "An error occurred: " . $e->getMessage();
+        }
+    } catch (Error $e) {
         if ($is_ajax) {
             sendJsonResponse(false, "A system error occurred. Please try again later.");
         } else {
@@ -757,8 +939,8 @@ $conn->close();
     
     <div class="shop-page">
         <div class="shop-header">
-            <h1>🛒 FLUXON SHOP</h1>
-            <p>Convert your game scores into Astrons</p>
+            <h1>🛒 TRADING HUB</h1>
+            <p>Trade Fluxon ↔ Astrons at admin-set rates</p>
         </div>
         
         <div class="balance-section">
@@ -780,6 +962,7 @@ $conn->close();
             <div class="error">✗ <?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         
+        <h2 style="text-align: center; color: var(--primary-cyan); margin: 40px 0 20px; font-family: 'Orbitron', sans-serif;">Forward Trading: Fluxon → Astrons</h2>
         <div class="shop-grid">
             <?php 
             $colors = ['#00ffff', '#9d4edd', '#FFD700'];
@@ -826,6 +1009,56 @@ $conn->close();
                 </form>
             </div>
             <?php endforeach; ?>
+        </div>
+        
+        <h2 style="text-align: center; color: var(--primary-purple); margin: 60px 0 20px; font-family: 'Orbitron', sans-serif;">Reverse Trading: Astrons → Fluxon</h2>
+        <div class="shop-grid">
+            <?php 
+            foreach ($shop_prices as $index => $price): 
+                $astrons_cost = intval($price['astrons_cost'] ?? 0);
+                $fluxon_reward = intval($price['fluxon_reward'] ?? 0);
+                $type = htmlspecialchars($price['claim_type']);
+                $color = $colors[$index] ?? '#00ffff';
+                $icon = $icons[$index] ?? '⚡';
+                $badge = $badges[$index] ?? 'TRADE';
+                
+                if ($astrons_cost > 0 && $fluxon_reward > 0) {
+                    $reverse_ratio = round($fluxon_reward / $astrons_cost, 0);
+                    $can_afford_reverse = $user_astrons >= $astrons_cost;
+            ?>
+            <div class="shop-item" style="border-color: <?php echo $color; ?>;">
+                <div class="item-badge" style="background: linear-gradient(135deg, <?php echo $color; ?>, <?php echo $index == 2 ? '#FFA500' : $color; ?>);">
+                    <?php echo $badge; ?>
+                </div>
+                <div class="item-icon" style="color: <?php echo $color; ?>;"><?php echo $icon; ?></div>
+                <div class="item-name" style="color: <?php echo $color; ?>;"><?php echo $type; ?></div>
+                
+                <div class="item-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Cost:</span>
+                        <span class="detail-value"><?php echo number_format($astrons_cost); ?> Astrons</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Reward:</span>
+                        <span class="detail-value"><?php echo number_format($fluxon_reward); ?> Fluxon</span>
+                    </div>
+                    <div class="conversion-rate">
+                        <?php echo number_format($reverse_ratio); ?> Fluxon per Astron
+                    </div>
+                </div>
+                
+                <form method="POST" id="trade-form-<?php echo $price['id']; ?>" onsubmit="return handleTrade(event, <?php echo $price['id']; ?>, <?php echo $astrons_cost; ?>, <?php echo $fluxon_reward; ?>);">
+                    <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
+                    <input type="hidden" name="item_astrons_cost" value="<?php echo $astrons_cost; ?>">
+                    <input type="hidden" name="item_fluxon_reward" value="<?php echo $fluxon_reward; ?>">
+                    <button type="submit" name="trade_astrons" id="trade-btn-<?php echo $price['id']; ?>" class="purchase-btn" style="background: linear-gradient(135deg, var(--primary-purple), #ff006e);" <?php echo !$can_afford_reverse ? 'disabled' : ''; ?>>
+                        <?php echo $can_afford_reverse ? "Get {$fluxon_reward} Fluxon" : "Insufficient Astrons"; ?>
+                    </button>
+                </form>
+            </div>
+            <?php 
+                }
+            endforeach; ?>
         </div>
     </div>
     
@@ -1101,6 +1334,151 @@ $conn->close();
             }
             
             return false; // Prevent form submission
+        }
+
+        // Handle reverse trade (Astrons → Fluxon) with AJAX
+        async function handleTrade(event, itemId, astronsCost, fluxonReward) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            if (processingState.has('trade-' + itemId)) {
+                console.log('Trade already in progress for item:', itemId);
+                return false;
+            }
+            
+            const form = document.getElementById('trade-form-' + itemId);
+            const button = document.getElementById('trade-btn-' + itemId);
+            const fluxonElement = document.getElementById('fluxonBalance');
+            const astronsElement = document.getElementById('astronsBalance');
+            const fluxonCard = document.getElementById('fluxonCard');
+            const astronsCard = document.getElementById('astronsCard');
+            
+            if (!form || !button || !fluxonElement || !astronsElement || !fluxonCard || !astronsCard) {
+                console.error('Missing DOM elements for trade handler.');
+                return false;
+            }
+            
+            if (button.disabled && (button.textContent === 'Processing...' || button.textContent.includes('Processing'))) {
+                return false;
+            }
+            
+            const currentFluxon = parseInt(fluxonElement.getAttribute('data-value')) || parseInt(fluxonElement.textContent.replace(/,/g, '')) || 0;
+            const currentAstrons = parseInt(astronsElement.getAttribute('data-value')) || parseInt(astronsElement.textContent.replace(/,/g, '')) || 0;
+            
+            if (currentAstrons < astronsCost) {
+                alert('Insufficient Astrons!');
+                return false;
+            }
+            
+            if (!confirm(`Trade ${astronsCost} Astrons for ${fluxonReward.toLocaleString()} Fluxon?`)) {
+                return false;
+            }
+            
+            processingState.add('trade-' + itemId);
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            
+            const formData = new FormData(form);
+            formData.append('ajax', '1');
+            
+            try {
+                const response = await fetch('shop.php', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                
+                const contentType = response.headers.get('Content-Type') || '';
+                let data;
+                
+                if (!contentType.includes('application/json')) {
+                    const responseText = await response.text();
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (e) {
+                        throw new Error('Server error: Unable to process your request. Please try again later.');
+                    }
+                } else {
+                    data = await response.json();
+                }
+                
+                if (data.success) {
+                    const actualNewFluxon = parseInt(data.new_fluxon) || 0;
+                    const actualNewAstrons = parseInt(data.new_astrons) || 0;
+                    
+                    fluxonCard.classList.add('animating');
+                    astronsCard.classList.add('animating');
+                    
+                    animateValue(fluxonElement, currentFluxon, actualNewFluxon, 1200, function() {
+                        fluxonElement.setAttribute('data-value', actualNewFluxon);
+                        fluxonElement.textContent = actualNewFluxon.toLocaleString();
+                        fluxonCard.classList.remove('animating');
+                        
+                        animateValue(astronsElement, currentAstrons, actualNewAstrons, 1200, function() {
+                            astronsElement.setAttribute('data-value', actualNewAstrons);
+                            astronsElement.textContent = actualNewAstrons.toLocaleString();
+                            astronsCard.classList.remove('animating');
+                            
+                            const alertDiv = document.createElement('div');
+                            alertDiv.className = 'message';
+                            alertDiv.innerHTML = '✓ ' + data.message;
+                            const header = document.querySelector('.shop-header');
+                            const container = document.querySelector('.shop-page');
+                            if (header && container) {
+                                container.insertBefore(alertDiv, header.nextSibling);
+                                setTimeout(function() {
+                                    alertDiv.style.opacity = '0';
+                                    alertDiv.style.transition = 'opacity 0.5s';
+                                    setTimeout(() => alertDiv.remove(), 500);
+                                }, 3000);
+                            }
+                            
+                            updatePurchaseButtons(actualNewFluxon);
+                            processingState.delete('trade-' + itemId);
+                            button.disabled = false;
+                            button.textContent = `Get ${fluxonReward} Fluxon`;
+                        });
+                    });
+                } else {
+                    alert('Error: ' + (data.message || 'Trade failed'));
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'error';
+                    alertDiv.style.cssText = 'max-width: 600px; margin: 20px auto; padding: 15px; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff0000; color: #ff0000; border-radius: 10px; text-align: center;';
+                    alertDiv.innerHTML = '✗ ' + (data.message || 'Trade failed');
+                    const header = document.querySelector('.shop-header');
+                    const container = document.querySelector('.shop-page');
+                    if (header && container) {
+                        container.insertBefore(alertDiv, header.nextSibling);
+                        setTimeout(function() {
+                            alertDiv.style.opacity = '0';
+                            alertDiv.style.transition = 'opacity 0.5s';
+                            setTimeout(() => alertDiv.remove(), 500);
+                        }, 5000);
+                    }
+                    
+                    processingState.delete('trade-' + itemId);
+                    button.disabled = false;
+                    button.textContent = `Get ${fluxonReward} Fluxon`;
+                }
+            } catch (error) {
+                console.error('Error during trade:', error);
+                alert('Error: ' + (error.message || 'An unexpected error occurred. Please try again.'));
+                
+                processingState.delete('trade-' + itemId);
+                button.disabled = false;
+                button.textContent = `Get ${fluxonReward} Fluxon`;
+            }
+            
+            return false;
         }
     </script>
 </body>
