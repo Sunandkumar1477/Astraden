@@ -19,10 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_credits'])) {
         if ($user_data) {
             if ($action_type === 'add') {
                 $conn->query("UPDATE user_profile SET credits = credits + $new_credits WHERE user_id = $user_id");
-                $desc = "Added $new_credits credits to {$user_data['username']}";
+                $desc = "Added $new_credits Astrons to {$user_data['username']}";
             } else {
                 $conn->query("UPDATE user_profile SET credits = $new_credits WHERE user_id = $user_id");
-                $desc = "Set credits for {$user_data['username']} to $new_credits";
+                $desc = "Set Astrons for {$user_data['username']} to $new_credits";
             }
             
             if ($conn->affected_rows === 0 && $action_type === 'set') {
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_credits'])) {
             }
 
             $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address, target_user_id) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'update_credits', '$desc', '{$_SERVER['REMOTE_ADDR']}', $user_id)");
-            $message = "Credits updated for {$user_data['username']}";
+            $message = "Astrons updated for {$user_data['username']}";
         }
     }
 }
@@ -157,7 +157,7 @@ $conn->close();
             <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key ic-reset"></i> <span>Reset Requests</span></a>
             <div class="menu-category">Financials</div>
             <a href="admin_transaction_codes.php" class="menu-item"><i class="fas fa-qrcode ic-verify"></i> <span>Verify Payments</span></a>
-            <a href="admin_user_credits.php" class="menu-item active"><i class="fas fa-coins ic-credits"></i> <span>Manual Credits</span></a>
+            <a href="admin_user_credits.php" class="menu-item active"><i class="fas fa-coins ic-credits"></i> <span>Manual Astrons</span></a>
             <a href="admin_credit_pricing.php" class="menu-item"><i class="fas fa-tags ic-pricing"></i> <span>Pricing Plans</span></a>
             <a href="admin_credit_timing.php" class="menu-item"><i class="fas fa-clock ic-timing"></i> <span>Purchase Timing</span></a>
             <a href="admin_credit_sale_limit.php" class="menu-item"><i class="fas fa-gauge-high ic-limits"></i> <span>Sale Limits</span></a>
@@ -172,12 +172,12 @@ $conn->close();
     </nav>
 
     <main class="main-content">
-        <h2 class="section-title"><i class="fas fa-wallet ic-credits" style="margin-right:15px;"></i> MANUAL CREDITS</h2>
+        <h2 class="section-title"><i class="fas fa-wallet ic-credits" style="margin-right:15px;"></i> MANUAL ASTRONS</h2>
 
         <?php if($message): ?><div class="msg"><?php echo $message; ?></div><?php endif; ?>
 
         <div class="stats-row">
-            <div class="stat-box"><span>Total Credits Circulating</span><h3><?php echo number_format($stats['total']); ?></h3></div>
+            <div class="stat-box"><span>Total Astrons Circulating</span><h3><?php echo number_format($stats['total']); ?></h3></div>
             <div class="stat-box"><span>Active Balance Holders</span><h3><?php echo number_format($stats['users']); ?></h3></div>
         </div>
 

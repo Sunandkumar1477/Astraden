@@ -280,7 +280,7 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
             <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key ic-reset"></i> <span>Reset Requests</span></a>
             <div class="menu-category">Financials</div>
             <a href="admin_transaction_codes.php" class="menu-item"><i class="fas fa-qrcode ic-verify"></i> <span>Verify Payments</span></a>
-            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Credits</span></a>
+            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Astrons</span></a>
             <a href="admin_credit_pricing.php" class="menu-item"><i class="fas fa-tags ic-pricing"></i> <span>Pricing Plans</span></a>
             <a href="admin_credit_timing.php" class="menu-item"><i class="fas fa-clock ic-timing"></i> <span>Purchase Timing</span></a>
             <a href="admin_credit_sale_limit.php" class="menu-item"><i class="fas fa-gauge-high ic-limits"></i> <span>Sale Limits</span></a>
@@ -321,7 +321,7 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
                     <input type="hidden" name="game_mode" id="game_mode_input" value="credits">
                     <div class="mode-option active">
                         <i class="fas fa-coins"></i>
-                        <span>CREDIT REWARDS</span>
+                        <span>ASTRON REWARDS</span>
                     </div>
                 </div>
 
@@ -388,7 +388,7 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
                         <td style="font-family:'Orbitron';color:var(--color-credits);"><?php echo number_format($s['score']); ?></td>
                         <td>
                             <span style="font-size:0.7rem;padding:3px 8px;border-radius:4px;background:rgba(0,255,255,0.1);color:var(--primary-cyan);font-weight:bold;text-transform:uppercase;">
-                                ⚡ Credits
+                                ⚡ Astrons
                             </span>
                         </td>
                         <td style="font-size:0.8rem;color:rgba(255,255,255,0.4);"><?php echo date('M d, H:i', strtotime($s['updated_at'])); ?></td>
@@ -409,10 +409,10 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
             const activeItem = sidebar.querySelector('.menu-item.active');
             if (activeItem) activeItem.scrollIntoView({ block: 'center' });
 
-            // Set labels to credits only
-            document.getElementById('prize1_label').textContent = '1ST RANK REWARD (CREDITS)';
-            document.getElementById('prize2_label').textContent = '2ND RANK REWARD (CREDITS)';
-            document.getElementById('prize3_label').textContent = '3RD RANK REWARD (CREDITS)';
+            // Set labels to Astrons only
+            document.getElementById('prize1_label').textContent = '1ST RANK REWARD (ASTRONS)';
+            document.getElementById('prize2_label').textContent = '2ND RANK REWARD (ASTRONS)';
+            document.getElementById('prize3_label').textContent = '3RD RANK REWARD (ASTRONS)';
         });
     </script>
 </body>

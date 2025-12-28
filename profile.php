@@ -369,7 +369,7 @@ $indian_states = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chha
                 </p>
 
                 <div class="credits-box">
-                    <p style="font-size:0.7rem; text-transform:uppercase; color:var(--gold);">Stellar Credits</p>
+                    <p style="font-size:0.7rem; text-transform:uppercase; color:var(--gold);">Stellar Astrons</p>
                     <div class="credits-value"><?php echo number_format($profile['credits'] ?? 0); ?></div>
                 </div>
 

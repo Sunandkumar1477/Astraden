@@ -417,7 +417,7 @@ $conn->close();
             </div>
             
             <div class="credits-display">
-                <div class="credits-label">Available Credits</div>
+                <div class="credits-label">Available Astrons</div>
                 <div class="credits-value">
                     <?php echo number_format($profile['credits'] ?? 0); ?>
                 </div>
@@ -536,7 +536,7 @@ $conn->close();
         <div class="delete-modal">
             <h2 style="font-family:'Orbitron'; color:var(--danger); margin-bottom:15px; text-align:center;">⚠️ TERMINATE ACCOUNT</h2>
             <p style="color:var(--danger); font-weight:bold; margin-bottom:15px; font-size:0.9rem;">THIS ACTION IS IRREVERSIBLE!</p>
-            <p style="font-size:0.85rem; margin-bottom:15px;">You will lose all credits, scores, and profile data.</p>
+            <p style="font-size:0.85rem; margin-bottom:15px;">You will lose all Astrons, scores, and profile data.</p>
             
             <form method="POST" action="delete_account.php" onsubmit="return confirmFinalDelete(event)">
                 <div class="form-group">

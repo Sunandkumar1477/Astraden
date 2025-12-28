@@ -147,7 +147,7 @@ $conn->close();
             <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key ic-reset"></i> <span>Reset Requests</span></a>
             <div class="menu-category">Financials</div>
             <a href="admin_transaction_codes.php" class="menu-item"><i class="fas fa-qrcode ic-verify"></i> <span>Verify Payments</span></a>
-            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Credits</span></a>
+            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Astrons</span></a>
             <a href="admin_credit_pricing.php" class="menu-item active"><i class="fas fa-tags ic-pricing"></i> <span>Pricing Plans</span></a>
             <a href="admin_credit_timing.php" class="menu-item"><i class="fas fa-clock ic-timing"></i> <span>Purchase Timing</span></a>
             <a href="admin_credit_sale_limit.php" class="menu-item"><i class="fas fa-gauge-high ic-limits"></i> <span>Sale Limits</span></a>
@@ -185,7 +185,7 @@ $conn->close();
 
         <div class="table-card">
             <table>
-                <thead><tr><th>Credit Amount</th><th>Market Price</th><th>Order</th><th>Action</th></tr></thead>
+                <thead><tr><th>Astron Amount</th><th>Market Price</th><th>Order</th><th>Action</th></tr></thead>
                 <tbody>
                     <?php foreach($packages as $p): ?>
                     <tr>

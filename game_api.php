@@ -277,7 +277,7 @@ switch ($action) {
         if ($current_credits < $credits_required) {
             echo json_encode([
                 'success' => false,
-                'message' => "Insufficient credits. You need {$credits_required} credits to play.",
+                'message' => "Insufficient Astrons. You need {$credits_required} Astrons to play.",
                 'credits' => $current_credits,
                 'required' => $credits_required
             ]);
@@ -293,12 +293,12 @@ switch ($action) {
         if ($update_stmt->execute()) {
             echo json_encode([
                 'success' => true,
-                'message' => 'Credits deducted successfully',
+                'message' => 'Astrons deducted successfully',
                 'credits_remaining' => $current_credits - $credits_required,
                 'session_id' => $session_id
             ]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to deduct credits']);
+            echo json_encode(['success' => false, 'message' => 'Failed to deduct Astrons']);
         }
         $update_stmt->close();
         $credits_stmt->close();
@@ -518,7 +518,7 @@ switch ($action) {
         elseif ($rank == 3) $prize_credits = $claim_res['contest_third_prize'];
 
         if ($prize_credits <= 0) {
-            echo json_encode(['success' => false, 'message' => 'No prize credits assigned for your rank.']);
+            echo json_encode(['success' => false, 'message' => 'No prize Astrons assigned for your rank.']);
             exit;
         }
 
@@ -536,7 +536,7 @@ switch ($action) {
             $log_claim->execute();
 
             $conn->commit();
-            echo json_encode(['success' => true, 'message' => "Congratulations! You claimed $prize_credits credits for Rank $rank!", 'credits_added' => $prize_credits]);
+            echo json_encode(['success' => true, 'message' => "Congratulations! You claimed $prize_credits Astrons for Rank $rank!", 'credits_added' => $prize_credits]);
         } catch (Exception $e) {
             $conn->rollback();
             echo json_encode(['success' => false, 'message' => 'An error occurred while claiming.']);

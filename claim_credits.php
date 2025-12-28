@@ -103,7 +103,7 @@ try {
         
         echo json_encode([
             'success' => true,
-            'message' => 'Transaction code submitted successfully! Your credits will be updated after verification.',
+            'message' => 'Transaction code submitted successfully! Your Astrons will be updated after verification.',
             'credits' => (int)$credits
         ]);
     } else {

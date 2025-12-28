@@ -234,11 +234,11 @@ session_start();
             <p>Astraden is a gaming contest platform that provides:</p>
             <ul>
                 <li>Access to various space-themed games and contests</li>
-                <li>Credit-based competitions and leaderboards</li>
-                <li>Credit-based entry system for contests</li>
-                <li>Credit rewards for top performers</li>
+                <li>Astron-based competitions and leaderboards</li>
+                <li>Astron-based entry system for contests</li>
+                <li>Astron rewards for top performers</li>
             </ul>
-            <p><strong>We are solely a contest platform provider.</strong> We facilitate contests and distribute credit rewards. We do not provide any other services, guarantees, warranties, or assume any responsibilities beyond contest facilitation and credit distribution.</p>
+            <p><strong>We are solely a contest platform provider.</strong> We facilitate contests and distribute Astron rewards. We do not provide any other services, guarantees, warranties, or assume any responsibilities beyond contest facilitation and Astron distribution.</p>
             
             <h2>3. USER RESPONSIBILITIES AND DEVICE USAGE</h2>
             <h3>3.1 Mobile Device Usage</h3>
@@ -287,32 +287,32 @@ session_start();
                 <p>We reserve the right to modify, suspend, or discontinue any feature at any time without notice or liability.</p>
             </div>
             
-            <h2>5. CONTESTS AND CREDIT REWARDS</h2>
+            <h2>5. CONTESTS AND ASTRON REWARDS</h2>
             <h3>5.1 Contest Participation</h3>
             <p>By participating in contests on Astraden:</p>
             <ul>
-                <li>You acknowledge that contests involve credit entry fees</li>
-                <li>You understand that credit rewards are awarded based on contest rules and leaderboard rankings</li>
+                <li>You acknowledge that contests involve Astron entry fees</li>
+                <li>You understand that Astron rewards are awarded based on contest rules and leaderboard rankings</li>
                 <li>You agree that contest results are final and binding</li>
                 <li>You accept that we reserve the right to disqualify any participant for violations of terms</li>
             </ul>
             
-            <h3>5.2 Credit Rewards</h3>
+            <h3>5.2 Astron Rewards</h3>
             <div class="disclaimer-box">
-                <strong>CREDIT REWARD DISCLAIMER</strong>
-                <p>Astraden provides credit rewards for top performers in contests. However:</p>
+                <strong>ASTRON REWARD DISCLAIMER</strong>
+                <p>Astraden provides Astron rewards for top performers in contests. However:</p>
                 <ul>
-                    <li>Credit rewards are added to your account balance and cannot be converted to cash</li>
-                    <li>Credit rewards are subject to verification and may take time to process</li>
-                    <li>We are NOT responsible for any delays in credit distribution</li>
-                    <li>Credit rewards are non-transferable and cannot be exchanged for real money</li>
+                    <li>Astron rewards are added to your account balance and cannot be converted to cash</li>
+                    <li>Astron rewards are subject to verification and may take time to process</li>
+                    <li>We are NOT responsible for any delays in Astron distribution</li>
+                    <li>Astron rewards are non-transferable and cannot be exchanged for real money</li>
                     <li>Users are responsible for maintaining accurate account information</li>
                 </ul>
-                <p><strong>Credit rewards are provided in good faith, but we are not liable for any issues beyond our direct control in the credit distribution process.</strong></p>
+                <p><strong>Astron rewards are provided in good faith, but we are not liable for any issues beyond our direct control in the Astron distribution process.</strong></p>
             </div>
             
-            <h3>5.3 Credit System</h3>
-            <p>Credits on the Platform:</p>
+            <h3>5.3 Astron System</h3>
+            <p>Astrons on the Platform:</p>
             <ul>
                 <li>Are non-refundable except as required by law</li>
                 <li>Cannot be exchanged for cash or real money</li>
@@ -331,7 +331,7 @@ session_start();
                     <li>Personal injury or property damage</li>
                     <li>Emotional distress or mental anguish</li>
                     <li>Any damages resulting from use or inability to use the Platform</li>
-                    <li>Any damages resulting from contests or credit distribution</li>
+                    <li>Any damages resulting from contests or Astron distribution</li>
                     <li>Any damages resulting from mobile device usage</li>
                     <li>Any damages resulting from third-party services or products</li>
                     <li>Any damages resulting from unauthorized access or security breaches</li>
@@ -371,7 +371,7 @@ session_start();
                 <li>Suspend or terminate your account at any time for violations of these terms</li>
                 <li>Refuse service to anyone for any reason</li>
                 <li>Modify or discontinue the Platform without notice</li>
-                <li>Withhold prizes or credits for suspected fraudulent activity</li>
+                <li>Withhold prizes or Astrons for suspected fraudulent activity</li>
             </ul>
             <p>Upon termination, your right to use the Platform immediately ceases, and we may delete your account and data.</p>
             

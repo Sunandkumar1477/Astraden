@@ -25,9 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['provide_credits'])) {
             $conn->query("UPDATE transaction_codes SET status = 'verified' WHERE id = $transaction_id");
             
             $user_name = $conn->query("SELECT username FROM users WHERE id = $user_id")->fetch_assoc()['username'] ?? 'User';
-            $message = "✓ Verified: $credits_to_add Credits added to $user_name";
+            $message = "✓ Verified: $credits_to_add Astrons added to $user_name";
             
-            $desc = "Verified transaction code {$transaction['transaction_code']} for $user_id ($credits_to_add Credits)";
+            $desc = "Verified transaction code {$transaction['transaction_code']} for $user_id ($credits_to_add Astrons)";
             $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'verify_payment', '$desc', '{$_SERVER['REMOTE_ADDR']}')");
         }
     }
@@ -148,7 +148,7 @@ $conn->close();
             <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key ic-reset"></i> <span>Reset Requests</span></a>
             <div class="menu-category">Financials</div>
             <a href="admin_transaction_codes.php" class="menu-item active"><i class="fas fa-qrcode ic-verify"></i> <span>Verify Payments</span></a>
-            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Credits</span></a>
+            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Astrons</span></a>
             <a href="admin_credit_pricing.php" class="menu-item"><i class="fas fa-tags ic-pricing"></i> <span>Pricing Plans</span></a>
             <a href="admin_credit_timing.php" class="menu-item"><i class="fas fa-clock ic-timing"></i> <span>Purchase Timing</span></a>
             <a href="admin_credit_sale_limit.php" class="menu-item"><i class="fas fa-gauge-high ic-limits"></i> <span>Sale Limits</span></a>

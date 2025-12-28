@@ -1291,16 +1291,16 @@ $conn->close();
             <div class="contest-badge">🏆 CREDIT CONTEST 🏆</div>
             <div class="prize-pool">
                 <div style="color: #FFD700; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Mission Rewards</div>
-                <div class="prize-item"><span>🥇 1st Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['1st']); ?> Credits</span></div>
-                <div class="prize-item"><span>🥈 2nd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['2nd']); ?> Credits</span></div>
-                <div class="prize-item"><span>🥉 3rd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['3rd']); ?> Credits</span></div>
+                <div class="prize-item"><span>🥇 1st Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['1st']); ?> Astrons</span></div>
+                <div class="prize-item"><span>🥈 2nd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['2nd']); ?> Astrons</span></div>
+                <div class="prize-item"><span>🥉 3rd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['3rd']); ?> Astrons</span></div>
             </div>
         <?php endif; ?>
 
         <div id="timer-display" class="timer-display">Loading...</div>
         <div id="status-message" class="status-message"></div>
         <div class="credits-info">
-            Your Credits: <span id="user-credits-display" style="color: <?php echo htmlspecialchars($credits_color); ?>; font-weight: bold;"><?php echo number_format($user_credits); ?></span>
+            Your Astrons: <span id="user-credits-display" style="color: <?php echo htmlspecialchars($credits_color); ?>; font-weight: bold;"><?php echo number_format($user_credits); ?></span>
         </div>
 
         <div class="game-btn-container">
@@ -1312,9 +1312,9 @@ $conn->close();
 
         <?php if ($is_claim_active && $is_logged_in): ?>
             <div class="claim-section">
-                <div style="color: #00ff00; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">🎁 Claim Your Credits</div>
-                <p style="font-size: 0.85rem; margin-bottom: 15px; color: #ccc;">If you ranked in the top 3, claim your credits now!</p>
-                <button id="claim-prize-btn" class="claim-btn">Claim Credits</button>
+                <div style="color: #00ff00; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">🎁 Claim Your Astrons</div>
+                <p style="font-size: 0.85rem; margin-bottom: 15px; color: #ccc;">If you ranked in the top 3, claim your Astrons now!</p>
+                <button id="claim-prize-btn" class="claim-btn">Claim Astrons</button>
                 <div id="claim-message" style="font-size: 0.85rem; margin-top: 10px; display: none;"></div>
             </div>
         <?php endif; ?>
@@ -1752,13 +1752,13 @@ $conn->close();
             const creditsRequired = gameSession.credits_required || 30;
             
             if (state.isContestMode) {
-                statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win credits!`;
+                statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} Astrons and reach the top 3 to win Astrons!`;
                 startBtn.style.display = 'flex';
                 startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
                 startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
                 startBtn.style.color = '#000';
             } else {
-                statusMessage.textContent = `Choose your mode: Demo (always free) or Real Game (${creditsRequired} credits)`;
+                statusMessage.textContent = `Choose your mode: Demo (always free) or Real Game (${creditsRequired} Astrons)`;
                 startBtn.style.display = 'flex';
                 startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
                 startBtn.style.background = ''; // Reset to CSS default
@@ -1780,14 +1780,14 @@ $conn->close();
                 // User not logged in - hide start button, show demo only
                 startBtn.style.display = 'none';
                 if (state.isContestMode) {
-                    statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} credits required).`;
-                } else {
-                    statusMessage.textContent = `Demo mode is free and always available! Login to play for real (${creditsRequired} credits required).`;
+                    statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} Astrons required).`;
+                    } else {
+                    statusMessage.textContent = `Demo mode is free and always available! Login to play for real (${creditsRequired} Astrons required).`;
                 }
             } else if (userCredits < creditsRequired) {
                 startBtn.disabled = true;
                 startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                statusMessage.textContent = `Demo mode is always available (free, no restrictions)! Or add ${creditsRequired} credits to play for real.`;
+                statusMessage.textContent = `Demo mode is always available (free, no restrictions)! Or add ${creditsRequired} Astrons to play for real.`;
             }
         }
         
@@ -1906,7 +1906,7 @@ $conn->close();
             const sessionEnd = gameSession.end_timestamp;
             
             if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
-                alert('Game session is not currently active. Credits will not be deducted. Please wait for the scheduled time or try demo mode.');
+                alert('Game session is not currently active. Astrons will not be deducted. Please wait for the scheduled time or try demo mode.');
                 return;
             }
             
@@ -1914,14 +1914,14 @@ $conn->close();
             const userCredits = <?php echo $user_credits; ?>;
             
             if (userCredits < creditsRequired) {
-                alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
+                alert(`Insufficient Astrons! You need ${creditsRequired} Astrons to play. Try demo mode instead.`);
                 return;
             }
             
             // Confirm before deducting credits
             const confirmMsg = state.isContestMode 
-                ? `Join the contest? This will deduct ${creditsRequired} credits. Your high score will be recorded for prizes!`
-                : `This will deduct ${creditsRequired} credits from your account. Continue?`;
+                ? `Join the contest? This will deduct ${creditsRequired} Astrons. Your high score will be recorded for prizes!`
+                : `This will deduct ${creditsRequired} Astrons from your account. Continue?`;
 
             if (!confirm(confirmMsg)) {
                 return;

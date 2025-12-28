@@ -87,7 +87,7 @@ session_start();
                     <div class="menu-item" id="mobileCreditsItem" style="display: none;" onclick="toggleMobileCreditsDropdown(event)">
                         <div class="item-icon">⚡</div>
                         <div class="item-info">
-                            <div class="item-label">Credits</div>
+                            <div class="item-label">Astrons</div>
                             <div class="item-value" id="mobileCreditsValue" style="color: #FFD700;">0</div>
                         </div>
                         <span class="dropdown-arrow" style="margin-left: auto; font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); transition: transform 0.3s ease;">▼</span>
@@ -96,7 +96,7 @@ session_start();
                     <div class="mobile-credits-dropdown" id="mobileCreditsDropdown" style="display: none;">
                         <!-- Credits Options -->
                         <div id="mobileCreditsOptionsWrapper">
-                            <button class="mobile-claim-credits-btn" onclick="handleMobileClaimCredits(event)" id="mobileClaimCreditsBtn">Claim Credits</button>
+                            <button class="mobile-claim-credits-btn" onclick="handleMobileClaimCredits(event)" id="mobileClaimCreditsBtn">Claim Astrons</button>
                         </div>
                     </div>
                     <!-- Referral Code Info -->
@@ -147,7 +147,7 @@ session_start();
                             </button>
                         </div>
                         <div class="referral-message">
-                            <p>💰 Share your code with friends and earn <strong>10% credits</strong> when they claim credits for the first time!</p>
+                            <p>💰 Share your code with friends and earn <strong>10% Astrons</strong> when they claim Astrons for the first time!</p>
                             <p style="margin-top: 8px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);">
                                 They can enter your code during registration.
                             </p>
@@ -156,14 +156,14 @@ session_start();
                 </div>
             </div>
         </div>
-        <div class="user-credits" id="userCredits" style="display: none;" onclick="toggleCreditsDropdown(event)" title="Credits">
+        <div class="user-credits" id="userCredits" style="display: none;" onclick="toggleCreditsDropdown(event)" title="Astrons">
             <span class="power-icon">⚡</span>
             <span class="user-credits-value" id="creditsValue">0</span>
             <!-- Credits Dropdown -->
             <div class="credits-dropdown" id="creditsDropdown">
                 <!-- Credits Options (Claim Credits only) -->
                 <div id="creditsOptionsWrapper">
-                    <button class="claim-credits-btn" onclick="checkClaimTimingAndOpen()" id="claimCreditsBtn" style="display: block !important;">Claim Credits</button>
+                    <button class="claim-credits-btn" onclick="checkClaimTimingAndOpen()" id="claimCreditsBtn" style="display: block !important;">Claim Astrons</button>
                 </div>
             </div>
         </div>
@@ -263,7 +263,7 @@ session_start();
                            maxlength="4" pattern="[A-Z0-9]{4}" title="Enter 4 alphanumeric characters"
                            style="text-transform: uppercase;">
                     <small style="color: rgba(0, 255, 255, 0.7); font-size: 0.8rem; display: block; margin-top: 5px;">
-                        💰 Earn 10% credits when your friend claims credits for the first time!
+                        💰 Earn 10% Astrons when your friend claims Astrons for the first time!
                     </small>
                 </div>
                 
@@ -440,7 +440,7 @@ session_start();
     <div class="modal-overlay" id="claimCreditsModal">
         <div class="claim-modal">
             <button class="close-modal claim-close-modal" onclick="closeModal('claimCredits')">&times;</button>
-            <h3>Claim Credits</h3>
+            <h3>Claim Astrons</h3>
             <form id="claimCreditsForm" onsubmit="handleClaimCredits(event)">
                 <div class="error-message" id="claimError"></div>
                 <div class="success-message" id="claimSuccess"></div>
@@ -505,7 +505,7 @@ session_start();
                         <span class="game-type">Defense</span>
                         <span class="credits-badge" id="credits-badge-earth-defender">
                             <span class="power-icon">⚡</span>
-                            <span id="credits-amount-earth-defender">30</span> Credits
+                            <span id="credits-amount-earth-defender">30</span> Astrons
                         </span>
                     </div>
                     <!-- Game Timing Badge -->
@@ -1338,7 +1338,7 @@ session_start();
                         if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: #' + data.user_rank;
                     } else {
                         rankValue.textContent = 'N/A';
-                        userRankDisplay.innerHTML = '<div class="no-rank-message">Play with credits to get ranked!</div>';
+                        userRankDisplay.innerHTML = '<div class="no-rank-message">Play with Astrons to get ranked!</div>';
                         
                         // Update mobile dropdown rank
                         const mobileRankValue = document.getElementById('mobileRankValue');
@@ -2080,7 +2080,7 @@ session_start();
                     </div>
                     <div class="footer-feature-item">
                         <i class="fas fa-coins"></i>
-                        <span>Credits System</span>
+                        <span>Astrons System</span>
                     </div>
                     <div class="footer-feature-item">
                         <i class="fas fa-users"></i>
@@ -2114,7 +2114,7 @@ session_start();
                 <h3>Contact Us</h3>
                 <p>Need help? Have questions? We're here for you 24/7!</p>
                 <p style="margin-top: 10px; font-size: 0.9rem; color: rgba(0, 255, 255, 0.6);">
-                    For support, payment verification, credit issues, or any queries, contact us via WhatsApp.
+                    For support, payment verification, Astron issues, or any queries, contact us via WhatsApp.
                 </p>
                 <div class="footer-whatsapp">
                     <a href="https://wa.me/917842108868" target="_blank" rel="noopener" aria-label="Contact us on WhatsApp">
@@ -2133,9 +2133,9 @@ session_start();
                     • WhatsApp: 30-50 minutes<br>
                     • Refund Policy: 24 hours
                 </p>
-                <p style="margin-top: 15px;"><strong>Game Credits:</strong></p>
+                <p style="margin-top: 15px;"><strong>Game Astrons:</strong></p>
                 <p style="font-size: 0.85rem; margin-top: 5px;">
-                    Claim credits to play games and compete on leaderboards. Credits are non-refundable but can be used for all games.
+                    Claim Astrons to play games and compete on leaderboards. Astrons are non-refundable but can be used for all games.
                 </p>
             </div>
             

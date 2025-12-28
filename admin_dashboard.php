@@ -168,7 +168,7 @@ $recent_logs = $conn->query("SELECT id, user_id, username, action, status, ip_ad
             <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key ic-reset"></i> <span>Reset Requests</span></a>
             <div class="menu-category">Financials</div>
             <a href="admin_transaction_codes.php" class="menu-item"><i class="fas fa-qrcode ic-verify"></i> <span>Verify Payments</span></a>
-            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Credits</span></a>
+            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Astrons</span></a>
             <a href="admin_credit_pricing.php" class="menu-item"><i class="fas fa-tags ic-pricing"></i> <span>Pricing Plans</span></a>
             <a href="admin_credit_timing.php" class="menu-item"><i class="fas fa-clock ic-timing"></i> <span>Purchase Timing</span></a>
             <a href="admin_credit_sale_limit.php" class="menu-item"><i class="fas fa-gauge-high ic-limits"></i> <span>Sale Limits</span></a>
@@ -212,7 +212,7 @@ $recent_logs = $conn->query("SELECT id, user_id, username, action, status, ip_ad
             <a href="admin_view_all_users.php" class="access-card"><i class="fas fa-users ic-users"></i><span>DIRECTORY</span></a>
             <a href="admin_password_reset_requests.php" class="access-card"><i class="fas fa-key ic-reset"></i><span>RESETS</span></a>
             <a href="admin_transaction_codes.php" class="access-card"><i class="fas fa-qrcode ic-verify"></i><span>VERIFY</span></a>
-            <a href="admin_user_credits.php" class="access-card"><i class="fas fa-coins ic-credits"></i><span>CREDITS</span></a>
+            <a href="admin_user_credits.php" class="access-card"><i class="fas fa-coins ic-credits"></i><span>ASTRONS</span></a>
             <a href="admin_contest_management.php" class="access-card"><i class="fas fa-trophy ic-contest"></i><span>CONTESTS</span></a>
             <a href="admin_game_leaderboard.php" class="access-card"><i class="fas fa-ranking-star ic-leaderboard"></i><span>BOARD</span></a>
         </div>
