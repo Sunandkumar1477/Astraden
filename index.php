@@ -800,6 +800,8 @@ session_start();
                         if (earthDefenderData.success) {
                             const normalCost = earthDefenderData.normal_credits_required || earthDefenderData.credits_per_chance || 30;
                             const contestCost = earthDefenderData.contest_credits_required || 30;
+                            const isContestActive = earthDefenderData.is_contest_active || false;
+                            const disableNormalPlay = earthDefenderData.disable_normal_play || false;
                             
                             // Update normal play button cost
                             const normalCostElement = document.getElementById('normal-cost-earth-defender');
@@ -811,6 +813,16 @@ session_start();
                             const contestCostElement = document.getElementById('contest-cost-earth-defender');
                             if (contestCostElement) {
                                 contestCostElement.textContent = `${contestCost} Astrons`;
+                            }
+                            
+                            // Hide normal play button if contest is active and normal play is disabled
+                            const normalPlayBtn = document.getElementById('normal-play-btn-earth-defender');
+                            if (normalPlayBtn) {
+                                if (isContestActive && disableNormalPlay) {
+                                    normalPlayBtn.style.display = 'none';
+                                } else {
+                                    normalPlayBtn.style.display = 'flex';
+                                }
                             }
                         }
                     } catch (e) {

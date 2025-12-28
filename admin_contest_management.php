@@ -14,6 +14,24 @@ try {
         $conn->query("ALTER TABLE games ADD COLUMN contest_credits_required INT(11) DEFAULT 30");
     }
     
+    // Check and add contest_start_datetime column
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_start_datetime'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_start_datetime DATETIME NULL");
+    }
+    
+    // Check and add contest_end_datetime column
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_end_datetime'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_end_datetime DATETIME NULL");
+    }
+    
+    // Check and add disable_normal_play column
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'disable_normal_play'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN disable_normal_play TINYINT(1) DEFAULT 0");
+    }
+    
     // Check and add game_mode column to contest_scores
     $check_col = $conn->query("SHOW COLUMNS FROM contest_scores LIKE 'game_mode'");
     if ($check_col->num_rows == 0) {
@@ -55,6 +73,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prize2 = intval($_POST['prize2']);
         $prize3 = intval($_POST['prize3']);
         $entry_fee = intval($_POST['entry_fee']);
+        
+        // Get contest timing
+        $contest_start_date = !empty($_POST['contest_start_date']) ? $_POST['contest_start_date'] : null;
+        $contest_start_time = !empty($_POST['contest_start_time']) ? $_POST['contest_start_time'] : null;
+        $contest_end_date = !empty($_POST['contest_end_date']) ? $_POST['contest_end_date'] : null;
+        $contest_end_time = !empty($_POST['contest_end_time']) ? $_POST['contest_end_time'] : null;
+        
+        // Combine date and time into datetime
+        $contest_start_datetime = null;
+        $contest_end_datetime = null;
+        
+        if ($contest_start_date && $contest_start_time) {
+            $contest_start_datetime = $contest_start_date . ' ' . $contest_start_time . ':00';
+        }
+        
+        if ($contest_end_date && $contest_end_time) {
+            $contest_end_datetime = $contest_end_date . ' ' . $contest_end_time . ':00';
+        }
+        
+        // Get disable normal play toggle
+        $disable_normal_play = isset($_POST['disable_normal_play']) ? 1 : 0;
+        
+        // Validation: If contest is active, require start and end datetime
+        if ($is_contest_active && (!$contest_start_datetime || !$contest_end_datetime)) {
+            $error = "Contest start and end date/time are required when contest is active!";
+        } else if ($contest_start_datetime && $contest_end_datetime && strtotime($contest_start_datetime) >= strtotime($contest_end_datetime)) {
+            $error = "Contest end time must be after start time!";
+        } else {
 
         // Check if status is changing (using prepared statement)
         $check_stmt = $conn->prepare("SELECT is_contest_active FROM games WHERE game_name = ?");
@@ -63,37 +109,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $current = $check_stmt->get_result()->fetch_assoc();
         $check_stmt->close();
         
-        $stmt = $conn->prepare("UPDATE games SET is_contest_active = ?, is_claim_active = ?, game_mode = ?, contest_first_prize = ?, contest_second_prize = ?, contest_third_prize = ?, contest_credits_required = ? WHERE game_name = ?");
-        $stmt->bind_param("iisiiiis", $is_contest_active, $is_claim_active, $game_mode, $prize1, $prize2, $prize3, $entry_fee, $game_name);
+            $stmt = $conn->prepare("UPDATE games SET is_contest_active = ?, is_claim_active = ?, game_mode = ?, contest_first_prize = ?, contest_second_prize = ?, contest_third_prize = ?, contest_credits_required = ?, contest_start_datetime = ?, contest_end_datetime = ?, disable_normal_play = ? WHERE game_name = ?");
+            $stmt->bind_param("iisiiiisssis", $is_contest_active, $is_claim_active, $game_mode, $prize1, $prize2, $prize3, $entry_fee, $contest_start_datetime, $contest_end_datetime, $disable_normal_play, $game_name);
         
-        if ($stmt->execute()) {
-            if ($is_contest_active && (!$current || !$current['is_contest_active'])) {
-                // Starting new contest
-                $hist = $conn->prepare("INSERT INTO contest_history (game_name, game_mode, prize1, prize2, prize3, entry_fee, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
-                $hist->bind_param("ssiiii", $game_name, $game_mode, $prize1, $prize2, $prize3, $entry_fee);
-                $hist->execute();
-                $hist->close();
-            } else if (!$is_contest_active && $current && $current['is_contest_active']) {
-                // Ending contest
-                $end_stmt = $conn->prepare("UPDATE contest_history SET status = 'completed', ended_at = NOW() WHERE game_name = ? AND status = 'active'");
-                $end_stmt->bind_param("s", $game_name);
-                $end_stmt->execute();
-                $end_stmt->close();
-            }
+            if ($stmt->execute()) {
+                if ($is_contest_active && (!$current || !$current['is_contest_active'])) {
+                    // Starting new contest
+                    $hist = $conn->prepare("INSERT INTO contest_history (game_name, game_mode, prize1, prize2, prize3, entry_fee, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+                    $hist->bind_param("ssiiii", $game_name, $game_mode, $prize1, $prize2, $prize3, $entry_fee);
+                    $hist->execute();
+                    $hist->close();
+                } else if (!$is_contest_active && $current && $current['is_contest_active']) {
+                    // Ending contest
+                    $end_stmt = $conn->prepare("UPDATE contest_history SET status = 'completed', ended_at = NOW() WHERE game_name = ? AND status = 'active'");
+                    $end_stmt->bind_param("s", $game_name);
+                    $end_stmt->execute();
+                    $end_stmt->close();
+                }
 
-            $message = "Mission parameters deployed successfully!";
-            $admin_id = $_SESSION['admin_id'];
-            $admin_user = $_SESSION['admin_username'];
-            $desc = "Updated contest for $game_name. Mode: $game_mode, Entry: $entry_fee";
-            $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-            $log_stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES (?, ?, 'contest_update', ?, ?)");
-            $log_stmt->bind_param("isss", $admin_id, $admin_user, $desc, $ip_address);
-            $log_stmt->execute();
-            $log_stmt->close();
-        } else {
-            $error = "Failed to update mission data: " . $stmt->error;
+                $message = "Mission parameters deployed successfully!";
+                $admin_id = $_SESSION['admin_id'];
+                $admin_user = $_SESSION['admin_username'];
+                $desc = "Updated contest for $game_name. Mode: $game_mode, Entry: $entry_fee";
+                if ($disable_normal_play) {
+                    $desc .= ", Normal play disabled";
+                }
+                $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+                $log_stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES (?, ?, 'contest_update', ?, ?)");
+                $log_stmt->bind_param("isss", $admin_id, $admin_user, $desc, $ip_address);
+                $log_stmt->execute();
+                $log_stmt->close();
+            } else {
+                $error = "Failed to update mission data: " . $stmt->error;
+            }
+            $stmt->close();
         }
-        $stmt->close();
     }
 
     if (isset($_POST['clear_scores'])) {
@@ -128,8 +178,29 @@ if (!$game_settings) {
         'contest_first_prize' => 0,
         'contest_second_prize' => 0,
         'contest_third_prize' => 0,
-        'contest_credits_required' => 30
+        'contest_credits_required' => 30,
+        'contest_start_datetime' => null,
+        'contest_end_datetime' => null,
+        'disable_normal_play' => 0
     ];
+}
+
+// Parse datetime for form fields
+$contest_start_date = '';
+$contest_start_time = '';
+$contest_end_date = '';
+$contest_end_time = '';
+
+if (!empty($game_settings['contest_start_datetime'])) {
+    $start_dt = new DateTime($game_settings['contest_start_datetime']);
+    $contest_start_date = $start_dt->format('Y-m-d');
+    $contest_start_time = $start_dt->format('H:i');
+}
+
+if (!empty($game_settings['contest_end_datetime'])) {
+    $end_dt = new DateTime($game_settings['contest_end_datetime']);
+    $contest_end_date = $end_dt->format('Y-m-d');
+    $contest_end_time = $end_dt->format('H:i');
 }
 
 // Unified Scoring Logic: Sum of scores from game_leaderboard (following Admin Leaderboard logic)
@@ -252,6 +323,8 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
         .prize-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px; }
         .form-group label { display: block; color: var(--primary-purple); font-weight: 700; font-size: 0.8rem; margin-bottom: 8px; }
         .form-group input { width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,255,255,0.3); border-radius: 8px; color: white; font-family:'Orbitron'; font-weight:bold; outline: none; text-align: center; }
+        .form-group input[type="date"], .form-group input[type="time"] { text-align: left; padding-left: 15px; }
+        .form-group input[type="date"], .form-group input[type="time"] { text-align: left; padding-left: 15px; }
 
         .btn-save { background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); border: none; color: white; padding: 15px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 900; width: 100%; cursor: pointer; transition: 0.3s; }
         .btn-clear { background: rgba(255, 0, 110, 0.1); border: 1px solid #ff006e; color: #ff006e; padding: 12px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 700; width: 100%; cursor: pointer; margin-top: 15px; }
@@ -330,6 +403,40 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
                     <div class="form-group"><label id="prize2_label">2ND RANK REWARD</label><input type="number" name="prize2" value="<?php echo $game_settings['contest_second_prize']; ?>"></div>
                     <div class="form-group"><label id="prize3_label">3RD RANK REWARD</label><input type="number" name="prize3" value="<?php echo $game_settings['contest_third_prize']; ?>"></div>
                     <div class="form-group"><label>PARTICIPATION FEE (⚡)</label><input type="number" name="entry_fee" value="<?php echo $game_settings['contest_credits_required'] ?: 30; ?>"></div>
+                </div>
+                
+                <div style="margin: 30px 0; padding: 20px; background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.2); border-radius: 12px;">
+                    <h4 style="font-family:'Orbitron';color:var(--primary-cyan);margin-bottom:20px;font-size:0.9rem;">CONTEST TIMING</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label>START DATE</label>
+                            <input type="date" name="contest_start_date" id="contest_start_date" value="<?php echo htmlspecialchars($contest_start_date); ?>">
+                        </div>
+                        <div class="form-group">
+                            <label>START TIME</label>
+                            <input type="time" name="contest_start_time" id="contest_start_time" value="<?php echo htmlspecialchars($contest_start_time); ?>">
+                        </div>
+                        <div class="form-group">
+                            <label>END DATE</label>
+                            <input type="date" name="contest_end_date" id="contest_end_date" value="<?php echo htmlspecialchars($contest_end_date); ?>">
+                        </div>
+                        <div class="form-group">
+                            <label>END TIME</label>
+                            <input type="time" name="contest_end_time" id="contest_end_time" value="<?php echo htmlspecialchars($contest_end_time); ?>">
+                        </div>
+                    </div>
+                    <small style="color:rgba(255,255,255,0.4);display:block;margin-top:10px;">⚠️ Contest timing is required when contest mode is active</small>
+                </div>
+                
+                <div class="toggle-group">
+                    <label class="switch">
+                        <input type="checkbox" name="disable_normal_play" id="disable_normal_play" <?php echo ($game_settings['disable_normal_play'] ?? 0) ? 'checked' : ''; ?>>
+                        <span class="slider"></span>
+                    </label>
+                    <div>
+                        <strong style="display:block;color:var(--color-limits);">DISABLE NORMAL PLAY</strong>
+                        <small style="color:rgba(255,255,255,0.4);">When enabled, users can only play contest mode during active contest period.</small>
+                    </div>
                 </div>
 
                 <div class="toggle-group">
@@ -413,6 +520,52 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
             document.getElementById('prize1_label').textContent = '1ST RANK REWARD (ASTRONS)';
             document.getElementById('prize2_label').textContent = '2ND RANK REWARD (ASTRONS)';
             document.getElementById('prize3_label').textContent = '3RD RANK REWARD (ASTRONS)';
+            
+            // Toggle contest timing fields based on contest active checkbox
+            const contestCheckbox = document.querySelector('input[name="is_contest_active"]');
+            const startDate = document.getElementById('contest_start_date');
+            const startTime = document.getElementById('contest_start_time');
+            const endDate = document.getElementById('contest_end_date');
+            const endTime = document.getElementById('contest_end_time');
+            
+            function toggleTimingFields() {
+                const isActive = contestCheckbox.checked;
+                [startDate, startTime, endDate, endTime].forEach(field => {
+                    if (field) {
+                        field.required = isActive;
+                        field.disabled = !isActive;
+                        field.style.opacity = isActive ? '1' : '0.5';
+                    }
+                });
+            }
+            
+            if (contestCheckbox) {
+                contestCheckbox.addEventListener('change', toggleTimingFields);
+                toggleTimingFields(); // Initial state
+            }
+            
+            // Form validation
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (contestCheckbox && contestCheckbox.checked) {
+                        if (!startDate.value || !startTime.value || !endDate.value || !endTime.value) {
+                            e.preventDefault();
+                            alert('Contest start and end date/time are required when contest is active!');
+                            return false;
+                        }
+                        
+                        const startDateTime = new Date(startDate.value + ' ' + startTime.value);
+                        const endDateTime = new Date(endDate.value + ' ' + endTime.value);
+                        
+                        if (startDateTime >= endDateTime) {
+                            e.preventDefault();
+                            alert('Contest end time must be after start time!');
+                            return false;
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>

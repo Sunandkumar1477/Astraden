@@ -1791,18 +1791,30 @@ if (isset($_SESSION['user_id'])) {
                         contestBtn.style.display = 'none';
                         statusMessage.textContent = `Login to play. Normal: ${normalCost} Astrons | Contest: ${contestCost} Astrons`;
                     } else {
-                        // Show both buttons
-                        statusMessage.textContent = 'Choose your play mode:';
-                        
-                        // Normal Play Button
-                        normalBtn.style.display = 'flex';
-                        normalBtn.innerHTML = `NORMAL PLAY &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${normalCost}`;
-                        normalBtn.disabled = userCredits < normalCost;
-                        
-                        // Contest Play Button
-                        contestBtn.style.display = 'flex';
-                        contestBtn.innerHTML = `🏆 PARTICIPATE IN CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${contestCost}`;
-                        contestBtn.disabled = userCredits < contestCost;
+                        // Check contest status and disable_normal_play from game_api
+                        fetch('game_api.php?action=check_status&game=earth-defender')
+                            .then(response => response.json())
+                            .then(data => {
+                                const isContestActive = data.is_contest_active || false;
+                                const disableNormalPlay = data.disable_normal_play || false;
+                                
+                                // Show both buttons by default
+                                statusMessage.textContent = 'Choose your play mode:';
+                                
+                                // Normal Play Button - hide if contest is active and normal play is disabled
+                                if (isContestActive && disableNormalPlay) {
+                                    normalBtn.style.display = 'none';
+                                    statusMessage.textContent = 'Contest mode is active. Only contest play is available.';
+                                } else {
+                                    normalBtn.style.display = 'flex';
+                                    normalBtn.innerHTML = `NORMAL PLAY &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${normalCost}`;
+                                    normalBtn.disabled = userCredits < normalCost;
+                                }
+                                
+                                // Contest Play Button
+                                contestBtn.style.display = 'flex';
+                                contestBtn.innerHTML = `🏆 PARTICIPATE IN CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${contestCost}`;
+                                contestBtn.disabled = userCredits < contestCost;
                         
                         // Show lock message if insufficient credits
                         if (userCredits < normalCost && userCredits < contestCost) {

@@ -87,7 +87,7 @@ switch ($action) {
         $game_mode = 'credits'; // Default game mode
         if ($check_games_table->num_rows > 0) {
             // Remove is_active requirement - we need contest settings even if game is not marked active
-            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, is_claim_active, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, game_mode FROM games WHERE game_name = ?");
+            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, is_claim_active, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, game_mode, contest_start_datetime, contest_end_datetime, disable_normal_play FROM games WHERE game_name = ?");
             $games_stmt->bind_param("s", $game_name);
             $games_stmt->execute();
             $games_result = $games_stmt->get_result();
@@ -102,6 +102,27 @@ switch ($action) {
                     '2nd' => intval($game_data['contest_second_prize']),
                     '3rd' => intval($game_data['contest_third_prize'])
                 ];
+                
+                // Check contest timing
+                $contest_start_datetime = $game_data['contest_start_datetime'] ?? null;
+                $contest_end_datetime = $game_data['contest_end_datetime'] ?? null;
+                $disable_normal_play = intval($game_data['disable_normal_play'] ?? 0);
+                
+                // If contest is active, check if current time is within contest window
+                if ($is_contest_active && $contest_start_datetime && $contest_end_datetime) {
+                    $now = time();
+                    $start_ts = strtotime($contest_start_datetime);
+                    $end_ts = strtotime($contest_end_datetime);
+                    
+                    // Contest is only active if current time is within the range
+                    if ($now < $start_ts || $now > $end_ts) {
+                        $is_contest_active = 0; // Contest not in active time window
+                    }
+                }
+            } else {
+                $disable_normal_play = 0;
+                $contest_start_datetime = null;
+                $contest_end_datetime = null;
             }
             $games_stmt->close();
         }
@@ -153,6 +174,9 @@ switch ($action) {
             'is_claim_active' => $is_claim_active,
             'game_mode' => $game_mode,
             'contest_prizes' => $prizes,
+            'disable_normal_play' => $disable_normal_play,
+            'contest_start_datetime' => $contest_start_datetime,
+            'contest_end_datetime' => $contest_end_datetime,
             'user_total_points' => $user_total_points,
             'session' => [
                 'id' => $session['id'] ?? 0,
