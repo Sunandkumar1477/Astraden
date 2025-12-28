@@ -1,22 +1,24 @@
 <?php
-// Start output buffering to prevent any accidental output
+// Start output buffering FIRST - before anything else
 ob_start();
+
+// Check for AJAX request IMMEDIATELY - before any includes or database operations
+$is_ajax = (
+    (!empty($_POST['ajax']) && $_POST['ajax'] == '1') ||
+    (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ||
+    (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+);
 
 session_start();
 require_once 'connection.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    // Check if AJAX request before redirecting
-    $is_ajax_check = (
-        (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ||
-        (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
-    );
-    
-    if ($is_ajax_check) {
-        ob_clean();
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Please login first']);
+    if ($is_ajax) {
+        ob_end_clean(); // Clean and end buffer
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-cache, must-revalidate');
+        echo json_encode(['success' => false, 'message' => 'Please login first'], JSON_UNESCAPED_UNICODE);
         exit;
     }
     
@@ -76,14 +78,6 @@ $credits_data = $credits_result->fetch_assoc();
 $user_astrons = intval($credits_data['credits'] ?? 0);
 $credits_stmt->close();
 
-// Handle purchase - Check if it's an AJAX request FIRST
-// Check multiple ways to detect AJAX requests (check POST first as it's most reliable)
-$is_ajax = (
-    (!empty($_POST['ajax']) && $_POST['ajax'] == '1') ||
-    (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ||
-    (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
-);
-
 $message = '';
 $error = '';
 $purchase_success = false;
@@ -91,9 +85,10 @@ $new_fluxon = $total_fluxon;
 $new_astrons = $user_astrons;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
-    // Clear any output buffer for AJAX requests
+    // For AJAX requests, clean output buffer immediately
     if ($is_ajax) {
-        ob_clean();
+        ob_end_clean(); // End and clean buffer completely
+        ob_start(); // Start fresh buffer for JSON output only
     }
     $item_id = intval($_POST['item_id'] ?? 0);
     $item_cost = intval($_POST['item_cost'] ?? 0);
@@ -174,9 +169,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 
                 // If AJAX request, return JSON response
                 if ($is_ajax) {
-                    ob_clean(); // Clear any output
+                    ob_end_clean(); // Clean buffer completely
                     header('Content-Type: application/json; charset=utf-8');
                     header('Cache-Control: no-cache, must-revalidate');
+                    header('X-Content-Type-Options: nosniff');
                     echo json_encode([
                         'success' => true,
                         'message' => $message,
@@ -186,7 +182,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                         'astrons_added' => $item_astrons
                     ], JSON_UNESCAPED_UNICODE);
                     $conn->close();
-                    ob_end_flush();
                     exit;
                 }
                 
@@ -198,15 +193,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 
                 // If AJAX request, return JSON error
                 if ($is_ajax) {
-                    ob_clean(); // Clear any output
+                    ob_end_clean(); // Clean buffer completely
                     header('Content-Type: application/json; charset=utf-8');
                     header('Cache-Control: no-cache, must-revalidate');
+                    header('X-Content-Type-Options: nosniff');
                     echo json_encode([
                         'success' => false,
                         'message' => $error
                     ], JSON_UNESCAPED_UNICODE);
                     $conn->close();
-                    ob_end_flush();
                     exit;
                 }
             }
@@ -215,15 +210,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             
             // If AJAX request, return JSON error
             if ($is_ajax) {
-                ob_clean(); // Clear any output
+                ob_end_clean(); // Clean buffer completely
                 header('Content-Type: application/json; charset=utf-8');
                 header('Cache-Control: no-cache, must-revalidate');
+                header('X-Content-Type-Options: nosniff');
                 echo json_encode([
                     'success' => false,
                     'message' => $error
                 ], JSON_UNESCAPED_UNICODE);
                 $conn->close();
-                ob_end_flush();
                 exit;
             }
         }
@@ -232,21 +227,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
         
         // If AJAX request, return JSON error
         if ($is_ajax) {
-            ob_clean(); // Clear any output
+            ob_end_clean(); // Clean buffer completely
             header('Content-Type: application/json; charset=utf-8');
             header('Cache-Control: no-cache, must-revalidate');
+            header('X-Content-Type-Options: nosniff');
             echo json_encode([
                 'success' => false,
                 'message' => $error
             ], JSON_UNESCAPED_UNICODE);
             $conn->close();
-            ob_end_flush();
             exit;
         }
     }
 }
 
-// End output buffering for non-AJAX requests
+// End output buffering for non-AJAX requests only
 if (!$is_ajax) {
     ob_end_flush();
 }
@@ -1145,31 +1140,23 @@ if (!$is_ajax) {
                 
                 // Check if response is OK
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    const errorText = await response.text();
+                    throw new Error('Network response was not ok: ' + response.status + ' - ' + errorText.substring(0, 100));
                 }
                 
-                // Get response text first to check content type
-                const responseText = await response.text();
-                
-                // Debug logging (remove in production if needed)
-                console.log('Response status:', response.status);
-                console.log('Response text length:', responseText.length);
-                console.log('Response preview:', responseText.substring(0, 200));
-                
-                // Try to parse as JSON
-                let data;
-                try {
-                    data = JSON.parse(responseText);
-                    console.log('Parsed JSON data:', data);
-                } catch (parseError) {
-                    console.error('JSON parse error:', parseError);
-                    console.error('Response text:', responseText);
-                    // If not JSON, check if it's HTML (error page)
-                    if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
-                        throw new Error('Server returned HTML instead of JSON. The request may not have been recognized as AJAX.');
-                    }
-                    throw new Error('Invalid JSON response from server: ' + parseError.message);
+                // Check content type first
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    // Clone response to read text without consuming it
+                    const responseClone = response.clone();
+                    const responseText = await responseClone.text();
+                    console.error('Expected JSON but got:', contentType);
+                    console.error('Response preview:', responseText.substring(0, 500));
+                    throw new Error('Server returned ' + (contentType || 'unknown type') + ' instead of JSON. The request may not have been recognized as AJAX.');
                 }
+                
+                // Parse JSON response
+                const data = await response.json();
                 
                 // Check if request was successful
                 if (data.success) {
