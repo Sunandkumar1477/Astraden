@@ -323,19 +323,34 @@ switch ($action) {
         $insert_stmt->bind_param("isiiis", $user_id, $game_name, $score, $credits_used, $session_id, $game_mode);
         
         if ($insert_stmt->execute()) {
-            // Get updated total points for this user for this game
-            $total_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND game_name = ? AND credits_used > 0");
-            $total_stmt->bind_param("is", $user_id, $game_name);
+            // Update total_score in users table (add the new score)
+            $update_total_stmt = $conn->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
+            $update_total_stmt->bind_param("ii", $score, $user_id);
+            $update_total_stmt->execute();
+            $update_total_stmt->close();
+            
+            // Get updated total score from users table
+            $total_stmt = $conn->prepare("SELECT total_score FROM users WHERE id = ?");
+            $total_stmt->bind_param("i", $user_id);
             $total_stmt->execute();
             $total_res = $total_stmt->get_result()->fetch_assoc();
-            $total_points = intval($total_res['total_points'] ?? 0);
+            $total_points = intval($total_res['total_score'] ?? 0);
             $total_stmt->close();
+            
+            // Also get game-specific total for backward compatibility
+            $game_total_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND game_name = ? AND credits_used > 0");
+            $game_total_stmt->bind_param("is", $user_id, $game_name);
+            $game_total_stmt->execute();
+            $game_total_res = $game_total_stmt->get_result()->fetch_assoc();
+            $game_total_points = intval($game_total_res['total_points'] ?? 0);
+            $game_total_stmt->close();
 
             echo json_encode([
                 'success' => true,
                 'message' => 'Score saved successfully',
                 'score' => $score,
                 'total_score' => $total_points,
+                'game_total_score' => $game_total_points,
                 'is_contest' => (bool)$is_contest_active,
                 'game_mode' => $game_mode
             ]);

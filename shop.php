@@ -64,10 +64,19 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Get user's Fluxon (total score from all games, including shop deductions)
-// Shop deductions are negative scores, so we sum all scores (positive and negative)
+// Get user's Fluxon (total score) from users table
+// This is now stored directly in users.total_score for better performance
 try {
-    if (!$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?")) {
+    // Check if total_score column exists, if not, add it
+    $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'total_score'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE users ADD COLUMN total_score BIGINT(20) NOT NULL DEFAULT 0 COMMENT 'Total score (Fluxon)'");
+        // Initialize from game_leaderboard
+        $conn->query("UPDATE users u SET total_score = COALESCE((SELECT SUM(score) FROM game_leaderboard gl WHERE gl.user_id = u.id), 0)");
+    }
+    if ($check_column) $check_column->close();
+    
+    if (!$fluxon_stmt = $conn->prepare("SELECT total_score FROM users WHERE id = ?")) {
         throw new Exception("Database error: " . $conn->error);
     }
     $fluxon_stmt->bind_param("i", $user_id);
@@ -76,7 +85,7 @@ try {
     }
     $fluxon_result = $fluxon_stmt->get_result();
     $fluxon_data = $fluxon_result->fetch_assoc();
-    $total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
+    $total_fluxon = intval($fluxon_data['total_score'] ?? 0);
     if ($total_fluxon < 0) $total_fluxon = 0;
     $fluxon_stmt->close();
 } catch (Exception $e) {
@@ -183,8 +192,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 $item_cost = $db_fluxon;
                 $item_astrons = $db_astrons;
                 
-                // Re-check Fluxon balance before transaction
-                if (!$fluxon_check_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?")) {
+                // Re-check Fluxon balance before transaction (from users table)
+                if (!$fluxon_check_stmt = $conn->prepare("SELECT total_score FROM users WHERE id = ?")) {
                     throw new Exception("Database error: " . $conn->error);
                 }
                 $fluxon_check_stmt->bind_param("i", $user_id);
@@ -193,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 }
                 $fluxon_check_result = $fluxon_check_stmt->get_result();
                 $fluxon_check_data = $fluxon_check_result->fetch_assoc();
-                $current_fluxon = intval($fluxon_check_data['total_fluxon'] ?? 0);
+                $current_fluxon = intval($fluxon_check_data['total_score'] ?? 0);
                 if ($current_fluxon < 0) $current_fluxon = 0;
                 $fluxon_check_stmt->close();
                 
@@ -262,17 +271,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                         }
                         $deduct_stmt->close();
                         
-                        // Step 4: Recalculate total Fluxon after deduction
-                        $fluxon_recalc_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
+                        // Step 4: Update total_score in users table (subtract the cost)
+                        $update_total_stmt = $conn->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
+                        $update_total_stmt->bind_param("ii", $negative_score, $user_id);
+                        if (!$update_total_stmt->execute()) {
+                            throw new Exception("Failed to update total score: " . $update_total_stmt->error);
+                        }
+                        $update_total_stmt->close();
+                        
+                        // Step 5: Get updated total Fluxon from users table
+                        $fluxon_recalc_stmt = $conn->prepare("SELECT total_score FROM users WHERE id = ?");
                         $fluxon_recalc_stmt->bind_param("i", $user_id);
                         $fluxon_recalc_stmt->execute();
                         $fluxon_recalc_result = $fluxon_recalc_stmt->get_result();
                         $fluxon_recalc_data = $fluxon_recalc_result->fetch_assoc();
-                        $new_fluxon = intval($fluxon_recalc_data['total_fluxon'] ?? 0);
+                        $new_fluxon = intval($fluxon_recalc_data['total_score'] ?? 0);
                         if ($new_fluxon < 0) $new_fluxon = 0;
                         $fluxon_recalc_stmt->close();
                         
-                        // Step 5: Re-fetch Astrons to get final value
+                        // Step 6: Re-fetch Astrons to get final value
                         $final_astrons_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
                         $final_astrons_stmt->bind_param("i", $user_id);
                         $final_astrons_stmt->execute();
