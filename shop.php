@@ -1,9 +1,25 @@
 <?php
+// Start output buffering to prevent any accidental output
+ob_start();
+
 session_start();
 require_once 'connection.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
+    // Check if AJAX request before redirecting
+    $is_ajax_check = (
+        (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ||
+        (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+    );
+    
+    if ($is_ajax_check) {
+        ob_clean();
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Please login first']);
+        exit;
+    }
+    
     header('Location: index.php');
     exit;
 }
@@ -60,13 +76,14 @@ $credits_data = $credits_result->fetch_assoc();
 $user_astrons = intval($credits_data['credits'] ?? 0);
 $credits_stmt->close();
 
-// Handle purchase - Check if it's an AJAX request
-// Check multiple ways to detect AJAX requests
+// Handle purchase - Check if it's an AJAX request FIRST
+// Check multiple ways to detect AJAX requests (check POST first as it's most reliable)
 $is_ajax = (
+    (!empty($_POST['ajax']) && $_POST['ajax'] == '1') ||
     (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ||
-    (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
-    (!empty($_GET['ajax']) && $_GET['ajax'] == '1')
+    (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
 );
+
 $message = '';
 $error = '';
 $purchase_success = false;
@@ -74,6 +91,10 @@ $new_fluxon = $total_fluxon;
 $new_astrons = $user_astrons;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
+    // Clear any output buffer for AJAX requests
+    if ($is_ajax) {
+        ob_clean();
+    }
     $item_id = intval($_POST['item_id'] ?? 0);
     $item_cost = intval($_POST['item_cost'] ?? 0);
     $item_astrons = intval($_POST['item_astrons'] ?? 0);
@@ -153,7 +174,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 
                 // If AJAX request, return JSON response
                 if ($is_ajax) {
-                    header('Content-Type: application/json');
+                    ob_clean(); // Clear any output
+                    header('Content-Type: application/json; charset=utf-8');
+                    header('Cache-Control: no-cache, must-revalidate');
                     echo json_encode([
                         'success' => true,
                         'message' => $message,
@@ -161,8 +184,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                         'new_astrons' => $new_astrons,
                         'fluxon_deducted' => $item_cost,
                         'astrons_added' => $item_astrons
-                    ]);
+                    ], JSON_UNESCAPED_UNICODE);
                     $conn->close();
+                    ob_end_flush();
                     exit;
                 }
                 
@@ -174,12 +198,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 
                 // If AJAX request, return JSON error
                 if ($is_ajax) {
-                    header('Content-Type: application/json');
+                    ob_clean(); // Clear any output
+                    header('Content-Type: application/json; charset=utf-8');
+                    header('Cache-Control: no-cache, must-revalidate');
                     echo json_encode([
                         'success' => false,
                         'message' => $error
-                    ]);
+                    ], JSON_UNESCAPED_UNICODE);
                     $conn->close();
+                    ob_end_flush();
                     exit;
                 }
             }
@@ -188,12 +215,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             
             // If AJAX request, return JSON error
             if ($is_ajax) {
-                header('Content-Type: application/json');
+                ob_clean(); // Clear any output
+                header('Content-Type: application/json; charset=utf-8');
+                header('Cache-Control: no-cache, must-revalidate');
                 echo json_encode([
                     'success' => false,
                     'message' => $error
-                ]);
+                ], JSON_UNESCAPED_UNICODE);
                 $conn->close();
+                ob_end_flush();
                 exit;
             }
         }
@@ -202,15 +232,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
         
         // If AJAX request, return JSON error
         if ($is_ajax) {
-            header('Content-Type: application/json');
+            ob_clean(); // Clear any output
+            header('Content-Type: application/json; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
             echo json_encode([
                 'success' => false,
                 'message' => $error
-            ]);
+            ], JSON_UNESCAPED_UNICODE);
             $conn->close();
+            ob_end_flush();
             exit;
         }
     }
+}
+
+// End output buffering for non-AJAX requests
+if (!$is_ajax) {
+    ob_end_flush();
 }
 ?>
 <!DOCTYPE html>
@@ -1093,10 +1131,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
             
             try {
                 // Submit the form with AJAX header
+                // Add ajax parameter to form data as backup
+                formData.append('ajax', '1');
+                
                 const response = await fetch('shop.php', {
                     method: 'POST',
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
                     },
                     body: formData
                 });
