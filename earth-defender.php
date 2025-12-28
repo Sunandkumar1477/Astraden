@@ -1902,6 +1902,12 @@ if (isset($_SESSION['user_id'])) {
             // Check if payment was already made from game selection page
             const urlParams = new URLSearchParams(window.location.search);
             const alreadyPaid = urlParams.get('paid') === '1';
+            const urlMode = urlParams.get('mode'); // Get mode from URL (normal or contest)
+            
+            // Override isContestMode if mode is specified in URL
+            if (alreadyPaid && urlMode) {
+                isContestMode = (urlMode === 'contest');
+            }
             
             if (!alreadyPaid) {
                 // Payment not made yet - check balance and deduct
@@ -1966,10 +1972,18 @@ if (isset($_SESSION['user_id'])) {
                 }
             } else {
                 // Payment already made from game selection page - start game directly
+                // Get the correct cost based on mode
+                let actualCost = creditsRequired;
+                if (isContestMode) {
+                    actualCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
+                } else {
+                    actualCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
+                }
+                
                 gameEndedByTime = false;
                 state.gameStarted = true;
                 state.isDemoMode = false;
-                state.creditsUsed = creditsRequired;
+                state.creditsUsed = actualCost;
                 state.isContestMode = isContestMode;
                 state.gameSessionId = gameSession.id || 0;
                 state.isPlaying = true;
@@ -1981,10 +1995,11 @@ if (isset($_SESSION['user_id'])) {
                 preventExitDuringGame();
                 document.getElementById('game-status-overlay').classList.add('hidden');
                 
-                // Remove paid parameter from URL
+                // Remove paid and mode parameters from URL
                 if (window.history.replaceState) {
                     const url = new URL(window.location);
                     url.searchParams.delete('paid');
+                    url.searchParams.delete('mode');
                     window.history.replaceState({}, '', url);
                 }
             }

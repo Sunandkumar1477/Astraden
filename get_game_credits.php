@@ -76,17 +76,21 @@ if ($game_name) {
     $games = $conn->query("SELECT $cols FROM games WHERE is_active = 1")->fetch_all(MYSQLI_ASSOC);
     $response = [];
     foreach ($games as $g) {
-        $is_contest = intval($g['is_contest_active']);
-        $final_credits = $is_contest ? intval($g['contest_credits_required']) : intval($g['credits_per_chance']);
+        $is_contest = intval($g['is_contest_active'] ?? 0);
+        $normal_cost = intval($g['credits_per_chance'] ?? 30);
+        $contest_cost = intval($g['contest_credits_required'] ?? 30);
+        $final_credits = $is_contest ? $contest_cost : $normal_cost;
         
         $response[$g['game_name']] = [
             'credits_per_chance' => $final_credits,
+            'normal_credits_required' => $normal_cost,
+            'contest_credits_required' => $contest_cost,
             'is_contest_active' => $is_contest,
-            'game_mode' => $g['game_mode'] ?: 'credits',
+            'game_mode' => $g['game_mode'] ?? 'credits',
             'contest_prizes' => [
-                '1st' => intval($g['contest_first_prize']),
-                '2nd' => intval($g['contest_second_prize']),
-                '3rd' => intval($g['contest_third_prize'])
+                '1st' => intval($g['contest_first_prize'] ?? 0),
+                '2nd' => intval($g['contest_second_prize'] ?? 0),
+                '3rd' => intval($g['contest_third_prize'] ?? 0)
             ]
         ];
     }

@@ -507,7 +507,7 @@ session_start();
         <div class="games-section" data-category="defense">
             <h2 class="section-title">DEFENSE GAMES</h2>
             <div class="games-grid">
-                <div class="game-card" data-game="earth-defender" data-type="defense" onclick="launchGame('earth-defender'); return false;" style="cursor: pointer;">
+                <div class="game-card" data-game="earth-defender" data-type="defense" style="cursor: default;">
                     <!-- Countdown Timer Badge -->
                     <div class="game-countdown-badge" id="countdown-badge-earth-defender" style="display: none;">
                         <span class="countdown-icon">⏰</span>
@@ -522,10 +522,6 @@ session_start();
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
                         <span class="game-type">Defense</span>
-                        <span class="credits-badge" id="credits-badge-earth-defender">
-                            <span class="power-icon">⚡</span>
-                            <span id="credits-amount-earth-defender">30</span> Astrons
-                        </span>
                     </div>
                     <!-- Game Timing Badge -->
                     <div class="game-timing-badge" id="timing-badge-earth-defender" style="display: none;">
@@ -542,7 +538,17 @@ session_start();
                             <span id="timing-date-earth-defender">-</span>
                         </div>
                     </div>
-                    <button class="play-btn" onclick="launchGame('earth-defender')">Play Now</button>
+                    <!-- Play Buttons -->
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                        <button class="play-btn" id="normal-play-btn-earth-defender" onclick="launchGame('earth-defender', 'normal', event)" style="background: linear-gradient(135deg, #00ffff, #0099cc);">
+                            <span style="font-weight: 700;">🎮 Play to Earn</span>
+                            <span style="font-size: 0.85rem; opacity: 0.9; margin-left: 8px;" id="normal-cost-earth-defender">30 Astrons</span>
+                        </button>
+                        <button class="play-btn" id="contest-play-btn-earth-defender" onclick="launchGame('earth-defender', 'contest', event)" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
+                            <span style="font-weight: 700;">🏆 Play Contest</span>
+                            <span style="font-size: 0.85rem; opacity: 0.9; margin-left: 8px;" id="contest-cost-earth-defender">30 Astrons</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -615,11 +621,22 @@ session_start();
             }
 
             // Launch game with security checks and Astrons payment
-            async function launchGame(gameName) {
+            async function launchGame(gameName, playMode = 'normal', event = null) {
+                // Prevent card click from triggering
+                if (event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
+                
                 const sanitized = sanitizeGameName(gameName);
                 if (!sanitized || !gamePaths[sanitized]) {
                     alert('Game not found or invalid!');
                     return;
+                }
+
+                // Validate play mode
+                if (playMode !== 'normal' && playMode !== 'contest') {
+                    playMode = 'normal';
                 }
 
                 // Check if user is logged in
@@ -633,43 +650,53 @@ session_start();
                 const creditsElement = document.getElementById('creditsValue');
                 const currentCredits = creditsElement ? parseInt(creditsElement.textContent.replace(/,/g, '')) || 0 : 0;
 
-                // Get game cost from admin settings
-                let gameCost = 30; // Default cost
+                // Get game costs from admin settings
+                let normalCost = 30; // Default cost
+                let contestCost = 30; // Default cost
                 try {
                     const creditsResponse = await fetch(`get_game_credits.php?game=${sanitized}`);
                     
                     if (!creditsResponse.ok) {
                         console.warn(`Failed to fetch game credits: ${creditsResponse.status}`);
-                        // Use default cost if fetch fails
-                        gameCost = 30;
                     } else {
                         const creditsData = await creditsResponse.json();
                         
-                        if (creditsData.success && creditsData.credits_per_chance) {
-                            gameCost = parseInt(creditsData.credits_per_chance) || 30;
+                        if (creditsData.success) {
+                            if (creditsData.normal_credits_required) {
+                                normalCost = parseInt(creditsData.normal_credits_required) || 30;
+                            }
+                            if (creditsData.contest_credits_required) {
+                                contestCost = parseInt(creditsData.contest_credits_required) || 30;
+                            }
+                            // Fallback to credits_per_chance if normal_credits_required not available
+                            if (creditsData.credits_per_chance && !creditsData.normal_credits_required) {
+                                normalCost = parseInt(creditsData.credits_per_chance) || 30;
+                            }
                         } else if (creditsData.success && creditsData.games && creditsData.games[sanitized]) {
                             // Handle games object format
-                            gameCost = parseInt(creditsData.games[sanitized].credits_per_chance) || 30;
-                        } else {
-                            // Game not found in database, use default cost
-                            console.warn(`Game "${sanitized}" not found in database, using default cost of 30 Astrons`);
-                            gameCost = 30;
+                            normalCost = parseInt(creditsData.games[sanitized].credits_per_chance) || 30;
+                            contestCost = parseInt(creditsData.games[sanitized].contest_credits_required) || 30;
                         }
                     }
                 } catch (error) {
                     console.error('Error fetching game credits:', error);
-                    // Use default cost if there's an error
-                    gameCost = 30;
                 }
+
+                // Determine cost based on play mode
+                const gameCost = playMode === 'contest' ? contestCost : normalCost;
+                const modeName = playMode === 'contest' ? 'Contest' : 'Normal';
 
                 // Check if user has sufficient Astrons
                 if (currentCredits < gameCost) {
-                    alert(`Insufficient Astrons! You need ${gameCost} Astrons to play this game.\n\nYour current balance: ${currentCredits} Astrons`);
+                    alert(`Insufficient Astrons! You need ${gameCost} Astrons to play in ${modeName} mode.\n\nYour current balance: ${currentCredits} Astrons`);
                     return;
                 }
 
                 // Confirm payment
-                const confirmMsg = `This will deduct ${gameCost} Astrons from your account to play this game.\n\nYour balance after payment: ${currentCredits - gameCost} Astrons\n\nContinue?`;
+                const confirmMsg = playMode === 'contest' 
+                    ? `Join the Contest? This will deduct ${gameCost} Astrons from your account.\n\nYour high score will be recorded for contest prizes!\n\nYour balance after payment: ${currentCredits - gameCost} Astrons\n\nContinue?`
+                    : `Play to Earn? This will deduct ${gameCost} Astrons from your account to play this game.\n\nYour balance after payment: ${currentCredits - gameCost} Astrons\n\nContinue?`;
+                    
                 if (!confirm(confirmMsg)) {
                     return;
                 }
@@ -678,11 +705,17 @@ session_start();
                 const loading = document.getElementById('loading');
                 if (loading) loading.classList.add('show');
 
+                // Disable buttons to prevent double-clicking
+                const normalBtn = document.getElementById(`normal-play-btn-${sanitized}`);
+                const contestBtn = document.getElementById(`contest-play-btn-${sanitized}`);
+                if (normalBtn) normalBtn.disabled = true;
+                if (contestBtn) contestBtn.disabled = true;
+
                 // Deduct Astrons before launching game
                 try {
                     const formData = new FormData();
                     formData.append('game_name', sanitized);
-                    formData.append('play_mode', 'normal');
+                    formData.append('play_mode', playMode);
                     formData.append('credits_amount', gameCost);
                     formData.append('session_id', 0); // Will be handled by API
 
@@ -706,18 +739,24 @@ session_start();
                             }
                         }
 
-                        // Redirect to game after successful payment (with payment flag)
+                        // Redirect to game after successful payment (with payment flag and mode)
                         setTimeout(() => {
-                            window.location.href = gamePaths[sanitized] + '?paid=1';
+                            window.location.href = gamePaths[sanitized] + `?paid=1&mode=${playMode}`;
                         }, 500);
                     } else {
                         // Hide loading on error
                         if (loading) loading.classList.remove('show');
+                        // Re-enable buttons
+                        if (normalBtn) normalBtn.disabled = false;
+                        if (contestBtn) contestBtn.disabled = false;
                         alert(paymentData.message || 'Failed to process payment. Please try again.');
                     }
                 } catch (error) {
                     console.error('Payment error:', error);
                     if (loading) loading.classList.remove('show');
+                    // Re-enable buttons
+                    if (normalBtn) normalBtn.disabled = false;
+                    if (contestBtn) contestBtn.disabled = false;
                     alert('An error occurred while processing payment. Please try again.');
                 }
             }
@@ -725,30 +764,57 @@ session_start();
             // Make launchGame available globally
             window.launchGame = launchGame;
 
-            // Load game credits and prizes badges
+            // Load game credits and update button costs
             async function loadGameCredits() {
                 try {
+                    // Load all games at once
                     const response = await fetch('get_game_credits.php');
                     const data = await response.json();
                     
                     if (data.success && data.games) {
-                        // Update credits and prizes for each game
+                        // Update costs for each game from games object
                         Object.keys(data.games).forEach(gameName => {
                             const gameData = data.games[gameName];
-                            const creditsAmount = typeof gameData === 'object' ? gameData.credits_per_chance : gameData;
-                            const badgeElement = document.getElementById(`credits-amount-${gameName}`);
-                            if (badgeElement) {
-                                badgeElement.textContent = creditsAmount;
+                            const normalCost = typeof gameData === 'object' ? (gameData.credits_per_chance || 30) : gameData;
+                            const contestCost = typeof gameData === 'object' ? (gameData.contest_credits_required || 30) : 30;
+                            
+                            // Update normal play button cost
+                            const normalCostElement = document.getElementById(`normal-cost-${gameName}`);
+                            if (normalCostElement) {
+                                normalCostElement.textContent = `${normalCost} Astrons`;
                             }
                             
+                            // Update contest play button cost
+                            const contestCostElement = document.getElementById(`contest-cost-${gameName}`);
+                            if (contestCostElement) {
+                                contestCostElement.textContent = `${contestCost} Astrons`;
+                            }
                         });
-                    } else if (data.success && data.game_name) {
-                        // Single game response
-                        const badgeElement = document.getElementById(`credits-amount-${data.game_name}`);
-                        if (badgeElement) {
-                            badgeElement.textContent = data.credits_per_chance;
-                        }
+                    }
+                    
+                    // Also load individual game credits for earth-defender specifically
+                    try {
+                        const earthDefenderResponse = await fetch('get_game_credits.php?game=earth-defender');
+                        const earthDefenderData = await earthDefenderResponse.json();
                         
+                        if (earthDefenderData.success) {
+                            const normalCost = earthDefenderData.normal_credits_required || earthDefenderData.credits_per_chance || 30;
+                            const contestCost = earthDefenderData.contest_credits_required || 30;
+                            
+                            // Update normal play button cost
+                            const normalCostElement = document.getElementById('normal-cost-earth-defender');
+                            if (normalCostElement) {
+                                normalCostElement.textContent = `${normalCost} Astrons`;
+                            }
+                            
+                            // Update contest play button cost
+                            const contestCostElement = document.getElementById('contest-cost-earth-defender');
+                            if (contestCostElement) {
+                                contestCostElement.textContent = `${contestCost} Astrons`;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Could not load earth-defender specific credits:', e);
                     }
                 } catch (error) {
                     console.error('Error loading game credits:', error);
@@ -2179,6 +2245,8 @@ session_start();
             makeFABDraggable();
             // Check user session on page load
             checkSession();
+            // Load game credits to update button costs
+            loadGameCredits();
         });
         
         // Also check session immediately if DOM is already loaded
