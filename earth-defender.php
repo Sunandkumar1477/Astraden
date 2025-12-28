@@ -1228,6 +1228,20 @@ if (isset($_SESSION['user_id'])) {
             margin-top: 2px;
         }
         
+        .guide-start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
+        }
+        
+        .guide-start-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .guide-start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         @media (max-width: 768px) {
             .instructions-content {
                 padding: 15px;
@@ -1249,6 +1263,11 @@ if (isset($_SESSION['user_id'])) {
             /* Hide status message on mobile */
             .status-message {
                 display: none !important;
+            }
+            
+            .guide-start-btn {
+                padding: 15px 20px !important;
+                font-size: 1rem !important;
             }
         }
     </style>
@@ -1442,6 +1461,13 @@ if (isset($_SESSION['user_id'])) {
                         <li><strong>Bomb Button:</strong> Detonate all asteroids</li>
                     </ul>
                 </div>
+                
+                <!-- Start Game Button (shown only when payment was made) -->
+                <div class="instruction-section" id="guide-start-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(0, 255, 255, 0.3);">
+                    <button id="guide-start-btn" class="guide-start-btn" onclick="if(typeof window.startGameFromGuide === 'function') { window.startGameFromGuide(); } else { alert('Game not ready yet. Please wait.'); } return false;" style="width: 100%; padding: 18px 30px; font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, #00ffff, #0099cc); border: 2px solid #00ffff; border-radius: 12px; color: white; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 20px rgba(0, 255, 255, 0.5); transition: all 0.3s;">
+                        🎮 START GAME
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1486,6 +1512,12 @@ if (isset($_SESSION['user_id'])) {
                 console.error('Instructions panel not found');
             }
             return false;
+        };
+        
+        // Guide start button handler - will be set from module scope
+        window.startGameFromGuide = function() {
+            // This will be overridden by the module script
+            console.log('startGameFromGuide called but not yet initialized');
         };
     </script>
 
@@ -2022,6 +2054,10 @@ if (isset($_SESSION['user_id'])) {
                     const normalPlayBtn = document.getElementById('normal-play-btn');
                     const contestPlayBtn = document.getElementById('contest-play-btn');
                     
+                    // Show start button in guide panel
+                    const guideStartSection = document.getElementById('guide-start-section');
+                    const guideStartBtn = document.getElementById('guide-start-btn');
+                    
                     // Hide the button that's not for this mode
                     if (isContestMode) {
                         if (normalPlayBtn) normalPlayBtn.style.display = 'none';
@@ -2030,6 +2066,11 @@ if (isset($_SESSION['user_id'])) {
                             contestPlayBtn.innerHTML = `🏆 START CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> (${actualCost} Paid)`;
                             contestPlayBtn.disabled = false;
                         }
+                        // Update guide start button for contest
+                        if (guideStartBtn) {
+                            guideStartBtn.innerHTML = `🏆 START CONTEST (${actualCost} Astrons Paid)`;
+                            guideStartBtn.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
+                        }
                     } else {
                         if (contestPlayBtn) contestPlayBtn.style.display = 'none';
                         if (normalPlayBtn) {
@@ -2037,6 +2078,16 @@ if (isset($_SESSION['user_id'])) {
                             normalPlayBtn.innerHTML = `🎮 START GAME &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> (${actualCost} Paid)`;
                             normalPlayBtn.disabled = false;
                         }
+                        // Update guide start button for normal
+                        if (guideStartBtn) {
+                            guideStartBtn.innerHTML = `🎮 START GAME (${actualCost} Astrons Paid)`;
+                            guideStartBtn.style.background = 'linear-gradient(135deg, #00ffff, #0099cc)';
+                        }
+                    }
+                    
+                    // Show guide start button section
+                    if (guideStartSection) {
+                        guideStartSection.style.display = 'block';
                     }
                 }
                 
@@ -2120,6 +2171,37 @@ if (isset($_SESSION['user_id'])) {
         
         // Always check game status to get session info
         checkGameStatus();
+        
+        // Set up guide start button handler (accessible from module scope)
+        window.startGameFromGuide = function() {
+            // Check if payment was already made
+            if (state.creditsUsed > 0 && !state.gameStarted) {
+                // Payment already made, start game directly
+                gameEndedByTime = false;
+                state.gameStarted = true;
+                state.isDemoMode = false;
+                state.isPlaying = true;
+                
+                // Show EXIT button
+                const exitBtnHud = document.getElementById('exit-game-btn-hud');
+                if (exitBtnHud) exitBtnHud.style.display = 'block';
+                
+                preventExitDuringGame();
+                
+                // Hide overlay and instructions
+                const overlay = document.getElementById('game-status-overlay');
+                if (overlay) overlay.classList.add('hidden');
+                
+                const instructionsPanel = document.getElementById('instructions-panel');
+                if (instructionsPanel) {
+                    instructionsPanel.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
+            } else if (!state.gameStarted) {
+                // No payment made yet - show message
+                alert('Please select a play mode first from the main screen.');
+            }
+        };
 
         // Claim Prize Button Handler
         const claimBtn = document.getElementById('claim-prize-btn');
