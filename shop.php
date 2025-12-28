@@ -10,13 +10,16 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Get user's Fluxon (total score from games)
-$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ? AND credits_used > 0");
+// Get user's Fluxon (total score from games, including shop deductions)
+// Shop deductions are negative scores, so we sum all scores (positive and negative)
+$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
 $fluxon_stmt->bind_param("i", $user_id);
 $fluxon_stmt->execute();
 $fluxon_result = $fluxon_stmt->get_result();
 $fluxon_data = $fluxon_result->fetch_assoc();
 $total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
+// Ensure Fluxon is never negative
+if ($total_fluxon < 0) $total_fluxon = 0;
 $fluxon_stmt->close();
 
 // Ensure shop_pricing table exists
@@ -67,22 +70,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
     
     if ($item_id > 0 && $item_cost > 0 && $item_astrons > 0) {
         if ($total_fluxon >= $item_cost) {
-            $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
-            $update_stmt->bind_param("ii", $item_astrons, $user_id);
+            // Start transaction
+            $conn->begin_transaction();
             
-            if ($update_stmt->execute()) {
+            try {
+                // Add Astrons to user profile
+                $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
+                $update_stmt->bind_param("ii", $item_astrons, $user_id);
+                $update_stmt->execute();
+                $update_stmt->close();
+                
+                // Deduct Fluxon by inserting a negative score entry
+                // This represents the Fluxon spent (negative score will reduce total)
+                $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode) VALUES (?, 'shop-purchase', ?, 0, 'credits')");
+                $negative_score = -$item_cost; // Negative score to deduct Fluxon
+                $deduct_stmt->bind_param("ii", $user_id, $negative_score);
+                $deduct_stmt->execute();
+                $deduct_stmt->close();
+                
+                // Recalculate total Fluxon after deduction
+                $fluxon_recalc_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
+                $fluxon_recalc_stmt->bind_param("i", $user_id);
+                $fluxon_recalc_stmt->execute();
+                $fluxon_recalc_result = $fluxon_recalc_stmt->get_result();
+                $fluxon_recalc_data = $fluxon_recalc_result->fetch_assoc();
+                $total_fluxon = intval($fluxon_recalc_data['total_fluxon'] ?? 0);
+                if ($total_fluxon < 0) $total_fluxon = 0;
+                $fluxon_recalc_stmt->close();
+                
+                // Commit transaction
+                $conn->commit();
+                
+                // Total Fluxon already recalculated above
+                
+                $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
+                $credits_stmt->bind_param("i", $user_id);
+                $credits_stmt->execute();
+                $credits_result = $credits_stmt->get_result();
+                $credits_data = $credits_result->fetch_assoc();
+                $user_astrons = intval($credits_data['credits'] ?? 0);
+                $credits_stmt->close();
+                
                 $message = "Nexus Link Established! Claimed {$item_astrons} Astrons.";
-                header('refresh:2;url=aetheric_mandala.php');
-            } else {
+            } catch (Exception $e) {
+                $conn->rollback();
                 $error = "Transmission Failure. Try again.";
             }
-            $update_stmt->close();
         } else {
             $error = "Insufficient Fluxon Energy!";
         }
     }
 }
-$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -833,13 +871,13 @@ $conn->close();
         <?php endif; ?>
 
         <div class="user-balance">
-            <div class="balance-card fluxon-card">
+            <div class="balance-card fluxon-card" id="fluxonCard">
                 <div class="balance-label">Total Fluxon Energy</div>
-                <div class="balance-value"><?php echo number_format($total_fluxon); ?></div>
+                <div class="balance-value" id="fluxonBalance"><?php echo number_format($total_fluxon); ?></div>
             </div>
-            <div class="balance-card astron-card">
+            <div class="balance-card astron-card" id="astronsCard">
                 <div class="balance-label">Available Astrons</div>
-                <div class="balance-value"><?php echo number_format($user_astrons); ?></div>
+                <div class="balance-value" id="astronsBalance"><?php echo number_format($user_astrons); ?></div>
             </div>
         </div>
         
@@ -869,13 +907,14 @@ $conn->close();
                 <div>
                     <div class="cost-label">Required Energy: <span class="cost-value"><?php echo number_format($fluxon); ?> Fluxon</span></div>
                     
-                    <form method="POST" onsubmit="return confirm('Initiate sync for <?php echo $astrons; ?> Astrons?');">
+                    <form method="POST" id="purchase-form-<?php echo $price['id']; ?>" onsubmit="return handlePurchase(event, <?php echo $price['id']; ?>, <?php echo $fluxon; ?>, <?php echo $astrons; ?>);">
                         <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
                         <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
                         <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
                         <button type="submit" name="purchase_item" 
                                 class="purchase-btn <?php echo $can_afford ? 'active' : ''; ?>" 
-                                <?php echo !$can_afford ? 'disabled' : ''; ?>>
+                                <?php echo !$can_afford ? 'disabled' : ''; ?>
+                                id="purchase-btn-<?php echo $price['id']; ?>">
                             <?php echo $can_afford ? 'Claim Reward' : 'Insufficient Energy'; ?>
                         </button>
                     </form>
@@ -884,5 +923,140 @@ $conn->close();
             <?php endforeach; ?>
         </div>
     </div>
+    
+    <script>
+        // Animation function for number counting
+        function animateValue(element, start, end, duration, callback) {
+            const startTime = performance.now();
+            const isDecrease = start > end;
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function for smooth animation
+                const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+                const current = Math.floor(start + (end - start) * easeOutCubic);
+                
+                element.textContent = current.toLocaleString();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    element.textContent = end.toLocaleString();
+                    if (callback) callback();
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+        
+        // Handle purchase with visual effects
+        async function handlePurchase(event, itemId, fluxonCost, astronsReward) {
+            event.preventDefault();
+            
+            const form = document.getElementById('purchase-form-' + itemId);
+            const button = document.getElementById('purchase-btn-' + itemId);
+            const fluxonElement = document.getElementById('fluxonBalance');
+            const astronsElement = document.getElementById('astronsBalance');
+            
+            // Disable button during processing
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            
+            // Get current values
+            const currentFluxon = parseInt(fluxonElement.textContent.replace(/,/g, '')) || 0;
+            const currentAstrons = parseInt(astronsElement.textContent.replace(/,/g, '')) || 0;
+            
+            // Calculate new values
+            const newFluxon = Math.max(0, currentFluxon - fluxonCost);
+            const newAstrons = currentAstrons + astronsReward;
+            
+            // Create form data
+            const formData = new FormData(form);
+            
+            try {
+                // Submit the form
+                const response = await fetch('shop.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Parse response
+                const responseText = await response.text();
+                
+                // Check if response contains success message
+                if (responseText.includes('Nexus Link Established') || responseText.includes('Claimed')) {
+                    // Animate Fluxon decrease
+                    animateValue(fluxonElement, currentFluxon, newFluxon, 1000, function() {
+                        // Animate Astrons increase
+                        animateValue(astronsElement, currentAstrons, newAstrons, 1000, function() {
+                            // Reload page after animations complete to show updated values
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 500);
+                        });
+                    });
+                    
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.innerHTML = '<i class="fas fa-check-circle"></i> Nexus Link Established! Claimed ' + astronsReward + ' Astrons.';
+                    alertDiv.style.animation = 'slideDown 0.5s ease';
+                    document.querySelector('.shop-container').insertBefore(alertDiv, document.querySelector('.shop-header').nextSibling);
+                    
+                    // Remove alert after 3 seconds
+                    setTimeout(function() {
+                        alertDiv.style.opacity = '0';
+                        alertDiv.style.transition = 'opacity 0.5s';
+                        setTimeout(function() {
+                            alertDiv.remove();
+                        }, 500);
+                    }, 3000);
+                } else {
+                    // Show error message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-error';
+                    alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Transmission Failure. Please try again.';
+                    alertDiv.style.animation = 'slideDown 0.5s ease';
+                    document.querySelector('.shop-container').insertBefore(alertDiv, document.querySelector('.shop-header').nextSibling);
+                    
+                    button.disabled = false;
+                    button.textContent = 'Claim Reward';
+                    
+                    setTimeout(function() {
+                        alertDiv.remove();
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                button.disabled = false;
+                button.textContent = 'Claim Reward';
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-error';
+                alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> An error occurred. Please try again.';
+                alertDiv.style.animation = 'slideDown 0.5s ease';
+                document.querySelector('.shop-container').insertBefore(alertDiv, document.querySelector('.shop-header').nextSibling);
+                
+                setTimeout(function() {
+                    alertDiv.remove();
+                }, 3000);
+            }
+        }
+        
+        // Add pulse animation for balance cards when values change
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+            }
+            .balance-card.animating {
+                animation: pulse 0.5s ease;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>

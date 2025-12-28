@@ -524,7 +524,7 @@ $conn->close();
             border: 1px solid rgba(255, 215, 0, 0.3);
         }
 
-        .game-btn, .start-game-btn, .demo-game-btn, .instructions-toggle-btn {
+        .game-btn, .normal-play-btn, .contest-play-btn, .instructions-toggle-btn {
             padding: 16px 32px;
             font-size: 1.1rem;
             font-weight: 700;
@@ -549,13 +549,13 @@ $conn->close();
             margin: 0;
         }
 
-        .game-btn:hover, .start-game-btn:hover, .instructions-toggle-btn:hover {
+        .game-btn:hover, .normal-play-btn:hover, .contest-play-btn:hover, .instructions-toggle-btn:hover {
             transform: translateY(-5px) scale(1.03);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
             filter: brightness(1.2);
         }
 
-        .game-btn:active, .start-game-btn:active, .instructions-toggle-btn:active {
+        .game-btn:active, .normal-play-btn:active, .contest-play-btn:active, .instructions-toggle-btn:active {
             transform: translateY(2px) scale(0.98);
         }
 
@@ -569,7 +569,7 @@ $conn->close();
                 margin: 40px auto;
             }
             
-            .game-btn, .start-game-btn, .instructions-toggle-btn {
+            .game-btn, .normal-play-btn, .contest-play-btn, .instructions-toggle-btn {
                 flex: 0 1 340px; /* Force uniform sizing on desktop */
             }
             
@@ -585,14 +585,22 @@ $conn->close();
             }
         }
 
-        .start-game-btn {
+        .normal-play-btn, .contest-play-btn {
             background: linear-gradient(135deg, #00ffff, #9d4edd);
             border: none;
             color: white;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            width: 100%;
+            max-width: 380px;
         }
 
-        .start-game-btn:disabled {
+        .contest-play-btn {
+            background: linear-gradient(135deg, #FFD700, #ff8c00);
+            color: #000;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+        }
+
+        .normal-play-btn:disabled, .contest-play-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none !important;
@@ -888,7 +896,8 @@ $conn->close();
             
             /* All Buttons - Consistent Box Styling */
             .game-btn, 
-            .start-game-btn, 
+            .normal-play-btn, 
+            .contest-play-btn, 
             .instructions-toggle-btn {
                 width: 100%;
                 max-width: none;
@@ -911,14 +920,16 @@ $conn->close();
             }
             
             .game-btn:hover, 
-            .start-game-btn:hover, 
+            .normal-play-btn:hover, 
+            .contest-play-btn:hover, 
             .instructions-toggle-btn:hover {
                 transform: translateX(3px) scale(1.01);
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             }
             
             .game-btn:active, 
-            .start-game-btn:active, 
+            .normal-play-btn:active, 
+            .contest-play-btn:active, 
             .instructions-toggle-btn:active {
                 transform: translateX(0) scale(0.99);
             }
@@ -1255,7 +1266,8 @@ $conn->close();
 
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
-            <button id="start-game-btn" class="start-game-btn" style="display: none;"></button>
+            <button id="normal-play-btn" class="normal-play-btn" style="display: none;"></button>
+            <button id="contest-play-btn" class="contest-play-btn" style="display: none;"></button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
         </div>
 
@@ -1608,9 +1620,27 @@ $conn->close();
                     }
                 }
                 
-                // Override credits_required with admin-set value from games table
+                // Get both normal and contest costs from games table
+                let normalCost = creditsFromGames;
+                let contestCost = creditsFromGames;
+                
                 if (data.success && data.session) {
-                    data.session.credits_required = creditsFromGames;
+                    // Fetch game costs to get both normal and contest costs
+                    try {
+                        const creditsResponse = await fetch('get_game_credits.php?game=earth-defender');
+                        const creditsData = await creditsResponse.json();
+                        if (creditsData.success) {
+                            normalCost = creditsData.normal_credits_required || creditsFromGames;
+                            contestCost = creditsData.contest_credits_required || creditsFromGames;
+                        }
+                    } catch (e) {
+                        console.error('Error fetching game costs:', e);
+                    }
+                    
+                    // Store both costs in session
+                    data.session.normal_credits_required = normalCost;
+                    data.session.contest_credits_required = contestCost;
+                    data.session.credits_required = data.is_contest_active ? contestCost : normalCost;
                 }
                 
                 if (data.success && data.session) {
@@ -1655,42 +1685,46 @@ $conn->close();
             const overlay = document.getElementById('game-status-overlay');
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
-            const startBtn = document.getElementById('start-game-btn');
+            const normalBtn = document.getElementById('normal-play-btn');
+            const contestBtn = document.getElementById('contest-play-btn');
             
             timerDisplay.textContent = 'GAME READY!';
-            const creditsRequired = gameSession.credits_required || 30;
             
-            if (state.isContestMode) {
-                statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} Astrons and reach the top 3 to win Astrons!`;
-                startBtn.style.display = 'flex';
-                startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
-                startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
-                startBtn.style.color = '#000';
-            } else {
-                statusMessage.textContent = `Play for ${creditsRequired} Astrons`;
-                startBtn.style.display = 'flex';
-                startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                startBtn.style.background = ''; // Reset to CSS default
-                startBtn.style.color = '';
-            }
-            startBtn.disabled = false;
+            // Get costs from game data
+            const normalCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
+            const contestCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
             
             // Check if user is logged in
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             const userCredits = <?php echo $user_credits; ?>;
             
             if (!isLoggedIn) {
-                // User not logged in - hide start button
-                startBtn.style.display = 'none';
-                if (state.isContestMode) {
-                    statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} Astrons required).`;
-                } else {
-                    statusMessage.textContent = `Login to play (${creditsRequired} Astrons required).`;
+                // User not logged in - hide both buttons
+                normalBtn.style.display = 'none';
+                contestBtn.style.display = 'none';
+                statusMessage.textContent = `Login to play. Normal: ${normalCost} Astrons | Contest: ${contestCost} Astrons`;
+            } else {
+                // Show both buttons
+                statusMessage.textContent = 'Choose your play mode:';
+                
+                // Normal Play Button
+                normalBtn.style.display = 'flex';
+                normalBtn.innerHTML = `NORMAL PLAY &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${normalCost}`;
+                normalBtn.disabled = userCredits < normalCost;
+                
+                // Contest Play Button
+                contestBtn.style.display = 'flex';
+                contestBtn.innerHTML = `🏆 PARTICIPATE IN CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${contestCost}`;
+                contestBtn.disabled = userCredits < contestCost;
+                
+                // Show lock message if insufficient credits
+                if (userCredits < normalCost && userCredits < contestCost) {
+                    statusMessage.textContent = `Insufficient Astrons! You need at least ${Math.min(normalCost, contestCost)} Astrons to play.`;
+                } else if (userCredits < normalCost) {
+                    statusMessage.textContent = `Insufficient Astrons for normal play. Contest requires ${contestCost} Astrons.`;
+                } else if (userCredits < contestCost) {
+                    statusMessage.textContent = `Insufficient Astrons for contest. Normal play requires ${normalCost} Astrons.`;
                 }
-            } else if (userCredits < creditsRequired) {
-                startBtn.disabled = true;
-                startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                statusMessage.textContent = `Insufficient Astrons! You need ${creditsRequired} Astrons to play.`;
             }
         }
         
@@ -1698,9 +1732,11 @@ $conn->close();
             const overlay = document.getElementById('game-status-overlay');
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
-            const startBtn = document.getElementById('start-game-btn');
+            const normalBtn = document.getElementById('normal-play-btn');
+            const contestBtn = document.getElementById('contest-play-btn');
             
-            startBtn.style.display = 'none';
+            normalBtn.style.display = 'none';
+            contestBtn.style.display = 'none';
             
             function updateCountdown() {
                 const now = Math.floor(Date.now() / 1000);
@@ -1735,14 +1771,16 @@ $conn->close();
             const overlay = document.getElementById('game-status-overlay');
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
-            const startBtn = document.getElementById('start-game-btn');
+            const normalBtn = document.getElementById('normal-play-btn');
+            const contestBtn = document.getElementById('contest-play-btn');
             
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             
             timerDisplay.textContent = 'NO SESSION';
             
-            // Hide play button when no session is active
-            startBtn.style.display = 'none';
+            // Hide play buttons when no session is active
+            normalBtn.style.display = 'none';
+            contestBtn.style.display = 'none';
             
             // Build message based on whether next session date is available and contest status
             let message = '';
@@ -1774,8 +1812,8 @@ $conn->close();
             startBtn.style.display = 'none';
         }
         
-        // Start game button handler (with credits)
-        document.getElementById('start-game-btn').addEventListener('click', async function() {
+        // Common function to start game with specified cost and mode
+        async function startGame(creditsRequired, isContestMode) {
             if (state.gameStarted) return;
             
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
@@ -1801,7 +1839,6 @@ $conn->close();
                 return;
             }
             
-            const creditsRequired = gameSession.credits_required || 30;
             const userCredits = <?php echo $user_credits; ?>;
             
             if (userCredits < creditsRequired) {
@@ -1810,7 +1847,7 @@ $conn->close();
             }
             
             // Confirm before deducting credits
-            const confirmMsg = state.isContestMode 
+            const confirmMsg = isContestMode 
                 ? `Join the contest? This will deduct ${creditsRequired} Astrons. Your high Fluxon will be recorded for prizes!`
                 : `This will deduct ${creditsRequired} Astrons from your account. Continue?`;
 
@@ -1819,10 +1856,12 @@ $conn->close();
             }
             
             try {
-                // Deduct credits
+                // Deduct credits - need to pass the correct cost
                 const formData = new FormData();
                 formData.append('session_id', gameSession.id);
                 formData.append('game_name', 'earth-defender');
+                formData.append('play_mode', isContestMode ? 'contest' : 'normal');
+                formData.append('credits_amount', creditsRequired);
                 
                 const response = await fetch('game_api.php?action=deduct_credits', {
                     method: 'POST',
@@ -1836,6 +1875,7 @@ $conn->close();
                     state.gameStarted = true;
                     state.isDemoMode = false;
                     state.creditsUsed = creditsRequired;
+                    state.isContestMode = isContestMode;
                     state.gameSessionId = data.session_id || gameSession.id;
                     state.isPlaying = true;
                     // Show EXIT button
@@ -1858,6 +1898,18 @@ $conn->close();
                 console.error('Error starting game:', error);
                 alert('An error occurred. Please try again.');
             }
+        }
+        
+        // Normal play button handler
+        document.getElementById('normal-play-btn').addEventListener('click', async function() {
+            const normalCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
+            await startGame(normalCost, false);
+        });
+        
+        // Contest play button handler
+        document.getElementById('contest-play-btn').addEventListener('click', async function() {
+            const contestCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
+            await startGame(contestCost, true);
         });
         
         

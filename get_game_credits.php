@@ -24,14 +24,18 @@ if ($game_name) {
     
     if ($game) {
         $is_contest = intval($game['is_contest_active']);
-        $final_credits = $is_contest ? intval($game['contest_credits_required']) : intval($game['credits_per_chance']);
+        $normal_cost = intval($game['credits_per_chance'] ?? 30);
+        $contest_cost = intval($game['contest_credits_required'] ?? 30);
+        $final_credits = $is_contest ? $contest_cost : $normal_cost;
         
         echo json_encode([
             'success' => true,
             'game_name' => $game['game_name'],
             'credits_per_chance' => $final_credits,
+            'normal_credits_required' => $normal_cost,
+            'contest_credits_required' => $contest_cost,
             'is_contest_active' => $is_contest,
-            'game_mode' => $game['game_mode'] ?: 'credits';
+            'game_mode' => $game['game_mode'] ?: 'credits',
             'contest_prizes' => [
                 '1st' => intval($game['contest_first_prize']),
                 '2nd' => intval($game['contest_second_prize']),

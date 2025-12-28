@@ -324,13 +324,11 @@ body {
 }
 
 .game-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: none;
-    border-color: var(--primary-purple);
+    /* Hover effect removed as per user request */
 }
 
 .game-card:active {
-    transform: translateY(-5px) scale(1.01);
+    /* Active effect removed */
 }
 
 .game-icon {

@@ -195,33 +195,31 @@ switch ($action) {
         // Deduct credits when user starts game
         $session_id = intval($_POST['session_id'] ?? 0);
         $game_name = $_POST['game_name'] ?? 'earth-defender';
+        $play_mode = $_POST['play_mode'] ?? 'normal'; // 'normal' or 'contest'
+        $credits_amount = intval($_POST['credits_amount'] ?? 0); // Amount passed from frontend
         
-        // Get contest status
-        $is_contest_active = 0;
-        $contest_stmt = $conn->prepare("SELECT is_contest_active FROM games WHERE game_name = ?");
-        $contest_stmt->bind_param("s", $game_name);
-        $contest_stmt->execute();
-        $contest_res = $contest_stmt->get_result();
-        if ($contest_res->num_rows > 0) {
-            $is_contest_active = intval($contest_res->fetch_assoc()['is_contest_active']);
-        }
-        $contest_stmt->close();
-
         // Get credits per chance from games table (admin-set value) - this is the source of truth
-        $credits_required = 30; // Default fallback
+        $normal_cost = 30; // Default fallback
+        $contest_cost = 30; // Default fallback
         $check_games_table = $conn->query("SHOW TABLES LIKE 'games'");
         if ($check_games_table->num_rows > 0) {
-            // Remove is_active requirement - we need contest settings even if game is not marked active
-            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, contest_credits_required FROM games WHERE game_name = ?");
+            $games_stmt = $conn->prepare("SELECT credits_per_chance, contest_credits_required FROM games WHERE game_name = ?");
             $games_stmt->bind_param("s", $game_name);
             $games_stmt->execute();
             $games_result = $games_stmt->get_result();
             if ($games_result->num_rows > 0) {
                 $game_data = $games_result->fetch_assoc();
-                $is_contest_active = intval($game_data['is_contest_active']);
-                $credits_required = $is_contest_active ? intval($game_data['contest_credits_required']) : intval($game_data['credits_per_chance']);
+                $normal_cost = intval($game_data['credits_per_chance'] ?? 30);
+                $contest_cost = intval($game_data['contest_credits_required'] ?? 30);
             }
             $games_stmt->close();
+        }
+        
+        // Use the amount passed from frontend, or determine based on play mode
+        if ($credits_amount > 0) {
+            $credits_required = $credits_amount;
+        } else {
+            $credits_required = ($play_mode === 'contest') ? $contest_cost : $normal_cost;
         }
         
         // Get active session (if session_id not provided, get latest active)
