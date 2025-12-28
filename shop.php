@@ -4,31 +4,38 @@ if (ob_get_level() == 0) {
     ob_start();
 }
 
-// Suppress any warnings/notices that might output HTML
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-
-session_start();
-require_once 'connection.php';
-
-// Detect AJAX requests early
-$is_ajax = (
+// Detect AJAX requests early (before session/connection)
+$is_ajax_early = (
     (!empty($_POST['ajax']) && $_POST['ajax'] == '1') ||
     (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ||
     (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
 );
 
+// Suppress any warnings/notices that might output HTML
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+session_start();
+require_once 'connection.php';
+
+// Use the early AJAX detection
+$is_ajax = $is_ajax_early;
+
 // Helper function to send JSON response and exit
 function sendJsonResponse($success, $message, $data = []) {
     // Clean all output buffers
     while (ob_get_level() > 0) {
-        ob_end_clean();
+        @ob_end_clean();
     }
     
-    // Set headers
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-cache, must-revalidate');
-    header('X-Content-Type-Options: nosniff');
+    // Only set headers if they haven't been sent
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-cache, must-revalidate');
+        header('X-Content-Type-Options: nosniff');
+        header('Pragma: no-cache');
+    }
     
     // Build response
     $response = [
@@ -59,14 +66,25 @@ $user_id = $_SESSION['user_id'];
 
 // Get user's Fluxon (total score from all games, including shop deductions)
 // Shop deductions are negative scores, so we sum all scores (positive and negative)
-$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
-$fluxon_stmt->bind_param("i", $user_id);
-$fluxon_stmt->execute();
-$fluxon_result = $fluxon_stmt->get_result();
-$fluxon_data = $fluxon_result->fetch_assoc();
-$total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
-if ($total_fluxon < 0) $total_fluxon = 0;
-$fluxon_stmt->close();
+try {
+    if (!$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?")) {
+        throw new Exception("Database error: " . $conn->error);
+    }
+    $fluxon_stmt->bind_param("i", $user_id);
+    if (!$fluxon_stmt->execute()) {
+        throw new Exception("Database error: " . $fluxon_stmt->error);
+    }
+    $fluxon_result = $fluxon_stmt->get_result();
+    $fluxon_data = $fluxon_result->fetch_assoc();
+    $total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
+    if ($total_fluxon < 0) $total_fluxon = 0;
+    $fluxon_stmt->close();
+} catch (Exception $e) {
+    if ($is_ajax) {
+        sendJsonResponse(false, "Error loading balance: " . $e->getMessage());
+    }
+    $total_fluxon = 0;
+}
 
 // Get shop prices from database
 $create_table = $conn->query("
@@ -98,13 +116,24 @@ if ($prices_result && $prices_result->num_rows > 0) {
 }
 
 // Get user's Astrons
-$credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
-$credits_stmt->bind_param("i", $user_id);
-$credits_stmt->execute();
-$credits_result = $credits_stmt->get_result();
-$credits_data = $credits_result->fetch_assoc();
-$user_astrons = intval($credits_data['credits'] ?? 0);
-$credits_stmt->close();
+try {
+    if (!$credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?")) {
+        throw new Exception("Database error: " . $conn->error);
+    }
+    $credits_stmt->bind_param("i", $user_id);
+    if (!$credits_stmt->execute()) {
+        throw new Exception("Database error: " . $credits_stmt->error);
+    }
+    $credits_result = $credits_stmt->get_result();
+    $credits_data = $credits_result->fetch_assoc();
+    $user_astrons = intval($credits_data['credits'] ?? 0);
+    $credits_stmt->close();
+} catch (Exception $e) {
+    if ($is_ajax) {
+        sendJsonResponse(false, "Error loading credits: " . $e->getMessage());
+    }
+    $user_astrons = 0;
+}
 
 // Handle purchase
 $message = '';
@@ -114,16 +143,22 @@ $new_fluxon = $total_fluxon;
 $new_astrons = $user_astrons;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
-    $item_id = intval($_POST['item_id'] ?? 0);
-    $item_cost = intval($_POST['item_cost'] ?? 0);
-    $item_astrons = intval($_POST['item_astrons'] ?? 0);
-    
-    if ($item_id > 0 && $item_cost > 0 && $item_astrons > 0) {
-        // CRITICAL: Verify the item exists in database and prices match admin settings
-        $verify_item_stmt = $conn->prepare("SELECT id, fluxon_amount, astrons_reward, is_active FROM shop_pricing WHERE id = ? AND is_active = 1");
-        $verify_item_stmt->bind_param("i", $item_id);
-        $verify_item_stmt->execute();
-        $verify_item_result = $verify_item_stmt->get_result();
+    // Wrap entire purchase handling in try-catch for AJAX requests
+    try {
+        $item_id = intval($_POST['item_id'] ?? 0);
+        $item_cost = intval($_POST['item_cost'] ?? 0);
+        $item_astrons = intval($_POST['item_astrons'] ?? 0);
+        
+        if ($item_id > 0 && $item_cost > 0 && $item_astrons > 0) {
+            // CRITICAL: Verify the item exists in database and prices match admin settings
+            if (!$verify_item_stmt = $conn->prepare("SELECT id, fluxon_amount, astrons_reward, is_active FROM shop_pricing WHERE id = ? AND is_active = 1")) {
+                throw new Exception("Database error: " . $conn->error);
+            }
+            $verify_item_stmt->bind_param("i", $item_id);
+            if (!$verify_item_stmt->execute()) {
+                throw new Exception("Database error: " . $verify_item_stmt->error);
+            }
+            $verify_item_result = $verify_item_stmt->get_result();
         
         if ($verify_item_result->num_rows === 0) {
             $verify_item_stmt->close();
@@ -149,9 +184,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 $item_astrons = $db_astrons;
                 
                 // Re-check Fluxon balance before transaction
-                $fluxon_check_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
+                if (!$fluxon_check_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?")) {
+                    throw new Exception("Database error: " . $conn->error);
+                }
                 $fluxon_check_stmt->bind_param("i", $user_id);
-                $fluxon_check_stmt->execute();
+                if (!$fluxon_check_stmt->execute()) {
+                    throw new Exception("Database error: " . $fluxon_check_stmt->error);
+                }
                 $fluxon_check_result = $fluxon_check_stmt->get_result();
                 $fluxon_check_data = $fluxon_check_result->fetch_assoc();
                 $current_fluxon = intval($fluxon_check_data['total_fluxon'] ?? 0);
@@ -280,13 +319,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
                 }
             }
         }
-    } else {
-        $error = "Invalid purchase data.";
-        
+        } else {
+            $error = "Invalid purchase data.";
+            
+            if ($is_ajax) {
+                sendJsonResponse(false, $error);
+            }
+        }
+    } catch (Exception $e) {
+        // Catch any unexpected errors and return JSON for AJAX requests
         if ($is_ajax) {
-            sendJsonResponse(false, $error);
+            sendJsonResponse(false, "An error occurred: " . $e->getMessage());
+        } else {
+            $error = "An error occurred: " . $e->getMessage();
+        }
+    } catch (Error $e) {
+        // Catch fatal errors (PHP 7+)
+        if ($is_ajax) {
+            sendJsonResponse(false, "A system error occurred. Please try again later.");
+        } else {
+            $error = "A system error occurred. Please try again later.";
         }
     }
+}
+
+// If AJAX request was handled, we should have exited by now
+// But if we reach here for AJAX, something went wrong
+if ($is_ajax) {
+    sendJsonResponse(false, "Request was not properly processed.");
 }
 
 // If not AJAX, continue with normal page rendering
