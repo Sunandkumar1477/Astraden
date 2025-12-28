@@ -1,52 +1,31 @@
 <?php
-// Start output buffering FIRST - before anything else
-ob_start();
-
-// Check for AJAX request IMMEDIATELY - before any includes or database operations
-$is_ajax = (
-    (!empty($_POST['ajax']) && $_POST['ajax'] == '1') ||
-    (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ||
-    (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
-);
-
 session_start();
 require_once 'connection.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    if ($is_ajax) {
-        ob_end_clean(); // Clean and end buffer
-        header('Content-Type: application/json; charset=utf-8');
-        header('Cache-Control: no-cache, must-revalidate');
-        echo json_encode(['success' => false, 'message' => 'Please login first'], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-    
     header('Location: index.php');
     exit;
 }
 
 $user_id = $_SESSION['user_id'];
 
-// Get user's Fluxon (total score from games, including shop deductions)
-// Shop deductions are negative scores, so we sum all scores (positive and negative)
-$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
+// Get user's Fluxon (total score from games)
+$fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ? AND credits_used > 0");
 $fluxon_stmt->bind_param("i", $user_id);
 $fluxon_stmt->execute();
 $fluxon_result = $fluxon_stmt->get_result();
 $fluxon_data = $fluxon_result->fetch_assoc();
 $total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
-// Ensure Fluxon is never negative
-if ($total_fluxon < 0) $total_fluxon = 0;
 $fluxon_stmt->close();
 
-// Ensure shop_pricing table exists
-$conn->query("
+// Get shop prices from database
+$create_table = $conn->query("
     CREATE TABLE IF NOT EXISTS shop_pricing (
         id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        fluxon_amount INT(11) NOT NULL,
-        astrons_reward INT(11) NOT NULL,
-        claim_type VARCHAR(50) NOT NULL,
+        fluxon_amount INT(11) NOT NULL COMMENT 'Amount of Fluxon required',
+        astrons_reward INT(11) NOT NULL COMMENT 'Astrons user gets',
+        claim_type VARCHAR(50) NOT NULL COMMENT 'Type name',
         is_active TINYINT(1) DEFAULT 1,
         display_order INT(11) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -54,69 +33,6 @@ $conn->query("
         UNIQUE KEY unique_fluxon (fluxon_amount)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
-
-// Ensure game_leaderboard table exists with all required columns
-$conn->query("
-    CREATE TABLE IF NOT EXISTS game_leaderboard (
-        id INT(11) AUTO_INCREMENT PRIMARY KEY,
-        user_id INT(11) NOT NULL,
-        game_name VARCHAR(50) NOT NULL DEFAULT 'earth-defender',
-        score INT(11) NOT NULL DEFAULT 0,
-        credits_used INT(11) NOT NULL DEFAULT 0 COMMENT 'Credits used for this game',
-        played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        session_id INT(11) NULL COMMENT 'Reference to game_sessions',
-        game_mode ENUM('money', 'credits') DEFAULT 'credits',
-        INDEX idx_user_id (user_id),
-        INDEX idx_game_name (game_name),
-        INDEX idx_score (score DESC),
-        INDEX idx_played_at (played_at DESC)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-");
-
-// Ensure user_profile table exists with credits column
-$conn->query("
-    CREATE TABLE IF NOT EXISTS user_profile (
-        id INT(11) AUTO_INCREMENT PRIMARY KEY,
-        user_id INT(11) NOT NULL UNIQUE,
-        credits INT(11) DEFAULT 0,
-        full_name VARCHAR(100) NULL,
-        profile_photo VARCHAR(20) NULL,
-        phone_pay_number VARCHAR(20) NULL,
-        google_pay_number VARCHAR(20) NULL,
-        state VARCHAR(50) NULL,
-        credits_color VARCHAR(20) DEFAULT '#00ffff',
-        bio TEXT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_user_id (user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-");
-
-// Add missing columns if they don't exist
-$columns_to_check = [
-    'game_leaderboard' => [
-        'created_at' => "ALTER TABLE game_leaderboard ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER played_at",
-        'game_mode' => "ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'credits' AFTER credits_used"
-    ],
-    'user_profile' => [
-        'credits' => "ALTER TABLE user_profile ADD COLUMN credits INT(11) DEFAULT 0 AFTER user_id"
-    ]
-];
-
-foreach ($columns_to_check as $table => $columns) {
-    $table_check = $conn->query("SHOW TABLES LIKE '$table'");
-    if ($table_check && $table_check->num_rows > 0) {
-        foreach ($columns as $column => $alter_sql) {
-            $col_check = $conn->query("SHOW COLUMNS FROM $table LIKE '$column'");
-            if ($col_check && $col_check->num_rows == 0) {
-                $conn->query($alter_sql);
-            }
-            if ($col_check) $col_check->close();
-        }
-    }
-    if ($table_check) $table_check->close();
-}
 
 // Get prices from database
 $prices_result = $conn->query("SELECT * FROM shop_pricing WHERE is_active = 1 ORDER BY display_order ASC LIMIT 3");
@@ -126,9 +42,9 @@ if ($prices_result && $prices_result->num_rows > 0) {
 } else {
     // Default prices if none set
     $shop_prices = [
-        ['id' => 1, 'fluxon_amount' => 5000, 'astrons_reward' => 10, 'claim_type' => 'Basic Access'],
-        ['id' => 2, 'fluxon_amount' => 7500, 'astrons_reward' => 20, 'claim_type' => 'Standard Pack'],
-        ['id' => 3, 'fluxon_amount' => 10000, 'astrons_reward' => 30, 'claim_type' => 'Elite Reserve']
+        ['id' => 1, 'fluxon_amount' => 5000, 'astrons_reward' => 10, 'claim_type' => 'Basic Claim'],
+        ['id' => 2, 'fluxon_amount' => 7500, 'astrons_reward' => 20, 'claim_type' => 'Standard Claim'],
+        ['id' => 3, 'fluxon_amount' => 10000, 'astrons_reward' => 30, 'claim_type' => 'Premium Claim']
     ];
 }
 
@@ -141,1292 +57,520 @@ $credits_data = $credits_result->fetch_assoc();
 $user_astrons = intval($credits_data['credits'] ?? 0);
 $credits_stmt->close();
 
+// Handle purchase with discount system
 $message = '';
 $error = '';
-$purchase_success = false;
-$new_fluxon = $total_fluxon;
-$new_astrons = $user_astrons;
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purchase_item'])) {
-    // For AJAX requests, clean output buffer immediately
-    if ($is_ajax) {
-        ob_end_clean(); // End and clean buffer completely
-        ob_start(); // Start fresh buffer for JSON output only
-    }
     $item_id = intval($_POST['item_id'] ?? 0);
     $item_cost = intval($_POST['item_cost'] ?? 0);
     $item_astrons = intval($_POST['item_astrons'] ?? 0);
     
     if ($item_id > 0 && $item_cost > 0 && $item_astrons > 0) {
-        // Re-check Fluxon balance before transaction (in case it changed)
-        $fluxon_check_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
-        $fluxon_check_stmt->bind_param("i", $user_id);
-        $fluxon_check_stmt->execute();
-        $fluxon_check_result = $fluxon_check_stmt->get_result();
-        $fluxon_check_data = $fluxon_check_result->fetch_assoc();
-        $current_fluxon = intval($fluxon_check_data['total_fluxon'] ?? 0);
-        if ($current_fluxon < 0) $current_fluxon = 0;
-        $fluxon_check_stmt->close();
-        
-        if ($current_fluxon >= $item_cost) {
-            // Start transaction for atomic operation
-            $conn->begin_transaction();
+        if ($total_fluxon >= $item_cost) {
+            // Add Astrons based on discount rate
+            $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
+            $update_stmt->bind_param("ii", $item_astrons, $user_id);
             
-            try {
-                // Step 1: Add Astrons to user profile (credits column)
-                // First ensure user_profile row exists for this user
-                $check_profile = $conn->prepare("SELECT id, credits FROM user_profile WHERE user_id = ?");
-                $check_profile->bind_param("i", $user_id);
-                $check_profile->execute();
-                $profile_result = $check_profile->get_result();
-                $profile_exists = ($profile_result->num_rows > 0);
-                $check_profile->close();
-                
-                if (!$profile_exists) {
-                    // Create user_profile row if it doesn't exist
-                    $create_profile = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, 0)");
-                    $create_profile->bind_param("i", $user_id);
-                    if (!$create_profile->execute()) {
-                        throw new Exception("Failed to create user profile: " . $create_profile->error);
-                    }
-                    $create_profile->close();
-                }
-                
-                // Update Astrons (credits) in user_profile table - this stores coins per user
-                $update_stmt = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
-                $update_stmt->bind_param("ii", $item_astrons, $user_id);
-                
-                if (!$update_stmt->execute()) {
-                    throw new Exception("Failed to update Astrons in user_profile: " . $update_stmt->error);
-                }
-                
-                $affected_rows = $update_stmt->affected_rows;
-                $update_stmt->close();
-                
-                // Get previous Astrons count before addition (for response)
-                $previous_astrons_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
-                $previous_astrons_stmt->bind_param("i", $user_id);
-                $previous_astrons_stmt->execute();
-                $previous_astrons_result = $previous_astrons_stmt->get_result();
-                $previous_astrons_data = $previous_astrons_result->fetch_assoc();
-                $previous_astrons = intval($previous_astrons_data['credits'] ?? 0) - $item_astrons; // Before addition
-                $previous_astrons_stmt->close();
-                
-                // Step 2: Deduct Fluxon by inserting a negative score entry
-                // This represents the Fluxon spent (negative score will reduce total)
-                // Store in game_leaderboard table with user_id to track per user
-                $negative_score = -$item_cost; // Negative score to deduct Fluxon
-                
-                // Check which timestamp columns exist
-                $check_created = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'created_at'");
-                $check_played = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'played_at'");
-                $has_created_at = ($check_created && $check_created->num_rows > 0);
-                $has_played_at = ($check_played && $check_played->num_rows > 0);
-                if ($check_created) $check_created->close();
-                if ($check_played) $check_played->close();
-                
-                // Build INSERT query based on available columns
-                if ($has_created_at && $has_played_at) {
-                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at, played_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW(), NOW())");
-                } else if ($has_played_at) {
-                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, played_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
-                } else if ($has_created_at) {
-                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode, created_at) VALUES (?, 'shop-purchase', ?, 0, 'credits', NOW())");
-                } else {
-                    $deduct_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, game_mode) VALUES (?, 'shop-purchase', ?, 0, 'credits')");
-                }
-                
-                $deduct_stmt->bind_param("ii", $user_id, $negative_score);
-                
-                if (!$deduct_stmt->execute()) {
-                    throw new Exception("Failed to deduct Fluxon: " . $deduct_stmt->error);
-                }
-                
-                $deduct_stmt->close();
-                
-                // Step 3: Recalculate and verify total Fluxon after deduction
-                // This ensures we get the actual updated value from database
-                $fluxon_recalc_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ?");
-                $fluxon_recalc_stmt->bind_param("i", $user_id);
-                $fluxon_recalc_stmt->execute();
-                $fluxon_recalc_result = $fluxon_recalc_stmt->get_result();
-                $fluxon_recalc_data = $fluxon_recalc_result->fetch_assoc();
-                $new_fluxon = intval($fluxon_recalc_data['total_fluxon'] ?? 0);
-                if ($new_fluxon < 0) $new_fluxon = 0;
-                $fluxon_recalc_stmt->close();
-                
-                // Verify the deduction worked correctly
-                $expected_fluxon = $current_fluxon - $item_cost;
-                if ($new_fluxon != $expected_fluxon && $new_fluxon != max(0, $expected_fluxon)) {
-                    // Log for debugging but don't fail - database might have other entries
-                    error_log("Fluxon verification: Expected {$expected_fluxon}, Got {$new_fluxon}, Current was {$current_fluxon}, Cost was {$item_cost}");
-                }
-                
-                // Step 4: Re-fetch Astrons to ensure we have the latest value
-                $final_astrons_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
-                $final_astrons_stmt->bind_param("i", $user_id);
-                $final_astrons_stmt->execute();
-                $final_astrons_result = $final_astrons_stmt->get_result();
-                $final_astrons_data = $final_astrons_result->fetch_assoc();
-                $final_astrons = intval($final_astrons_data['credits'] ?? 0);
-                $final_astrons_stmt->close();
-                
-                // Commit transaction - all operations successful
-                $conn->commit();
-                
-                // Update variables for display - use final verified values
-                $total_fluxon = $new_fluxon;
-                $user_astrons = $final_astrons;
-                $purchase_success = true;
-                $message = "Nexus Link Established! Claimed {$item_astrons} Astrons.";
-                
-                // If AJAX request, return JSON response with verified database values
-                if ($is_ajax) {
-                    ob_end_clean(); // Clean buffer completely
-                    header('Content-Type: application/json; charset=utf-8');
-                    header('Cache-Control: no-cache, must-revalidate');
-                    header('X-Content-Type-Options: nosniff');
-                    echo json_encode([
-                        'success' => true,
-                        'message' => $message,
-                        'new_fluxon' => $new_fluxon, // Updated Fluxon after deduction
-                        'new_astrons' => $final_astrons, // Updated Astrons after addition
-                        'fluxon_deducted' => $item_cost,
-                        'astrons_added' => $item_astrons,
-                        'previous_fluxon' => $current_fluxon,
-                        'previous_astrons' => $previous_astrons
-                    ], JSON_UNESCAPED_UNICODE);
-                    $conn->close();
-                    exit;
-                }
-                
-            } catch (Exception $e) {
-                // Rollback on any error
-                $conn->rollback();
-                $error = "Transmission Failure: " . $e->getMessage() . ". Please try again.";
-                error_log("Shop purchase error for user {$user_id}: " . $e->getMessage());
-                
-                // If AJAX request, return JSON error
-                if ($is_ajax) {
-                    ob_end_clean(); // Clean buffer completely
-                    header('Content-Type: application/json; charset=utf-8');
-                    header('Cache-Control: no-cache, must-revalidate');
-                    header('X-Content-Type-Options: nosniff');
-                    echo json_encode([
-                        'success' => false,
-                        'message' => $error
-                    ], JSON_UNESCAPED_UNICODE);
-                    $conn->close();
-                    exit;
-                }
+            if ($update_stmt->execute()) {
+                $message = "Successfully claimed {$item_astrons} Astrons using {$item_cost} Fluxon!";
+                // Refresh user data
+                $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
+                $credits_stmt->bind_param("i", $user_id);
+                $credits_stmt->execute();
+                $credits_result = $credits_stmt->get_result();
+                $credits_data = $credits_result->fetch_assoc();
+                $user_astrons = intval($credits_data['credits'] ?? 0);
+                $credits_stmt->close();
+                // Refresh Fluxon (it doesn't change, but refresh to be sure)
+                $fluxon_stmt = $conn->prepare("SELECT COALESCE(SUM(score), 0) as total_fluxon FROM game_leaderboard WHERE user_id = ? AND credits_used > 0");
+                $fluxon_stmt->bind_param("i", $user_id);
+                $fluxon_stmt->execute();
+                $fluxon_result = $fluxon_stmt->get_result();
+                $fluxon_data = $fluxon_result->fetch_assoc();
+                $total_fluxon = intval($fluxon_data['total_fluxon'] ?? 0);
+                $fluxon_stmt->close();
+            } else {
+                $error = "Failed to process purchase. Please try again.";
             }
+            $update_stmt->close();
         } else {
-            $error = "Insufficient Fluxon Energy! You have " . number_format($current_fluxon) . " Fluxon, but need " . number_format($item_cost) . ".";
-            
-            // If AJAX request, return JSON error
-            if ($is_ajax) {
-                ob_end_clean(); // Clean buffer completely
-                header('Content-Type: application/json; charset=utf-8');
-                header('Cache-Control: no-cache, must-revalidate');
-                header('X-Content-Type-Options: nosniff');
-                echo json_encode([
-                    'success' => false,
-                    'message' => $error
-                ], JSON_UNESCAPED_UNICODE);
-                $conn->close();
-                exit;
-            }
-        }
-    } else {
-        $error = "Invalid purchase request. Please try again.";
-        
-        // If AJAX request, return JSON error
-        if ($is_ajax) {
-            ob_end_clean(); // Clean buffer completely
-            header('Content-Type: application/json; charset=utf-8');
-            header('Cache-Control: no-cache, must-revalidate');
-            header('X-Content-Type-Options: nosniff');
-            echo json_encode([
-                'success' => false,
-                'message' => $error
-            ], JSON_UNESCAPED_UNICODE);
-            $conn->close();
-            exit;
+            $error = "Insufficient Fluxon! You need {$item_cost} Fluxon to claim this item.";
         }
     }
 }
 
-// End output buffering for non-AJAX requests only
-if (!$is_ajax) {
-    ob_end_flush();
-}
+$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fluxon Shop - Space Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop - Astra Den</title>
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
+    <link rel="alternate icon" type="image/png" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/index.css">
     <style>
         :root {
-            --cyan: #00ffff;
-            --purple: #9d4edd;
-            --gold: #FFD700;
-            --bg-dark: #050508;
+            --primary-cyan: #00ffff;
+            --primary-purple: #9d4edd;
+            --primary-pink: #ff006e;
+            --dark-bg: #0a0a0f;
             --card-bg: rgba(15, 15, 25, 0.85);
-            --neon-glow: 0 0 15px rgba(0, 255, 255, 0.4);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-dark);
-            color: #fff;
+        .shop-page {
             min-height: 100vh;
-            padding-bottom: 50px;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(157, 78, 221, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.08) 0%, transparent 40%);
-            background-attachment: fixed;
-        }
-
-        /* --- NAVIGATION --- */
-        .nav-bar {
-            max-width: 1000px;
-            margin: 15px auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: flex-start;
-        }
-
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--cyan);
-            border-radius: 50px;
-            color: var(--cyan);
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.3s ease;
-        }
-
-        .back-btn:hover {
-            background: rgba(0, 255, 255, 0.15);
-            box-shadow: var(--neon-glow);
-        }
-
-        /* --- HEADER --- */
-        .shop-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 20px;
+            position: relative;
+            padding: 120px 20px 50px;
+            z-index: 1;
         }
 
         .shop-header {
             text-align: center;
-            margin: 20px 0 40px;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 2;
         }
 
         .shop-header h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.8rem, 8vw, 3rem);
-            color: var(--cyan);
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            margin-bottom: 10px;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            color: var(--primary-cyan);
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+            font-weight: 900;
         }
 
         .shop-header p {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.6);
-            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            margin-top: 10px;
         }
 
-        /* --- BALANCE DASHBOARD --- */
-        .user-balance {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 40px;
+        .balance-section {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
         }
 
         .balance-card {
             background: var(--card-bg);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            padding: 20px;
-            border-radius: 16px;
+            border: 2px solid var(--primary-cyan);
+            border-radius: 20px;
+            padding: 25px 40px;
             text-align: center;
+            min-width: 250px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1), transparent);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .balance-card.fluxon {
+            border-color: #00ff00;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+
+        .balance-card.astrons {
+            border-color: #FFD700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .balance-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-card.fluxon .balance-value {
+            color: #00ff00;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+        }
+
+        .balance-card.astrons .balance-value {
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .shop-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .shop-item {
+            background: var(--card-bg);
+            border: 2px solid var(--primary-purple);
+            border-radius: 25px;
+            padding: 35px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(10px);
         }
 
-        .balance-card.fluxon-card { border-color: var(--purple); }
-        .balance-card.astron-card { border-color: var(--gold); }
-
-        .balance-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-            color: rgba(255, 255, 255, 0.7);
+        .shop-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.05), rgba(157, 78, 221, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .balance-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.2rem, 5vw, 2.2rem);
-            font-weight: 900;
+        .shop-item:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--primary-cyan);
+            box-shadow: 0 15px 50px rgba(0, 255, 255, 0.4);
         }
 
-        .fluxon-card .balance-value { color: var(--purple); }
-        .astron-card .balance-value { color: var(--gold); }
-
-        /* --- SHOP GRID --- */
-        .shop-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+        .shop-item:hover::before {
+            opacity: 1;
         }
 
-        .shop-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .item-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+            color: white;
+            padding: 5px 15px;
             border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .item-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px currentColor);
             position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .shop-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--cyan);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
-        }
-
-        .item-visual {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
-            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+            z-index: 1;
         }
 
         .item-name {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
+            color: var(--primary-cyan);
+            margin-bottom: 15px;
             font-weight: 700;
-            margin-bottom: 10px;
-            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
         }
 
-        .conversion-pill {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 6px 16px;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            color: var(--cyan);
-            margin-bottom: 20px;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-        }
-
-        .reward-area {
+        .item-details {
             background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
             padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(255, 215, 0, 0.1);
+            margin: 20px 0;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
         }
 
-        .reward-label { font-size: 0.7rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); }
-        .reward-value { font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--gold); font-weight: 800; }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
 
-        .cost-label { color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-bottom: 15px; font-weight: 600; }
-        .cost-value { color: var(--purple); font-weight: 800; }
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .detail-value {
+            color: #FFD700;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .conversion-rate {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            margin-top: 10px;
+            font-style: italic;
+        }
 
         .purchase-btn {
             width: 100%;
             padding: 15px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
             border: none;
+            border-radius: 12px;
+            color: white;
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            cursor: pointer;
-            transition: 0.3s;
-            background: linear-gradient(90deg, #1e293b, #0f172a);
+            position: relative;
+            z-index: 1;
+            margin-top: 20px;
+        }
+
+        .purchase-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+        }
+
+        .purchase-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .purchase-btn:disabled {
+            background: rgba(100, 100, 100, 0.3);
             color: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: not-allowed;
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
-        .purchase-btn.active {
-            background: linear-gradient(90deg, var(--cyan), var(--purple));
-            color: #fff;
-            border: none;
-            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2);
-        }
-
-        .purchase-btn.active:hover {
-            transform: scale(1.02);
-            box-shadow: var(--neon-glow);
-        }
-
-        /* --- ALERTS --- */
-        .alert {
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            text-align: center;
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 12px 25px;
+            background: var(--card-bg);
+            border: 2px solid var(--primary-cyan);
+            border-radius: 10px;
+            color: var(--primary-cyan);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            animation: slideDown 0.5s ease;
-        }
-        .alert-success { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
-        .alert-error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
-
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* --- COMPREHENSIVE MOBILE MEDIA QUERIES --- */
-        
-        /* Extra Large Devices (Large Desktops) - 1200px and up */
-        @media (min-width: 1200px) {
-            .shop-container {
-                max-width: 1200px;
-            }
-            .shop-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 30px;
-            }
+        .back-btn:hover {
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            transform: translateX(-3px);
         }
 
-        /* Large Devices (Desktops) - 992px to 1199px */
-        @media (max-width: 1199px) and (min-width: 992px) {
-            .shop-container {
-                max-width: 960px;
-            }
-            .shop-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 25px;
-            }
+        .message {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            position: relative;
+            z-index: 2;
         }
 
-        /* Medium Devices (Tablets) - 768px to 991px */
-        @media (max-width: 991px) and (min-width: 768px) {
-            .shop-container {
-                max-width: 100%;
-                padding: 0 30px;
+        .error {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff0000;
+            color: #ff0000;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        @media (max-width: 768px) {
+            .shop-page {
+                padding: 100px 15px 30px;
             }
-            .nav-bar {
-                padding: 0 30px;
-            }
-            .shop-header {
-                margin: 30px 0 50px;
-            }
-            .shop-header h1 {
-                font-size: 2.5rem;
-                letter-spacing: 3px;
-            }
-            .shop-header p {
-                font-size: 1.1rem;
-            }
-            .user-balance {
-                grid-template-columns: 1fr 1fr;
+
+            .balance-section {
                 gap: 20px;
-                margin-bottom: 50px;
             }
-            .balance-card {
-                padding: 25px;
-            }
-            .balance-label {
-                font-size: 0.8rem;
-            }
-            .balance-value {
-                font-size: 2rem;
-            }
-            .shop-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 25px;
-            }
-            .shop-card {
-                padding: 25px;
-            }
-            .item-visual {
-                font-size: 3rem;
-            }
-            .item-name {
-                font-size: 1.3rem;
-            }
-            .reward-area {
-                padding: 18px;
-            }
-            .reward-value {
-                font-size: 1.8rem;
-            }
-            .purchase-btn {
-                padding: 14px;
-                font-size: 0.95rem;
-            }
-        }
 
-        /* Small Devices (Large Phones) - 650px to 767px */
-        @media (max-width: 767px) and (min-width: 651px) {
-            .shop-container {
-                max-width: 100%;
-                padding: 0 25px;
-            }
-            .nav-bar {
-                padding: 0 25px;
-                margin: 20px auto;
-            }
-            .back-btn {
-                padding: 12px 22px;
-                font-size: 0.9rem;
-            }
-            .shop-header {
-                margin: 25px 0 45px;
-            }
-            .shop-header h1 {
-                font-size: 2.3rem;
-                letter-spacing: 3px;
-                margin-bottom: 12px;
-            }
-            .shop-header p {
-                font-size: 1rem;
-                letter-spacing: 1.5px;
-            }
-            .user-balance {
-                grid-template-columns: 1fr 1fr;
-                gap: 15px;
-                margin-bottom: 45px;
-            }
             .balance-card {
-                padding: 22px;
-                border-radius: 14px;
+                min-width: 100%;
+                padding: 20px 30px;
             }
-            .balance-label {
-                font-size: 0.75rem;
-                margin-bottom: 10px;
-            }
-            .balance-value {
-                font-size: 1.8rem;
-            }
+
             .shop-grid {
                 grid-template-columns: 1fr;
-                gap: 22px;
+                gap: 20px;
             }
-            .shop-card {
-                padding: 28px;
-                border-radius: 18px;
-            }
-            .item-visual {
-                font-size: 3.2rem;
-                margin-bottom: 18px;
-            }
-            .item-name {
-                font-size: 1.35rem;
-                margin-bottom: 12px;
-            }
-            .conversion-pill {
-                padding: 7px 18px;
-                font-size: 0.85rem;
-                margin-bottom: 22px;
-            }
-            .reward-area {
-                padding: 20px;
-                margin-bottom: 22px;
-            }
-            .reward-label {
-                font-size: 0.75rem;
-            }
-            .reward-value {
-                font-size: 1.9rem;
-            }
-            .cost-label {
-                font-size: 0.95rem;
-                margin-bottom: 18px;
-            }
-            .purchase-btn {
-                padding: 16px;
-                font-size: 0.95rem;
-            }
-            .alert {
-                padding: 18px;
-                margin-bottom: 35px;
-            }
-        }
 
-        /* Extra Small Devices (Phones) - 481px to 650px */
-        @media (max-width: 650px) and (min-width: 481px) {
-            .shop-container {
-                max-width: 100%;
-                padding: 0 20px;
-            }
-            .nav-bar {
-                padding: 0 20px;
-                margin: 15px auto;
-                justify-content: center;
-            }
             .back-btn {
+                top: 15px;
+                left: 15px;
                 padding: 10px 20px;
-                font-size: 0.85rem;
-                gap: 6px;
-            }
-            .shop-header {
-                margin: 20px 0 35px;
-            }
-            .shop-header h1 {
-                font-size: 2rem;
-                letter-spacing: 2px;
-                margin-bottom: 10px;
-            }
-            .shop-header p {
-                font-size: 0.95rem;
-                letter-spacing: 1px;
-            }
-            .user-balance {
-                grid-template-columns: 1fr;
-                gap: 12px;
-                margin-bottom: 35px;
-            }
-            .balance-card {
-                padding: 20px;
-                border-radius: 14px;
-            }
-            .balance-label {
-                font-size: 0.7rem;
-                margin-bottom: 8px;
-            }
-            .balance-value {
-                font-size: 1.7rem;
-            }
-            .shop-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            .shop-card {
-                padding: 25px;
-                border-radius: 16px;
-            }
-            .item-visual {
-                font-size: 3rem;
-                margin-bottom: 15px;
-            }
-            .item-name {
-                font-size: 1.25rem;
-                margin-bottom: 10px;
-            }
-            .conversion-pill {
-                padding: 6px 16px;
-                font-size: 0.8rem;
-                margin-bottom: 20px;
-            }
-            .reward-area {
-                padding: 18px;
-                margin-bottom: 20px;
-            }
-            .reward-label {
-                font-size: 0.7rem;
-            }
-            .reward-value {
-                font-size: 1.7rem;
-            }
-            .reward-value small {
-                font-size: 0.75rem;
-            }
-            .cost-label {
                 font-size: 0.9rem;
-                margin-bottom: 15px;
-            }
-            .purchase-btn {
-                padding: 15px;
-                font-size: 0.9rem;
-            }
-            .alert {
-                padding: 15px;
-                margin-bottom: 30px;
-                font-size: 0.95rem;
-            }
-        }
-
-        /* Very Small Devices (Small Phones) - 320px to 480px */
-        @media (max-width: 480px) {
-            body {
-                padding-bottom: 30px;
-            }
-            .shop-container {
-                max-width: 100%;
-                padding: 0 15px;
-            }
-            .nav-bar {
-                padding: 0 15px;
-                margin: 12px auto;
-                justify-content: center;
-            }
-            .back-btn {
-                padding: 9px 18px;
-                font-size: 0.8rem;
-                gap: 5px;
-                letter-spacing: 0.5px;
-            }
-            .back-btn i {
-                font-size: 0.85rem;
-            }
-            .shop-header {
-                margin: 15px 0 30px;
-            }
-            .shop-header h1 {
-                font-size: 1.75rem;
-                letter-spacing: 1.5px;
-                margin-bottom: 8px;
-                line-height: 1.2;
-            }
-            .shop-header p {
-                font-size: 0.85rem;
-                letter-spacing: 0.5px;
-                padding: 0 10px;
-            }
-            .user-balance {
-                grid-template-columns: 1fr;
-                gap: 10px;
-                margin-bottom: 30px;
-            }
-            .balance-card {
-                padding: 18px 15px;
-                border-radius: 12px;
-            }
-            .balance-label {
-                font-size: 0.65rem;
-                margin-bottom: 6px;
-                letter-spacing: 1.5px;
-            }
-            .balance-value {
-                font-size: 1.5rem;
-                word-break: break-word;
-            }
-            .shop-grid {
-                grid-template-columns: 1fr;
-                gap: 18px;
-            }
-            .shop-card {
-                padding: 20px 18px;
-                border-radius: 14px;
-            }
-            .item-visual {
-                font-size: 2.5rem;
-                margin-bottom: 12px;
-            }
-            .item-visual i {
-                font-size: 2.5rem;
-            }
-            .item-name {
-                font-size: 1.1rem;
-                margin-bottom: 8px;
-                line-height: 1.3;
-            }
-            .conversion-pill {
-                padding: 5px 14px;
-                font-size: 0.75rem;
-                margin-bottom: 18px;
-                line-height: 1.4;
-            }
-            .reward-area {
-                padding: 15px;
-                margin-bottom: 18px;
-                border-radius: 10px;
-            }
-            .reward-label {
-                font-size: 0.65rem;
-                margin-bottom: 5px;
-            }
-            .reward-value {
-                font-size: 1.5rem;
-                line-height: 1.2;
-            }
-            .reward-value small {
-                font-size: 0.7rem;
-            }
-            .cost-label {
-                font-size: 0.85rem;
-                margin-bottom: 12px;
-                line-height: 1.4;
-            }
-            .cost-value {
-                display: block;
-                margin-top: 3px;
-                font-size: 1rem;
-            }
-            .purchase-btn {
-                padding: 14px;
-                font-size: 0.85rem;
-                letter-spacing: 0.5px;
-                border-radius: 8px;
-            }
-            .alert {
-                padding: 12px 15px;
-                margin-bottom: 25px;
-                border-radius: 10px;
-                font-size: 0.85rem;
-            }
-            .alert i {
-                font-size: 0.9rem;
-                margin-right: 6px;
-            }
-        }
-
-        /* Ultra Small Devices (Very Small Phones) - 320px and below */
-        @media (max-width: 320px) {
-            .shop-container {
-                padding: 0 12px;
-            }
-            .nav-bar {
-                padding: 0 12px;
-                margin: 10px auto;
-            }
-            .back-btn {
-                padding: 8px 15px;
-                font-size: 0.75rem;
-            }
-            .shop-header h1 {
-                font-size: 1.5rem;
-                letter-spacing: 1px;
-            }
-            .shop-header p {
-                font-size: 0.8rem;
-            }
-            .balance-card {
-                padding: 15px 12px;
-            }
-            .balance-label {
-                font-size: 0.6rem;
-            }
-            .balance-value {
-                font-size: 1.3rem;
-            }
-            .shop-card {
-                padding: 18px 15px;
-            }
-            .item-visual {
-                font-size: 2.2rem;
-            }
-            .item-name {
-                font-size: 1rem;
-            }
-            .conversion-pill {
-                font-size: 0.7rem;
-                padding: 4px 12px;
-            }
-            .reward-value {
-                font-size: 1.3rem;
-            }
-            .purchase-btn {
-                padding: 12px;
-                font-size: 0.8rem;
-            }
-        }
-
-        /* Landscape Orientation for Mobile */
-        @media (max-width: 900px) and (orientation: landscape) {
-            .shop-header {
-                margin: 15px 0 25px;
-            }
-            .shop-header h1 {
-                font-size: 2rem;
-            }
-            .user-balance {
-                grid-template-columns: 1fr 1fr;
-                gap: 15px;
-                margin-bottom: 30px;
-            }
-            .shop-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-            }
-        }
-
-        /* Touch Device Optimizations */
-        @media (hover: none) and (pointer: coarse) {
-            .back-btn {
-                min-height: 44px;
-                min-width: 44px;
-            }
-            .purchase-btn {
-                min-height: 48px;
-            }
-            .shop-card {
-                -webkit-tap-highlight-color: rgba(0, 255, 255, 0.1);
-            }
-        }
-
-        /* High DPI Displays */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .balance-card,
-            .shop-card {
-                border-width: 0.5px;
             }
         }
     </style>
 </head>
-<body class="no-select">
-    <div class="nav-bar">
-        <a href="index.php" class="back-btn"><i class="fas fa-arrow-left"></i> Games Hub</a>
-    </div>
+<body class="no-select" oncontextmenu="return false;">
+    <!-- Space Background -->
+    <div id="space-background"></div>
     
-    <div class="shop-container">
+    <a href="index.php" class="back-btn">
+        <span>←</span>
+        <span>Back</span>
+    </a>
+    
+    <div class="shop-page">
         <div class="shop-header">
-            <h1>Aether Shop</h1>
-            <p>Convert Game Energy into Stellar Credits</p>
+            <h1>🛒 FLUXON SHOP</h1>
+            <p>Convert your game scores into Astrons</p>
+        </div>
+        
+        <div class="balance-section">
+            <div class="balance-card fluxon">
+                <div class="balance-label">Total Fluxon</div>
+                <div class="balance-value" id="fluxonBalance"><?php echo number_format($total_fluxon); ?></div>
+            </div>
+            <div class="balance-card astrons">
+                <div class="balance-label">Your Astrons</div>
+                <div class="balance-value" id="astronsBalance"><?php echo number_format($user_astrons); ?></div>
+            </div>
         </div>
         
         <?php if ($message): ?>
-            <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?php echo $message; ?></div>
+            <div class="message">✓ <?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
         
         <?php if ($error): ?>
-            <div class="alert alert-error"><i class="fas fa-exclamation-triangle"></i> <?php echo $error; ?></div>
+            <div class="error">✗ <?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
-
-        <div class="user-balance">
-            <div class="balance-card fluxon-card" id="fluxonCard">
-                <div class="balance-label">Total Fluxon Energy</div>
-                <div class="balance-value" id="fluxonBalance" data-value="<?php echo $total_fluxon; ?>"><?php echo number_format($total_fluxon); ?></div>
-            </div>
-            <div class="balance-card astron-card" id="astronsCard">
-                <div class="balance-label">Available Astrons</div>
-                <div class="balance-value" id="astronsBalance" data-value="<?php echo $user_astrons; ?>"><?php echo number_format($user_astrons); ?></div>
-            </div>
-        </div>
         
         <div class="shop-grid">
             <?php 
-            $icons = ['<i class="fas fa-bolt" style="color:#00ffff"></i>', 
-                      '<i class="fas fa-satellite-dish" style="color:#9d4edd"></i>', 
-                      '<i class="fas fa-meteor" style="color:#FFD700"></i>'];
-            
+            $colors = ['#00ffff', '#9d4edd', '#FFD700'];
+            $icons = ['⚡', '⚡⚡', '⚡⚡⚡'];
+            $badges = ['BASIC', 'STANDARD', 'PREMIUM'];
             foreach ($shop_prices as $index => $price): 
                 $fluxon = intval($price['fluxon_amount']);
                 $astrons = intval($price['astrons_reward']);
-                $can_afford = ($total_fluxon >= $fluxon);
+                $type = htmlspecialchars($price['claim_type']);
+                $color = $colors[$index] ?? '#00ffff';
+                $icon = $icons[$index] ?? '⚡';
+                $badge = $badges[$index] ?? 'CLAIM';
+                $ratio = round($fluxon / $astrons, 0);
+                $can_afford = $total_fluxon >= $fluxon;
             ?>
-            <div class="shop-card" style="<?php echo $index === 2 ? 'border-color: var(--gold); background: rgba(255,215,0,0.03);' : ''; ?>">
-                <div>
-                    <div class="item-visual"><?php echo $icons[$index] ?? $icons[0]; ?></div>
-                    <div class="item-name"><?php echo htmlspecialchars($price['claim_type']); ?></div>
-                    <div class="conversion-pill">Rate: 1 Astron / <?php echo number_format($fluxon / $astrons); ?> Fluxon</div>
-                    
-                    <div class="reward-area">
-                        <div class="reward-label">Payload Amount</div>
-                        <div class="reward-value"><?php echo $astrons; ?> <small style="font-size:0.8rem">Astrons</small></div>
+            <div class="shop-item" style="border-color: <?php echo $color; ?>;">
+                <div class="item-badge" style="background: linear-gradient(135deg, <?php echo $color; ?>, <?php echo $index == 2 ? '#FFA500' : $color; ?>);">
+                    <?php echo $badge; ?>
+                </div>
+                <div class="item-icon" style="color: <?php echo $color; ?>;"><?php echo $icon; ?></div>
+                <div class="item-name" style="color: <?php echo $color; ?>;"><?php echo $type; ?></div>
+                
+                <div class="item-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Cost:</span>
+                        <span class="detail-value"><?php echo number_format($fluxon); ?> Fluxon</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Reward:</span>
+                        <span class="detail-value"><?php echo $astrons; ?> Astrons</span>
+                    </div>
+                    <div class="conversion-rate">
+                        <?php echo number_format($ratio); ?> Fluxon per Astron
                     </div>
                 </div>
-
-                <div>
-                    <div class="cost-label">Required Energy: <span class="cost-value"><?php echo number_format($fluxon); ?> Fluxon</span></div>
-                    
-                    <form method="POST" id="purchase-form-<?php echo $price['id']; ?>" onsubmit="handlePurchase(event, <?php echo $price['id']; ?>, <?php echo $fluxon; ?>, <?php echo $astrons; ?>); return false;">
-                        <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
-                        <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
-                        <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
-                        <button type="submit" name="purchase_item" 
-                                class="purchase-btn <?php echo $can_afford ? 'active' : ''; ?>" 
-                                <?php echo !$can_afford ? 'disabled' : ''; ?>
-                                id="purchase-btn-<?php echo $price['id']; ?>">
-                            <?php echo $can_afford ? 'Claim Reward' : 'Insufficient Energy'; ?>
-                        </button>
-                    </form>
-                </div>
+                
+                <form method="POST" onsubmit="return confirm('Claim <?php echo $astrons; ?> Astrons for <?php echo number_format($fluxon); ?> Fluxon?');">
+                    <input type="hidden" name="item_id" value="<?php echo $price['id']; ?>">
+                    <input type="hidden" name="item_cost" value="<?php echo $fluxon; ?>">
+                    <input type="hidden" name="item_astrons" value="<?php echo $astrons; ?>">
+                    <button type="submit" name="purchase_item" class="purchase-btn" <?php echo !$can_afford ? 'disabled' : ''; ?>>
+                        <?php echo $can_afford ? "Claim {$astrons} Astrons" : "Insufficient Fluxon"; ?>
+                    </button>
+                </form>
             </div>
             <?php endforeach; ?>
         </div>
     </div>
     
     <script>
-        // Animation function for number counting
-        function animateValue(element, start, end, duration, callback) {
-            const startTime = performance.now();
-            const isDecrease = start > end;
-            
-            function update(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // Easing function for smooth animation
-                const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-                const current = Math.floor(start + (end - start) * easeOutCubic);
-                
-                element.textContent = current.toLocaleString();
-                
-                if (progress < 1) {
-                    requestAnimationFrame(update);
-                } else {
-                    element.textContent = end.toLocaleString();
-                    if (callback) callback();
-                }
-            }
-            
-            requestAnimationFrame(update);
-        }
-        
-        // Handle purchase with visual effects
-        async function handlePurchase(event, itemId, fluxonCost, astronsReward) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
-            const form = document.getElementById('purchase-form-' + itemId);
-            const button = document.getElementById('purchase-btn-' + itemId);
-            const fluxonElement = document.getElementById('fluxonBalance');
-            const astronsElement = document.getElementById('astronsBalance');
-            const fluxonCard = document.getElementById('fluxonCard');
-            const astronsCard = document.getElementById('astronsCard');
-            
-            // Validate elements exist
-            if (!form || !button || !fluxonElement || !astronsElement) {
-                console.error('Required elements not found');
-                alert('Error: Page elements not found. Please refresh the page.');
-                return false;
-            }
-            
-            // Check if already processing
-            if (button.disabled && button.textContent === 'Processing...') {
-                return false;
-            }
-            
-            // Disable button during processing
-            button.disabled = true;
-            button.textContent = 'Processing...';
-            
-            // Get current values
-            const currentFluxon = parseInt(fluxonElement.textContent.replace(/,/g, '')) || 0;
-            const currentAstrons = parseInt(astronsElement.textContent.replace(/,/g, '')) || 0;
-            
-            // Validate sufficient Fluxon
-            if (currentFluxon < fluxonCost) {
-                button.disabled = false;
-                button.textContent = 'Claim Reward';
-                alert('Insufficient Fluxon Energy!');
-                return false;
-            }
-            
-            // Calculate new values
-            const newFluxon = Math.max(0, currentFluxon - fluxonCost);
-            const newAstrons = currentAstrons + astronsReward;
-            
-            // Create form data
-            const formData = new FormData(form);
-            
-            try {
-                // Submit the form with AJAX header
-                // Add ajax parameter to form data as backup
-                formData.append('ajax', '1');
-                
-                const response = await fetch('shop.php', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    },
-                    body: formData
-                });
-                
-                // Check if response is OK
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error('Network response was not ok: ' + response.status + ' - ' + errorText.substring(0, 100));
-                }
-                
-                // Check content type first
-                const contentType = response.headers.get('content-type') || '';
-                if (!contentType.includes('application/json')) {
-                    // Clone response to read text without consuming it
-                    const responseClone = response.clone();
-                    const responseText = await responseClone.text();
-                    console.error('Expected JSON but got:', contentType);
-                    console.error('Response preview:', responseText.substring(0, 500));
-                    throw new Error('Server returned ' + (contentType || 'unknown type') + ' instead of JSON. The request may not have been recognized as AJAX.');
-                }
-                
-                // Parse JSON response
-                const data = await response.json();
-                
-                // Check if request was successful
-                if (data.success) {
-                    // Get actual database values from response (these are the verified totals from database)
-                    const actualNewFluxon = parseInt(data.new_fluxon) || 0; // Total Fluxon after deduction
-                    const actualNewAstrons = parseInt(data.new_astrons) || 0; // Total Astrons after addition
-                    
-                    console.log('Purchase successful:', {
-                        previousFluxon: currentFluxon,
-                        newFluxon: actualNewFluxon,
-                        fluxonDeducted: data.fluxon_deducted,
-                        previousAstrons: currentAstrons,
-                        newAstrons: actualNewAstrons,
-                        astronsAdded: data.astrons_added
-                    });
-                    
-                    // Add pulse animation to cards
-                    const fluxonCard = document.getElementById('fluxonCard');
-                    const astronsCard = document.getElementById('astronsCard');
-                    fluxonCard.classList.add('animating');
-                    astronsCard.classList.add('animating');
-                    
-                    // Animate Fluxon decrease - show the deduction from current to new total
-                    animateValue(fluxonElement, currentFluxon, actualNewFluxon, 1200, function() {
-                        // Update data-value attribute with new total
-                        fluxonElement.setAttribute('data-value', actualNewFluxon);
-                        fluxonElement.textContent = actualNewFluxon.toLocaleString(); // Ensure final value is correct
-                        fluxonCard.classList.remove('animating');
-                        
-                        // Animate Astrons increase - show the addition from current to new total
-                        animateValue(astronsElement, currentAstrons, actualNewAstrons, 1200, function() {
-                            // Update data-value attribute with new total
-                            astronsElement.setAttribute('data-value', actualNewAstrons);
-                            astronsElement.textContent = actualNewAstrons.toLocaleString(); // Ensure final value is correct
-                            astronsCard.classList.remove('animating');
-                            
-                            // Show success message
-                            const alertDiv = document.createElement('div');
-                            alertDiv.className = 'alert alert-success';
-                            alertDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
-                            alertDiv.style.animation = 'slideDown 0.5s ease';
-                            const header = document.querySelector('.shop-header');
-                            const container = document.querySelector('.shop-container');
-                            container.insertBefore(alertDiv, header.nextSibling);
-                            
-                            // Remove alert after 3 seconds
-                            setTimeout(function() {
-                                alertDiv.style.opacity = '0';
-                                alertDiv.style.transition = 'opacity 0.5s';
-                                setTimeout(function() {
-                                    alertDiv.remove();
-                                }, 500);
-                            }, 3000);
-                            
-                            // Update button state
-                            button.disabled = false;
-                            button.textContent = 'Claim Reward';
-                            
-                            // Update all purchase buttons based on new Fluxon balance
-                            updatePurchaseButtons(actualNewFluxon);
-                            
-                            // Log final values for verification
-                            console.log('Final values updated:', {
-                                fluxon: actualNewFluxon,
-                                astrons: actualNewAstrons
-                            });
-                        });
-                    });
-                } else {
-                    // Show error message
-                    const errorMsg = data.message || 'Transmission Failure. Please try again.';
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-error';
-                    alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + errorMsg;
-                    alertDiv.style.animation = 'slideDown 0.5s ease';
-                    const header = document.querySelector('.shop-header');
-                    const container = document.querySelector('.shop-container');
-                    if (header && container) {
-                        container.insertBefore(alertDiv, header.nextSibling);
-                    } else {
-                        document.body.insertBefore(alertDiv, document.body.firstChild);
-                    }
-                    
-                    button.disabled = false;
-                    button.textContent = 'Claim Reward';
-                    
-                    setTimeout(function() {
-                        alertDiv.remove();
-                    }, 3000);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                button.disabled = false;
-                button.textContent = 'Claim Reward';
-                
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-error';
-                alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + (error.message || 'An error occurred. Please try again.');
-                alertDiv.style.animation = 'slideDown 0.5s ease';
-                const header = document.querySelector('.shop-header');
-                const container = document.querySelector('.shop-container');
-                if (header && container) {
-                    container.insertBefore(alertDiv, header.nextSibling);
-                } else {
-                    document.body.insertBefore(alertDiv, document.body.firstChild);
-                }
-                
-                setTimeout(function() {
-                    alertDiv.remove();
-                }, 3000);
+        // Initialize space background
+        const spaceBg = document.getElementById('space-background');
+        if (spaceBg && typeof createSpaceBackground === 'function') {
+            createSpaceBackground();
+        } else {
+            // Fallback if function doesn't exist
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                spaceBg.appendChild(star);
             }
         }
-        
-        // Function to update purchase buttons based on available Fluxon
-        function updatePurchaseButtons(availableFluxon) {
-            document.querySelectorAll('.shop-card').forEach(function(card) {
-                const costElement = card.querySelector('.cost-value');
-                if (costElement) {
-                    const costText = costElement.textContent.replace(/,/g, '').replace(' Fluxon', '').trim();
-                    const cost = parseInt(costText) || 0;
-                    const canAfford = availableFluxon >= cost;
-                    const button = card.querySelector('.purchase-btn');
-                    if (button) {
-                        if (canAfford) {
-                            button.disabled = false;
-                            button.classList.add('active');
-                            button.textContent = 'Claim Reward';
-                        } else {
-                            button.disabled = true;
-                            button.classList.remove('active');
-                            button.textContent = 'Insufficient Energy';
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Add pulse animation for balance cards when values change
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes pulse {
-                0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
-                50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(0, 255, 255, 0.6); }
-            }
-            .balance-card.animating {
-                animation: pulse 0.6s ease;
-            }
-            .fluxon-card.animating {
-                box-shadow: 0 0 30px rgba(157, 78, 221, 0.6) !important;
-            }
-            .astron-card.animating {
-                box-shadow: 0 0 30px rgba(255, 215, 0, 0.6) !important;
-            }
-        `;
-        document.head.appendChild(style);
+
+        // Auto-refresh balance after purchase
+        <?php if ($message): ?>
+        setTimeout(function() {
+            location.reload();
+        }, 2000);
+        <?php endif; ?>
     </script>
 </body>
 </html>
