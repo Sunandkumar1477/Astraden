@@ -608,14 +608,23 @@ if (isset($_SESSION['user_id'])) {
         }
         
         .start-mission-btn {
-            background: linear-gradient(135deg, #00ffff, #0099cc);
-            border-color: #00ffff;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            background: linear-gradient(135deg, #00ffff, #0099cc) !important;
+            border: 2px solid #00ffff !important;
+            color: white !important;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5) !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
         .start-mission-btn:hover {
             transform: translateY(-5px) scale(1.05);
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
+        }
+        
+        .start-mission-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .contest-play-btn {
@@ -1309,7 +1318,7 @@ if (isset($_SESSION['user_id'])) {
 
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
-            <button id="start-mission-btn" class="start-mission-btn" style="display: none;">🚀 START MISSION</button>
+            <button id="start-mission-btn" class="start-mission-btn" style="display: none; visibility: hidden;">🚀 START MISSION</button>
             <button id="normal-play-btn" class="normal-play-btn" style="display: none;"></button>
             <button id="contest-play-btn" class="contest-play-btn" style="display: none;"></button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
@@ -1496,6 +1505,33 @@ if (isset($_SESSION['user_id'])) {
 
     <!-- Non-module script for instructions - must be outside module scope -->
     <script>
+        // IMMEDIATE: Show Start Mission button if payment was made (runs before module loads)
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('paid') === '1') {
+                // Wait for DOM to be ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', showBtn);
+                } else {
+                    showBtn();
+                }
+                
+                function showBtn() {
+                    setTimeout(() => {
+                        const btn = document.getElementById('start-mission-btn');
+                        if (btn) {
+                            btn.style.display = 'flex';
+                            btn.style.visibility = 'visible';
+                            btn.style.opacity = '1';
+                            const mode = urlParams.get('mode');
+                            btn.textContent = mode === 'contest' ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
+                            btn.disabled = false;
+                            console.log('Start Mission button shown immediately on page load');
+                        }
+                    }, 50);
+                }
+            }
+        })();
         
         // Global instructions toggle handler - works immediately
         window.toggleInstructions = function(e) {
@@ -1775,17 +1811,27 @@ if (isset($_SESSION['user_id'])) {
                 
                 // Ensure Start Mission button is visible
                 const startMissionBtn = document.getElementById('start-mission-btn');
-                if (startMissionBtn && state.creditsUsed > 0) {
+                if (startMissionBtn) {
                     startMissionBtn.style.display = 'flex';
+                    startMissionBtn.style.visibility = 'visible';
                     startMissionBtn.textContent = state.isContestMode ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
                     startMissionBtn.disabled = false;
+                    console.log('Start Mission button shown in showGameReady');
+                } else {
+                    console.error('Start Mission button not found in showGameReady');
                 }
                 
                 // Hide normal/contest buttons
                 const normalBtn = document.getElementById('normal-play-btn');
                 const contestBtn = document.getElementById('contest-play-btn');
-                if (normalBtn) normalBtn.style.display = 'none';
-                if (contestBtn) contestBtn.style.display = 'none';
+                if (normalBtn) {
+                    normalBtn.style.display = 'none';
+                    normalBtn.style.visibility = 'hidden';
+                }
+                if (contestBtn) {
+                    contestBtn.style.display = 'none';
+                    contestBtn.style.visibility = 'hidden';
+                }
                 
                 return;
             }
@@ -2071,8 +2117,12 @@ if (isset($_SESSION['user_id'])) {
                 const startMissionBtnImmediate = document.getElementById('start-mission-btn');
                 if (startMissionBtnImmediate) {
                     startMissionBtnImmediate.style.display = 'flex';
+                    startMissionBtnImmediate.style.visibility = 'visible';
                     startMissionBtnImmediate.textContent = isContestMode ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
                     startMissionBtnImmediate.disabled = false;
+                    console.log('Start Mission button shown immediately after payment');
+                } else {
+                    console.error('Start Mission button not found immediately after payment');
                 }
                 
                 // Show game status overlay with game name and buttons
@@ -2107,8 +2157,12 @@ if (isset($_SESSION['user_id'])) {
                     const startMissionBtn = document.getElementById('start-mission-btn');
                     if (startMissionBtn) {
                         startMissionBtn.style.display = 'flex';
+                        startMissionBtn.style.visibility = 'visible';
                         startMissionBtn.textContent = isContestMode ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
                         startMissionBtn.disabled = false;
+                        console.log('Start Mission button shown in startGame function');
+                    } else {
+                        console.error('Start Mission button not found when trying to show');
                     }
                     
                     // Show start button in guide panel
@@ -2202,6 +2256,33 @@ if (isset($_SESSION['user_id'])) {
         const paidOnLoad = urlParamsOnLoad.get('paid') === '1';
         const modeOnLoad = urlParamsOnLoad.get('mode');
         
+        // Function to show Start Mission button
+        function showStartMissionButton() {
+            const startMissionBtn = document.getElementById('start-mission-btn');
+            if (startMissionBtn) {
+                const isContest = modeOnLoad === 'contest' || state.isContestMode;
+                startMissionBtn.style.display = 'flex';
+                startMissionBtn.style.visibility = 'visible';
+                startMissionBtn.textContent = isContest ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
+                startMissionBtn.disabled = false;
+                console.log('Start Mission button shown');
+            } else {
+                console.error('Start Mission button not found in DOM');
+            }
+            
+            // Hide normal/contest buttons
+            const normalBtn = document.getElementById('normal-play-btn');
+            const contestBtn = document.getElementById('contest-play-btn');
+            if (normalBtn) {
+                normalBtn.style.display = 'none';
+                normalBtn.style.visibility = 'hidden';
+            }
+            if (contestBtn) {
+                contestBtn.style.display = 'none';
+                contestBtn.style.visibility = 'hidden';
+            }
+        }
+        
         // Initialize
         if (paidOnLoad) {
             // Payment already made - ensure overlay is visible
@@ -2216,51 +2297,88 @@ if (isset($_SESSION['user_id'])) {
             }
             
             // Show Start Mission button immediately
-            const startMissionBtn = document.getElementById('start-mission-btn');
-            if (startMissionBtn) {
-                startMissionBtn.style.display = 'flex';
-                const isContest = modeOnLoad === 'contest';
-                startMissionBtn.textContent = isContest ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
-                startMissionBtn.disabled = false;
-            }
+            showStartMissionButton();
             
-            // Hide normal/contest buttons
-            const normalBtn = document.getElementById('normal-play-btn');
-            const contestBtn = document.getElementById('contest-play-btn');
-            if (normalBtn) normalBtn.style.display = 'none';
-            if (contestBtn) contestBtn.style.display = 'none';
+            // Also show it after a short delay to ensure DOM is ready
+            setTimeout(showStartMissionButton, 100);
+            setTimeout(showStartMissionButton, 500);
+            setTimeout(showStartMissionButton, 1000);
+            
+            // Keep checking to ensure button stays visible (in case other code tries to hide it)
+            const keepButtonVisible = setInterval(() => {
+                if (paidOnLoad) {
+                    const btn = document.getElementById('start-mission-btn');
+                    if (btn && (btn.style.display === 'none' || btn.style.visibility === 'hidden')) {
+                        showStartMissionButton();
+                    }
+                } else {
+                    clearInterval(keepButtonVisible);
+                }
+            }, 500);
         }
         
         // Always check game status to get session info
         checkGameStatus();
         
-        // Start Mission button handler
-        const startMissionBtnEl = document.getElementById('start-mission-btn');
-        if (startMissionBtnEl) {
-            startMissionBtnEl.addEventListener('click', function() {
-                // Check if payment was already made
-                if (state.creditsUsed > 0 && !state.gameStarted) {
-                    // Payment already made, start game directly
-                    gameEndedByTime = false;
-                    state.gameStarted = true;
-                    state.isDemoMode = false;
-                    state.isPlaying = true;
+        // After checkGameStatus, ensure Start Mission button is visible if payment was made
+        setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('paid') === '1') {
+                showStartMissionButton();
+            }
+        }, 1500);
+        
+        // Start Mission button handler - set up with multiple attempts
+        function setupStartMissionButtonHandler() {
+            const startMissionBtnEl = document.getElementById('start-mission-btn');
+            if (startMissionBtnEl) {
+                // Remove existing listeners by cloning
+                const newBtn = startMissionBtnEl.cloneNode(true);
+                startMissionBtnEl.parentNode.replaceChild(newBtn, startMissionBtnEl);
+                
+                // Add click handler
+                newBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     
-                    // Show EXIT button
-                    const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                    if (exitBtnHud) exitBtnHud.style.display = 'block';
+                    // Check if payment was already made
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const paid = urlParams.get('paid') === '1' || state.creditsUsed > 0;
                     
-                    preventExitDuringGame();
-                    
-                    // Hide overlay
-                    const overlay = document.getElementById('game-status-overlay');
-                    if (overlay) overlay.classList.add('hidden');
-                } else {
-                    // No payment made - this shouldn't happen, but handle it
-                    alert('Payment not found. Please return to the game selection page.');
-                }
-            });
+                    if (paid && !state.gameStarted) {
+                        // Payment already made, start game directly
+                        gameEndedByTime = false;
+                        state.gameStarted = true;
+                        state.isDemoMode = false;
+                        state.isPlaying = true;
+                        
+                        // Show EXIT button
+                        const exitBtnHud = document.getElementById('exit-game-btn-hud');
+                        if (exitBtnHud) exitBtnHud.style.display = 'block';
+                        
+                        preventExitDuringGame();
+                        
+                        // Hide overlay
+                        const overlay = document.getElementById('game-status-overlay');
+                        if (overlay) overlay.classList.add('hidden');
+                    } else {
+                        // No payment made - this shouldn't happen, but handle it
+                        alert('Payment not found. Please return to the game selection page.');
+                    }
+                });
+                
+                console.log('Start Mission button handler set up successfully');
+                return true;
+            } else {
+                console.error('Start Mission button not found for handler setup');
+                return false;
+            }
         }
+        
+        // Set up handler immediately and with delays
+        setupStartMissionButtonHandler();
+        setTimeout(setupStartMissionButtonHandler, 100);
+        setTimeout(setupStartMissionButtonHandler, 500);
         
         // Set up guide start button handler (accessible from module scope)
         window.startGameFromGuide = function() {
