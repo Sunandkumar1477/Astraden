@@ -32,4 +32,3 @@ echo json_encode([
     'profile_photo' => $profile_photo
 ]);
 ?>
-

@@ -256,4 +256,3 @@ $log_stmt->close();
 $logs_stmt->close();
 $conn->close();
 ?>
-

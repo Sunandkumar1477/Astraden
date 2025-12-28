@@ -53,4 +53,3 @@ echo "<p><a href='index.php'>Go to Home Page</a></p>";
 
 $conn->close();
 ?>
-

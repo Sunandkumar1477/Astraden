@@ -57,4 +57,3 @@ if ($conn->query($sql)) {
 
 echo "Database setup completed.";
 ?>
-
