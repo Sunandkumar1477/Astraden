@@ -634,16 +634,33 @@ session_start();
                 const currentCredits = creditsElement ? parseInt(creditsElement.textContent.replace(/,/g, '')) || 0 : 0;
 
                 // Get game cost from admin settings
+                let gameCost = 30; // Default cost
                 try {
                     const creditsResponse = await fetch(`get_game_credits.php?game=${sanitized}`);
-                    const creditsData = await creditsResponse.json();
                     
-                    if (!creditsData.success) {
-                        alert('Unable to load game information. Please try again.');
-                        return;
+                    if (!creditsResponse.ok) {
+                        console.warn(`Failed to fetch game credits: ${creditsResponse.status}`);
+                        // Use default cost if fetch fails
+                        gameCost = 30;
+                    } else {
+                        const creditsData = await creditsResponse.json();
+                        
+                        if (creditsData.success && creditsData.credits_per_chance) {
+                            gameCost = parseInt(creditsData.credits_per_chance) || 30;
+                        } else if (creditsData.success && creditsData.games && creditsData.games[sanitized]) {
+                            // Handle games object format
+                            gameCost = parseInt(creditsData.games[sanitized].credits_per_chance) || 30;
+                        } else {
+                            // Game not found in database, use default cost
+                            console.warn(`Game "${sanitized}" not found in database, using default cost of 30 Astrons`);
+                            gameCost = 30;
+                        }
                     }
-
-                    const gameCost = parseInt(creditsData.credits_per_chance) || 30;
+                } catch (error) {
+                    console.error('Error fetching game credits:', error);
+                    // Use default cost if there's an error
+                    gameCost = 30;
+                }
 
                     // Check if user has sufficient Astrons
                     if (currentCredits < gameCost) {
