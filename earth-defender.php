@@ -1720,6 +1720,17 @@ if (isset($_SESSION['user_id'])) {
                 return;
             }
             
+            // Check if payment was already made - if so, don't override the button states
+            const urlParams = new URLSearchParams(window.location.search);
+            const alreadyPaid = urlParams.get('paid') === '1';
+            
+            if (alreadyPaid && state.creditsUsed > 0) {
+                // Payment already made - buttons are already set by startGame function
+                // Just ensure overlay is visible
+                if (overlay) overlay.classList.remove('hidden');
+                return;
+            }
+            
             timerDisplay.textContent = 'GAME READY!';
             
             // Fetch costs from get_game_credits.php to ensure we have the latest values
@@ -1971,7 +1982,7 @@ if (isset($_SESSION['user_id'])) {
                     alert('An error occurred. Please try again.');
                 }
             } else {
-                // Payment already made from game selection page - start game directly
+                // Payment already made from game selection page - show game guide screen
                 // Get the correct cost based on mode
                 let actualCost = creditsRequired;
                 if (isContestMode) {
@@ -1980,20 +1991,54 @@ if (isset($_SESSION['user_id'])) {
                     actualCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
                 }
                 
-                gameEndedByTime = false;
-                state.gameStarted = true;
-                state.isDemoMode = false;
+                // Store payment info but don't start game yet
                 state.creditsUsed = actualCost;
                 state.isContestMode = isContestMode;
                 state.gameSessionId = gameSession.id || 0;
-                state.isPlaying = true;
                 
-                // Show EXIT button
-                const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                if (exitBtnHud) exitBtnHud.style.display = 'block';
-                
-                preventExitDuringGame();
-                document.getElementById('game-status-overlay').classList.add('hidden');
+                // Show game status overlay with game name and buttons
+                const overlay = document.getElementById('game-status-overlay');
+                if (overlay) {
+                    overlay.classList.remove('hidden');
+                    
+                    // Update timer display to show game is ready
+                    const timerDisplay = document.getElementById('timer-display');
+                    if (timerDisplay) {
+                        timerDisplay.textContent = isContestMode ? '🏆 CONTEST MODE - READY TO PLAY' : '🎮 NORMAL MODE - READY TO PLAY';
+                        timerDisplay.style.color = isContestMode ? '#FFD700' : '#00ffff';
+                    }
+                    
+                    // Update status message
+                    const statusMsg = document.getElementById('status-message');
+                    if (statusMsg) {
+                        statusMsg.textContent = isContestMode 
+                            ? `You paid ${actualCost} Astrons. Your high score will be recorded for contest prizes!`
+                            : `You paid ${actualCost} Astrons. Ready to play and earn Fluxon!`;
+                        statusMsg.style.display = 'block';
+                        statusMsg.style.color = '#00ff00';
+                    }
+                    
+                    // Show start game button based on mode
+                    const normalPlayBtn = document.getElementById('normal-play-btn');
+                    const contestPlayBtn = document.getElementById('contest-play-btn');
+                    
+                    // Hide the button that's not for this mode
+                    if (isContestMode) {
+                        if (normalPlayBtn) normalPlayBtn.style.display = 'none';
+                        if (contestPlayBtn) {
+                            contestPlayBtn.style.display = 'flex';
+                            contestPlayBtn.innerHTML = `🏆 START CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> (${actualCost} Paid)`;
+                            contestPlayBtn.disabled = false;
+                        }
+                    } else {
+                        if (contestPlayBtn) contestPlayBtn.style.display = 'none';
+                        if (normalPlayBtn) {
+                            normalPlayBtn.style.display = 'flex';
+                            normalPlayBtn.innerHTML = `🎮 START GAME &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> (${actualCost} Paid)`;
+                            normalPlayBtn.disabled = false;
+                        }
+                    }
+                }
                 
                 // Remove paid and mode parameters from URL
                 if (window.history.replaceState) {
@@ -2006,19 +2051,74 @@ if (isset($_SESSION['user_id'])) {
         }
         
         // Normal play button handler
-        document.getElementById('normal-play-btn').addEventListener('click', async function() {
-            const normalCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
-            await startGame(normalCost, false);
-        });
+        const normalPlayBtnEl = document.getElementById('normal-play-btn');
+        if (normalPlayBtnEl) {
+            normalPlayBtnEl.addEventListener('click', async function() {
+                // Check if payment was already made (creditsUsed > 0 means payment was made)
+                if (state.creditsUsed > 0 && !state.isContestMode && !state.gameStarted) {
+                    // Payment already made for normal mode, start game directly
+                    gameEndedByTime = false;
+                    state.gameStarted = true;
+                    state.isDemoMode = false;
+                    state.isPlaying = true;
+                    
+                    // Show EXIT button
+                    const exitBtnHud = document.getElementById('exit-game-btn-hud');
+                    if (exitBtnHud) exitBtnHud.style.display = 'block';
+                    
+                    preventExitDuringGame();
+                    const overlay = document.getElementById('game-status-overlay');
+                    if (overlay) overlay.classList.add('hidden');
+                } else if (!state.gameStarted) {
+                    // Normal flow - deduct and start
+                    const normalCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
+                    await startGame(normalCost, false);
+                }
+            });
+        }
         
         // Contest play button handler
-        document.getElementById('contest-play-btn').addEventListener('click', async function() {
-            const contestCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
-            await startGame(contestCost, true);
-        });
+        const contestPlayBtnEl = document.getElementById('contest-play-btn');
+        if (contestPlayBtnEl) {
+            contestPlayBtnEl.addEventListener('click', async function() {
+                // Check if payment was already made (creditsUsed > 0 means payment was made)
+                if (state.creditsUsed > 0 && state.isContestMode && !state.gameStarted) {
+                    // Payment already made for contest mode, start game directly
+                    gameEndedByTime = false;
+                    state.gameStarted = true;
+                    state.isDemoMode = false;
+                    state.isPlaying = true;
+                    
+                    // Show EXIT button
+                    const exitBtnHud = document.getElementById('exit-game-btn-hud');
+                    if (exitBtnHud) exitBtnHud.style.display = 'block';
+                    
+                    preventExitDuringGame();
+                    const overlay = document.getElementById('game-status-overlay');
+                    if (overlay) overlay.classList.add('hidden');
+                } else if (!state.gameStarted) {
+                    // Normal flow - deduct and start
+                    const contestCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
+                    await startGame(contestCost, true);
+                }
+            });
+        }
         
+        
+        // Check if payment was already made on page load
+        const urlParamsOnLoad = new URLSearchParams(window.location.search);
+        const paidOnLoad = urlParamsOnLoad.get('paid') === '1';
         
         // Initialize
+        if (paidOnLoad) {
+            // Payment already made - ensure overlay is visible
+            const overlay = document.getElementById('game-status-overlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+            }
+        }
+        
+        // Always check game status to get session info
         checkGameStatus();
 
         // Claim Prize Button Handler
