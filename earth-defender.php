@@ -1886,64 +1886,94 @@ $conn->close();
             
             // No timing checks - always allow play
             
-            const userCredits = <?php echo $user_credits; ?>;
+            // Check if payment was already made from game selection page
+            const urlParams = new URLSearchParams(window.location.search);
+            const alreadyPaid = urlParams.get('paid') === '1';
             
-            if (userCredits < creditsRequired) {
-                alert(`Insufficient Astrons! You need ${creditsRequired} Astrons to play.`);
-                return;
-            }
-            
-            // Confirm before deducting credits
-            const confirmMsg = isContestMode 
-                ? `Join the contest? This will deduct ${creditsRequired} Astrons. Your high Fluxon will be recorded for prizes!`
-                : `This will deduct ${creditsRequired} Astrons from your account. Continue?`;
-
-            if (!confirm(confirmMsg)) {
-                return;
-            }
-            
-            try {
-                // Deduct credits - need to pass the correct cost
-                const formData = new FormData();
-                formData.append('session_id', gameSession.id);
-                formData.append('game_name', 'earth-defender');
-                formData.append('play_mode', isContestMode ? 'contest' : 'normal');
-                formData.append('credits_amount', creditsRequired);
+            if (!alreadyPaid) {
+                // Payment not made yet - check balance and deduct
+                const userCredits = <?php echo $user_credits; ?>;
                 
-                const response = await fetch('game_api.php?action=deduct_credits', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    gameEndedByTime = false; // Reset time's up flag
-                    state.gameStarted = true;
-                    state.isDemoMode = false;
-                    state.creditsUsed = creditsRequired;
-                    state.isContestMode = isContestMode;
-                    state.gameSessionId = data.session_id || gameSession.id;
-                    state.isPlaying = true;
-                    // Show EXIT button
-                    const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                    if (exitBtnHud) exitBtnHud.style.display = 'block';
-                    
-                    preventExitDuringGame();
-                    document.getElementById('game-status-overlay').classList.add('hidden');
-                    // Update credits display
-                    document.getElementById('user-credits-display').textContent = data.credits_remaining.toLocaleString();
-                } else {
-                    // Show specific error message from server
-                    if (data.message) {
-                        alert(data.message);
-                    } else {
-                        alert('Failed to start game. Please try again.');
-                    }
+                if (userCredits < creditsRequired) {
+                    alert(`Insufficient Astrons! You need ${creditsRequired} Astrons to play.`);
+                    return;
                 }
-            } catch (error) {
-                console.error('Error starting game:', error);
-                alert('An error occurred. Please try again.');
+                
+                // Confirm before deducting credits
+                const confirmMsg = isContestMode 
+                    ? `Join the contest? This will deduct ${creditsRequired} Astrons. Your high Fluxon will be recorded for prizes!`
+                    : `This will deduct ${creditsRequired} Astrons from your account. Continue?`;
+
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+                
+                try {
+                    // Deduct credits - need to pass the correct cost
+                    const formData = new FormData();
+                    formData.append('session_id', gameSession.id);
+                    formData.append('game_name', 'earth-defender');
+                    formData.append('play_mode', isContestMode ? 'contest' : 'normal');
+                    formData.append('credits_amount', creditsRequired);
+                    
+                    const response = await fetch('game_api.php?action=deduct_credits', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        gameEndedByTime = false; // Reset time's up flag
+                        state.gameStarted = true;
+                        state.isDemoMode = false;
+                        state.creditsUsed = creditsRequired;
+                        state.isContestMode = isContestMode;
+                        state.gameSessionId = data.session_id || gameSession.id;
+                        state.isPlaying = true;
+                        // Show EXIT button
+                        const exitBtnHud = document.getElementById('exit-game-btn-hud');
+                        if (exitBtnHud) exitBtnHud.style.display = 'block';
+                        
+                        preventExitDuringGame();
+                        document.getElementById('game-status-overlay').classList.add('hidden');
+                        // Update credits display
+                        document.getElementById('user-credits-display').textContent = data.credits_remaining.toLocaleString();
+                    } else {
+                        // Show specific error message from server
+                        if (data.message) {
+                            alert(data.message);
+                        } else {
+                            alert('Failed to start game. Please try again.');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error starting game:', error);
+                    alert('An error occurred. Please try again.');
+                }
+            } else {
+                // Payment already made from game selection page - start game directly
+                gameEndedByTime = false;
+                state.gameStarted = true;
+                state.isDemoMode = false;
+                state.creditsUsed = creditsRequired;
+                state.isContestMode = isContestMode;
+                state.gameSessionId = gameSession.id || 0;
+                state.isPlaying = true;
+                
+                // Show EXIT button
+                const exitBtnHud = document.getElementById('exit-game-btn-hud');
+                if (exitBtnHud) exitBtnHud.style.display = 'block';
+                
+                preventExitDuringGame();
+                document.getElementById('game-status-overlay').classList.add('hidden');
+                
+                // Remove paid parameter from URL
+                if (window.history.replaceState) {
+                    const url = new URL(window.location);
+                    url.searchParams.delete('paid');
+                    window.history.replaceState({}, '', url);
+                }
             }
         }
         

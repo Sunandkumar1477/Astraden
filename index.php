@@ -614,22 +614,99 @@ session_start();
                 return gameName.toLowerCase();
             }
 
-            // Launch game with security checks
-            function launchGame(gameName) {
+            // Launch game with security checks and Astrons payment
+            async function launchGame(gameName) {
                 const sanitized = sanitizeGameName(gameName);
                 if (!sanitized || !gamePaths[sanitized]) {
                     alert('Game not found or invalid!');
                     return;
                 }
 
-                // Show loading
-                const loading = document.getElementById('loading');
-                loading.classList.add('show');
+                // Check if user is logged in
+                const isLoggedIn = document.getElementById('userInfoBar') && !document.getElementById('userInfoBar').classList.contains('hidden');
+                if (!isLoggedIn) {
+                    alert('Please login to play games.');
+                    return;
+                }
 
-                // Redirect after short delay for smooth transition
-                setTimeout(() => {
-                    window.location.href = gamePaths[sanitized];
-                }, 500);
+                // Get user's current Astrons balance
+                const creditsElement = document.getElementById('creditsValue');
+                const currentCredits = creditsElement ? parseInt(creditsElement.textContent.replace(/,/g, '')) || 0 : 0;
+
+                // Get game cost from admin settings
+                try {
+                    const creditsResponse = await fetch(`get_game_credits.php?game=${sanitized}`);
+                    const creditsData = await creditsResponse.json();
+                    
+                    if (!creditsData.success) {
+                        alert('Unable to load game information. Please try again.');
+                        return;
+                    }
+
+                    const gameCost = parseInt(creditsData.credits_per_chance) || 30;
+
+                    // Check if user has sufficient Astrons
+                    if (currentCredits < gameCost) {
+                        alert(`Insufficient Astrons! You need ${gameCost} Astrons to play this game.\n\nYour current balance: ${currentCredits} Astrons`);
+                        return;
+                    }
+
+                    // Confirm payment
+                    const confirmMsg = `This will deduct ${gameCost} Astrons from your account to play this game.\n\nYour balance after payment: ${currentCredits - gameCost} Astrons\n\nContinue?`;
+                    if (!confirm(confirmMsg)) {
+                        return;
+                    }
+
+                    // Show loading
+                    const loading = document.getElementById('loading');
+                    if (loading) loading.classList.add('show');
+
+                    // Deduct Astrons before launching game
+                    try {
+                        const formData = new FormData();
+                        formData.append('game_name', sanitized);
+                        formData.append('play_mode', 'normal');
+                        formData.append('credits_amount', gameCost);
+                        formData.append('session_id', 0); // Will be handled by API
+
+                        const paymentResponse = await fetch('game_api.php?action=deduct_credits', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const paymentData = await paymentResponse.json();
+
+                        if (paymentData.success) {
+                            // Update credits display
+                            if (creditsElement) {
+                                const newBalance = paymentData.credits_remaining || (currentCredits - gameCost);
+                                creditsElement.textContent = newBalance.toLocaleString();
+                                
+                                // Update mobile credits display
+                                const mobileCreditsValue = document.getElementById('mobileCreditsValue');
+                                if (mobileCreditsValue) {
+                                    mobileCreditsValue.textContent = newBalance.toLocaleString();
+                                }
+                            }
+
+                            // Redirect to game after successful payment (with payment flag)
+                            setTimeout(() => {
+                                window.location.href = gamePaths[sanitized] + '?paid=1';
+                            }, 500);
+                        } else {
+                            // Hide loading on error
+                            if (loading) loading.classList.remove('show');
+                            alert(paymentData.message || 'Failed to process payment. Please try again.');
+                        }
+                    } catch (error) {
+                        console.error('Payment error:', error);
+                        if (loading) loading.classList.remove('show');
+                        alert('An error occurred while processing payment. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error loading game credits:', error);
+                    alert('Unable to load game information. Please try again.');
+                }
             }
 
             // Make launchGame available globally

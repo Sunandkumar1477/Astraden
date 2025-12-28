@@ -200,24 +200,34 @@ switch ($action) {
         }
         
         // Get active session (if session_id not provided, get latest active)
+        // Allow payment even if no session exists (for pre-launch payment)
+        $session = null;
         if ($session_id > 0) {
             $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ? AND is_active = 1");
             $session_stmt->bind_param("i", $session_id);
+            $session_stmt->execute();
+            $session_result = $session_stmt->get_result();
+            if ($session_result->num_rows > 0) {
+                $session = $session_result->fetch_assoc();
+                $session_id = $session['id'];
+            }
+            $session_stmt->close();
         } else {
             $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE game_name = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1");
             $session_stmt->bind_param("s", $game_name);
-        }
-        $session_stmt->execute();
-        $session_result = $session_stmt->get_result();
-        
-        if ($session_result->num_rows === 0) {
-            echo json_encode(['success' => false, 'message' => 'Invalid or inactive game session']);
+            $session_stmt->execute();
+            $session_result = $session_stmt->get_result();
+            if ($session_result->num_rows > 0) {
+                $session = $session_result->fetch_assoc();
+                $session_id = $session['id'];
+            }
             $session_stmt->close();
-            exit;
         }
         
-        $session = $session_result->fetch_assoc();
-        $session_id = $session['id'];
+        // If no session exists, create a virtual session ID (0) - payment can still proceed
+        if (!$session) {
+            $session_id = 0; // Virtual session for pre-launch payment
+        }
         
         // Remove all session timing restrictions - games can be played anytime
         // No need to check if session is active - always allow play
