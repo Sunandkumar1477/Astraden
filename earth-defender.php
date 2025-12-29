@@ -1310,7 +1310,6 @@ $conn->close();
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
             <button id="start-game-btn" class="start-game-btn" style="display: none;"></button>
-            <button id="demo-game-btn" class="demo-game-btn" onclick="window.handleDemoClick(); return false;" style="display: flex !important;">PLAY DEMO</button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
         </div>
 

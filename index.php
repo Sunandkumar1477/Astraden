@@ -151,14 +151,6 @@ session_start();
                             <div class="item-value" id="mobileReferralValue">----</div>
                         </div>
                     </div>
-                    <!-- Rank Info -->
-                    <div class="menu-item" id="mobileRankItem" style="display: none;" onclick="toggleRankDropdown(event)">
-                        <div class="item-icon">🏆</div>
-                        <div class="item-info">
-                            <div class="item-label">Your Rank</div>
-                            <div class="item-value" id="mobileRankValue">-</div>
-                        </div>
-                    </div>
                     <!-- Profile Link -->
                     <a href="view_profile.php" class="menu-item">
                         <div class="item-icon">🌍</div>
@@ -252,23 +244,6 @@ session_start();
                     </div>
                     <button class="add-credits-btn" onclick="showQRCode(event)" disabled id="addCreditsBtn">Add Credits</button>
                     <button class="claim-credits-btn" onclick="checkClaimTimingAndOpen()" id="claimCreditsBtn" style="display: block !important;">Claim Credits</button>
-                </div>
-            </div>
-        </div>
-        <div class="user-rank" id="userRank" style="display: none;" onclick="toggleRankDropdown(event)">
-            <span class="user-rank-label">Your Rank:</span>
-            <span class="user-rank-value" id="rankValue">-</span>
-            <!-- Rank Dropdown -->
-            <div class="rank-dropdown" id="rankDropdown">
-                <div class="rank-section">
-                    <div class="rank-section-title">🏆 Your Ranking</div>
-                    <div id="userRankDisplay" class="no-rank-message">Loading...</div>
-                </div>
-                <div class="rank-section">
-                    <div class="rank-section-title">📊 Top 10 Gamers</div>
-                    <div class="leaderboard-list" id="leaderboardList">
-                        <div class="no-rank-message">Loading...</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1338,18 +1313,8 @@ session_start();
                                         powerIcon.style.setProperty('color', '#00ff00', 'important');
                                     }
                                     
-                                    // Show rank dropdown
-                                    document.getElementById('userRank').style.display = 'flex';
-                                    
-                                    // Update mobile dropdown rank
-                                    const mobileRankItem = document.getElementById('mobileRankItem');
-                                    if (mobileRankItem) mobileRankItem.style.display = 'flex';
-                                    
-                                    // Load user rank for mobile dropdown
-                                    loadUserRank();
                                 } else {
                                     document.getElementById('userCredits').style.display = 'none';
-                                    document.getElementById('userRank').style.display = 'none';
                                     
                                     // Still show rank as N/A in mobile dropdown
                                     const dropdownUserRank = document.getElementById('dropdownUserRank');
@@ -1365,7 +1330,6 @@ session_start();
                         document.getElementById('profilePlanetBtn').classList.add('hidden');
                         document.getElementById('userCredits').style.display = 'none';
                         document.getElementById('userReferralCode').style.display = 'none';
-                        document.getElementById('userRank').style.display = 'none';
                     }
                 })
                 .catch(error => {
@@ -1600,100 +1564,6 @@ session_start();
             }
         });
         
-        function toggleRankDropdown(event) {
-            event.stopPropagation();
-            const dropdown = document.getElementById('rankDropdown');
-            dropdown.classList.toggle('show');
-            if (dropdown.classList.contains('show')) {
-                loadUserRank();
-            }
-        }
-
-        async function loadUserRank() {
-            const rankValue = document.getElementById('rankValue');
-            const userRankDisplay = document.getElementById('userRankDisplay');
-            const leaderboardList = document.getElementById('leaderboardList');
-            
-            try {
-                const response = await fetch('game_api.php?action=user_rank&game=earth-defender');
-                
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    const userTotalPoints = data.user_total_points || data.user_best_score || 0;
-                    
-                    if (data.user_rank !== null && data.user_rank !== undefined && userTotalPoints > 0) {
-                        rankValue.textContent = '#' + data.user_rank;
-                        userRankDisplay.innerHTML = `
-                            <div class="rank-display">
-                                <span class="rank-number">#${data.user_rank}</span>
-                                <span class="rank-name">You</span>
-                                <span class="rank-score">${userTotalPoints.toLocaleString()} Total Pts</span>
-                            </div>
-                        `;
-                        
-                        // Update mobile dropdown rank
-                        const mobileRankValue = document.getElementById('mobileRankValue');
-                        if (mobileRankValue) mobileRankValue.textContent = '#' + data.user_rank;
-                        
-                        // Update dropdown header rank
-                        const dropdownUserRank = document.getElementById('dropdownUserRank');
-                        if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: #' + data.user_rank;
-                    } else {
-                        rankValue.textContent = 'N/A';
-                        userRankDisplay.innerHTML = '<div class="no-rank-message">Play with credits to get ranked!</div>';
-                        
-                        // Update mobile dropdown rank
-                        const mobileRankValue = document.getElementById('mobileRankValue');
-                        if (mobileRankValue) mobileRankValue.textContent = 'N/A';
-                        
-                        // Update dropdown header rank
-                        const dropdownUserRank = document.getElementById('dropdownUserRank');
-                        if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: N/A';
-                    }
-                    
-                    if (data.leaderboard && data.leaderboard.length > 0) {
-                        const currentUserId = <?php echo isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 'null'; ?>;
-                        leaderboardList.innerHTML = data.leaderboard.map((entry) => {
-                            const isCurrentUser = entry.user_id == currentUserId;
-                            const totalPoints = entry.total_points || entry.score || 0;
-                            return `
-                                <div class="leaderboard-item-rank ${isCurrentUser ? 'is-current-user' : ''}">
-                                    <span class="rank-number">#${entry.rank}</span>
-                                    <span class="rank-name">${entry.full_name || entry.username}</span>
-                                    <span class="rank-score">${totalPoints.toLocaleString()} Total Pts</span>
-                                </div>
-                            `;
-                        }).join('');
-                    } else {
-                        leaderboardList.innerHTML = '<div class="no-rank-message">No scores yet</div>';
-                    }
-                } else {
-                    // API returned success: false
-                    rankValue.textContent = 'N/A';
-                    userRankDisplay.innerHTML = '<div class="no-rank-message">Unable to load rank</div>';
-                    leaderboardList.innerHTML = '<div class="no-rank-message">Unable to load leaderboard</div>';
-                    console.error('API Error:', data.message || 'Unknown error');
-                    
-                    // Update dropdown header rank
-                    const dropdownUserRank = document.getElementById('dropdownUserRank');
-                    if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: N/A';
-                }
-            } catch (error) {
-                console.error('Error loading user rank:', error);
-                rankValue.textContent = 'N/A';
-                userRankDisplay.innerHTML = '<div class="no-rank-message">Error loading rank</div>';
-                leaderboardList.innerHTML = '<div class="no-rank-message">Error loading leaderboard</div>';
-                
-                // Update dropdown header rank
-                const dropdownUserRank = document.getElementById('dropdownUserRank');
-                if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: Error';
-            }
-        }
         
         // Mobile credits dropdown toggle - Optimized for performance
         function toggleMobileCreditsDropdown(event) {
@@ -1930,8 +1800,6 @@ session_start();
             const creditsElement = document.getElementById('userCredits');
             const referralDropdown = document.getElementById('referralDropdown');
             const referralElement = document.getElementById('userReferralCode');
-            const rankDropdown = document.getElementById('rankDropdown');
-            const rankElement = document.getElementById('userRank');
             
             if (creditsDropdown && !creditsElement.contains(event.target)) {
                 creditsDropdown.classList.remove('show');
@@ -1941,9 +1809,6 @@ session_start();
                 referralDropdown.classList.remove('show');
             }
             
-            if (rankDropdown && !rankElement.contains(event.target)) {
-                rankDropdown.classList.remove('show');
-            }
         });
 
         // Prevent form resubmission
@@ -2643,7 +2508,6 @@ session_start();
         window.toggleCreditsDropdown = toggleCreditsDropdown;
         window.selectCreditsOption = selectCreditsOption;
         window.showQRCode = showQRCode;
-        window.toggleRankDropdown = toggleRankDropdown;
         window.handleClaimCredits = handleClaimCredits;
         window.toggleMobileCreditsDropdown = toggleMobileCreditsDropdown;
         window.selectMobileCreditsOption = selectMobileCreditsOption;
