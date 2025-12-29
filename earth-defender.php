@@ -206,13 +206,14 @@ $conn->close();
 
             #bomb-container {
                 bottom: 20px;
-                gap: 8px;
+                gap: 6px;
+                max-width: 200px;
             }
 
             #bomb-btn {
-                padding: 10px 20px;
-                font-size: 1rem;
-                max-width: 200px;
+                padding: 8px 16px;
+                font-size: 0.75rem;
+                max-width: 150px;
             }
 
             #bomb-count-display {
@@ -286,10 +287,10 @@ $conn->close();
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             pointer-events: auto;
-            width: 90%;
-            max-width: 350px;
+            width: auto;
+            max-width: 250px;
             z-index: 100;
         }
 
@@ -297,22 +298,22 @@ $conn->close();
             background: linear-gradient(135deg, #ff3333, #880000);
             border: 2px solid #ff0000;
             color: white;
-            padding: 15px 30px;
+            padding: 8px 16px;
             width: 100%;
-            font-size: 1.2rem;
+            font-size: 0.75rem;
             font-weight: 800;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+            letter-spacing: 1px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: 'Orbitron', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 2px;
         }
 
         #bomb-btn:hover {
@@ -341,12 +342,12 @@ $conn->close();
         @media (min-width: 769px) {
             #bomb-container {
                 bottom: 50px;
-                max-width: 400px;
+                max-width: 300px;
             }
             
             #bomb-btn {
-                padding: 20px 40px;
-                font-size: 1.4rem;
+                padding: 10px 20px;
+                font-size: 0.85rem;
             }
         }
 
