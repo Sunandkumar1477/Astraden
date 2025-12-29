@@ -163,6 +163,7 @@ $recent_logs = $conn->query("SELECT id, user_id, username, action, status, ip_ad
         <div class="sidebar-menu" id="sidebarMenu">
             <div class="menu-category">General</div>
             <a href="admin_dashboard.php" class="menu-item active"><i class="fas fa-chart-line ic-overview"></i> <span>Overview</span></a>
+            <a href="admin_system_settings.php" class="menu-item"><i class="fas fa-cog" style="color: #06b6d4; text-shadow: 0 0 10px #06b6d4;"></i> <span>System Settings</span></a>
             <div class="menu-category">User Control</div>
             <a href="admin_view_all_users.php" class="menu-item"><i class="fas fa-users ic-users"></i> <span>User Directory</span></a>
             <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key ic-reset"></i> <span>Reset Requests</span></a>

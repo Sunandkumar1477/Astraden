@@ -1530,6 +1530,10 @@ session_start();
 
         // Load credit packages from API
         function loadCreditPackages() {
+            // Don't load if credit purchase is disabled
+            if (!showCreditPurchase) {
+                return;
+            }
             fetch('get_credit_packages.php')
                 .then(response => response.json())
                 .then(data => {
@@ -2422,6 +2426,10 @@ session_start();
         
         // Check credit timing availability
         function checkCreditTiming() {
+            // Don't check if credit purchase is disabled
+            if (!showCreditPurchase) {
+                return;
+            }
             let addTimingLoaded = false;
             let claimTimingLoaded = false;
             
@@ -2533,11 +2541,59 @@ session_start();
             }
         }
         
+        // Check system settings for credit purchase visibility
+        let showCreditPurchase = true;
+        function checkSystemSettings() {
+            fetch('check_system_settings.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showCreditPurchase = data.show_credit_purchase === 1;
+                        if (!showCreditPurchase) {
+                            // Hide credit purchase options (desktop)
+                            const creditsOptionsContainer = document.getElementById('creditsOptionsContainer');
+                            const addCreditsBtn = document.getElementById('addCreditsBtn');
+                            const creditTimingNotice = document.getElementById('creditTimingNotice');
+                            const timesUpMessage = document.getElementById('timesUpMessage');
+                            const creditLimitNotice = document.getElementById('creditLimitNotice');
+                            
+                            if (creditsOptionsContainer) creditsOptionsContainer.style.display = 'none';
+                            if (addCreditsBtn) addCreditsBtn.style.display = 'none';
+                            if (creditTimingNotice) creditTimingNotice.style.display = 'none';
+                            if (timesUpMessage) timesUpMessage.style.display = 'none';
+                            if (creditLimitNotice) creditLimitNotice.style.display = 'none';
+                            
+                            // Hide credit purchase options (mobile)
+                            const mobileCreditsOptionsContainer = document.getElementById('mobileCreditsOptionsContainer');
+                            const mobileAddCreditsBtn = document.getElementById('mobileAddCreditsBtn');
+                            const mobileCreditTimingNotice = document.getElementById('mobileCreditTimingNotice');
+                            const mobileTimesUpMessage = document.getElementById('mobileTimesUpMessage');
+                            const mobileCreditLimitNotice = document.getElementById('mobileCreditLimitNotice');
+                            
+                            if (mobileCreditsOptionsContainer) mobileCreditsOptionsContainer.style.display = 'none';
+                            if (mobileAddCreditsBtn) mobileAddCreditsBtn.style.display = 'none';
+                            if (mobileCreditTimingNotice) mobileCreditTimingNotice.style.display = 'none';
+                            if (mobileTimesUpMessage) mobileTimesUpMessage.style.display = 'none';
+                            if (mobileCreditLimitNotice) mobileCreditLimitNotice.style.display = 'none';
+                        } else {
+                            // Show credit purchase options and load packages
+                            loadCreditPackages();
+                            checkCreditTiming();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking system settings:', error);
+                    // Default to showing if error
+                    loadCreditPackages();
+                    checkCreditTiming();
+                });
+        }
+        
         // Check session on page load
         window.addEventListener('load', function() {
             checkSession();
-            loadCreditPackages(); // Load credit packages on page load
-            checkCreditTiming(); // Check credit timing availability
+            checkSystemSettings(); // Check system settings first
             
             // Update countdown every second
             timingUpdateInterval = setInterval(updateTimingCountdowns, 1000);
