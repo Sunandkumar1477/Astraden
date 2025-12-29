@@ -7,7 +7,14 @@ $message = '';
 $error = '';
 
 // Auto-add missing columns
-$conn->query("ALTER TABLE game_leaderboard ADD COLUMN IF NOT EXISTS game_mode ENUM('money', 'credits') DEFAULT 'money'");
+try {
+    $check_col = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'game_mode'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+    }
+} catch (Exception $e) {
+    // Silently handle errors - column might already exist
+}
 
 $available_games = ['earth-defender' => '🛡️ Earth Defender'];
 $selected_game_view = $_GET['game_view'] ?? 'all';
@@ -37,14 +44,28 @@ $sql = "SELECT u.id, u.username, up.full_name, COALESCE(SUM(gl.score), 0) as tot
         FROM users u
         LEFT JOIN user_profile up ON u.id = up.user_id
         LEFT JOIN game_leaderboard gl ON u.id = gl.user_id AND $where_sql 
-        GROUP BY u.id 
+        GROUP BY u.id, u.username, up.full_name, up.credits
         HAVING total_points > 0
         ORDER BY total_points DESC";
 
-$leaderboard = $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
+$result = $conn->query($sql);
+if ($result) {
+    $leaderboard = $result->fetch_all(MYSQLI_ASSOC);
+} else {
+    $leaderboard = [];
+    $error = "Error loading leaderboard: " . $conn->error;
+}
 
 $user_id = intval($_GET['user_id'] ?? 0);
-$selected_user = $user_id ? $conn->query("SELECT u.*, up.* FROM users u LEFT JOIN user_profile up ON u.id = up.user_id WHERE u.id = $user_id")->fetch_assoc() : null;
+$selected_user = null;
+if ($user_id > 0) {
+    $user_stmt = $conn->prepare("SELECT u.*, up.* FROM users u LEFT JOIN user_profile up ON u.id = up.user_id WHERE u.id = ?");
+    $user_stmt->bind_param("i", $user_id);
+    $user_stmt->execute();
+    $user_result = $user_stmt->get_result();
+    $selected_user = $user_result->fetch_assoc();
+    $user_stmt->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -144,6 +165,7 @@ $selected_user = $user_id ? $conn->query("SELECT u.*, up.* FROM users u LEFT JOI
         .info-val { font-size: 1.1rem; font-weight: bold; color: white; }
 
         .msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(0, 255, 204, 0.1); border: 1px solid #00ffcc; color: #00ffcc; font-weight: bold; }
+        .error-msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(255, 0, 110, 0.1); border: 1px solid #ff006e; color: #ff006e; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -175,6 +197,7 @@ $selected_user = $user_id ? $conn->query("SELECT u.*, up.* FROM users u LEFT JOI
         <h2 class="section-title"><i class="fas fa-star ic-leaderboard" style="margin-right:15px;"></i> LEADERBOARDS</h2>
 
         <?php if($message): ?><div class="msg"><?php echo $message; ?></div><?php endif; ?>
+        <?php if($error): ?><div class="error-msg"><?php echo $error; ?></div><?php endif; ?>
 
         <div class="config-card">
             <h3>PURGE LEADERBOARD DATA</h3>
@@ -201,22 +224,25 @@ $selected_user = $user_id ? $conn->query("SELECT u.*, up.* FROM users u LEFT JOI
         </div>
 
         <div class="table-card">
-        <table>
+            <table>
                 <thead><tr><th>Rank</th><th>Player Identity</th><th>Combat Score</th><th>Missions</th><th>Balance</th><th>Details</th></tr></thead>
-            <tbody>
-                    <?php $rank=1; foreach($leaderboard as $l): ?>
-                    <tr>
-                        <td><div class="rank-id"><?php echo $rank++; ?></div></td>
-                        <td><strong style="color:var(--primary-cyan);"><?php echo htmlspecialchars($l['username']); ?></strong><br><small style="color:rgba(255,255,255,0.4);"><?php echo htmlspecialchars($l['full_name']); ?></small></td>
-                        <td class="points-val"><?php echo number_format($l['total_points']); ?></td>
-                        <td><?php echo $l['games_played']; ?></td>
-                        <td style="color:#FFD700;font-weight:bold;"><?php echo number_format($l['credits']); ?> ⚡</td>
-                        <td><a href="?user_id=<?php echo $l['id']; ?>&game_view=<?php echo $selected_game_view; ?>" class="view-btn">VIEW INTEL</a></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
+                <tbody>
+                    <?php if(empty($leaderboard)): ?>
+                        <tr><td colspan="6" style="text-align:center;padding:40px;color:rgba(255,255,255,0.2);">NO LEADERBOARD DATA FOUND</td></tr>
+                    <?php else: 
+                        $rank=1; foreach($leaderboard as $l): ?>
+                        <tr>
+                            <td><div class="rank-id"><?php echo $rank++; ?></div></td>
+                            <td><strong style="color:var(--primary-cyan);"><?php echo htmlspecialchars($l['username']); ?></strong><br><small style="color:rgba(255,255,255,0.4);"><?php echo htmlspecialchars($l['full_name'] ?? ''); ?></small></td>
+                            <td class="points-val"><?php echo number_format($l['total_points']); ?></td>
+                            <td><?php echo $l['games_played']; ?></td>
+                            <td style="color:#FFD700;font-weight:bold;"><?php echo number_format($l['credits']); ?> ⚡</td>
+                            <td><a href="?user_id=<?php echo $l['id']; ?>&game_view=<?php echo $selected_game_view; ?>&mode_view=<?php echo $selected_mode; ?>" class="view-btn">VIEW INTEL</a></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
     </main>
 
     <?php if($selected_user): ?>
