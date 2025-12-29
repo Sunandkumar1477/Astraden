@@ -21,29 +21,37 @@ $available_games = ['earth-defender' => '🛡️ Earth Defender'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
     $session_id = intval($_POST['session_id'] ?? 0);
     $game_name = trim($_POST['game_name'] ?? 'earth-defender');
-    $session_date = trim($_POST['session_date'] ?? '');
-    $session_time = trim($_POST['session_time'] ?? '');
-    $closing_time = trim($_POST['closing_time'] ?? '');
-    $credits_required = intval($_POST['credits_required'] ?? 30);
+    $start_date = trim($_POST['start_date'] ?? '');
+    $start_time = trim($_POST['start_time'] ?? '');
+    $end_date = trim($_POST['end_date'] ?? '');
+    $end_time = trim($_POST['end_time'] ?? '');
     
-    if (!empty($session_date) && !empty($session_time) && !empty($closing_time)) {
-        $opening_dt = new DateTime("$session_date $session_time", new DateTimeZone('Asia/Kolkata'));
-        $closing_dt = new DateTime("$session_date $closing_time", new DateTimeZone('Asia/Kolkata'));
-        if ($closing_dt < $opening_dt) $closing_dt->modify('+1 day');
-        $duration = ($opening_dt->diff($closing_dt)->h * 60) + $opening_dt->diff($closing_dt)->i;
-
-        if ($session_id > 0) {
-            $stmt = $conn->prepare("UPDATE game_sessions SET game_name=?, session_date=?, session_time=?, duration_minutes=?, credits_required=? WHERE id=?");
-            $stmt->bind_param("sssiii", $game_name, $session_date, $session_time, $duration, $credits_required, $session_id);
-            $stmt->execute();
-            $message = "Session updated.";
+    if (!empty($start_date) && !empty($start_time) && !empty($end_date) && !empty($end_time)) {
+        $start_dt = new DateTime("$start_date $start_time", new DateTimeZone('Asia/Kolkata'));
+        $end_dt = new DateTime("$end_date $end_time", new DateTimeZone('Asia/Kolkata'));
+        if ($end_dt < $start_dt) {
+            $message = "End date/time must be after start date/time.";
         } else {
-            $conn->query("UPDATE game_sessions SET is_active = 0 WHERE game_name = '$game_name'");
-            $stmt = $conn->prepare("INSERT INTO game_sessions (game_name, session_date, session_time, duration_minutes, credits_required, is_active) VALUES (?, ?, ?, ?, ?, 1)");
-            $stmt->bind_param("sssii", $game_name, $session_date, $session_time, $duration, $credits_required);
-            $stmt->execute();
-            $message = "New session published.";
+            $duration = ($start_dt->diff($end_dt)->days * 24 * 60) + ($start_dt->diff($end_dt)->h * 60) + $start_dt->diff($end_dt)->i;
+            $session_date = $start_date;
+            $session_time = $start_time;
+            $credits_required = 30; // Default value, not shown in form
+
+            if ($session_id > 0) {
+                $stmt = $conn->prepare("UPDATE game_sessions SET game_name=?, session_date=?, session_time=?, duration_minutes=?, credits_required=? WHERE id=?");
+                $stmt->bind_param("sssiii", $game_name, $session_date, $session_time, $duration, $credits_required, $session_id);
+                $stmt->execute();
+                $message = "Session updated.";
+            } else {
+                $conn->query("UPDATE game_sessions SET is_active = 0 WHERE game_name = '$game_name'");
+                $stmt = $conn->prepare("INSERT INTO game_sessions (game_name, session_date, session_time, duration_minutes, credits_required, is_active) VALUES (?, ?, ?, ?, ?, 1)");
+                $stmt->bind_param("sssii", $game_name, $session_date, $session_time, $duration, $credits_required);
+                $stmt->execute();
+                $message = "New session published.";
+            }
         }
+    } else {
+        $error = "Please fill all date and time fields.";
     }
 }
 
@@ -54,6 +62,17 @@ if (isset($_GET['edit'])) {
     $edit_stmt->bind_param("i", $_GET['edit']);
     $edit_stmt->execute();
     $edit_session = $edit_stmt->get_result()->fetch_assoc();
+    
+    // Calculate end date and time from start date/time and duration
+    if ($edit_session) {
+        $start_dt = new DateTime($edit_session['session_date'] . ' ' . $edit_session['session_time'], new DateTimeZone('Asia/Kolkata'));
+        $end_dt = clone $start_dt;
+        $end_dt->modify('+' . $edit_session['duration_minutes'] . ' minutes');
+        $edit_session['end_date'] = $end_dt->format('Y-m-d');
+        $edit_session['end_time'] = $end_dt->format('H:i');
+        $edit_session['start_date'] = $edit_session['session_date'];
+        $edit_session['start_time'] = $edit_session['session_time'];
+    }
 }
 
 $current_session = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' AND is_active = 1 LIMIT 1")->fetch_assoc();
@@ -154,6 +173,7 @@ $conn->close();
         .status-end { background: rgba(255, 255, 255, 0.05); color: rgba(255,255,255,0.3); }
 
         .msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(0, 255, 204, 0.1); border: 1px solid #00ffcc; color: #00ffcc; font-weight: bold; }
+        .error-msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(255, 0, 110, 0.1); border: 1px solid #ff006e; color: #ff006e; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -187,6 +207,7 @@ $conn->close();
         <h2 class="section-title"><i class="fas fa-clock ic-sessions" style="margin-right:15px;"></i> GAME SESSIONS</h2>
 
         <?php if($message): ?><div class="msg"><?php echo $message; ?></div><?php endif; ?>
+        <?php if($error): ?><div class="error-msg"><?php echo $error; ?></div><?php endif; ?>
 
         <?php if($current_session): ?>
         <div class="active-banner">
@@ -206,25 +227,37 @@ $conn->close();
             <form method="POST">
                 <?php if($edit_session): ?><input type="hidden" name="session_id" value="<?php echo $edit_session['id']; ?>"><?php endif; ?>
                 <div class="form-grid">
-                    <div class="form-group"><label>TARGET GAME</label><select name="game_name"><?php foreach($available_games as $k=>$v): ?><option value="<?php echo $k; ?>"><?php echo $v; ?></option><?php endforeach; ?></select></div>
-                    <div class="form-group"><label>MISSION DATE</label><input type="date" name="session_date" value="<?php echo $edit_session ? $edit_session['session_date'] : date('Y-m-d'); ?>"></div>
-                    <div class="form-group"><label>OPENING WINDOW (IST)</label><input type="time" name="session_time" value="<?php echo $edit_session ? $edit_session['session_time'] : ''; ?>"></div>
-                    <div class="form-group"><label>CLOSING WINDOW (IST)</label><input type="time" name="closing_time"></div>
+                    <div class="form-group"><label>TARGET GAME</label><select name="game_name"><?php foreach($available_games as $k=>$v): ?><option value="<?php echo $k; ?>" <?php echo ($edit_session && $edit_session['game_name'] === $k) ? 'selected' : ''; ?>><?php echo $v; ?></option><?php endforeach; ?></select></div>
+                    <div class="form-group"><label>START DATE</label><input type="date" name="start_date" value="<?php echo $edit_session ? ($edit_session['start_date'] ?? $edit_session['session_date']) : date('Y-m-d'); ?>" required></div>
+                    <div class="form-group"><label>START TIME (IST)</label><input type="time" name="start_time" value="<?php echo $edit_session ? ($edit_session['start_time'] ?? $edit_session['session_time']) : ''; ?>" required></div>
+                    <div class="form-group"><label>END DATE</label><input type="date" name="end_date" value="<?php echo $edit_session ? ($edit_session['end_date'] ?? date('Y-m-d')) : date('Y-m-d'); ?>" required></div>
+                    <div class="form-group"><label>END TIME (IST)</label><input type="time" name="end_time" value="<?php echo $edit_session ? ($edit_session['end_time'] ?? '') : ''; ?>" required></div>
                 </div>
-                <div class="form-group" style="margin-bottom:25px;"><label>PARTICIPATION FEE (CREDITS)</label><input type="number" name="credits_required" value="<?php echo $edit_session ? $edit_session['credits_required'] : 30; ?>"></div>
                 <button type="submit" name="set_session" class="btn-publish"><?php echo $edit_session ? 'UPDATE MISSION LOG' : 'PUBLISH LIVE WINDOW'; ?></button>
             </form>
         </div>
 
         <div class="table-card">
             <table>
-                <thead><tr><th>Mission Date</th><th>Window</th><th>Cost</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Start Date & Time</th><th>End Date & Time</th><th>Duration</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
-                    <?php foreach($all_sessions as $s): ?>
+                    <?php foreach($all_sessions as $s): 
+                        $start_dt = new DateTime($s['session_date'] . ' ' . $s['session_time'], new DateTimeZone('Asia/Kolkata'));
+                        $end_dt = clone $start_dt;
+                        $end_dt->modify('+' . $s['duration_minutes'] . ' minutes');
+                    ?>
                     <tr>
-                        <td><?php echo date('d M Y', strtotime($s['session_date'])); ?></td>
-                        <td><?php echo date('h:i A', strtotime($s['session_time'])); ?> IST</td>
-                        <td style="color:var(--color-credits);font-weight:bold;"><?php echo $s['credits_required']; ?> ⚡</td>
+                        <td><?php echo date('d M Y, h:i A', strtotime($s['session_date'] . ' ' . $s['session_time'])); ?> IST</td>
+                        <td><?php echo $end_dt->format('d M Y, h:i A'); ?> IST</td>
+                        <td style="color:var(--primary-cyan);font-weight:bold;"><?php 
+                            $hours = floor($s['duration_minutes'] / 60);
+                            $minutes = $s['duration_minutes'] % 60;
+                            if ($hours > 0) {
+                                echo $hours . 'h ' . $minutes . 'm';
+                            } else {
+                                echo $minutes . 'm';
+                            }
+                        ?></td>
                         <td><span class="status-pill <?php echo $s['is_active'] ? 'status-live' : 'status-end'; ?>"><?php echo $s['is_active'] ? 'LIVE' : 'ENDED'; ?></span></td>
                         <td>
                             <a href="?game=<?php echo $selected_game; ?>&edit=<?php echo $s['id']; ?>" style="color:var(--primary-cyan);text-decoration:none;font-weight:bold;font-size:0.8rem;">EDIT</a>
