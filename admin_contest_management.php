@@ -14,6 +14,29 @@ try {
         $conn->query("ALTER TABLE games ADD COLUMN contest_credits_required INT(11) DEFAULT 30");
     }
     
+    // Check and add play_type column (normal/contest)
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'play_type'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN play_type ENUM('normal', 'contest') DEFAULT 'normal'");
+    }
+    
+    // Check and add contest datetime columns
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_start_datetime'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_start_datetime DATETIME NULL");
+    }
+    
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_end_datetime'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_end_datetime DATETIME NULL");
+    }
+    
+    // Check and add normal_play_credits column
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'normal_play_credits'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN normal_play_credits INT(11) DEFAULT 30");
+    }
+    
     // Check and add game_mode column to contest_scores
     $check_col = $conn->query("SHOW COLUMNS FROM contest_scores LIKE 'game_mode'");
     if ($check_col->num_rows == 0) {
@@ -24,6 +47,12 @@ try {
     $check_col = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'game_mode'");
     if ($check_col->num_rows == 0) {
         $conn->query("ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+    }
+    
+    // Check and add play_type column to game_leaderboard
+    $check_col = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'play_type'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE game_leaderboard ADD COLUMN play_type ENUM('normal', 'contest') DEFAULT 'normal'");
     }
     
     // Create contest_history table if not exists
@@ -48,6 +77,7 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_contest'])) {
         $game_name = $_POST['game_name'];
+        $play_type = isset($_POST['play_type']) && $_POST['play_type'] === 'contest' ? 'contest' : 'normal';
         $is_contest_active = isset($_POST['is_contest_active']) ? 1 : 0;
         $is_claim_active = isset($_POST['is_claim_active']) ? 1 : 0;
         $game_mode = $_POST['game_mode']; 
@@ -55,25 +85,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prize2 = intval($_POST['prize2']);
         $prize3 = intval($_POST['prize3']);
         $entry_fee = intval($_POST['entry_fee']);
+        
+        // Normal play credits
+        $normal_play_credits = intval($_POST['normal_play_credits'] ?? 30);
+        
+        // Contest datetime fields
+        $contest_start_datetime = null;
+        $contest_end_datetime = null;
+        if ($play_type === 'contest') {
+            $start_date = trim($_POST['contest_start_date'] ?? '');
+            $start_time = trim($_POST['contest_start_time'] ?? '');
+            $end_date = trim($_POST['contest_end_date'] ?? '');
+            $end_time = trim($_POST['contest_end_time'] ?? '');
+            
+            if (!empty($start_date) && !empty($start_time)) {
+                $contest_start_datetime = "$start_date $start_time:00";
+            }
+            if (!empty($end_date) && !empty($end_time)) {
+                $contest_end_datetime = "$end_date $end_time:00";
+            }
+        }
 
         // Check if status is changing (using prepared statement)
-        $check_stmt = $conn->prepare("SELECT is_contest_active FROM games WHERE game_name = ?");
+        $check_stmt = $conn->prepare("SELECT is_contest_active, play_type FROM games WHERE game_name = ?");
         $check_stmt->bind_param("s", $game_name);
         $check_stmt->execute();
         $current = $check_stmt->get_result()->fetch_assoc();
         $check_stmt->close();
         
-        $stmt = $conn->prepare("UPDATE games SET is_contest_active = ?, is_claim_active = ?, game_mode = ?, contest_first_prize = ?, contest_second_prize = ?, contest_third_prize = ?, contest_credits_required = ? WHERE game_name = ?");
-        $stmt->bind_param("iisiiiis", $is_contest_active, $is_claim_active, $game_mode, $prize1, $prize2, $prize3, $entry_fee, $game_name);
+        $stmt = $conn->prepare("UPDATE games SET play_type = ?, is_contest_active = ?, is_claim_active = ?, game_mode = ?, contest_first_prize = ?, contest_second_prize = ?, contest_third_prize = ?, contest_credits_required = ?, normal_play_credits = ?, contest_start_datetime = ?, contest_end_datetime = ? WHERE game_name = ?");
+        $stmt->bind_param("siiisiiissss", $play_type, $is_contest_active, $is_claim_active, $game_mode, $prize1, $prize2, $prize3, $entry_fee, $normal_play_credits, $contest_start_datetime, $contest_end_datetime, $game_name);
         
         if ($stmt->execute()) {
-            if ($is_contest_active && (!$current || !$current['is_contest_active'])) {
+            if ($play_type === 'contest' && $is_contest_active && (!$current || $current['play_type'] !== 'contest' || !$current['is_contest_active'])) {
                 // Starting new contest
                 $hist = $conn->prepare("INSERT INTO contest_history (game_name, game_mode, prize1, prize2, prize3, entry_fee, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
                 $hist->bind_param("ssiiii", $game_name, $game_mode, $prize1, $prize2, $prize3, $entry_fee);
                 $hist->execute();
                 $hist->close();
-            } else if (!$is_contest_active && $current && $current['is_contest_active']) {
+            } else if (($play_type === 'normal' || !$is_contest_active) && $current && $current['play_type'] === 'contest' && $current['is_contest_active']) {
                 // Ending contest
                 $end_stmt = $conn->prepare("UPDATE contest_history SET status = 'completed', ended_at = NOW() WHERE game_name = ? AND status = 'active'");
                 $end_stmt->bind_param("s", $game_name);
@@ -84,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Mission parameters deployed successfully!";
             $admin_id = $_SESSION['admin_id'];
             $admin_user = $_SESSION['admin_username'];
-            $desc = "Updated contest for $game_name. Mode: $game_mode, Entry: $entry_fee";
+            $desc = "Updated game settings for $game_name. Play Type: $play_type, Mode: $game_mode";
             $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
             $log_stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES (?, ?, 'contest_update', ?, ?)");
             $log_stmt->bind_param("isss", $admin_id, $admin_user, $desc, $ip_address);
@@ -122,31 +172,55 @@ $game_stmt->close();
 // Set defaults if game_settings is null
 if (!$game_settings) {
     $game_settings = [
+        'play_type' => 'normal',
         'is_contest_active' => 0,
         'is_claim_active' => 0,
         'game_mode' => 'money',
         'contest_first_prize' => 0,
         'contest_second_prize' => 0,
         'contest_third_prize' => 0,
-        'contest_credits_required' => 30
+        'contest_credits_required' => 30,
+        'normal_play_credits' => 30,
+        'contest_start_datetime' => null,
+        'contest_end_datetime' => null
     ];
 }
 
-// Unified Scoring Logic: Sum of scores from game_leaderboard (following Admin Leaderboard logic)
+// Parse contest datetime if exists
+$contest_start_date = '';
+$contest_start_time = '';
+$contest_end_date = '';
+$contest_end_time = '';
+if (!empty($game_settings['contest_start_datetime'])) {
+    $start_dt = new DateTime($game_settings['contest_start_datetime']);
+    $contest_start_date = $start_dt->format('Y-m-d');
+    $contest_start_time = $start_dt->format('H:i');
+}
+if (!empty($game_settings['contest_end_datetime'])) {
+    $end_dt = new DateTime($game_settings['contest_end_datetime']);
+    $contest_end_date = $end_dt->format('Y-m-d');
+    $contest_end_time = $end_dt->format('H:i');
+}
+
+// Get play type from game settings
+$current_play_type = $game_settings['play_type'] ?: 'normal';
+
+// Unified Scoring Logic: Sum of scores from game_leaderboard filtered by play_type
 $scores_stmt = $conn->prepare("
     SELECT 
         u.username, 
         SUM(gl.score) as score, 
         MAX(gl.game_mode) as game_mode, 
+        MAX(gl.play_type) as play_type,
         MAX(gl.played_at) as updated_at
     FROM game_leaderboard gl
     JOIN users u ON gl.user_id = u.id
-    WHERE gl.game_name = ? AND gl.credits_used > 0
+    WHERE gl.game_name = ? AND gl.credits_used > 0 AND gl.play_type = ?
     GROUP BY u.id, u.username
     ORDER BY score DESC
     LIMIT 20
 ");
-$scores_stmt->bind_param("s", $game_name);
+$scores_stmt->bind_param("ss", $game_name, $current_play_type);
 $scores_stmt->execute();
 $scores_result = $scores_stmt->get_result();
 $scores = $scores_result->fetch_all(MYSQLI_ASSOC);
@@ -301,48 +375,77 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
         <?php if($error): ?><div class="error-msg"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
         <div class="config-card">
-            <form method="POST">
+            <form method="POST" id="contestForm">
                 <input type="hidden" name="game_name" value="earth-defender">
+                <input type="hidden" name="play_type" id="play_type_input" value="<?php echo $game_settings['play_type'] ?: 'normal'; ?>">
                 <h3>System Configuration</h3>
                 
                 <div class="toggle-group">
                     <label class="switch">
-                        <input type="checkbox" name="is_contest_active" <?php echo $game_settings['is_contest_active'] ? 'checked' : ''; ?>>
+                        <input type="checkbox" name="normal_play_toggle" id="normal_play_toggle" <?php echo ($game_settings['play_type'] ?: 'normal') === 'normal' ? 'checked' : ''; ?> onchange="togglePlayMode(this)">
                         <span class="slider"></span>
                     </label>
                     <div>
-                        <strong style="display:block;color:var(--color-contest);">CONTEST MODE</strong>
-                        <small style="color:rgba(255,255,255,0.4);">Enables score tracking and mission deployment.</small>
+                        <strong style="display:block;color:var(--color-sessions);">NORMAL PLAY</strong>
+                        <small style="color:rgba(255,255,255,0.4);">Enable normal play mode - users can play anytime with credit cost.</small>
                     </div>
                 </div>
 
-                <div class="toggle-group">
-                    <label class="switch">
-                        <input type="checkbox" name="credit_winning_toggle" id="credit_winning_toggle" <?php echo ($game_settings['game_mode'] ?: 'money') === 'credits' ? 'checked' : ''; ?> onchange="toggleCreditWinning(this)">
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <strong style="display:block;color:var(--color-credits);">CREDIT WINNING</strong>
-                        <small style="color:rgba(255,255,255,0.4);">Enable credit rewards instead of prize money for contest winners.</small>
+                <div id="normal_play_section" style="display: <?php echo ($game_settings['play_type'] ?: 'normal') === 'normal' ? 'block' : 'none'; ?>;">
+                    <div class="form-group" style="margin-bottom:25px;">
+                        <label>CREDITS REQUIRED FOR NORMAL PLAY (⚡)</label>
+                        <input type="number" name="normal_play_credits" value="<?php echo $game_settings['normal_play_credits'] ?: 30; ?>" min="1">
                     </div>
                 </div>
-                <input type="hidden" name="game_mode" id="game_mode_input" value="<?php echo $game_settings['game_mode'] ?: 'money'; ?>">
 
-                <div class="prize-grid">
-                    <div class="form-group"><label id="prize1_label">1ST RANK REWARD</label><input type="number" name="prize1" value="<?php echo $game_settings['contest_first_prize']; ?>"></div>
-                    <div class="form-group"><label id="prize2_label">2ND RANK REWARD</label><input type="number" name="prize2" value="<?php echo $game_settings['contest_second_prize']; ?>"></div>
-                    <div class="form-group"><label id="prize3_label">3RD RANK REWARD</label><input type="number" name="prize3" value="<?php echo $game_settings['contest_third_prize']; ?>"></div>
-                    <div class="form-group"><label>PARTICIPATION FEE (⚡)</label><input type="number" name="entry_fee" value="<?php echo $game_settings['contest_credits_required'] ?: 30; ?>"></div>
-                </div>
+                <div id="contest_section" style="display: <?php echo ($game_settings['play_type'] ?: 'normal') === 'contest' ? 'block' : 'none'; ?>;">
+                    <div class="toggle-group">
+                        <label class="switch">
+                            <input type="checkbox" name="is_contest_active" <?php echo $game_settings['is_contest_active'] ? 'checked' : ''; ?>>
+                            <span class="slider"></span>
+                        </label>
+                        <div>
+                            <strong style="display:block;color:var(--color-contest);">CONTEST MODE</strong>
+                            <small style="color:rgba(255,255,255,0.4);">Enables score tracking and mission deployment.</small>
+                        </div>
+                    </div>
 
-                <div class="toggle-group">
-                    <label class="switch">
-                        <input type="checkbox" name="is_claim_active" <?php echo $game_settings['is_claim_active'] ? 'checked' : ''; ?>>
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <strong style="display:block;color:var(--color-verify);">PRIZE CLAIMING</strong>
-                        <small style="color:rgba(255,255,255,0.4);">Allows top winners to claim their mission rewards.</small>
+                    <div class="form-group" style="margin-bottom:15px;"><label>CONTEST DATE & TIME RANGE</label></div>
+                    <div class="prize-grid" style="margin-bottom:20px;">
+                        <div class="form-group"><label>START DATE</label><input type="date" name="contest_start_date" value="<?php echo $contest_start_date; ?>" id="contest_start_date"></div>
+                        <div class="form-group"><label>START TIME (IST)</label><input type="time" name="contest_start_time" value="<?php echo $contest_start_time; ?>" id="contest_start_time"></div>
+                        <div class="form-group"><label>END DATE</label><input type="date" name="contest_end_date" value="<?php echo $contest_end_date; ?>" id="contest_end_date"></div>
+                        <div class="form-group"><label>END TIME (IST)</label><input type="time" name="contest_end_time" value="<?php echo $contest_end_time; ?>" id="contest_end_time"></div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <label class="switch">
+                            <input type="checkbox" name="credit_winning_toggle" id="credit_winning_toggle" <?php echo ($game_settings['game_mode'] ?: 'money') === 'credits' ? 'checked' : ''; ?> onchange="toggleCreditWinning(this)">
+                            <span class="slider"></span>
+                        </label>
+                        <div>
+                            <strong style="display:block;color:var(--color-credits);">CREDIT WINNING</strong>
+                            <small style="color:rgba(255,255,255,0.4);">Enable credit rewards instead of prize money for contest winners.</small>
+                        </div>
+                    </div>
+                    <input type="hidden" name="game_mode" id="game_mode_input" value="<?php echo $game_settings['game_mode'] ?: 'money'; ?>">
+
+                    <div class="prize-grid">
+                        <div class="form-group"><label id="prize1_label">1ST RANK REWARD</label><input type="number" name="prize1" value="<?php echo $game_settings['contest_first_prize']; ?>"></div>
+                        <div class="form-group"><label id="prize2_label">2ND RANK REWARD</label><input type="number" name="prize2" value="<?php echo $game_settings['contest_second_prize']; ?>"></div>
+                        <div class="form-group"><label id="prize3_label">3RD RANK REWARD</label><input type="number" name="prize3" value="<?php echo $game_settings['contest_third_prize']; ?>"></div>
+                        <div class="form-group"><label>PARTICIPATION FEE (⚡)</label><input type="number" name="entry_fee" value="<?php echo $game_settings['contest_credits_required'] ?: 30; ?>"></div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <label class="switch">
+                            <input type="checkbox" name="is_claim_active" <?php echo $game_settings['is_claim_active'] ? 'checked' : ''; ?>>
+                            <span class="slider"></span>
+                        </label>
+                        <div>
+                            <strong style="display:block;color:var(--color-verify);">PRIZE CLAIMING</strong>
+                            <small style="color:rgba(255,255,255,0.4);">Allows top winners to claim their mission rewards.</small>
+                        </div>
                     </div>
                 </div>
 
@@ -375,14 +478,14 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
         </div>
 
         <div class="table-card">
-            <h3 style="padding:20px;font-family:'Orbitron';color:var(--primary-cyan);font-size:0.9rem;">LIVE RANKINGS (EARTH DEFENDER)</h3>
+            <h3 style="padding:20px;font-family:'Orbitron';color:var(--primary-cyan);font-size:0.9rem;">LIVE RANKINGS (EARTH DEFENDER) - <?php echo strtoupper($current_play_type); ?> PLAY</h3>
             <table>
                 <thead>
-                    <tr><th>Rank</th><th>Player Identity</th><th>Combat Score</th><th>Mode</th><th>Timestamp</th></tr>
+                    <tr><th>Rank</th><th>Player Identity</th><th>Combat Score</th><th>Mode</th><th>Play Type</th><th>Timestamp</th></tr>
                 </thead>
                 <tbody>
                     <?php if(empty($scores)): ?>
-                        <tr><td colspan="5" style="text-align:center;padding:40px;color:rgba(255,255,255,0.2);">NO COMBAT DATA RECORDED</td></tr>
+                        <tr><td colspan="6" style="text-align:center;padding:40px;color:rgba(255,255,255,0.2);">NO COMBAT DATA RECORDED</td></tr>
                     <?php endif;
                     $rank = 1; foreach($scores as $s): ?>
                     <tr>
@@ -394,6 +497,11 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
                                 <?php echo ($s['game_mode'] ?? 'money') === 'money' ? '💰 Money' : '⚡ Credits'; ?>
                             </span>
                         </td>
+                        <td>
+                            <span style="font-size:0.7rem;padding:3px 8px;border-radius:4px;background:rgba(<?php echo ($s['play_type'] ?? 'normal') === 'contest' ? '251,191,36' : '59,130,246'; ?>,0.1);color:<?php echo ($s['play_type'] ?? 'normal') === 'contest' ? '#fbbf24' : '#3b82f6'; ?>;font-weight:bold;text-transform:uppercase;">
+                                <?php echo ($s['play_type'] ?? 'normal') === 'contest' ? '🏆 Contest' : '🎮 Normal'; ?>
+                            </span>
+                        </td>
                         <td style="font-size:0.8rem;color:rgba(255,255,255,0.4);"><?php echo date('M d, H:i', strtotime($s['updated_at'])); ?></td>
                     </tr>
                     <?php endforeach; ?>
@@ -403,6 +511,23 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
     </main>
 
     <script>
+        function togglePlayMode(checkbox) {
+            const isNormal = checkbox.checked;
+            const playType = isNormal ? 'normal' : 'contest';
+            document.getElementById('play_type_input').value = playType;
+            
+            const normalSection = document.getElementById('normal_play_section');
+            const contestSection = document.getElementById('contest_section');
+            
+            if (isNormal) {
+                normalSection.style.display = 'block';
+                contestSection.style.display = 'none';
+            } else {
+                normalSection.style.display = 'none';
+                contestSection.style.display = 'block';
+            }
+        }
+
         function toggleCreditWinning(checkbox) {
             const mode = checkbox.checked ? 'credits' : 'money';
             document.getElementById('game_mode_input').value = mode;
@@ -422,12 +547,15 @@ $history = $history_result ? $history_result->fetch_all(MYSQLI_ASSOC) : [];
             const activeItem = sidebar.querySelector('.menu-item.active');
             if (activeItem) activeItem.scrollIntoView({ block: 'center' });
 
-            // Initialize prize labels based on current mode
-            const currentMode = document.getElementById('game_mode_input').value;
-            const suffix = currentMode === 'money' ? ' (INR)' : ' (CREDITS)';
-            document.getElementById('prize1_label').textContent = '1ST RANK REWARD' + suffix;
-            document.getElementById('prize2_label').textContent = '2ND RANK REWARD' + suffix;
-            document.getElementById('prize3_label').textContent = '3RD RANK REWARD' + suffix;
+            // Initialize prize labels based on current mode (only if contest section is visible)
+            const contestSection = document.getElementById('contest_section');
+            if (contestSection.style.display !== 'none') {
+                const currentMode = document.getElementById('game_mode_input').value;
+                const suffix = currentMode === 'money' ? ' (INR)' : ' (CREDITS)';
+                document.getElementById('prize1_label').textContent = '1ST RANK REWARD' + suffix;
+                document.getElementById('prize2_label').textContent = '2ND RANK REWARD' + suffix;
+                document.getElementById('prize3_label').textContent = '3RD RANK REWARD' + suffix;
+            }
         });
     </script>
 </body>

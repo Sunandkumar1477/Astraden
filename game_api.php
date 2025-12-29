@@ -28,6 +28,29 @@ try {
         $conn->query("ALTER TABLE games ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
     }
     
+    // Check and add play_type column
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'play_type'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN play_type ENUM('normal', 'contest') DEFAULT 'normal'");
+    }
+    
+    // Check and add contest datetime columns
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_start_datetime'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_start_datetime DATETIME NULL");
+    }
+    
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_end_datetime'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN contest_end_datetime DATETIME NULL");
+    }
+    
+    // Check and add normal_play_credits column
+    $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'normal_play_credits'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE games ADD COLUMN normal_play_credits INT(11) DEFAULT 30");
+    }
+    
     // Check and add contest_credits_required column
     $check_col = $conn->query("SHOW COLUMNS FROM games LIKE 'contest_credits_required'");
     if ($check_col->num_rows == 0) {
@@ -47,6 +70,12 @@ try {
     $check_col = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'game_mode'");
     if ($check_col->num_rows == 0) {
         $conn->query("ALTER TABLE game_leaderboard ADD COLUMN game_mode ENUM('money', 'credits') DEFAULT 'money'");
+    }
+    
+    // Check and add play_type to game_leaderboard
+    $check_col = $conn->query("SHOW COLUMNS FROM game_leaderboard LIKE 'play_type'");
+    if ($check_col->num_rows == 0) {
+        $conn->query("ALTER TABLE game_leaderboard ADD COLUMN play_type ENUM('normal', 'contest') DEFAULT 'normal'");
     }
 } catch (Exception $e) {
     // Silently handle errors - columns might already exist
@@ -82,19 +111,37 @@ switch ($action) {
         $is_contest_active = 0;
         $is_claim_active = 0;
         $prizes = ['1st' => 0, '2nd' => 0, '3rd' => 0];
+        $play_type = 'normal';
+        $is_contest_time = false;
 
         $check_games_table = $conn->query("SHOW TABLES LIKE 'games'");
         $game_mode = 'money'; // Default game mode
         if ($check_games_table->num_rows > 0) {
             // Remove is_active requirement - we need contest settings even if game is not marked active
-            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, is_claim_active, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, game_mode FROM games WHERE game_name = ?");
+            $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, is_claim_active, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, game_mode, play_type, normal_play_credits, contest_start_datetime, contest_end_datetime FROM games WHERE game_name = ?");
             $games_stmt->bind_param("s", $game_name);
             $games_stmt->execute();
             $games_result = $games_stmt->get_result();
             if ($games_result->num_rows > 0) {
                 $game_data = $games_result->fetch_assoc();
+                $play_type = $game_data['play_type'] ?: 'normal';
                 $is_contest_active = intval($game_data['is_contest_active']);
-                $credits_per_chance = $is_contest_active ? intval($game_data['contest_credits_required']) : intval($game_data['credits_per_chance']);
+                
+                // Determine credits based on play type
+                if ($play_type === 'normal') {
+                    $credits_per_chance = intval($game_data['normal_play_credits'] ?: $game_data['credits_per_chance'] ?: 30);
+                } else {
+                    $credits_per_chance = intval($game_data['contest_credits_required'] ?: $game_data['credits_per_chance'] ?: 30);
+                    
+                    // Check if current time is within contest datetime range
+                    if (!empty($game_data['contest_start_datetime']) && !empty($game_data['contest_end_datetime'])) {
+                        $now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
+                        $start_dt = new DateTime($game_data['contest_start_datetime'], new DateTimeZone('Asia/Kolkata'));
+                        $end_dt = new DateTime($game_data['contest_end_datetime'], new DateTimeZone('Asia/Kolkata'));
+                        $is_contest_time = ($now >= $start_dt && $now <= $end_dt);
+                    }
+                }
+                
                 $is_claim_active = intval($game_data['is_claim_active']);
                 $game_mode = $game_data['game_mode'] ?: 'money';
                 $prizes = [
@@ -313,17 +360,31 @@ switch ($action) {
         $is_demo = isset($_POST['is_demo']) && $_POST['is_demo'] === 'true';
         $game_name = $_POST['game_name'] ?? 'earth-defender';
 
-        // Check if contest mode is active
+        // Check play type and contest status
+        $play_type = 'normal';
         $is_contest_active = 0;
         $game_mode = 'money';
-        $contest_stmt = $conn->prepare("SELECT is_contest_active, game_mode FROM games WHERE game_name = ?");
+        $is_contest_time = false;
+        
+        $contest_stmt = $conn->prepare("SELECT play_type, is_contest_active, game_mode, contest_start_datetime, contest_end_datetime FROM games WHERE game_name = ?");
         $contest_stmt->bind_param("s", $game_name);
         $contest_stmt->execute();
         $contest_res = $contest_stmt->get_result();
         if ($contest_res->num_rows > 0) {
             $row = $contest_res->fetch_assoc();
+            $play_type = $row['play_type'] ?: 'normal';
             $is_contest_active = intval($row['is_contest_active']);
             $game_mode = $row['game_mode'] ?: 'money';
+            
+            // Check if current time is within contest datetime range
+            if ($play_type === 'contest' && !empty($row['contest_start_datetime']) && !empty($row['contest_end_datetime'])) {
+                $now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
+                $start_dt = new DateTime($row['contest_start_datetime'], new DateTimeZone('Asia/Kolkata'));
+                $end_dt = new DateTime($row['contest_end_datetime'], new DateTimeZone('Asia/Kolkata'));
+                $is_contest_time = ($now >= $start_dt && $now <= $end_dt);
+            } else if ($play_type === 'normal') {
+                $is_contest_time = false; // Normal play is always available
+            }
         }
         $contest_stmt->close();
         
@@ -350,8 +411,18 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Invalid score']);
             exit;
         }
+        
+        // For contest mode, only save if within contest time
+        if ($play_type === 'contest' && !$is_contest_time) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Contest is not active at this time'
+            ]);
+            exit;
+        }
 
-        if ($is_contest_active) {
+        // Save to contest_scores if it's an active contest
+        if ($play_type === 'contest' && $is_contest_active && $is_contest_time) {
             // Save to contest_scores (ONLY the best score for this contest)
             // We include game_mode so we know what type of contest this best score belongs to
             $contest_insert = $conn->prepare("INSERT INTO contest_scores (user_id, game_name, score, game_mode) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE score = GREATEST(score, VALUES(score)), game_mode = VALUES(game_mode)");
@@ -360,9 +431,9 @@ switch ($action) {
             $contest_insert->close();
         }
         
-        // ALWAYS save to game_leaderboard so it counts towards "Total Points" on the main leaderboard
-        $insert_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, session_id, game_mode) VALUES (?, ?, ?, ?, ?, ?)");
-        $insert_stmt->bind_param("isiiis", $user_id, $game_name, $score, $credits_used, $session_id, $game_mode);
+        // ALWAYS save to game_leaderboard with play_type so scores are separated
+        $insert_stmt = $conn->prepare("INSERT INTO game_leaderboard (user_id, game_name, score, credits_used, session_id, game_mode, play_type) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $insert_stmt->bind_param("isiiiss", $user_id, $game_name, $score, $credits_used, $session_id, $game_mode, $play_type);
         
         if ($insert_stmt->execute()) {
             // Get updated total points for this user for this game
@@ -373,12 +444,22 @@ switch ($action) {
             $total_points = intval($total_res['total_points'] ?? 0);
             $total_stmt->close();
 
+            // Get total points for this play type
+            $total_stmt_type = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND game_name = ? AND credits_used > 0 AND play_type = ?");
+            $total_stmt_type->bind_param("iss", $user_id, $game_name, $play_type);
+            $total_stmt_type->execute();
+            $total_res_type = $total_stmt_type->get_result()->fetch_assoc();
+            $total_points_type = intval($total_res_type['total_points'] ?? 0);
+            $total_stmt_type->close();
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Score saved successfully',
                 'score' => $score,
                 'total_score' => $total_points,
-                'is_contest' => (bool)$is_contest_active,
+                'total_score_type' => $total_points_type,
+                'play_type' => $play_type,
+                'is_contest' => ($play_type === 'contest' && (bool)$is_contest_active),
                 'game_mode' => $game_mode
             ]);
         } else {
@@ -392,6 +473,7 @@ switch ($action) {
         $limit = intval($_GET['limit'] ?? 10);
         $game_filter = $_GET['game'] ?? 'all';
         $mode_filter = $_GET['mode'] ?? 'all';
+        $play_type_filter = $_GET['play_type'] ?? 'all'; // Filter by normal/contest
 
         $where_clauses = ["gl.credits_used > 0"];
         if ($game_filter !== 'all') {
@@ -399,6 +481,9 @@ switch ($action) {
         }
         if ($mode_filter !== 'all') {
             $where_clauses[] = "gl.game_mode = '" . $conn->real_escape_string($mode_filter) . "'";
+        }
+        if ($play_type_filter !== 'all') {
+            $where_clauses[] = "gl.play_type = '" . $conn->real_escape_string($play_type_filter) . "'";
         }
         $where_sql = implode(" AND ", $where_clauses);
 
