@@ -2865,8 +2865,8 @@ session_start();
             <!-- About Section -->
             <div class="footer-section">
                 <h3>About Astra Den</h3>
-                <p>Astra Den is your ultimate destination for exciting space-themed gaming adventures. Experience thrilling games, compete for real prizes, and join a community of passionate gamers.</p>
-                <p>Play, compete, and win real cash prizes in our exciting gaming tournaments. Join thousands of players in the galaxy's most thrilling gaming experience!</p>
+                <p>Astra Den is your ultimate destination for exciting space-themed gaming adventures. Experience thrilling games, compete for credits, and join a community of passionate gamers.</p>
+                <p>Play, compete, and earn credits in our exciting gaming tournaments. Join thousands of players in the galaxy's most thrilling gaming experience!</p>
             </div>
             
             <!-- Features Section -->
@@ -2879,7 +2879,7 @@ session_start();
                     </div>
                     <div class="footer-feature-item">
                         <i class="fas fa-trophy"></i>
-                        <span>Real Cash Prize Contests</span>
+                        <span>Credit Reward Contests</span>
                     </div>
                     <div class="footer-feature-item">
                         <i class="fas fa-coins"></i>
@@ -2938,7 +2938,7 @@ session_start();
                 </p>
                 <p style="margin-top: 15px;"><strong>Game Credits:</strong></p>
                 <p style="font-size: 0.85rem; margin-top: 5px;">
-                    Purchase credits to play games and compete for real cash prizes. Credits are non-refundable but can be used for all games.
+                    Use credits to play games and compete for credit rewards. Credits can be earned through contests and achievements.
                 </p>
             </div>
             

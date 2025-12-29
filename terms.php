@@ -234,11 +234,10 @@ session_start();
             <p>Astraden is a gaming contest platform that provides:</p>
             <ul>
                 <li>Access to various space-themed games and contests</li>
-                <li>Real money prize competitions</li>
                 <li>Credit-based entry system for contests</li>
-                <li>Real money transfer services for prize distribution</li>
+                <li>Credit rewards and contest participation</li>
             </ul>
-            <p><strong>We are solely a contest platform provider.</strong> We facilitate contests and distribute real prize money. We do not provide any other services, guarantees, warranties, or assume any responsibilities beyond contest facilitation and prize distribution.</p>
+            <p><strong>We are solely a contest platform provider.</strong> We facilitate contests and distribute credit rewards. We do not provide any other services, guarantees, warranties, or assume any responsibilities beyond contest facilitation and credit distribution.</p>
             
             <h2>3. USER RESPONSIBILITIES AND DEVICE USAGE</h2>
             <h3>3.1 Mobile Device Usage</h3>
@@ -291,35 +290,34 @@ session_start();
             <h3>5.1 Contest Participation</h3>
             <p>By participating in contests on Astraden:</p>
             <ul>
-                <li>You acknowledge that contests involve real money entry fees</li>
-                <li>You understand that prizes are awarded based on contest rules and leaderboard rankings</li>
+                <li>You acknowledge that contests involve credit entry fees</li>
+                <li>You understand that credit rewards are awarded based on contest rules and leaderboard rankings</li>
                 <li>You agree that contest results are final and binding</li>
                 <li>You accept that we reserve the right to disqualify any participant for violations of terms</li>
             </ul>
             
-            <h3>5.2 Real Money Transfers</h3>
+            <h3>5.2 Credit Rewards</h3>
             <div class="disclaimer-box">
-                <strong>REAL MONEY TRANSFER DISCLAIMER</strong>
-                <p>Astraden provides genuine real money transfer services for prize distribution. However:</p>
+                <strong>CREDIT REWARDS DISCLAIMER</strong>
+                <p>Astraden provides credit rewards for contest participation and achievements. However:</p>
                 <ul>
-                    <li>We are NOT responsible for delays in prize transfers due to banking systems, payment processors, or third-party services</li>
-                    <li>We are NOT responsible for any fees, charges, or taxes imposed by banks, payment processors, or government authorities</li>
+                    <li>We are NOT responsible for delays in credit distribution due to technical issues or system maintenance</li>
+                    <li>We are NOT responsible for any errors in credit calculations or distribution</li>
                     <li>We are NOT responsible for incorrect account information provided by users</li>
-                    <li>We are NOT responsible for currency conversion rates or fluctuations</li>
-                    <li>We are NOT responsible for any restrictions or limitations imposed by financial institutions</li>
-                    <li>Prize transfers are subject to verification and may take 24-72 hours or longer</li>
-                    <li>Users are responsible for providing accurate payment information</li>
-                    <li>Users are responsible for any tax obligations related to prize winnings</li>
+                    <li>We are NOT responsible for any restrictions or limitations imposed by system policies</li>
+                    <li>Credit rewards are subject to verification and may take time to process</li>
+                    <li>Users are responsible for maintaining accurate account information</li>
+                    <li>Credit rewards are non-transferable and subject to Platform terms</li>
                 </ul>
-                <p><strong>We provide real money transfers in good faith, but we are not liable for any issues beyond our direct control in the transfer process.</strong></p>
+                <p><strong>We provide credit rewards in good faith, but we are not liable for any issues beyond our direct control in the distribution process.</strong></p>
             </div>
             
             <h3>5.3 Credit System</h3>
-            <p>Credits purchased on the Platform:</p>
+            <p>Credits on the Platform:</p>
             <ul>
                 <li>Are non-refundable except as required by law</li>
-                <li>Cannot be exchanged for cash except as prize winnings</li>
-                <li>Are valid only for contest entry fees</li>
+                <li>Cannot be exchanged for cash</li>
+                <li>Are valid only for contest entry fees and game participation</li>
                 <li>May expire according to Platform policies</li>
                 <li>Are subject to Platform terms and conditions</li>
             </ul>
@@ -334,7 +332,7 @@ session_start();
                     <li>Personal injury or property damage</li>
                     <li>Emotional distress or mental anguish</li>
                     <li>Any damages resulting from use or inability to use the Platform</li>
-                    <li>Any damages resulting from contests, prize distribution, or money transfers</li>
+                    <li>Any damages resulting from contests or credit distribution</li>
                     <li>Any damages resulting from mobile device usage</li>
                     <li>Any damages resulting from third-party services or products</li>
                     <li>Any damages resulting from unauthorized access or security breaches</li>
@@ -374,7 +372,7 @@ session_start();
                 <li>Suspend or terminate your account at any time for violations of these terms</li>
                 <li>Refuse service to anyone for any reason</li>
                 <li>Modify or discontinue the Platform without notice</li>
-                <li>Withhold prizes or credits for suspected fraudulent activity</li>
+                <li>Withhold credits for suspected fraudulent activity</li>
             </ul>
             <p>Upon termination, your right to use the Platform immediately ceases, and we may delete your account and data.</p>
             
@@ -416,7 +414,7 @@ session_start();
                     <li>You have read and understood these Terms and Conditions in their entirety</li>
                     <li>You accept all risks associated with using the Platform</li>
                     <li>You understand that Astraden is solely a contest platform provider</li>
-                    <li>You agree that we are not responsible for mobile device issues, platform features, or any matters beyond contest facilitation and prize distribution</li>
+                    <li>You agree that we are not responsible for mobile device issues, platform features, or any matters beyond contest facilitation and credit distribution</li>
                     <li>You waive any claims against Astraden except as explicitly stated in these Terms</li>
                     <li>You agree to use the Platform at your own risk</li>
                 </ul>
