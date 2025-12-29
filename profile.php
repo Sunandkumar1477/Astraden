@@ -415,13 +415,13 @@ $indian_states = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chha
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div class="form-group">
-                        <label>Communication Mobile Number</label>
+                        <label>Mobile Number</label>
                         <input type="text" name="phone_pay" class="form-control" value="<?php echo htmlspecialchars($profile['phone_pay_number'] ?? ''); ?>" placeholder="Enter communication mobile number">
                     </div>
-                    <div class="form-group">
+                    <!-- <div class="form-group">
                         <label>G-Pay ID</label>
                         <input type="text" name="google_pay" class="form-control" value="<?php echo htmlspecialchars($profile['google_pay_number'] ?? ''); ?>">
-                    </div>
+                    </div> -->
                 </div>
 
                 <div class="form-group">
