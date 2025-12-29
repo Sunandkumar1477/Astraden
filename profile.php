@@ -415,8 +415,8 @@ $indian_states = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chha
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div class="form-group">
-                        <label>PhonePay ID</label>
-                        <input type="text" name="phone_pay" class="form-control" value="<?php echo htmlspecialchars($profile['phone_pay_number'] ?? ''); ?>">
+                        <label>Communication Mobile Number</label>
+                        <input type="text" name="phone_pay" class="form-control" value="<?php echo htmlspecialchars($profile['phone_pay_number'] ?? ''); ?>" placeholder="Enter communication mobile number">
                     </div>
                     <div class="form-group">
                         <label>G-Pay ID</label>
@@ -437,8 +437,8 @@ $indian_states = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chha
                 </div>
 
                 <div class="form-group">
-                    <label>Bio / Transmission</label>
-                    <textarea name="bio" class="form-control" style="min-height:80px;"><?php echo htmlspecialchars($profile['bio'] ?? ''); ?></textarea>
+                    <label>Address</label>
+                    <textarea name="bio" class="form-control" style="min-height:80px;" placeholder="Enter your address"><?php echo htmlspecialchars($profile['bio'] ?? ''); ?></textarea>
                 </div>
 
                 <button type="submit" class="submit-btn">Authorize Profile Update</button>

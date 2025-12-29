@@ -446,7 +446,7 @@ $conn->close();
                 
                 <?php if ($profile && $profile['phone_pay_number']): ?>
                 <div class="info-card">
-                    <h3>PhonePay</h3>
+                    <h3>Communication Mobile Number</h3>
                     <p><?php echo htmlspecialchars($profile['phone_pay_number']); ?></p>
                 </div>
                 <?php endif; ?>
@@ -461,7 +461,7 @@ $conn->close();
             
             <?php if ($profile && $profile['bio']): ?>
             <div class="bio-section">
-                <h3>Bio Data</h3>
+                <h3>Address</h3>
                 <p><?php echo nl2br(htmlspecialchars($profile['bio'])); ?></p>
             </div>
             <?php endif; ?>
