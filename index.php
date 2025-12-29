@@ -634,7 +634,7 @@ session_start();
                             <span id="timing-date-earth-defender">-</span>
                         </div>
                     </div>
-                    <button class="play-btn" onclick="launchGame('earth-defender')">Play Now</button>
+                    <button class="play-btn" onclick="launchGame('earth-defender')">Start Mission</button>
                 </div>
             </div>
         </div>

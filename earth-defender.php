@@ -1751,19 +1751,19 @@ $conn->close();
             const startBtn = document.getElementById('start-game-btn');
             const demoBtn = document.getElementById('demo-game-btn');
             
-            timerDisplay.textContent = 'GAME READY!';
+            timerDisplay.textContent = '';
             const creditsRequired = gameSession.credits_required || 30;
             
             if (state.isContestMode) {
                 statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
                 startBtn.style.display = 'flex';
-                startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
+                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
                 startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
                 startBtn.style.color = '#000';
             } else {
-                statusMessage.textContent = `Choose your mode: Demo (always free) or Real Game (${creditsRequired} credits)`;
+                statusMessage.textContent = `Mission ready! Use ${creditsRequired} credits to start.`;
                 startBtn.style.display = 'flex';
-                startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
                 startBtn.style.background = ''; // Reset to CSS default
                 startBtn.style.color = '';
             }
@@ -1785,12 +1785,12 @@ $conn->close();
                 if (state.isContestMode) {
                     statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} credits required).`;
                 } else {
-                    statusMessage.textContent = `Demo mode is free and always available! Login to play for real (${creditsRequired} credits required).`;
+                    statusMessage.textContent = `Login or Register to start mission (${creditsRequired} credits required).`;
                 }
             } else if (userCredits < creditsRequired) {
                 startBtn.disabled = true;
                 startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                statusMessage.textContent = `Demo mode is always available (free, no restrictions)! Or add ${creditsRequired} credits to play for real.`;
+                statusMessage.textContent = `Add ${creditsRequired} credits to start mission.`;
             }
         }
         
@@ -1827,9 +1827,9 @@ $conn->close();
                 
                 // Show contest message if contest is active
                 if (state.isContestMode) {
-                    statusMessage.textContent = `🏆 Contest is active! Game will start soon. Demo mode is always available (free, no restrictions)!`;
+                    statusMessage.textContent = `🏆 Contest is active! Mission will start soon.`;
                 } else {
-                    statusMessage.textContent = 'Game will start soon. Demo mode is always available (free, no restrictions)!';
+                    statusMessage.textContent = 'Mission will start soon.';
                 }
             }
             
@@ -1858,23 +1858,23 @@ $conn->close();
                     const dateObj = new Date(nextSessionDate + 'T00:00:00');
                     const options = { year: 'numeric', month: 'long', day: 'numeric' };
                     const formattedDate = dateObj.toLocaleDateString('en-IN', options);
-                    message = `🏆 Contest is active! Game session will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
+                    message = `🏆 Contest is active! Mission will start on ${formattedDate}.`;
                 } else {
-                    message = '🏆 Contest is active! Wait for the game session to start. Demo mode is always available (free, no restrictions)!';
+                    message = '🏆 Contest is active! Wait for the mission to start.';
                 }
             } else {
                 if (nextSessionDate) {
                     const dateObj = new Date(nextSessionDate + 'T00:00:00');
                     const options = { year: 'numeric', month: 'long', day: 'numeric' };
                     const formattedDate = dateObj.toLocaleDateString('en-IN', options);
-                    message = `This game will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
+                    message = `Mission will start on ${formattedDate}.`;
                 } else {
-                    message = 'This game does not start every day. For updates, follow our YouTube and Instagram. Demo mode is always available (free, no restrictions)!';
+                    message = 'Mission does not start every day. For updates, follow our YouTube and Instagram.';
                 }
             }
             
             if (!isLoggedIn) {
-                message = message.replace('Demo mode', 'Demo mode is free and always available! Login to play for real when sessions are active.');
+                message += ' Login or Register to participate.';
             }
             
             statusMessage.textContent = message;
