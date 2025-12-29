@@ -14,7 +14,7 @@ if ($check_table->num_rows == 0) {
 }
 
 // Columns to fetch
-$cols = "game_name, credits_per_chance, is_active, is_contest_active, game_mode, play_type, normal_play_credits, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, first_prize, second_prize, third_prize";
+$cols = "game_name, credits_per_chance, is_active, is_contest_active, game_mode, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, first_prize, second_prize, third_prize";
 
 if ($game_name) {
     $stmt = $conn->prepare("SELECT $cols FROM games WHERE game_name = ?");
@@ -23,21 +23,13 @@ if ($game_name) {
     $game = $stmt->get_result()->fetch_assoc();
     
     if ($game) {
-        $play_type = $game['play_type'] ?: 'normal';
         $is_contest = intval($game['is_contest_active']);
-        
-        // Determine credits based on play type
-        if ($play_type === 'normal') {
-            $final_credits = intval($game['normal_play_credits'] ?: $game['credits_per_chance'] ?: 30);
-        } else {
-            $final_credits = intval($game['contest_credits_required'] ?: $game['credits_per_chance'] ?: 30);
-        }
+        $final_credits = $is_contest ? intval($game['contest_credits_required']) : intval($game['credits_per_chance']);
         
         echo json_encode([
             'success' => true,
             'game_name' => $game['game_name'],
             'credits_per_chance' => $final_credits,
-            'play_type' => $play_type,
             'is_contest_active' => $is_contest,
             'game_mode' => $game['game_mode'] ?: 'money',
             'contest_prizes' => [
@@ -58,19 +50,11 @@ if ($game_name) {
     $games = $conn->query("SELECT $cols FROM games WHERE is_active = 1")->fetch_all(MYSQLI_ASSOC);
     $response = [];
     foreach ($games as $g) {
-        $play_type = $g['play_type'] ?: 'normal';
         $is_contest = intval($g['is_contest_active']);
-        
-        // Determine credits based on play type
-        if ($play_type === 'normal') {
-            $final_credits = intval($g['normal_play_credits'] ?: $g['credits_per_chance'] ?: 30);
-        } else {
-            $final_credits = intval($g['contest_credits_required'] ?: $g['credits_per_chance'] ?: 30);
-        }
+        $final_credits = $is_contest ? intval($g['contest_credits_required']) : intval($g['credits_per_chance']);
         
         $response[$g['game_name']] = [
             'credits_per_chance' => $final_credits,
-            'play_type' => $play_type,
             'is_contest_active' => $is_contest,
             'game_mode' => $g['game_mode'] ?: 'money',
             'contest_prizes' => [
