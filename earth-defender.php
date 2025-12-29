@@ -186,7 +186,6 @@ $conn->close();
             }
 
             /* Hide non-essential items on mobile during gameplay to maximize space */
-            #hud-total-score-item,
             .hud-item:nth-last-child(1) { /* This is the control info item */
                 display: none !important;
             }
@@ -3051,8 +3050,12 @@ $conn->close();
                             }
                             // Also update HUD total score
                             const hudTotalScore = document.getElementById('hud-total-score');
+                            const hudTotalScoreItem = document.getElementById('hud-total-score-item');
                             if (hudTotalScore) {
                                 hudTotalScore.textContent = data.total_score.toLocaleString();
+                            }
+                            if (hudTotalScoreItem) {
+                                hudTotalScoreItem.style.display = 'flex';
                             }
                         }
 
