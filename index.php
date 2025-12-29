@@ -597,7 +597,7 @@ session_start();
                             <span id="countdown-minutes-earth-defender">0</span> min
                         </span>
                     </div>
-                    <div class="game-icon">🛡️</div>
+                    <div class="game-icon">💥</div>
                     <div class="game-title">Earth Defender</div>
                     <div class="game-description">
                         Protect Earth from incoming asteroids! Rotate the planet and shoot to defend against the cosmic threat.
