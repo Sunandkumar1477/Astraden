@@ -1572,7 +1572,19 @@ $conn->close();
                 return;
             }
             
-            if (!gameSession || !gameSession.end_timestamp) {
+            if (!gameSession) {
+                hideContestTimers();
+                return;
+            }
+            
+            // Skip timer for always available sessions
+            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
+            if (isAlwaysAvailable) {
+                hideContestTimers();
+                return;
+            }
+            
+            if (!gameSession.end_timestamp) {
                 hideContestTimers();
                 return;
             }
@@ -1712,8 +1724,11 @@ $conn->close();
                     updateContestTimer();
                     contestTimerInterval = setInterval(updateContestTimer, 1000);
                     
-                    if (data.is_active) {
-                        // Game is active - show start button
+                    // Check if session is always available
+                    const isAlwaysAvailable = data.session && (data.session.always_available === true || data.session.always_available === 1);
+                    
+                    if (data.is_active || isAlwaysAvailable) {
+                        // Game is active - show start button (always available sessions are always active)
                         showGameReady();
                     } else if (data.session && data.session.time_until_start > 0) {
                         // Game not active but scheduled - show countdown
@@ -1879,13 +1894,18 @@ $conn->close();
             }
             
             // Double-check session is active before allowing credit deduction
-            const now = Math.floor(Date.now() / 1000);
-            const sessionStart = gameSession.start_timestamp;
-            const sessionEnd = gameSession.end_timestamp;
+            // Skip time check if session is always available
+            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
             
-            if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
-                alert('Game session is not currently active. Credits will not be deducted. Please wait for the scheduled time or try demo mode.');
-                return;
+            if (!isAlwaysAvailable) {
+                const now = Math.floor(Date.now() / 1000);
+                const sessionStart = gameSession.start_timestamp;
+                const sessionEnd = gameSession.end_timestamp;
+                
+                if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
+                    alert('Game session is not currently active. Credits will not be deducted. Please wait for the scheduled time or try demo mode.');
+                    return;
+                }
             }
             
             const creditsRequired = gameSession.credits_required || 30;
@@ -2733,8 +2753,9 @@ $conn->close();
         function updateGameLogic(delta) {
             if (!state.isPlaying) return;
             
-            // Check if session has ended (only for real games, NOT demo mode)
-            if (!state.isDemoMode && gameSession && gameSession.end_timestamp) {
+            // Check if session has ended (only for real games, NOT demo mode, NOT always available)
+            const isAlwaysAvailable = gameSession && (gameSession.always_available === true || gameSession.always_available === 1);
+            if (!state.isDemoMode && gameSession && gameSession.end_timestamp && !isAlwaysAvailable) {
                 const now = Math.floor(Date.now() / 1000);
                 if (now > gameSession.end_timestamp && !gameEndedByTime) {
                     gameEndedByTime = true;
