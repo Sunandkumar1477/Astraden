@@ -29,7 +29,12 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Profile - Space Games Hub</title>
-    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <!-- Favicon - Must be early in head for proper display -->
+    <link rel="icon" type="image/svg+xml" href="Alogo.svg">
+    <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
+    <link rel="alternate icon" type="image/png" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="Alogo.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
