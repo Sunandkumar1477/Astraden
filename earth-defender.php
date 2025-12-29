@@ -1846,38 +1846,13 @@ $conn->close();
             
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             
-            timerDisplay.textContent = 'NO SESSION';
+            timerDisplay.textContent = '';
             
             // Hide play button when no session is active
             startBtn.style.display = 'none';
             
-            // Build message based on whether next session date is available and contest status
-            let message = '';
-            if (isContestActive) {
-                if (nextSessionDate) {
-                    const dateObj = new Date(nextSessionDate + 'T00:00:00');
-                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                    const formattedDate = dateObj.toLocaleDateString('en-IN', options);
-                    message = `🏆 Contest is active! Mission will start on ${formattedDate}.`;
-                } else {
-                    message = '🏆 Contest is active! Wait for the mission to start.';
-                }
-            } else {
-                if (nextSessionDate) {
-                    const dateObj = new Date(nextSessionDate + 'T00:00:00');
-                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                    const formattedDate = dateObj.toLocaleDateString('en-IN', options);
-                    message = `Mission will start on ${formattedDate}.`;
-                } else {
-                    message = 'Mission does not start every day. For updates, follow our YouTube and Instagram.';
-                }
-            }
-            
-            if (!isLoggedIn) {
-                message += ' Login or Register to participate.';
-            }
-            
-            statusMessage.textContent = message;
+            // Clear status message
+            statusMessage.textContent = '';
             startBtn.style.display = 'none';
             // Demo can be played ANYTIME - always visible and enabled
             if (demoBtn) {
