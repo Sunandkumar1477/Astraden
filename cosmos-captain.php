@@ -449,6 +449,9 @@ $conn->close();
                         Total Score: <span id="total-score-display">0</span>
                     </p>
                 </div>
+                <a id="prize-claim-link" href="#" style="display: none; background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; text-decoration: none; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; margin-top: 10px; text-align: center; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
+                    🏆 VIEW PRIZE CLAIM
+                </a>
                 <button id="back-to-menu-btn" style="background: linear-gradient(135deg, #00ffff, #9d4edd); color: white; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; margin-top: 10px;">
                     🏠 BACK TO MENU
                 </button>
@@ -522,6 +525,7 @@ $conn->close();
         let isTabVisible = true;
         let creditsRequired = 30;
         let currentUserCredits = USER_CREDITS;
+        let isTimeDurationSession = false; // Track if current session is time-duration (not always_available)
         
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -654,6 +658,12 @@ $conn->close();
                         currentSessionId = data.session.id;
                         currentUserCredits = data.user_credits || USER_CREDITS;
                         updateCreditsDisplay(currentUserCredits);
+                        
+                        // Check if this is a time-duration session (not always_available)
+                        isTimeDurationSession = data.session && !data.session.always_available;
+                        
+                        // Apply different styling for time-duration sessions
+                        applyTimeDurationStyling(isTimeDurationSession);
                         
                         // Update credits required from session if available
                         if (data.session && data.session.credits_required) {
@@ -967,6 +977,36 @@ $conn->close();
                 healthBar.style.background = 'linear-gradient(90deg, #2ecc71, #27ae60)';
             }
         }
+        
+        // Apply different styling for time-duration sessions
+        function applyTimeDurationStyling(isTimeDuration) {
+            const scoreElement = document.getElementById('score');
+            const scoreLabel = scoreElement ? scoreElement.parentElement.previousElementSibling : null;
+            
+            if (isTimeDuration) {
+                // Time-duration session: Gold/Yellow styling
+                if (scoreElement) {
+                    scoreElement.style.color = '#FFD700';
+                    scoreElement.style.textShadow = '0 0 15px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.5)';
+                    scoreElement.style.fontWeight = '900';
+                }
+                if (scoreLabel) {
+                    scoreLabel.style.color = '#FFD700';
+                    scoreLabel.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.6)';
+                }
+            } else {
+                // Normal session: Default cyan styling
+                if (scoreElement) {
+                    scoreElement.style.color = '';
+                    scoreElement.style.textShadow = '';
+                    scoreElement.style.fontWeight = '';
+                }
+                if (scoreLabel) {
+                    scoreLabel.style.color = '';
+                    scoreLabel.style.textShadow = '';
+                }
+            }
+        }
 
         class Asteroid {
             constructor() {
@@ -1235,6 +1275,11 @@ $conn->close();
             const finalScoreDisplay = document.getElementById('final-score-display');
             if (finalScoreDisplay) {
                 finalScoreDisplay.textContent = score.toLocaleString();
+                // Apply time-duration styling to final score if in time-duration session
+                if (isTimeDurationSession) {
+                    finalScoreDisplay.style.color = '#FFD700';
+                    finalScoreDisplay.style.textShadow = '0 0 15px rgba(255, 215, 0, 0.8)';
+                }
             }
             
             // Update message text
@@ -1250,6 +1295,13 @@ $conn->close();
                         totalScoreContainer.style.display = 'block';
                     }
                 }, 500);
+            }
+            
+            // Show prize claim link if in time-duration session
+            const prizeClaimLink = document.getElementById('prize-claim-link');
+            if (prizeClaimLink && isTimeDurationSession && currentSessionId) {
+                prizeClaimLink.href = `prize_claim.php?game=${GAME_NAME}&session_id=${currentSessionId}`;
+                prizeClaimLink.style.display = 'block';
             }
             
             // Show back to menu button and hide start button

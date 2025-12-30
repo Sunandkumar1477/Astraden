@@ -770,6 +770,97 @@ switch ($action) {
         ]);
         break;
         
+    case 'session_leaderboard':
+        // Get top 10 scores for a specific time-duration session
+        $session_id = intval($_GET['session_id'] ?? 0);
+        $game_name = $_GET['game_name'] ?? 'earth-defender';
+        
+        if ($session_id <= 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid session ID'
+            ]);
+            exit;
+        }
+        
+        // Get session details to verify it's a time-duration session
+        $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ? AND game_name = ?");
+        $session_stmt->bind_param("is", $session_id, $game_name);
+        $session_stmt->execute();
+        $session_result = $session_stmt->get_result();
+        
+        if ($session_result->num_rows === 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Session not found'
+            ]);
+            $session_stmt->close();
+            exit;
+        }
+        
+        $session_data = $session_result->fetch_assoc();
+        $session_stmt->close();
+        
+        // Get top 10 scores for this specific session
+        $leaderboard_stmt = $conn->prepare("
+            SELECT 
+                gl.score,
+                gl.played_at,
+                u.id as user_id,
+                u.username,
+                up.full_name,
+                up.credits_color
+            FROM game_leaderboard gl
+            JOIN users u ON gl.user_id = u.id
+            LEFT JOIN user_profile up ON u.id = up.user_id
+            WHERE gl.session_id = ? 
+            AND gl.game_name = ?
+            AND gl.credits_used > 0
+            ORDER BY gl.score DESC
+            LIMIT 10
+        ");
+        $leaderboard_stmt->bind_param("is", $session_id, $game_name);
+        $leaderboard_stmt->execute();
+        $leaderboard_result = $leaderboard_stmt->get_result();
+        $leaderboard = $leaderboard_result->fetch_all(MYSQLI_ASSOC);
+        
+        // Add rank numbers (handling ties)
+        $ranked_leaderboard = [];
+        $current_rank = 1;
+        $prev_score = null;
+        foreach ($leaderboard as $index => $entry) {
+            $entry['score'] = intval($entry['score']);
+            if ($prev_score !== null && $entry['score'] < $prev_score) {
+                $current_rank = $index + 1;
+            }
+            $entry['rank'] = $current_rank;
+            $ranked_leaderboard[] = $entry;
+            $prev_score = $entry['score'];
+        }
+        
+        // Format session date/time
+        $session_date = $session_data['session_date'];
+        $session_time = $session_data['session_time'];
+        $duration_minutes = $session_data['duration_minutes'];
+        $session_start_dt = new DateTime($session_date . ' ' . $session_time, new DateTimeZone('Asia/Kolkata'));
+        $session_end_dt = clone $session_start_dt;
+        $session_end_dt->modify('+' . $duration_minutes . ' minutes');
+        
+        echo json_encode([
+            'success' => true,
+            'session' => [
+                'id' => $session_id,
+                'start_date' => $session_date,
+                'start_time' => $session_time,
+                'duration_minutes' => $duration_minutes,
+                'start_datetime' => $session_start_dt->format('d M Y, h:i A') . ' IST',
+                'end_datetime' => $session_end_dt->format('d M Y, h:i A') . ' IST'
+            ],
+            'leaderboard' => $ranked_leaderboard
+        ]);
+        $leaderboard_stmt->close();
+        break;
+        
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
 }

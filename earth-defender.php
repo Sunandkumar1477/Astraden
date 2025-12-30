@@ -1362,6 +1362,9 @@ $conn->close();
                 <p>Final Score: <span id="final-score" style="color: #ff3333; font-weight: bold;">0</span></p>
                 <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 5px;">Total Score: <span id="total-score">0</span></p>
             </div>
+            <a id="prize-claim-link" href="#" style="display: none; background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; text-decoration: none; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; margin: 10px 0; text-align: center; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
+                🏆 VIEW PRIZE CLAIM
+            </a>
             <div class="game-btn-container">
                 <button class="game-btn btn-primary" onclick="location.reload()">🎮 REBOOT SYSTEM</button>
                 <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
@@ -1559,6 +1562,36 @@ $conn->close();
         // Track if game ended due to time
         let gameEndedByTime = false;
         
+        // Apply different styling for time-duration sessions
+        function applyTimeDurationStyling(isTimeDuration) {
+            const scoreElement = document.getElementById('score');
+            const scoreLabel = scoreElement ? scoreElement.parentElement : null;
+            
+            if (isTimeDuration) {
+                // Time-duration session: Gold/Yellow styling
+                if (scoreElement) {
+                    scoreElement.style.color = '#FFD700';
+                    scoreElement.style.textShadow = '0 0 15px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.5)';
+                    scoreElement.style.fontWeight = '900';
+                }
+                if (scoreLabel) {
+                    scoreLabel.style.color = '#FFD700';
+                    scoreLabel.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.6)';
+                }
+            } else {
+                // Normal session: Default styling
+                if (scoreElement) {
+                    scoreElement.style.color = '';
+                    scoreElement.style.textShadow = '';
+                    scoreElement.style.fontWeight = '';
+                }
+                if (scoreLabel) {
+                    scoreLabel.style.color = '';
+                    scoreLabel.style.textShadow = '';
+                }
+            }
+        }
+        
         function hideContestTimers() {
             document.getElementById('contest-timer').style.display = 'none';
             const mobileTimer = document.getElementById('contest-timer-mobile');
@@ -1716,6 +1749,12 @@ $conn->close();
                     state.gameSessionId = gameSession.id || null;
                     state.isContestMode = data.is_contest_active || false;
                     state.gameMode = data.game_mode || 'money';
+                    
+                    // Track if this is a time-duration session (not always_available)
+                    state.isTimeDurationSession = gameSession && !gameSession.always_available;
+                    
+                    // Apply different styling for time-duration sessions
+                    applyTimeDurationStyling(state.isTimeDurationSession);
                     
                     // Start contest timer
                     if (contestTimerInterval) {
@@ -2979,7 +3018,22 @@ $conn->close();
             
             const gameOverDiv = document.getElementById('game-over');
             gameOverDiv.style.display = 'block';
-            document.getElementById('final-score').innerText = state.score;
+            const finalScoreEl = document.getElementById('final-score');
+            finalScoreEl.innerText = state.score;
+            
+            // Apply time-duration styling to final score if in time-duration session
+            if (state.isTimeDurationSession) {
+                finalScoreEl.style.color = '#FFD700';
+                finalScoreEl.style.textShadow = '0 0 15px rgba(255, 215, 0, 0.8)';
+                finalScoreEl.style.fontWeight = '900';
+                
+                // Show prize claim link if in time-duration session
+                const prizeClaimLink = document.getElementById('prize-claim-link');
+                if (prizeClaimLink && state.gameSessionId) {
+                    prizeClaimLink.href = `prize_claim.php?game=earth-defender&session_id=${state.gameSessionId}`;
+                    prizeClaimLink.style.display = 'block';
+                }
+            }
             
             // Get game over title
             const gameOverTitle = gameOverDiv.querySelector('h1');
