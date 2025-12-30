@@ -582,32 +582,8 @@ session_start();
             <p>Select Your Adventure</p>
         </div>
 
-        <!-- Categories (Desktop) -->
-        <div class="categories desktop-categories">
-            <button class="category-btn active" data-category="all">All Games</button>
-            <button class="category-btn" data-category="action">Action</button>
-            <button class="category-btn" data-category="defense">Defense</button>
-            <button class="category-btn" data-category="arcade">Arcade</button>
-        </div>
-        
-        <!-- Mobile Assist Button -->
-        <div class="mobile-assist-container">
-            <button class="assist-btn" id="mobileAssistBtn" onclick="toggleMobileCategories(event)">
-                <span class="assist-icon">🎯</span>
-                <span class="assist-text">Categories</span>
-                <span class="assist-arrow">▼</span>
-            </button>
-            <div class="mobile-categories-dropdown" id="mobileCategoriesDropdown">
-                <button class="mobile-category-option active" data-category="all" onclick="selectMobileCategory('all')">All Games</button>
-                <button class="mobile-category-option" data-category="action" onclick="selectMobileCategory('action')">Action</button>
-                <button class="mobile-category-option" data-category="defense" onclick="selectMobileCategory('defense')">Defense</button>
-                <button class="mobile-category-option" data-category="arcade" onclick="selectMobileCategory('arcade')">Arcade</button>
-            </div>
-        </div>
-
-        <!-- Games Sections -->
-        <div class="games-section" data-category="defense">
-            <h2 class="section-title">DEFENSE GAMES</h2>
+        <!-- All Games Grid -->
+        <div class="all-games-container">
             <div class="games-grid">
                 <div class="game-card" data-game="earth-defender" data-type="defense" onclick="launchGame('earth-defender'); return false;" style="cursor: pointer;">
                     <!-- Countdown Timer Badge -->
@@ -661,13 +637,6 @@ session_start();
                     </div>
                     <button class="play-btn" onclick="launchGame('earth-defender')">Start Mission</button>
                 </div>
-            </div>
-        </div>
-
-        <!-- Action Games Section -->
-        <div class="games-section hidden" data-category="action">
-            <h2 class="section-title">ACTION GAMES</h2>
-            <div class="games-grid">
                 <div class="game-card" data-game="cosmos-captain" data-type="action" onclick="launchGame('cosmos-captain'); return false;" style="cursor: pointer;">
                     <!-- Countdown Timer Badge -->
                     <div class="game-countdown-badge" id="countdown-badge-cosmos-captain" style="display: none;">
@@ -720,13 +689,6 @@ session_start();
                     </div>
                     <button class="play-btn" onclick="launchGame('cosmos-captain')">Launch Shuttle</button>
                 </div>
-            </div>
-        </div>
-
-
-        <div class="games-section hidden" data-category="arcade">
-            <h2 class="section-title">ARCADE GAMES</h2>
-            <div class="games-grid">
                 <div class="coming-soon-card">
                     <div class="coming-soon-icon">🎮</div>
                     <div class="coming-soon-text">Coming Soon</div>
@@ -1014,143 +976,7 @@ session_start();
             loadGameCredits();
             loadGameTiming();
 
-            // Category filtering - ensure buttons are always clickable
-            function setupCategoryButtons() {
-                document.querySelectorAll('.category-btn').forEach(btn => {
-                    // Clone button to remove any existing listeners
-                    const newBtn = btn.cloneNode(true);
-                    btn.parentNode.replaceChild(newBtn, btn);
-                    
-                    // Click handler
-                    newBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        
-                        const category = this.dataset.category;
-                        
-                        // Update active button
-                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-                        
-                        // Sync mobile options
-                        document.querySelectorAll('.mobile-category-option').forEach(opt => {
-                            opt.classList.remove('active');
-                            if (opt.dataset.category === category) {
-                                opt.classList.add('active');
-                            }
-                        });
-
-                        // Show/hide game sections
-                        document.querySelectorAll('.games-section').forEach(section => {
-                            if (category === 'all' || section.dataset.category === category) {
-                                section.classList.remove('hidden');
-                            } else {
-                                section.classList.add('hidden');
-                            }
-                        });
-                        
-                        return false;
-                    }, true); // Capture phase
-                    
-                    // Touch handler for mobile
-                    newBtn.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        
-                        const category = this.dataset.category;
-                        
-                        // Update active button
-                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-                        
-                        // Sync mobile options
-                        document.querySelectorAll('.mobile-category-option').forEach(opt => {
-                            opt.classList.remove('active');
-                            if (opt.dataset.category === category) {
-                                opt.classList.add('active');
-                            }
-                        });
-
-                        // Show/hide game sections
-                        document.querySelectorAll('.games-section').forEach(section => {
-                            if (category === 'all' || section.dataset.category === category) {
-                                section.classList.remove('hidden');
-                            } else {
-                                section.classList.add('hidden');
-                            }
-                        });
-                        
-                        return false;
-                    }, { passive: false, capture: true });
-                });
-            }
-            
-            // Setup category buttons immediately
-            setupCategoryButtons();
-            
-            // Also setup after a short delay to ensure DOM is ready
-            setTimeout(setupCategoryButtons, 100);
-            
-            // Mobile assist button functions
-            function toggleMobileCategories(event) {
-                if (event) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                const btn = document.getElementById('mobileAssistBtn');
-                const dropdown = document.getElementById('mobileCategoriesDropdown');
-                if (btn && dropdown) {
-                    btn.classList.toggle('active');
-                    dropdown.classList.toggle('show');
-                }
-            }
-            
-            function selectMobileCategory(category) {
-                // Close dropdown
-                const btn = document.getElementById('mobileAssistBtn');
-                const dropdown = document.getElementById('mobileCategoriesDropdown');
-                if (btn && dropdown) {
-                    btn.classList.remove('active');
-                    dropdown.classList.remove('show');
-                }
-                
-                // Update active mobile option
-                document.querySelectorAll('.mobile-category-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-                document.querySelector(`.mobile-category-option[data-category="${category}"]`)?.classList.add('active');
-                
-                // Update desktop buttons if visible
-                document.querySelectorAll('.category-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.category === category) {
-                        btn.classList.add('active');
-                    }
-                });
-                
-                // Show/hide game sections
-                document.querySelectorAll('.games-section').forEach(section => {
-                    if (category === 'all' || section.dataset.category === category) {
-                        section.classList.remove('hidden');
-                    } else {
-                        section.classList.add('hidden');
-                    }
-                });
-            }
-            
-            // Close mobile dropdown when clicking outside
-            document.addEventListener('click', function(event) {
-                const assistBtn = document.getElementById('mobileAssistBtn');
-                const assistDropdown = document.getElementById('mobileCategoriesDropdown');
-                if (assistBtn && assistDropdown && 
-                    !assistBtn.contains(event.target) && 
-                    !assistDropdown.contains(event.target)) {
-                    assistDropdown.classList.remove('show');
-                    assistBtn.classList.remove('active');
-                }
-            });
+            // All games are shown in a single grid - no category filtering needed
 
             // Mobile detection and optimization
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -2766,9 +2592,9 @@ session_start();
         }
         
         function scrollToGames() {
-            const gamesSection = document.querySelector('.games-section');
-            if (gamesSection) {
-                gamesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const gamesContainer = document.querySelector('.all-games-container');
+            if (gamesContainer) {
+                gamesContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             toggleFABMenu();
         }

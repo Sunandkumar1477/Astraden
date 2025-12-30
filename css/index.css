@@ -164,18 +164,14 @@ body {
     letter-spacing: 3px;
 }
 
-/* Game Categories */
+/* Game Categories - Hidden */
 .categories {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 40px;
+    display: none !important;
 }
 
-/* Hide mobile assist button on desktop */
+/* Hide mobile assist button */
 .mobile-assist-container {
-    display: none;
+    display: none !important;
 }
 
 .category-btn {
@@ -228,20 +224,18 @@ body {
     transform: translateY(0);
 }
 
+/* All Games Container */
+.all-games-container {
+    margin-bottom: 40px;
+}
+
 /* Games Grid */
 .games-section {
-    margin-bottom: 60px;
+    margin-bottom: 0;
 }
 
 .section-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(1.5rem, 4vw, 2.5rem);
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 30px;
-    color: var(--primary-purple);
-    text-shadow: 0 0 15px rgba(157, 78, 221, 0.6);
-    letter-spacing: 4px;
+    display: none !important;
 }
 
 .games-grid {
@@ -1507,6 +1501,14 @@ body {
 /* Hide games by category */
 .games-section.hidden {
     display: none;
+}
+
+/* Show all games in grid - remove hidden class behavior */
+.all-games-container .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    padding: 20px 0;
 }
 
 /* Security - Prevent right-click and inspect */
@@ -4535,8 +4537,9 @@ body.mobile-device .play-btn:active {
         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
     
-        /* Hide desktop categories on mobile */
-    .desktop-categories {
+        /* Hide all categories on mobile */
+    .desktop-categories,
+    .categories {
         display: none !important;
     }
     
