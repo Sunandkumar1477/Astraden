@@ -1542,6 +1542,157 @@ body {
     }
 }
 
+/* Media Query for screens below 770px - Show all game information */
+@media (max-width: 770px) {
+    /* Ensure all game cards show full information */
+    .game-card {
+        min-height: auto;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        height: auto;
+    }
+    
+    /* Show all buttons - including Cosmos Captain play button */
+    .game-card .play-btn {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100%;
+        padding: 10px;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        margin-top: 12px;
+    }
+    
+    /* Show all game information badges */
+    .game-prizes {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px;
+        margin-top: 10px !important;
+    }
+    
+    .game-timing-badge {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px;
+        margin-top: 10px !important;
+        font-size: 0.7rem;
+    }
+    
+    .game-countdown-badge {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Ensure game description is fully visible */
+    .game-description {
+        display: block !important;
+        visibility: visible !important;
+        -webkit-line-clamp: unset !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        white-space: normal !important;
+        max-height: none !important;
+    }
+    
+    /* Show game type and credits badge */
+    .game-type {
+        display: inline-block !important;
+        visibility: visible !important;
+    }
+    
+    .credits-badge {
+        display: inline-flex !important;
+        visibility: visible !important;
+    }
+    
+    /* Ensure game icon is visible */
+    .game-icon {
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    /* Ensure game title is visible */
+    .game-title {
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    /* Make sure all prize items are visible */
+    .prize-item {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Make sure all timing items are visible */
+    .game-timing-badge .timing-item {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Ensure proper spacing between elements */
+    .game-card > * {
+        margin-bottom: 8px;
+    }
+    
+    .game-card > *:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Adjust grid to show 2 columns with proper spacing */
+    .games-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .all-games-container .games-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    /* Ensure meta row (game-type and credits-badge) is visible */
+    .game-card > div[style*="display: flex"][style*="justify-content: space-between"] {
+        display: flex !important;
+        visibility: visible !important;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px !important;
+    }
+    
+    /* Make sure prize medals and text are visible */
+    .prize-medal {
+        display: inline !important;
+        visibility: visible !important;
+    }
+    
+    .prize-text {
+        display: inline !important;
+        visibility: visible !important;
+    }
+    
+    /* Ensure timing labels and values are visible */
+    .game-timing-badge .timing-label {
+        display: inline !important;
+        visibility: visible !important;
+    }
+    
+    .game-timing-badge .timing-item span:not(.timing-label) {
+        display: inline !important;
+        visibility: visible !important;
+    }
+}
+
 /* Security - Prevent right-click and inspect */
 .no-select {
     -webkit-touch-callout: none;
