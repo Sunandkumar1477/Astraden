@@ -161,7 +161,7 @@ session_start();
                         <div class="item-icon">🛒</div>
                         <div class="item-info">
                             <div class="item-label">Shop</div>
-                            <div class="item-value">Buy Credits</div>
+                            <div class="item-value">Score: <span id="mobileShopScoreIndex">0</span></div>
                         </div>
                     </a>
                     <!-- Profile Link -->
@@ -181,8 +181,8 @@ session_start();
         <!-- Desktop User Info (hidden on mobile) -->
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
-            <a href="shop.php" class="shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Score Shop">
-                <i class="fas fa-store"></i> Shop
+            <a href="shop.php" class="shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Shop">
+                <i class="fas fa-store"></i> Shop (<span id="shopBtnScoreIndex">0</span>)
             </a>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
             <span class="referral-icon">🎁</span>
@@ -1269,9 +1269,20 @@ session_start();
                         const shopBtn = document.getElementById('shopPlanetBtn');
                         if (shopBtn) shopBtn.classList.remove('hidden');
                         
-                        // Show shop button (desktop)
+                        // Show shop button (desktop) with score
                         const shopBtnDesktop = document.getElementById('shopBtnDesktop');
+                        const shopBtnScoreIndex = document.getElementById('shopBtnScoreIndex');
                         if (shopBtnDesktop) shopBtnDesktop.style.display = 'flex';
+                        if (shopBtnScoreIndex && data.total_score !== undefined) {
+                            shopBtnScoreIndex.textContent = data.total_score.toLocaleString();
+                            shopBtnDesktop.title = 'Shop - Total Score: ' + data.total_score.toLocaleString();
+                        }
+                        
+                        // Update shop score in mobile menu
+                        const mobileShopScoreIndex = document.getElementById('mobileShopScoreIndex');
+                        if (mobileShopScoreIndex && data.total_score !== undefined) {
+                            mobileShopScoreIndex.textContent = data.total_score.toLocaleString();
+                        }
                         
                         // Show referral code if available
                         if (data.referral_code) {

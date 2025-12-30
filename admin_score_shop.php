@@ -14,6 +14,7 @@ try {
             id INT(11) AUTO_INCREMENT PRIMARY KEY,
             game_name VARCHAR(50) NOT NULL DEFAULT 'all',
             score_per_credit INT(11) NOT NULL DEFAULT 100,
+            claim_credits_score INT(11) DEFAULT 0 COMMENT 'Score required to claim credits (0 = disabled)',
             is_active TINYINT(1) DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -22,7 +23,13 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         
         // Insert default
-        $conn->query("INSERT INTO score_shop_settings (game_name, score_per_credit, is_active) VALUES ('all', 100, 1)");
+        $conn->query("INSERT INTO score_shop_settings (game_name, score_per_credit, claim_credits_score, is_active) VALUES ('all', 100, 0, 1)");
+    } else {
+        // Check if claim_credits_score column exists
+        $check_col = $conn->query("SHOW COLUMNS FROM score_shop_settings LIKE 'claim_credits_score'");
+        if ($check_col->num_rows == 0) {
+            $conn->query("ALTER TABLE score_shop_settings ADD COLUMN claim_credits_score INT(11) DEFAULT 0 COMMENT 'Score required to claim credits (0 = disabled)'");
+        }
     }
 } catch (Exception $e) {
     // Table might already exist
@@ -42,19 +49,20 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_rate'])) {
     $game_name = trim($_POST['game_name'] ?? 'all');
     $score_per_credit = intval($_POST['score_per_credit'] ?? 100);
+    $claim_credits_score = intval($_POST['claim_credits_score'] ?? 0);
     
     if ($score_per_credit <= 0) {
         $error = "Score per credit must be greater than 0.";
     } else {
-        $stmt = $conn->prepare("INSERT INTO score_shop_settings (game_name, score_per_credit, is_active) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE score_per_credit = ?, updated_at = NOW()");
-        $stmt->bind_param("sii", $game_name, $score_per_credit, $score_per_credit);
+        $stmt = $conn->prepare("INSERT INTO score_shop_settings (game_name, score_per_credit, claim_credits_score, is_active) VALUES (?, ?, ?, 1) ON DUPLICATE KEY UPDATE score_per_credit = ?, claim_credits_score = ?, updated_at = NOW()");
+        $stmt->bind_param("siiiii", $game_name, $score_per_credit, $claim_credits_score, $score_per_credit, $claim_credits_score);
         
         if ($stmt->execute()) {
-            $desc = "Updated score shop rate for " . ($game_name === 'all' ? 'All Games' : $game_name) . " to {$score_per_credit} score per credit";
+            $desc = "Updated score shop rate for " . ($game_name === 'all' ? 'All Games' : $game_name) . " to {$score_per_credit} score per credit" . ($claim_credits_score > 0 ? " and claim credits score to {$claim_credits_score}" : "");
             $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'update_score_shop', '$desc', '{$_SERVER['REMOTE_ADDR']}')");
-            $message = "Score shop rate updated successfully!";
+            $message = "Score shop settings updated successfully!";
         } else {
-            $error = "Failed to update rate.";
+            $error = "Failed to update settings.";
         }
         $stmt->close();
     }
@@ -166,21 +174,27 @@ $conn->close();
                 </div>
                 <div class="form-group">
                     <label>SCORE PER CREDIT (⚡)</label>
-                    <input type="number" name="score_per_credit" value="100" min="1" required>
+                    <input type="number" name="score_per_credit" value="<?php echo isset($settings_map['all']) ? $settings_map['all']['score_per_credit'] : 100; ?>" min="1" required>
                     <small style="color:rgba(255,255,255,0.4);display:block;margin-top:5px;">How many score points = 1 credit (e.g., 100 score = 1 credit)</small>
                 </div>
-                <button type="submit" name="update_rate" class="btn-update">UPDATE CONVERSION RATE</button>
+                <div class="form-group">
+                    <label>CLAIM CREDITS SCORE (🎁)</label>
+                    <input type="number" name="claim_credits_score" value="<?php echo isset($settings_map['all']) ? ($settings_map['all']['claim_credits_score'] ?? 0) : 0; ?>" min="0" required>
+                    <small style="color:rgba(255,255,255,0.4);display:block;margin-top:5px;">Score required to claim credits (set 0 to disable claim feature)</small>
+                </div>
+                <button type="submit" name="update_rate" class="btn-update">UPDATE SETTINGS</button>
             </form>
         </div>
 
         <div class="table-card">
             <table>
-                <thead><tr><th>Game</th><th>Score Per Credit</th><th>Status</th><th>Last Updated</th></tr></thead>
+                <thead><tr><th>Game</th><th>Score Per Credit</th><th>Claim Credits Score</th><th>Status</th><th>Last Updated</th></tr></thead>
                 <tbody>
                     <?php foreach($settings as $s): ?>
                     <tr>
                         <td><strong style="color:var(--primary-cyan);"><?php echo $available_games[$s['game_name']] ?? $s['game_name']; ?></strong></td>
                         <td><span style="color:var(--color-shop);font-weight:bold;"><?php echo $s['score_per_credit']; ?> Score = 1 ⚡</span></td>
+                        <td><span style="color:#9d4edd;font-weight:bold;"><?php echo ($s['claim_credits_score'] ?? 0) > 0 ? $s['claim_credits_score'] . ' Score' : 'Disabled'; ?></span></td>
                         <td><span style="color:#00ffcc;font-weight:bold;font-size:0.75rem;"><?php echo $s['is_active'] ? 'ACTIVE' : 'INACTIVE'; ?></span></td>
                         <td style="font-size:0.8rem;color:rgba(255,255,255,0.4);"><?php echo $s['updated_at'] ? date('M d, H:i', strtotime($s['updated_at'])) : date('M d, H:i', strtotime($s['created_at'])); ?></td>
                     </tr>

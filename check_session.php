@@ -65,6 +65,15 @@ if (isset($_SESSION['user_id'])) {
     $credits = $profile['credits'] ?? 0;
     $credits_color = $profile['credits_color'] ?? '#00ffff';
     
+    // Get total score
+    $score_stmt = $conn->prepare("SELECT SUM(score) as total_score FROM game_leaderboard WHERE user_id = ? AND credits_used > 0 AND score > 0");
+    $score_stmt->bind_param("i", $user_id);
+    $score_stmt->execute();
+    $score_result = $score_stmt->get_result();
+    $score_data = $score_result->fetch_assoc();
+    $score_stmt->close();
+    $total_score = intval($score_data['total_score'] ?? 0);
+    
     // Get referral code
     $ref_stmt = $conn->prepare("SELECT referral_code FROM users WHERE id = ?");
     $ref_stmt->bind_param("i", $user_id);
@@ -85,7 +94,8 @@ if (isset($_SESSION['user_id'])) {
         ],
         'credits' => (int)$credits,
         'credits_color' => $credits_color,
-        'referral_code' => $referral_code
+        'referral_code' => $referral_code,
+        'total_score' => $total_score
     ]);
 } else {
     echo json_encode(['logged_in' => false]);

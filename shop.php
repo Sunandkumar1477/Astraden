@@ -37,11 +37,15 @@ $conn->query("UPDATE user_profile SET available_score = $total_score WHERE user_
 // Available score is the total score (can be used to buy credits)
 $available_score = $total_score;
 
-// Get conversion rates
+// Get conversion rates and claim credits settings
 $conversion_rates = [];
+$claim_credits_score = 0;
 $rates_query = $conn->query("SELECT * FROM score_shop_settings WHERE is_active = 1");
 while ($row = $rates_query->fetch_assoc()) {
     $conversion_rates[$row['game_name']] = intval($row['score_per_credit']);
+    if ($row['game_name'] === 'all') {
+        $claim_credits_score = intval($row['claim_credits_score'] ?? 0);
+    }
 }
 
 $available_games = ['earth-defender' => '🛡️ Earth Defender'];
@@ -148,7 +152,7 @@ $conn->close();
                         <div class="item-icon">🛒</div>
                         <div class="item-info">
                             <div class="item-label">Shop</div>
-                            <div class="item-value">Buy Credits</div>
+                            <div class="item-value">Score: <span id="mobileShopScore"><?php echo number_format($total_score); ?></span></div>
                         </div>
                     </a>
                     <!-- Profile Link -->
@@ -168,8 +172,8 @@ $conn->close();
         <!-- Desktop User Info (hidden on mobile) -->
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
-            <a href="shop.php" class="shop-btn-desktop" style="display: none;" id="shopBtnDesktop" title="Shop">
-                <i class="fas fa-store"></i> Shop
+            <a href="shop.php" class="shop-btn-desktop" style="display: none;" id="shopBtnDesktop" title="Shop - Total Score: <?php echo number_format($total_score); ?>">
+                <i class="fas fa-store"></i> Shop (<span id="shopBtnScore"><?php echo number_format($total_score); ?></span>)
             </a>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
                 <span class="referral-icon">🎁</span>
@@ -227,6 +231,41 @@ $conn->close();
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
+        
+        <?php if($claim_credits_score > 0): ?>
+        <div class="purchase-section" style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(157, 78, 221, 0.1), rgba(0, 255, 255, 0.1)); border: 2px solid #9d4edd;">
+            <h2><i class="fas fa-gift"></i> Claim Credits</h2>
+            <div style="padding: 20px; text-align: center;">
+                <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px; font-size: 1.1rem;">
+                    Claim credits instantly with your score!
+                </p>
+                <div style="background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="color: rgba(255,255,255,0.7);">Score Required:</span>
+                        <span style="color: #9d4edd; font-weight: 900; font-size: 1.5rem;"><?php echo number_format($claim_credits_score); ?></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="color: rgba(255,255,255,0.7);">Your Total Score:</span>
+                        <span style="color: #fbbf24; font-weight: 900; font-size: 1.5rem;"><?php echo number_format($total_score); ?></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: rgba(255,255,255,0.7);">Credits You'll Get:</span>
+                        <span style="color: #00ffcc; font-weight: 900; font-size: 1.5rem;">1 ⚡</span>
+                    </div>
+                </div>
+                <form method="POST" action="claim_credits_with_score.php" id="claimForm">
+                    <button type="submit" class="btn-purchase" style="background: linear-gradient(135deg, #9d4edd, #00ffff);" id="claimBtn" <?php echo $total_score < $claim_credits_score ? 'disabled' : ''; ?>>
+                        <i class="fas fa-gift"></i> CLAIM 1 CREDIT
+                    </button>
+                </form>
+                <?php if($total_score < $claim_credits_score): ?>
+                    <p style="color: #ff006e; margin-top: 15px; font-size: 0.9rem;">
+                        You need <?php echo number_format($claim_credits_score - $total_score); ?> more score to claim credits.
+                    </p>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
         
         <div class="purchase-section">
             <h2><i class="fas fa-shopping-cart"></i> Buy Credits with Score</h2>
