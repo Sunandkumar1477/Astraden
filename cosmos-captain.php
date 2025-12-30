@@ -761,17 +761,24 @@ $conn->close();
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Deduct credits response:', data);
                 if (data.success) {
-                    creditsUsed = data.credits_used;
-                    currentUserCredits = data.remaining_credits;
-                    updateCreditsDisplay(data.remaining_credits);
+                    // Use creditsRequired (which we already know) instead of data.credits_used
+                    creditsUsed = creditsRequired;
+                    currentUserCredits = data.credits_remaining || (currentUserCredits - creditsRequired);
+                    updateCreditsDisplay(currentUserCredits);
                     gameStarted = true;
                     // Update credits display in overlay
                     const userCreditsDisplay = document.getElementById('user-credits-display');
                     if (userCreditsDisplay) {
-                        userCreditsDisplay.textContent = data.remaining_credits.toLocaleString();
+                        userCreditsDisplay.textContent = currentUserCredits.toLocaleString();
                     }
                     // Show total score box
                     const totalScoreBox = document.getElementById('total-score-box');
@@ -782,8 +789,10 @@ $conn->close();
                     if (exitBtn) {
                         exitBtn.style.display = 'block';
                     }
+                    console.log('Game started successfully. creditsUsed:', creditsUsed, 'remaining:', currentUserCredits);
                     return true;
                 } else {
+                    console.error('Failed to deduct credits:', data);
                     alert(data.message || 'Failed to start game');
                     if (data.redirect) {
                         window.location.href = data.redirect;
@@ -792,8 +801,8 @@ $conn->close();
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to start game');
+                console.error('Error starting game:', error);
+                alert('Failed to start game: ' + error.message);
                 return false;
             });
         }
