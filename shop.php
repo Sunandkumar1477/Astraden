@@ -290,6 +290,29 @@ $conn->close();
             cursor: not-allowed;
         }
         
+        /* Home button styling */
+        .home-btn-desktop {
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #00ffff, #0099cc);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .home-btn-desktop:hover {
+            background: linear-gradient(135deg, #00ccff, #0088bb);
+            border-color: #00ccff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.4);
+        }
+        
         /* Messages */
         .message { 
             padding: 12px; 
@@ -328,8 +351,27 @@ $conn->close();
                 font-size: 1.8rem; 
             }
             .score-summary {
-                grid-template-columns: 1fr;
-                gap: 12px;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            /* Make the third card (credits) span full width below */
+            .score-card:nth-child(3) {
+                grid-column: 1 / -1;
+            }
+            /* Make all score cards smaller on mobile */
+            .score-card {
+                padding: 12px;
+            }
+            .score-card h3 {
+                font-size: 0.7rem;
+                margin-bottom: 8px;
+            }
+            .score-card .score-value {
+                font-size: 1.4rem;
+            }
+            .score-card .score-label {
+                font-size: 0.75rem;
+                margin-top: 3px;
             }
             .games-scores,
             .purchase-section {
@@ -428,6 +470,9 @@ $conn->close();
         <!-- Desktop User Info (hidden on mobile) -->
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
+            <a href="index.php" class="home-btn-desktop" style="padding: 8px 15px; background: linear-gradient(135deg, #00ffff, #0099cc); border: 2px solid #00ffff; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease; display: flex; align-items: center; gap: 6px;" title="Home">
+                <i class="fas fa-home"></i> Home
+            </a>
             <a href="shop.php" class="shop-btn-desktop" style="display: none;" id="shopBtnDesktop" title="Shop - Total Score: <?php echo number_format($total_score); ?>">
                 <i class="fas fa-store"></i> Shop (<span id="shopBtnScore"><?php echo number_format($total_score); ?></span>)
             </a>
@@ -507,7 +552,7 @@ $conn->close();
                     <h3>Purchase Summary</h3>
                     <div class="summary-row">
                         <span class="summary-label">Credits to Buy:</span>
-                        <span class="summary-value" id="creditsDisplay">1 ⚡</span>
+                        <span class="summary-value" id="creditsDisplay">10 ⚡</span>
                     </div>
                     <div class="summary-row">
                         <span class="summary-label">Score Required:</span>
@@ -524,8 +569,8 @@ $conn->close();
                 </div>
                 
                 <div class="form-group">
-                    <label>Amount of Credits to Buy</label>
-                    <input type="number" name="credits_amount" id="creditsAmount" min="1" value="1" required>
+                    <label>Amount of Credits to Buy (Minimum: 10)</label>
+                    <input type="number" name="credits_amount" id="creditsAmount" min="10" value="10" required>
                     <div class="rate-info" id="rateInfo">Conversion rate: Loading...</div>
                 </div>
                 
@@ -707,7 +752,7 @@ $conn->close();
             scoreRequired.textContent = numberFormat(requiredScore);
             remainingScore.textContent = numberFormat(Math.max(0, remaining));
             
-            if (requiredScore > gameScore || credits <= 0) {
+            if (requiredScore > gameScore || credits < 10) {
                 purchaseBtn.disabled = true;
                 purchaseBtn.style.opacity = '0.5';
             } else {
@@ -738,9 +783,9 @@ $conn->close();
                 return false;
             }
             
-            if (credits <= 0) {
+            if (credits < 10) {
                 e.preventDefault();
-                alert('Please enter a valid amount of credits to buy.');
+                alert('Minimum purchase is 10 credits. Please enter at least 10 credits.');
                 return false;
             }
             
