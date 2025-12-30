@@ -1368,8 +1368,8 @@ $conn->close();
                 🏆 VIEW PRIZE CLAIM
             </a>
             <div class="game-btn-container">
-                <button class="game-btn btn-primary" onclick="location.reload()">🎮 PLAY AGAIN</button>
-                <a href="index.php" class="game-btn btn-home" onclick="return true;">🏠 BACK TO HOME</a>
+                <button class="game-btn btn-primary" onclick="location.reload(); return false;">🎮 PLAY AGAIN</button>
+                <a href="index.php" class="game-btn btn-home" onclick="window.location.href='index.php'; return false;">🏠 BACK TO HOME</a>
             </div>
         </div>
 
@@ -3023,15 +3023,23 @@ $conn->close();
             if (statusOverlay) {
                 statusOverlay.style.display = 'none';
                 statusOverlay.classList.add('hidden');
+                statusOverlay.style.visibility = 'hidden';
+                statusOverlay.style.pointerEvents = 'none';
             }
             
             const gameOverDiv = document.getElementById('game-over');
-            // Make sure game-over div is visible and stays visible
+            // Make sure game-over div is visible and stays visible - NO AUTO REDIRECT
+            // The modal will remain visible until user explicitly clicks "Back to Home" or "Play Again"
             gameOverDiv.style.display = 'flex';
             gameOverDiv.style.visibility = 'visible';
             gameOverDiv.style.opacity = '1';
             gameOverDiv.style.pointerEvents = 'auto';
             gameOverDiv.style.zIndex = '2000';
+            gameOverDiv.style.position = 'fixed';
+            
+            // Ensure no other elements can hide this modal
+            // Prevent any automatic redirects - wait for user to click button
+            console.log('Game Over - Modal displayed. Waiting for user to click button.');
             
             const finalScoreEl = document.getElementById('final-score');
             finalScoreEl.innerText = state.score;
@@ -3242,6 +3250,8 @@ $conn->close();
         }
 
         window.addEventListener('popstate', async function(event) {
+            // Only show exit confirmation if game is actively playing
+            // After game over, allow normal navigation (user can use browser back button)
             if (state.isPlaying) {
                 showExitConfirmation();
             }
