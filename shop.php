@@ -67,50 +67,287 @@ $conn->close();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
     <style>
-        .shop-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
-        .shop-header { text-align: center; margin-bottom: 40px; }
-        .shop-header h1 { font-family: 'Orbitron', sans-serif; color: #00ffff; font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 0 20px #00ffff; }
-        .shop-header p { color: rgba(255,255,255,0.6); font-size: 1.1rem; }
+        /* Ensure body and content are visible */
+        body {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding-top: 80px;
+        }
         
-        .score-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .score-card { background: rgba(15, 15, 25, 0.95); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 20px; padding: 25px; text-align: center; }
-        .score-card h3 { font-family: 'Orbitron', sans-serif; color: #9d4edd; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 2px; }
-        .score-card .score-value { font-size: 2.5rem; font-weight: 900; color: #fbbf24; text-shadow: 0 0 20px #fbbf24; }
-        .score-card .score-label { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-top: 5px; }
+        /* Space background should be behind everything */
+        #space-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
         
-        .games-scores { background: rgba(15, 15, 25, 0.95); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 20px; padding: 30px; margin-bottom: 40px; }
-        .games-scores h2 { font-family: 'Orbitron', sans-serif; color: #00ffff; margin-bottom: 25px; font-size: 1.5rem; }
-        .game-score-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; margin-bottom: 10px; }
-        .game-score-item:last-child { margin-bottom: 0; }
-        .game-name { font-weight: 700; color: white; }
-        .game-score { font-size: 1.3rem; font-weight: 900; color: #fbbf24; }
+        /* Main shop container */
+        .shop-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 40px 20px;
+            position: relative;
+            z-index: 10;
+            min-height: calc(100vh - 160px);
+        }
         
-        .purchase-section { background: rgba(15, 15, 25, 0.95); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 20px; padding: 30px; }
-        .purchase-section h2 { font-family: 'Orbitron', sans-serif; color: #00ffff; margin-bottom: 25px; font-size: 1.5rem; }
-        .purchase-form { display: grid; gap: 20px; }
-        .form-group { }
-        .form-group label { display: block; color: #9d4edd; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; text-transform: uppercase; }
-        .form-group select, .form-group input { width: 100%; padding: 15px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,255,255,0.3); border-radius: 10px; color: white; font-size: 1rem; font-family: 'Rajdhani', sans-serif; }
-        .form-group input[type="number"] { font-size: 1.2rem; font-weight: 700; }
-        .rate-info { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 5px; }
-        .purchase-summary { background: rgba(0,255,255,0.1); border: 2px solid #00ffff; border-radius: 15px; padding: 20px; margin: 20px 0; }
-        .purchase-summary h3 { font-family: 'Orbitron', sans-serif; color: #00ffff; margin-bottom: 15px; font-size: 1rem; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .summary-row:last-child { margin-bottom: 0; border-top: 1px solid rgba(0,255,255,0.3); padding-top: 10px; margin-top: 10px; font-weight: 900; font-size: 1.2rem; }
-        .summary-label { color: rgba(255,255,255,0.7); }
-        .summary-value { color: #fbbf24; font-weight: 700; }
-        .btn-purchase { background: linear-gradient(135deg, #00ffff, #9d4edd); border: none; color: white; padding: 18px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.1rem; cursor: pointer; width: 100%; transition: transform 0.2s; }
-        .btn-purchase:hover { transform: scale(1.02); }
-        .btn-purchase:disabled { opacity: 0.5; cursor: not-allowed; }
+        .shop-header { 
+            text-align: center; 
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 10;
+        }
+        .shop-header h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: #00ffff; 
+            font-size: 2.5rem; 
+            margin-bottom: 10px; 
+            text-shadow: 0 0 20px #00ffff;
+            position: relative;
+            z-index: 10;
+        }
+        .shop-header p { 
+            color: rgba(255,255,255,0.8); 
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 10;
+        }
         
-        .message { padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-weight: 700; }
-        .msg-success { background: rgba(0, 255, 204, 0.1); border: 2px solid #00ffcc; color: #00ffcc; }
-        .msg-error { background: rgba(255, 0, 110, 0.1); border: 2px solid #ff006e; color: #ff006e; }
+        /* Score summary cards */
+        .score-summary { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 10;
+        }
+        .score-card { 
+            background: rgba(15, 15, 25, 0.95); 
+            border: 2px solid rgba(0, 255, 255, 0.3); 
+            border-radius: 20px; 
+            padding: 25px; 
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+        .score-card h3 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: #9d4edd; 
+            font-size: 0.9rem; 
+            text-transform: uppercase; 
+            margin-bottom: 15px; 
+            letter-spacing: 2px; 
+        }
+        .score-card .score-value { 
+            font-size: 2.5rem; 
+            font-weight: 900; 
+            color: #fbbf24; 
+            text-shadow: 0 0 20px #fbbf24;
+            display: block;
+        }
+        .score-card .score-label { 
+            color: rgba(255,255,255,0.7); 
+            font-size: 0.9rem; 
+            margin-top: 5px; 
+        }
         
+        /* Games scores section */
+        .games-scores { 
+            background: rgba(15, 15, 25, 0.95); 
+            border: 1px solid rgba(0, 255, 255, 0.2); 
+            border-radius: 20px; 
+            padding: 30px; 
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+        .games-scores h2 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: #00ffff; 
+            margin-bottom: 25px; 
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .game-score-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 15px; 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 10px; 
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .game-score-item:last-child { 
+            margin-bottom: 0; 
+        }
+        .game-name { 
+            font-weight: 700; 
+            color: white;
+            font-size: 1.1rem;
+        }
+        .game-score { 
+            font-size: 1.3rem; 
+            font-weight: 900; 
+            color: #fbbf24;
+            text-shadow: 0 0 10px #fbbf24;
+        }
+        
+        /* Purchase sections */
+        .purchase-section { 
+            background: rgba(15, 15, 25, 0.95); 
+            border: 1px solid rgba(0, 255, 255, 0.2); 
+            border-radius: 20px; 
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+        .purchase-section h2 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: #00ffff; 
+            margin-bottom: 25px; 
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .purchase-form { 
+            display: grid; 
+            gap: 20px; 
+        }
+        .form-group { 
+            margin-bottom: 15px;
+        }
+        .form-group label { 
+            display: block; 
+            color: #9d4edd; 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            margin-bottom: 8px; 
+            text-transform: uppercase; 
+        }
+        .form-group select, .form-group input { 
+            width: 100%; 
+            padding: 15px; 
+            background: rgba(0,0,0,0.5); 
+            border: 1px solid rgba(0,255,255,0.3); 
+            border-radius: 10px; 
+            color: white; 
+            font-size: 1rem; 
+            font-family: 'Rajdhani', sans-serif;
+        }
+        .form-group input[type="number"] { 
+            font-size: 1.2rem; 
+            font-weight: 700; 
+        }
+        .rate-info { 
+            color: rgba(255,255,255,0.7); 
+            font-size: 0.85rem; 
+            margin-top: 5px; 
+        }
+        .purchase-summary { 
+            background: rgba(0,255,255,0.1); 
+            border: 2px solid #00ffff; 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin: 20px 0; 
+        }
+        .purchase-summary h3 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: #00ffff; 
+            margin-bottom: 15px; 
+            font-size: 1rem; 
+        }
+        .summary-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 10px; 
+        }
+        .summary-row:last-child { 
+            margin-bottom: 0; 
+            border-top: 1px solid rgba(0,255,255,0.3); 
+            padding-top: 10px; 
+            margin-top: 10px; 
+            font-weight: 900; 
+            font-size: 1.2rem; 
+        }
+        .summary-label { 
+            color: rgba(255,255,255,0.8); 
+        }
+        .summary-value { 
+            color: #fbbf24; 
+            font-weight: 700; 
+        }
+        .btn-purchase { 
+            background: linear-gradient(135deg, #00ffff, #9d4edd); 
+            border: none; 
+            color: white; 
+            padding: 18px; 
+            border-radius: 10px; 
+            font-family: 'Orbitron', sans-serif; 
+            font-weight: 900; 
+            font-size: 1.1rem; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+        .btn-purchase:hover { 
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+        }
+        .btn-purchase:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed;
+        }
+        
+        /* Messages */
+        .message { 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
+            text-align: center; 
+            font-weight: 700;
+            position: relative;
+            z-index: 10;
+        }
+        .msg-success { 
+            background: rgba(0, 255, 204, 0.2); 
+            border: 2px solid #00ffcc; 
+            color: #00ffcc; 
+        }
+        .msg-error { 
+            background: rgba(255, 0, 110, 0.2); 
+            border: 2px solid #ff006e; 
+            color: #ff006e; 
+        }
+        
+        /* Responsive */
         @media (max-width: 768px) {
-            .shop-container { padding: 20px 15px; }
-            .shop-header h1 { font-size: 1.8rem; }
-            .score-card .score-value { font-size: 2rem; }
+            body {
+                padding-top: 60px;
+            }
+            .shop-container { 
+                padding: 20px 15px; 
+            }
+            .shop-header h1 { 
+                font-size: 1.8rem; 
+            }
+            .score-card .score-value { 
+                font-size: 2rem; 
+            }
+            .score-summary {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
