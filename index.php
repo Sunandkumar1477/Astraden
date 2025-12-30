@@ -574,6 +574,30 @@ session_start();
         </div>
     </div>
 
+    <!-- Login Required Modal -->
+    <div class="modal-overlay" id="loginRequiredModal">
+        <div class="auth-modal">
+            <button class="close-modal" onclick="closeModal('loginRequired')">&times;</button>
+            <div class="modal-header">
+                <h2>Login Required</h2>
+                <p>Please log in and enjoy the game</p>
+            </div>
+            <div style="padding: 20px; text-align: center;">
+                <p style="color: rgba(0, 255, 255, 0.9); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.6;">
+                    You need to be logged in to play games. Please log in or create an account to continue.
+                </p>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button type="button" class="submit-btn" onclick="redirectToLogin()" style="flex: 1; min-width: 150px; background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));">
+                        Login
+                    </button>
+                    <button type="button" class="submit-btn" onclick="redirectToRegister()" style="flex: 1; min-width: 150px; background: rgba(157, 78, 221, 0.3); border: 2px solid var(--primary-purple); color: var(--primary-purple);">
+                        Register
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Container -->
     <div class="container">
         <!-- Header -->
@@ -749,14 +773,35 @@ session_start();
                     return;
                 }
 
-                // Show loading
-                const loading = document.getElementById('loading');
-                loading.classList.add('show');
+                // Check if user is logged in (verify with server)
+                fetch('check_session.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        isUserLoggedIn = data.logged_in || false;
+                        
+                        if (!isUserLoggedIn) {
+                            // Show login required modal
+                            openModal('loginRequired');
+                            return;
+                        }
 
-                // Redirect after short delay for smooth transition
-                setTimeout(() => {
-                    window.location.href = gamePaths[sanitized];
-                }, 500);
+                        // User is logged in, proceed with game launch
+                        // Show loading
+                        const loading = document.getElementById('loading');
+                        if (loading) {
+                            loading.classList.add('show');
+                        }
+
+                        // Redirect after short delay for smooth transition
+                        setTimeout(() => {
+                            window.location.href = gamePaths[sanitized];
+                        }, 500);
+                    })
+                    .catch(error => {
+                        console.error('Error checking session:', error);
+                        // On error, show login modal as fallback
+                        openModal('loginRequired');
+                    });
             }
 
             // Make launchGame available globally
@@ -1134,11 +1179,13 @@ session_start();
         let selectedCreditsAmount = 0; // Will be set when packages load
         let selectedCreditsPrice = 0; // Will be set when packages load
         let creditPackages = []; // Store loaded packages
+        let isUserLoggedIn = false; // Track login status
 
         function checkSession() {
             fetch('check_session.php')
                 .then(response => response.json())
                 .then(data => {
+                    isUserLoggedIn = data.logged_in || false; // Update login status
                     if (data.logged_in) {
                         document.getElementById('userInfoBar').classList.remove('hidden');
                         document.getElementById('authButtons').classList.add('hidden');
@@ -1273,6 +1320,7 @@ session_start();
                                 console.error('Profile check error:', error);
                             });
                     } else {
+                        isUserLoggedIn = false; // Update login status
                         document.getElementById('userInfoBar').classList.add('hidden');
                         document.getElementById('authButtons').classList.remove('hidden');
                         document.getElementById('profilePlanetBtn').classList.add('hidden');
@@ -1772,7 +1820,8 @@ session_start();
                 'login': 'loginModal',
                 'register': 'registerModal',
                 'loginConfirmation': 'loginConfirmationModal',
-                'forgotPassword': 'forgotPasswordModal'
+                'forgotPassword': 'forgotPasswordModal',
+                'loginRequired': 'loginRequiredModal'
             };
             const modalId = modalMap[type] || (type + 'Modal');
             const modal = document.getElementById(modalId);
@@ -1794,7 +1843,8 @@ session_start();
                 'login': 'loginModal',
                 'register': 'registerModal',
                 'loginConfirmation': 'loginConfirmationModal',
-                'forgotPassword': 'forgotPasswordModal'
+                'forgotPassword': 'forgotPasswordModal',
+                'loginRequired': 'loginRequiredModal'
             };
             const modalId = modalMap[type] || (type + 'Modal');
             const modal = document.getElementById(modalId);
@@ -1816,6 +1866,20 @@ session_start();
                 }
             }
         }
+        
+        // Redirect to login page
+        function redirectToLogin() {
+            window.location.href = 'login.php';
+        }
+        
+        // Redirect to register page
+        function redirectToRegister() {
+            window.location.href = 'register.php';
+        }
+        
+        // Make redirect functions globally accessible
+        window.redirectToLogin = redirectToLogin;
+        window.redirectToRegister = redirectToRegister;
         
         // Make closeModal globally accessible
         window.closeModal = closeModal;

@@ -419,15 +419,8 @@ body {
 }
 
 .game-type {
-    display: inline-block;
-    padding: 5px 12px;
-    background: rgba(157, 78, 221, 0.2);
-    border: 1px solid var(--primary-purple);
-    border-radius: 20px;
-    font-size: 0.75rem;
-    color: var(--primary-purple);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    display: none !important;
+    visibility: hidden !important;
 }
 
 .credits-badge {
@@ -808,8 +801,8 @@ body {
     }
 
     .game-type {
-        padding: 3px 8px;
-        font-size: 0.6rem;
+        display: none !important;
+        visibility: hidden !important;
     }
     
     /* Meta row adjustments for 2-column mobile layout */
@@ -1619,12 +1612,10 @@ body {
         margin-bottom: 10px;
     }
     
-    /* Show game type and credits badge */
+    /* Hide game type - don't show Defense/Action text */
     .game-type {
-        display: inline-block !important;
-        visibility: visible !important;
-        padding: 3px 8px;
-        font-size: 0.6rem;
+        display: none !important;
+        visibility: hidden !important;
     }
     
     .credits-badge {
