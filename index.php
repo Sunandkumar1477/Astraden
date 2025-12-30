@@ -664,14 +664,61 @@ session_start();
             </div>
         </div>
 
-        <!-- Placeholder sections for future games -->
+        <!-- Action Games Section -->
         <div class="games-section hidden" data-category="action">
             <h2 class="section-title">ACTION GAMES</h2>
             <div class="games-grid">
-                <div class="coming-soon-card">
-                    <div class="coming-soon-icon">⚔️</div>
-                    <div class="coming-soon-text">Coming Soon</div>
-                    <div class="coming-soon-subtext">Exciting action games are on the way!</div>
+                <div class="game-card" data-game="cosmos-captain" data-type="action" onclick="launchGame('cosmos-captain'); return false;" style="cursor: pointer;">
+                    <!-- Countdown Timer Badge -->
+                    <div class="game-countdown-badge" id="countdown-badge-cosmos-captain" style="display: none;">
+                        <span class="countdown-icon">⏰</span>
+                        <span class="countdown-text">
+                            <span id="countdown-minutes-cosmos-captain">0</span> min
+                        </span>
+                    </div>
+                    <div class="game-icon">🚀</div>
+                    <div class="game-title">Cosmos Captain</div>
+                    <div class="game-description">
+                        Navigate through asteroid fields! Destroy rocks to score points and target emerald asteroids to repair your hull.
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                        <span class="game-type">Action</span>
+                        <span class="credits-badge" id="credits-badge-cosmos-captain">
+                            <span class="power-icon">⚡</span>
+                            <span id="credits-amount-cosmos-captain">30</span> Credits
+                        </span>
+                    </div>
+                    <!-- Prizes Display -->
+                    <div class="game-prizes" id="prizes-cosmos-captain" style="margin-top: 15px; display: none;">
+                        <div class="prize-item">
+                            <span class="prize-medal">🥇</span>
+                            <span class="prize-text">1st: ₹<span id="first-prize-cosmos-captain">0</span></span>
+                        </div>
+                        <div class="prize-item">
+                            <span class="prize-medal">🥈</span>
+                            <span class="prize-text">2nd: ₹<span id="second-prize-cosmos-captain">0</span></span>
+                        </div>
+                        <div class="prize-item">
+                            <span class="prize-medal">🥉</span>
+                            <span class="prize-text">3rd: ₹<span id="third-prize-cosmos-captain">0</span></span>
+                        </div>
+                    </div>
+                    <!-- Game Timing Badge -->
+                    <div class="game-timing-badge" id="timing-badge-cosmos-captain" style="display: none;">
+                        <div class="timing-item">
+                            <span class="timing-label">Duration:</span>
+                            <span id="timing-duration-cosmos-captain">-</span>
+                        </div>
+                        <div class="timing-item">
+                            <span class="timing-label">Time:</span>
+                            <span id="timing-time-cosmos-captain">-</span>
+                        </div>
+                        <div class="timing-item">
+                            <span class="timing-label">Date:</span>
+                            <span id="timing-date-cosmos-captain">-</span>
+                        </div>
+                    </div>
+                    <button class="play-btn" onclick="launchGame('cosmos-captain')">Launch Shuttle</button>
                 </div>
             </div>
         </div>
@@ -718,7 +765,8 @@ session_start();
 
             // Obfuscate game paths (basic security)
             const gamePaths = {
-                'earth-defender': 'earth-defender.php'
+                'earth-defender': 'earth-defender.php',
+                'cosmos-captain': 'cosmos-captain.php'
             };
 
             // Validate game name to prevent path traversal
@@ -818,6 +866,12 @@ session_start();
                     isStarted: false,
                     startTimestamp: 0,
                     intervalId: null
+                },
+                'cosmos-captain': {
+                    timeUntilStart: 0,
+                    isStarted: false,
+                    startTimestamp: 0,
+                    intervalId: null
                 }
             };
             
@@ -852,15 +906,15 @@ session_start();
                 }
             }
             
-            // Load game timing badges
-            async function loadGameTiming() {
+            // Load game timing badges for a specific game
+            async function loadGameTimingForGame(gameName) {
                 try {
-                    const response = await fetch('get_game_timing.php?game=earth-defender');
+                    const response = await fetch(`get_game_timing.php?game=${gameName}`);
                     const data = await response.json();
                     
                     if (data.success && data.has_session && data.timing) {
                         const timing = data.timing;
-                        const badgeElement = document.getElementById('timing-badge-earth-defender');
+                        const badgeElement = document.getElementById(`timing-badge-${gameName}`);
                         
                         // Check if session is always available
                         const isAlwaysAvailable = timing.always_available === true;
@@ -873,9 +927,9 @@ session_start();
                                 badgeElement.style.display = 'flex';
                                 
                                 // Update timing display only for time-restricted sessions
-                                const durationEl = document.getElementById('timing-duration-earth-defender');
-                                const timeEl = document.getElementById('timing-time-earth-defender');
-                                const dateEl = document.getElementById('timing-date-earth-defender');
+                                const durationEl = document.getElementById(`timing-duration-${gameName}`);
+                                const timeEl = document.getElementById(`timing-time-${gameName}`);
+                                const dateEl = document.getElementById(`timing-date-${gameName}`);
                                 
                                 if (durationEl) durationEl.textContent = timing.duration;
                                 if (timeEl) timeEl.textContent = timing.time;
@@ -885,7 +939,7 @@ session_start();
                         
                         // Setup countdown timer (only for time-restricted sessions)
                         if (!isAlwaysAvailable && timing.time_until_start_seconds !== undefined && timing.time_until_start_seconds > 0 && !timing.is_started) {
-                            const countdownBadge = document.getElementById('countdown-badge-earth-defender');
+                            const countdownBadge = document.getElementById(`countdown-badge-${gameName}`);
                             if (countdownBadge) {
                                 countdownBadge.style.display = 'flex';
                                 
@@ -894,7 +948,7 @@ session_start();
                                 const startTimestamp = serverTime + timing.time_until_start_seconds;
                                 
                                 // Store countdown data
-                                gameCountdownData['earth-defender'] = {
+                                gameCountdownData[gameName] = {
                                     timeUntilStart: timing.time_until_start_seconds,
                                     isStarted: false,
                                     startTimestamp: startTimestamp,
@@ -902,50 +956,58 @@ session_start();
                                 };
                                 
                                 // Initial update
-                                updateGameCountdown('earth-defender');
+                                updateGameCountdown(gameName);
                                 
                                 // Update every second
-                                if (gameCountdownData['earth-defender'].intervalId) {
-                                    clearInterval(gameCountdownData['earth-defender'].intervalId);
+                                if (gameCountdownData[gameName].intervalId) {
+                                    clearInterval(gameCountdownData[gameName].intervalId);
                                 }
-                                gameCountdownData['earth-defender'].intervalId = setInterval(() => {
-                                    updateGameCountdown('earth-defender');
+                                gameCountdownData[gameName].intervalId = setInterval(() => {
+                                    updateGameCountdown(gameName);
                                 }, 1000);
                             }
                         } else {
                             // Hide countdown if game has started, no time until start, or always available
-                            const countdownBadge = document.getElementById('countdown-badge-earth-defender');
+                            const countdownBadge = document.getElementById(`countdown-badge-${gameName}`);
                             if (countdownBadge) {
                                 countdownBadge.style.display = 'none';
                             }
                             // Clear interval if exists
-                            if (gameCountdownData['earth-defender'] && gameCountdownData['earth-defender'].intervalId) {
-                                clearInterval(gameCountdownData['earth-defender'].intervalId);
-                                gameCountdownData['earth-defender'].intervalId = null;
+                            if (gameCountdownData[gameName] && gameCountdownData[gameName].intervalId) {
+                                clearInterval(gameCountdownData[gameName].intervalId);
+                                gameCountdownData[gameName].intervalId = null;
                             }
                         }
                         
                         // Ensure countdown is hidden for always available sessions
                         if (isAlwaysAvailable) {
-                            const countdownBadge = document.getElementById('countdown-badge-earth-defender');
+                            const countdownBadge = document.getElementById(`countdown-badge-${gameName}`);
                             if (countdownBadge) {
                                 countdownBadge.style.display = 'none';
                             }
                         }
                     } else {
                         // Hide badges if no session
-                        const badgeElement = document.getElementById('timing-badge-earth-defender');
+                        const badgeElement = document.getElementById(`timing-badge-${gameName}`);
                         if (badgeElement) {
                             badgeElement.style.display = 'none';
                         }
-                        const countdownBadge = document.getElementById('countdown-badge-earth-defender');
+                        const countdownBadge = document.getElementById(`countdown-badge-${gameName}`);
                         if (countdownBadge) {
                             countdownBadge.style.display = 'none';
                         }
                     }
                 } catch (error) {
-                    console.error('Error loading game timing:', error);
+                    console.error(`Error loading game timing for ${gameName}:`, error);
                 }
+            }
+            
+            // Load game timing badges for all games
+            async function loadGameTiming() {
+                await Promise.all([
+                    loadGameTimingForGame('earth-defender'),
+                    loadGameTimingForGame('cosmos-captain')
+                ]);
             }
 
             // Load credits, prizes, and timing on page load

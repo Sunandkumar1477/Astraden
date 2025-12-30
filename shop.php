@@ -48,7 +48,10 @@ while ($row = $rates_query->fetch_assoc()) {
     }
 }
 
-$available_games = ['earth-defender' => '🛡️ Earth Defender'];
+$available_games = [
+    'earth-defender' => '🛡️ Earth Defender',
+    'cosmos-captain' => '🚀 Cosmos Captain'
+];
 $default_rate = $conversion_rates['all'] ?? 100;
 
 $conn->close();
