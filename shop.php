@@ -67,15 +67,16 @@ $conn->close();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
     <style>
-        /* Ensure body and content are visible */
+        /* Simplified styles for better mobile performance */
         body {
             position: relative;
             z-index: 1;
             min-height: 100vh;
             padding-top: 80px;
+            background: #0a0a0f;
         }
         
-        /* Space background should be behind everything */
+        /* Simplified space background - static on mobile */
         #space-background {
             position: fixed;
             top: 0;
@@ -83,13 +84,15 @@ $conn->close();
             width: 100%;
             height: 100%;
             z-index: 0;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 100%);
+            pointer-events: none;
         }
         
         /* Main shop container */
         .shop-container { 
             max-width: 1200px; 
             margin: 0 auto; 
-            padding: 40px 20px;
+            padding: 20px 15px;
             position: relative;
             z-index: 10;
             min-height: calc(100vh - 160px);
@@ -97,94 +100,77 @@ $conn->close();
         
         .shop-header { 
             text-align: center; 
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             position: relative;
             z-index: 10;
         }
         .shop-header h1 { 
             font-family: 'Orbitron', sans-serif; 
             color: #00ffff; 
-            font-size: 2.5rem; 
+            font-size: 2rem; 
             margin-bottom: 10px; 
-            text-shadow: 0 0 20px #00ffff;
-            position: relative;
-            z-index: 10;
         }
         .shop-header p { 
             color: rgba(255,255,255,0.8); 
-            font-size: 1.1rem;
-            position: relative;
-            z-index: 10;
+            font-size: 1rem;
         }
         
-        /* Score summary cards */
+        /* Score summary cards - simplified */
         .score-summary { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-            gap: 20px; 
-            margin-bottom: 40px;
-            position: relative;
-            z-index: 10;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 30px;
         }
         .score-card { 
-            background: rgba(15, 15, 25, 0.95); 
-            border: 2px solid rgba(0, 255, 255, 0.3); 
-            border-radius: 20px; 
-            padding: 25px; 
+            background: rgba(15, 15, 25, 0.9); 
+            border: 1px solid rgba(0, 255, 255, 0.3); 
+            border-radius: 12px; 
+            padding: 20px; 
             text-align: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 10;
         }
         .score-card h3 { 
             font-family: 'Orbitron', sans-serif; 
             color: #9d4edd; 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
             text-transform: uppercase; 
-            margin-bottom: 15px; 
-            letter-spacing: 2px; 
+            margin-bottom: 12px; 
+            letter-spacing: 1px; 
         }
         .score-card .score-value { 
-            font-size: 2.5rem; 
+            font-size: 2rem; 
             font-weight: 900; 
             color: #fbbf24; 
-            text-shadow: 0 0 20px #fbbf24;
             display: block;
         }
         .score-card .score-label { 
             color: rgba(255,255,255,0.7); 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
             margin-top: 5px; 
         }
         
-        /* Games scores section */
+        /* Games scores section - simplified */
         .games-scores { 
-            background: rgba(15, 15, 25, 0.95); 
+            background: rgba(15, 15, 25, 0.9); 
             border: 1px solid rgba(0, 255, 255, 0.2); 
-            border-radius: 20px; 
-            padding: 30px; 
-            margin-bottom: 40px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 10;
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 30px;
         }
         .games-scores h2 { 
             font-family: 'Orbitron', sans-serif; 
             color: #00ffff; 
-            margin-bottom: 25px; 
-            font-size: 1.5rem;
-            text-shadow: 0 0 10px #00ffff;
+            margin-bottom: 20px; 
+            font-size: 1.3rem;
         }
         .game-score-item { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 15px; 
+            padding: 12px; 
             background: rgba(0,0,0,0.3); 
-            border-radius: 10px; 
-            margin-bottom: 10px;
+            border-radius: 8px; 
+            margin-bottom: 8px;
             border: 1px solid rgba(255,255,255,0.1);
         }
         .game-score-item:last-child { 
@@ -193,36 +179,31 @@ $conn->close();
         .game-name { 
             font-weight: 700; 
             color: white;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
         .game-score { 
-            font-size: 1.3rem; 
+            font-size: 1.2rem; 
             font-weight: 900; 
             color: #fbbf24;
-            text-shadow: 0 0 10px #fbbf24;
         }
         
-        /* Purchase sections */
+        /* Purchase sections - simplified */
         .purchase-section { 
-            background: rgba(15, 15, 25, 0.95); 
+            background: rgba(15, 15, 25, 0.9); 
             border: 1px solid rgba(0, 255, 255, 0.2); 
-            border-radius: 20px; 
-            padding: 30px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 10;
+            border-radius: 12px; 
+            padding: 20px;
+            margin-bottom: 20px;
         }
         .purchase-section h2 { 
             font-family: 'Orbitron', sans-serif; 
             color: #00ffff; 
-            margin-bottom: 25px; 
-            font-size: 1.5rem;
-            text-shadow: 0 0 10px #00ffff;
+            margin-bottom: 20px; 
+            font-size: 1.3rem;
         }
         .purchase-form { 
             display: grid; 
-            gap: 20px; 
+            gap: 15px; 
         }
         .form-group { 
             margin-bottom: 15px;
@@ -231,22 +212,22 @@ $conn->close();
             display: block; 
             color: #9d4edd; 
             font-weight: 700; 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
             margin-bottom: 8px; 
             text-transform: uppercase; 
         }
         .form-group select, .form-group input { 
             width: 100%; 
-            padding: 15px; 
+            padding: 12px; 
             background: rgba(0,0,0,0.5); 
             border: 1px solid rgba(0,255,255,0.3); 
-            border-radius: 10px; 
+            border-radius: 8px; 
             color: white; 
             font-size: 1rem; 
             font-family: 'Rajdhani', sans-serif;
         }
         .form-group input[type="number"] { 
-            font-size: 1.2rem; 
+            font-size: 1.1rem; 
             font-weight: 700; 
         }
         .rate-info { 
@@ -256,29 +237,30 @@ $conn->close();
         }
         .purchase-summary { 
             background: rgba(0,255,255,0.1); 
-            border: 2px solid #00ffff; 
-            border-radius: 15px; 
-            padding: 20px; 
-            margin: 20px 0; 
+            border: 1px solid #00ffff; 
+            border-radius: 10px; 
+            padding: 15px; 
+            margin: 15px 0; 
         }
         .purchase-summary h3 { 
             font-family: 'Orbitron', sans-serif; 
             color: #00ffff; 
-            margin-bottom: 15px; 
-            font-size: 1rem; 
+            margin-bottom: 12px; 
+            font-size: 0.95rem; 
         }
         .summary-row { 
             display: flex; 
             justify-content: space-between; 
-            margin-bottom: 10px; 
+            margin-bottom: 8px; 
+            font-size: 0.9rem;
         }
         .summary-row:last-child { 
             margin-bottom: 0; 
             border-top: 1px solid rgba(0,255,255,0.3); 
-            padding-top: 10px; 
-            margin-top: 10px; 
+            padding-top: 8px; 
+            margin-top: 8px; 
             font-weight: 900; 
-            font-size: 1.2rem; 
+            font-size: 1.1rem; 
         }
         .summary-label { 
             color: rgba(255,255,255,0.8); 
@@ -291,19 +273,17 @@ $conn->close();
             background: linear-gradient(135deg, #00ffff, #9d4edd); 
             border: none; 
             color: white; 
-            padding: 18px; 
-            border-radius: 10px; 
+            padding: 15px; 
+            border-radius: 8px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 900; 
-            font-size: 1.1rem; 
+            font-size: 1rem; 
             cursor: pointer; 
             width: 100%; 
-            transition: transform 0.2s;
-            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+            transition: opacity 0.2s;
         }
         .btn-purchase:hover { 
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+            opacity: 0.9;
         }
         .btn-purchase:disabled { 
             opacity: 0.5; 
@@ -312,41 +292,124 @@ $conn->close();
         
         /* Messages */
         .message { 
-            padding: 15px; 
-            border-radius: 10px; 
+            padding: 12px; 
+            border-radius: 8px; 
             margin-bottom: 20px; 
             text-align: center; 
             font-weight: 700;
-            position: relative;
-            z-index: 10;
+            font-size: 0.9rem;
         }
         .msg-success { 
             background: rgba(0, 255, 204, 0.2); 
-            border: 2px solid #00ffcc; 
+            border: 1px solid #00ffcc; 
             color: #00ffcc; 
         }
         .msg-error { 
             background: rgba(255, 0, 110, 0.2); 
-            border: 2px solid #ff006e; 
+            border: 1px solid #ff006e; 
             color: #ff006e; 
         }
         
-        /* Responsive */
+        /* Claim credits section - simplified */
+        .claim-section {
+            background: rgba(15, 15, 25, 0.9);
+            border: 1px solid #9d4edd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .claim-info-box {
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .claim-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .claim-info-row:last-child {
+            margin-bottom: 0;
+        }
+        .claim-label {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .claim-value {
+            font-weight: 900;
+            font-size: 1.3rem;
+        }
+        
+        /* Responsive - Mobile optimized */
         @media (max-width: 768px) {
             body {
                 padding-top: 60px;
             }
             .shop-container { 
-                padding: 20px 15px; 
+                padding: 15px 10px; 
             }
             .shop-header h1 { 
-                font-size: 1.8rem; 
+                font-size: 1.5rem; 
+            }
+            .shop-header p {
+                font-size: 0.9rem;
             }
             .score-card .score-value { 
-                font-size: 2rem; 
+                font-size: 1.8rem; 
             }
             .score-summary {
                 grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .games-scores,
+            .purchase-section,
+            .claim-section {
+                padding: 15px;
+            }
+            .games-scores h2,
+            .purchase-section h2 {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
+            .game-score-item {
+                padding: 10px;
+            }
+            .game-name,
+            .game-score {
+                font-size: 0.9rem;
+            }
+            .form-group select,
+            .form-group input {
+                padding: 10px;
+                font-size: 0.95rem;
+            }
+            .btn-purchase {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+            .claim-info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .claim-value {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Disable animations on mobile for performance */
+        @media (max-width: 768px) {
+            .star,
+            .shooting-star {
+                display: none !important;
+            }
+            #space-background {
+                background: #0a0a0f !important;
             }
         }
     </style>
@@ -470,48 +533,48 @@ $conn->close();
         </div>
         
         <!-- Claim Credits Section -->
-        <div class="purchase-section" style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(157, 78, 221, 0.15), rgba(0, 255, 255, 0.15)); border: 2px solid #9d4edd; box-shadow: 0 0 30px rgba(157, 78, 221, 0.3);">
+        <div class="claim-section">
             <h2><i class="fas fa-gift"></i> Claim Credits</h2>
             <?php if($claim_credits_score > 0): ?>
-            <div style="padding: 20px; text-align: center;">
-                <p style="color: rgba(255,255,255,0.9); margin-bottom: 25px; font-size: 1.2rem; font-weight: 700;">
+            <div style="text-align: center;">
+                <p style="color: rgba(255,255,255,0.9); margin-bottom: 15px; font-size: 1rem; font-weight: 700;">
                     🎁 Claim credits instantly with your score!
                 </p>
-                <div style="background: rgba(0,0,0,0.4); border-radius: 15px; padding: 25px; margin-bottom: 25px; border: 1px solid rgba(157, 78, 221, 0.3);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 10px; background: rgba(157, 78, 221, 0.1); border-radius: 10px;">
-                        <span style="color: rgba(255,255,255,0.8); font-size: 1rem; font-weight: 600;">Score Required:</span>
-                        <span style="color: #9d4edd; font-weight: 900; font-size: 1.8rem; text-shadow: 0 0 10px #9d4edd;"><?php echo number_format($claim_credits_score); ?></span>
+                <div class="claim-info-box">
+                    <div class="claim-info-row" style="background: rgba(157, 78, 221, 0.1);">
+                        <span class="claim-label">Score Required:</span>
+                        <span class="claim-value" style="color: #9d4edd;"><?php echo number_format($claim_credits_score); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 10px;">
-                        <span style="color: rgba(255,255,255,0.8); font-size: 1rem; font-weight: 600;">Your Total Score:</span>
-                        <span style="color: #fbbf24; font-weight: 900; font-size: 1.8rem; text-shadow: 0 0 10px #fbbf24;"><?php echo number_format($total_score); ?></span>
+                    <div class="claim-info-row" style="background: rgba(251, 191, 36, 0.1);">
+                        <span class="claim-label">Your Total Score:</span>
+                        <span class="claim-value" style="color: #fbbf24;"><?php echo number_format($total_score); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0, 255, 204, 0.1); border-radius: 10px;">
-                        <span style="color: rgba(255,255,255,0.8); font-size: 1rem; font-weight: 600;">Credits You'll Get:</span>
-                        <span style="color: #00ffcc; font-weight: 900; font-size: 1.8rem; text-shadow: 0 0 10px #00ffcc;">1 ⚡</span>
+                    <div class="claim-info-row" style="background: rgba(0, 255, 204, 0.1);">
+                        <span class="claim-label">Credits You'll Get:</span>
+                        <span class="claim-value" style="color: #00ffcc;">1 ⚡</span>
                     </div>
                 </div>
                 <form method="POST" action="claim_credits_with_score.php" id="claimForm">
-                    <button type="submit" class="btn-purchase" style="background: linear-gradient(135deg, #9d4edd, #00ffff); font-size: 1.2rem; padding: 20px; box-shadow: 0 0 20px rgba(157, 78, 221, 0.5);" id="claimBtn" <?php echo $total_score < $claim_credits_score ? 'disabled' : ''; ?>>
+                    <button type="submit" class="btn-purchase" style="background: linear-gradient(135deg, #9d4edd, #00ffff);" id="claimBtn" <?php echo $total_score < $claim_credits_score ? 'disabled' : ''; ?>>
                         <i class="fas fa-gift"></i> CLAIM 1 CREDIT NOW
                     </button>
                 </form>
                 <?php if($total_score < $claim_credits_score): ?>
-                    <p style="color: #ff006e; margin-top: 20px; font-size: 1rem; font-weight: 700; padding: 15px; background: rgba(255, 0, 110, 0.1); border-radius: 10px; border: 1px solid #ff006e;">
+                    <p style="color: #ff006e; margin-top: 15px; font-size: 0.9rem; font-weight: 700; padding: 12px; background: rgba(255, 0, 110, 0.1); border-radius: 8px; border: 1px solid #ff006e;">
                         ⚠️ You need <?php echo number_format($claim_credits_score - $total_score); ?> more score to claim credits. Keep playing to earn more!
                     </p>
                 <?php else: ?>
-                    <p style="color: #00ffcc; margin-top: 15px; font-size: 0.9rem; font-weight: 600;">
+                    <p style="color: #00ffcc; margin-top: 12px; font-size: 0.85rem; font-weight: 600;">
                         ✓ You have enough score! Click the button above to claim your credit.
                     </p>
                 <?php endif; ?>
             </div>
             <?php else: ?>
-            <div style="padding: 30px; text-align: center;">
-                <p style="color: rgba(255,255,255,0.6); font-size: 1.1rem; margin-bottom: 15px;">
+            <div style="padding: 20px; text-align: center;">
+                <p style="color: rgba(255,255,255,0.6); font-size: 1rem; margin-bottom: 10px;">
                     Claim credits feature is currently disabled.
                 </p>
-                <p style="color: rgba(255,255,255,0.4); font-size: 0.9rem;">
+                <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">
                     Admin needs to set the claim credits score in Score Shop Settings.
                 </p>
             </div>
@@ -573,35 +636,33 @@ $conn->close();
     </div>
     
     <script>
-        // Initialize space background
+        // Initialize space background - optimized for mobile
         function createStars() {
             const spaceBg = document.getElementById('space-background');
             if (!spaceBg) return;
             
+            // Check if mobile device
+            const isMobile = window.innerWidth <= 768;
+            
             // Clear existing stars
             spaceBg.innerHTML = '';
             
-            // Create stars
-            for (let i = 0; i < 100; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 3 + 's';
-                spaceBg.appendChild(star);
-            }
-            
-            // Create shooting stars occasionally
-            setInterval(() => {
-                if (Math.random() > 0.7) {
-                    const shootingStar = document.createElement('div');
-                    shootingStar.className = 'shooting-star';
-                    shootingStar.style.left = Math.random() * 100 + '%';
-                    shootingStar.style.top = '-100px';
-                    spaceBg.appendChild(shootingStar);
-                    setTimeout(() => shootingStar.remove(), 3000);
+            // Only create stars on desktop, reduce count significantly
+            if (!isMobile) {
+                // Reduced star count for better performance
+                const starCount = 30; // Reduced from 100
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 100 + '%';
+                    star.style.animationDelay = Math.random() * 3 + 's';
+                    spaceBg.appendChild(star);
                 }
-            }, 2000);
+                
+                // Disable shooting stars for better performance
+                // Removed shooting star creation
+            }
         }
         
         // Check session and show user info
@@ -697,6 +758,15 @@ $conn->close();
         document.addEventListener('DOMContentLoaded', function() {
             createStars();
             checkSession();
+        });
+        
+        // Recreate stars on window resize (for responsive behavior)
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                createStars();
+            }, 250);
         });
         
         const conversionRates = <?php echo json_encode($conversion_rates); ?>;
