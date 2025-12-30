@@ -65,10 +65,11 @@ if ($check_sessions->num_rows == 0 || $check_leaderboard->num_rows == 0) {
 switch ($action) {
     case 'check_status':
         // Check if game session is active
-        $game_name = $_GET['game'] ?? 'earth-defender';
+        $game_name = $_GET['game'] ?? $_GET['game_name'] ?? 'earth-defender';
         
         // Get user's total points for this game
         $user_total_points = 0;
+        $user_credits = 0;
         if ($user_id) {
             $total_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND game_name = ? AND credits_used > 0");
             $total_stmt->bind_param("is", $user_id, $game_name);
@@ -76,6 +77,14 @@ switch ($action) {
             $total_res = $total_stmt->get_result()->fetch_assoc();
             $user_total_points = intval($total_res['total_points'] ?? 0);
             $total_stmt->close();
+            
+            // Get user credits
+            $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
+            $credits_stmt->bind_param("i", $user_id);
+            $credits_stmt->execute();
+            $credits_res = $credits_stmt->get_result()->fetch_assoc();
+            $user_credits = intval($credits_res['credits'] ?? 0);
+            $credits_stmt->close();
         }
 
         // Get credits per chance and contest status from games table
@@ -188,6 +197,7 @@ switch ($action) {
                 'game_mode' => $game_mode,
                 'contest_prizes' => $prizes,
                 'user_total_points' => $user_total_points,
+                'user_credits' => $user_credits,
                 'session' => [
                     'id' => $session['id'],
                     'date' => $session['session_date'],
@@ -228,13 +238,13 @@ switch ($action) {
                 'game_mode' => $game_mode,
                 'contest_prizes' => $prizes,
                 'user_total_points' => $user_total_points,
+                'user_credits' => $user_credits,
                 'session' => null,
                 'next_session_date' => $next_session_date,
                 'credits_required' => $credits_per_chance,
                 'message' => 'No game session scheduled'
             ]);
         }
-        $stmt->close();
         break;
         
     case 'deduct_credits':
@@ -371,7 +381,6 @@ switch ($action) {
                 'required' => $credits_required
             ]);
             $credits_stmt->close();
-            $session_stmt->close();
             exit;
         }
         
@@ -391,7 +400,6 @@ switch ($action) {
         }
         $update_stmt->close();
         $credits_stmt->close();
-        $session_stmt->close();
         break;
         
     case 'save_score':
