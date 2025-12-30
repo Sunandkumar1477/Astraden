@@ -503,10 +503,6 @@ $conn->close();
                     </select>
                 </div>
                 
-                <button type="submit" class="btn-purchase" id="purchaseBtn" style="margin-bottom: 20px;">
-                    <i class="fas fa-shopping-cart"></i> PURCHASE CREDITS
-                </button>
-                
                 <div class="purchase-summary">
                     <h3>Purchase Summary</h3>
                     <div class="summary-row">
@@ -532,6 +528,10 @@ $conn->close();
                     <input type="number" name="credits_amount" id="creditsAmount" min="1" value="1" required>
                     <div class="rate-info" id="rateInfo">Conversion rate: Loading...</div>
                 </div>
+                
+                <button type="submit" class="btn-purchase" id="purchaseBtn">
+                    <i class="fas fa-shopping-cart"></i> PURCHASE CREDITS
+                </button>
             </form>
         </div>
         
