@@ -126,6 +126,8 @@ $conn->close();
             backdrop-filter: blur(5px);
             box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
             min-width: 120px;
+            position: relative;
+            z-index: 10;
         }
 
         .health-container {
@@ -299,6 +301,56 @@ $conn->close();
         .hit-effect {
             animation: damage-flash 0.3s forwards;
         }
+        
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            .stat-box {
+                padding: 8px 15px;
+                min-width: 100px;
+                font-size: 0.9rem;
+            }
+            
+            .score-label {
+                font-size: 9px;
+            }
+            
+            .score-value {
+                font-size: 20px;
+            }
+            
+            #message-box {
+                width: 90%;
+                max-width: 350px;
+                padding: 20px;
+            }
+            
+            #message-box h1 {
+                font-size: 24px;
+            }
+            
+            #message-box p {
+                font-size: 14px;
+            }
+            
+            #score-details {
+                padding: 12px;
+            }
+            
+            #final-score-display {
+                font-size: 1.3rem !important;
+            }
+            
+            #back-to-menu-btn {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 14px;
+            }
+            
+            #exit-game-btn {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -325,14 +377,15 @@ $conn->close();
                         <div class="score-label">Total Score</div>
                         <div id="total-score" class="score-value" style="color: #00ff00;">0</div>
                     </div>
-                    <div class="stat-box" style="margin-top: 10px;">
+                    <!-- Credits display hidden as per user request -->
+                    <div class="stat-box" style="margin-top: 10px; display: none;" id="credits-display-box">
                         <div class="score-label">Credits</div>
                         <div id="credits-display" class="score-value" style="color: <?php echo $credits_color; ?>;">
                             ⚡ <span id="credits-value"><?php echo $user_credits; ?></span>
                         </div>
                     </div>
                 </div>
-                <div style="position: absolute; top: 20px; right: 20px; pointer-events: auto;">
+                <div style="position: absolute; top: 20px; right: 20px; pointer-events: auto; z-index: 1;">
                     <button id="exit-game-btn" style="display: none; background: rgba(255, 77, 77, 0.2); border: 2px solid #ff4d4d; color: #ff4d4d; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
                         ⛔ EXIT
                     </button>
@@ -383,19 +436,28 @@ $conn->close();
                 </div>
             </div>
             
-            <!-- Old message box (hidden, used for game over) -->
+            <!-- Game Over message box -->
             <div id="message-box" style="display: none;">
-                <h1 id="msg-title">COSMOS CAPTAIN</h1>
-                <p id="msg-text">Commander, our scanners detect heavy asteroid fields. Destroy standard rocks to clear path, or target <span class="special-hint">Emerald Asteroids</span> to repair the hull.</p>
-                <button id="start-btn">Engage Engines</button>
-                <div class="instructions">
+                <h1 id="msg-title">GAME OVER</h1>
+                <p id="msg-text">Commander, the hull has failed. Mission terminated.</p>
+                <div id="score-details" style="margin: 20px 0; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid var(--primary-glow); border-radius: 8px;">
+                    <div style="margin-bottom: 10px;">
+                        <span style="color: var(--primary-glow); font-size: 0.9rem;">Final Score:</span>
+                        <span id="final-score-display" style="color: #fff; font-size: 1.5rem; font-weight: bold; margin-left: 10px;">0</span>
+                    </div>
+                    <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 10px; font-size: 0.9rem;">
+                        Total Score: <span id="total-score-display">0</span>
+                    </p>
+                </div>
+                <button id="back-to-menu-btn" style="background: linear-gradient(135deg, #00ffff, #9d4edd); color: white; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; margin-top: 10px;">
+                    🏠 BACK TO MENU
+                </button>
+                <button id="start-btn" style="display: none;">Engage Engines</button>
+                <div class="instructions" style="display: none;">
                     Click/Tap to Fire Bullets<br>
                     Green Asteroids = +20 Health<br>
                     Collision = -25 Health
                 </div>
-                <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 15px; font-size: 14px;">
-                    Total Score: <span id="total-score-display">0</span>
-                </p>
             </div>
             
             <!-- Exit Confirmation Modal -->
@@ -483,6 +545,7 @@ $conn->close();
         const exitModal = document.getElementById('exit-confirm-modal');
         const exitYesBtn = document.getElementById('exit-yes-btn');
         const exitNoBtn = document.getElementById('exit-no-btn');
+        const backToMenuBtn = document.getElementById('back-to-menu-btn');
 
         let width, height;
         let score = 0;
@@ -1163,12 +1226,19 @@ $conn->close();
             gameActive = false;
             playGameOverSound();
             createExplosion(ship.x, ship.y, '#ff4d4d');
-            msgTitle.textContent = "SHIP CRITICALLY DAMAGED";
+            msgTitle.textContent = "GAME OVER";
             
             // Save score
             saveScore(score);
             
-            let gameOverText = `Commander, the hull has failed. Mission terminated.\n\nFinal Score: ${score.toLocaleString()}`;
+            // Update final score display
+            const finalScoreDisplay = document.getElementById('final-score-display');
+            if (finalScoreDisplay) {
+                finalScoreDisplay.textContent = score.toLocaleString();
+            }
+            
+            // Update message text
+            msgText.textContent = "Commander, the hull has failed. Mission terminated.";
             
             if (IS_LOGGED_IN) {
                 // Show total score after saving
@@ -1179,19 +1249,21 @@ $conn->close();
                         totalScoreDisplay.textContent = userTotalScore.toLocaleString();
                         totalScoreContainer.style.display = 'block';
                     }
-                    if (IS_CONTEST_ACTIVE) {
-                        gameOverText += '\n\n🏆 Contest score saved!';
-                    }
-                    gameOverText += `\n\nTotal Score: ${userTotalScore.toLocaleString()}`;
-                    msgText.textContent = gameOverText;
                 }, 500);
             }
             
-            msgText.textContent = gameOverText;
-            startBtn.textContent = "Relaunch Shuttle";
+            // Show back to menu button and hide start button
+            const backToMenuBtn = document.getElementById('back-to-menu-btn');
+            if (backToMenuBtn) {
+                backToMenuBtn.style.display = 'block';
+            }
+            if (startBtn) {
+                startBtn.style.display = 'none';
+            }
+            
             messageBox.style.display = 'block';
             
-            // Hide total score box
+            // Hide total score box in HUD
             const totalScoreBox = document.getElementById('total-score-box');
             if (totalScoreBox) {
                 totalScoreBox.style.display = 'none';
@@ -1250,7 +1322,23 @@ $conn->close();
             });
         }
         
-        // Initialize start button (for game over restart)
+        // Back to menu button handler
+        if (backToMenuBtn) {
+            backToMenuBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Save score before leaving (if not already saved)
+                if (gameStarted && creditsUsed > 0 && score > 0) {
+                    saveScore(score);
+                }
+                
+                // Redirect to index page
+                window.location.href = 'index.php';
+            });
+        }
+        
+        // Initialize start button (for game over restart - hidden by default)
         if (startBtn) {
             startBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -1426,5 +1514,6 @@ $conn->close();
     </script>
 </body>
 </html>
+
 
 
