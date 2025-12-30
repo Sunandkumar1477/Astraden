@@ -39,10 +39,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
     $game_name = trim($_POST['game_name'] ?? 'earth-defender');
     $always_available = isset($_POST['always_available']) ? 1 : 0;
     $credits_required = intval($_POST['credits_required'] ?? 30);
+    $credits_per_chance = intval($_POST['credits_per_chance'] ?? 30);
     $start_date = trim($_POST['start_date'] ?? '');
     $start_time = trim($_POST['start_time'] ?? '');
     $end_date = trim($_POST['end_date'] ?? '');
     $end_time = trim($_POST['end_time'] ?? '');
+    
+    // Update play credits in games table
+    if ($credits_per_chance > 0) {
+        $display_name = $game_name === 'earth-defender' ? 'Earth Defender' : ucfirst(str_replace('-', ' ', $game_name));
+        $update_game_stmt = $conn->prepare("INSERT INTO games (game_name, display_name, credits_per_chance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE credits_per_chance = ?, updated_at = NOW()");
+        $update_game_stmt->bind_param("ssii", $game_name, $display_name, $credits_per_chance, $credits_per_chance);
+        $update_game_stmt->execute();
+        $update_game_stmt->close();
+    }
     
     if ($always_available) {
         // Always available mode - only credits required, no time restrictions
@@ -101,11 +111,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
 
 $selected_game = $_GET['game'] ?? 'earth-defender';
 $edit_session = null;
+$current_play_credits = 30; // Default value
+
+// Get current play credits from games table
+$game_credits_stmt = $conn->prepare("SELECT credits_per_chance FROM games WHERE game_name = ?");
+$game_credits_stmt->bind_param("s", $selected_game);
+$game_credits_stmt->execute();
+$game_credits_result = $game_credits_stmt->get_result();
+if ($game_credits_result->num_rows > 0) {
+    $game_credits_row = $game_credits_result->fetch_assoc();
+    $current_play_credits = intval($game_credits_row['credits_per_chance']);
+}
+$game_credits_stmt->close();
+
 if (isset($_GET['edit'])) {
     $edit_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ?");
     $edit_stmt->bind_param("i", $_GET['edit']);
     $edit_stmt->execute();
     $edit_session = $edit_stmt->get_result()->fetch_assoc();
+    
+    // Get play credits for the game being edited
+    if ($edit_session) {
+        $edit_game_name = $edit_session['game_name'];
+        $edit_game_credits_stmt = $conn->prepare("SELECT credits_per_chance FROM games WHERE game_name = ?");
+        $edit_game_credits_stmt->bind_param("s", $edit_game_name);
+        $edit_game_credits_stmt->execute();
+        $edit_game_credits_result = $edit_game_credits_stmt->get_result();
+        if ($edit_game_credits_result->num_rows > 0) {
+            $edit_game_credits_row = $edit_game_credits_result->fetch_assoc();
+            $current_play_credits = intval($edit_game_credits_row['credits_per_chance']);
+        }
+        $edit_game_credits_stmt->close();
+    }
     
     // Calculate end date and time from start date/time and duration (only for time-restricted sessions)
     if ($edit_session && (!isset($edit_session['always_available']) || $edit_session['always_available'] == 0)) {
@@ -283,6 +320,7 @@ $conn->close();
                         <div class="info-bit"><span>Opening</span><strong><?php echo date('h:i A', strtotime($current_session['session_time'])); ?> IST</strong></div>
                         <div class="info-bit"><span>Duration</span><strong><?php echo $current_session['duration_minutes']; ?> MIN</strong></div>
                     <?php endif; ?>
+                    <div class="info-bit"><span>Play Cost</span><strong><?php echo $current_play_credits; ?> ⚡</strong></div>
                 </div>
             </div>
             <a href="?game=<?php echo $selected_game; ?>&edit=<?php echo $current_session['id']; ?>" class="info-bit" style="text-decoration:none;color:var(--primary-cyan);font-weight:bold;">EDIT SESSION</a>
@@ -306,13 +344,23 @@ $conn->close();
                 </div>
 
                 <div id="always_available_section" style="display: <?php echo ($edit_session && $edit_session['always_available']) ? 'block' : 'none'; ?>;">
-                    <div class="form-group" style="margin-bottom:25px;">
+                    <div class="form-group" style="margin-bottom:20px;">
                         <label>CREDITS REQUIRED FOR PLAY (⚡)</label>
                         <input type="number" name="credits_required" value="<?php echo $edit_session ? $edit_session['credits_required'] : 30; ?>" min="1" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom:25px;">
+                        <label>PLAY CREDITS PER CHANCE (⚡)</label>
+                        <input type="number" name="credits_per_chance" value="<?php echo $current_play_credits; ?>" min="1" required>
+                        <small style="color:rgba(255,255,255,0.4);display:block;margin-top:5px;">Credits cost per game play/chance</small>
                     </div>
                 </div>
 
                 <div id="time_restricted_section" style="display: <?php echo ($edit_session && $edit_session['always_available']) ? 'none' : 'block'; ?>;">
+                    <div class="form-group" style="margin-bottom:20px;">
+                        <label>PLAY CREDITS PER CHANCE (⚡)</label>
+                        <input type="number" name="credits_per_chance" value="<?php echo $current_play_credits; ?>" min="1" required>
+                        <small style="color:rgba(255,255,255,0.4);display:block;margin-top:5px;">Credits cost per game play/chance</small>
+                    </div>
                     <div class="form-grid">
                         <div class="form-group"><label>START DATE</label><input type="date" name="start_date" value="<?php echo $edit_session ? ($edit_session['start_date'] ?? $edit_session['session_date']) : date('Y-m-d'); ?>" id="start_date"></div>
                         <div class="form-group"><label>START TIME (IST)</label><input type="time" name="start_time" value="<?php echo $edit_session ? ($edit_session['start_time'] ?? $edit_session['session_time']) : ''; ?>" id="start_time"></div>
