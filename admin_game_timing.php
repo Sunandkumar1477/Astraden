@@ -417,8 +417,8 @@ $conn->close();
                                 $duration_display = $minutes . 'm';
                             }
                         }
-                        // Get play credits for this session
-                        $session_play_cost = isset($session_play_credits[$s['game_name']]) ? $session_play_credits[$s['game_name']] : 30;
+                        // Get play credits for this session - use credits_required from the session itself
+                        $session_play_cost = isset($s['credits_required']) ? intval($s['credits_required']) : 30;
                     ?>
                     <tr>
                         <td><?php echo $start_display; ?></td>
