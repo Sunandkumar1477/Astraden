@@ -55,14 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
     }
     
     if ($always_available) {
-        // Always available mode - only credits required, no time restrictions
-        if ($credits_required <= 0) {
-            $error = "Credits required must be greater than 0.";
+        // Always available mode - no time restrictions, uses credits_per_chance from games table
+        if ($credits_per_chance <= 0) {
+            $error = "Play credits per chance must be greater than 0.";
         } else {
             // Set default values for always available sessions
             $session_date = date('Y-m-d');
             $session_time = '00:00:00';
             $duration = 0; // No duration limit
+            $credits_required = 0; // Not used in always available mode
             
             if ($session_id > 0) {
                 $stmt = $conn->prepare("UPDATE game_sessions SET game_name=?, session_date=?, session_time=?, duration_minutes=?, credits_required=?, always_available=? WHERE id=?");
@@ -164,6 +165,25 @@ if (isset($_GET['edit'])) {
 
 $current_session = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' AND is_active = 1 LIMIT 1")->fetch_assoc();
 $all_sessions = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' ORDER BY session_date DESC, session_time DESC LIMIT 10")->fetch_all(MYSQLI_ASSOC);
+
+// Get play credits for all sessions to display in table
+$session_play_credits = [];
+foreach ($all_sessions as $s) {
+    $session_game_name = $s['game_name'];
+    if (!isset($session_play_credits[$session_game_name])) {
+        $session_credits_stmt = $conn->prepare("SELECT credits_per_chance FROM games WHERE game_name = ?");
+        $session_credits_stmt->bind_param("s", $session_game_name);
+        $session_credits_stmt->execute();
+        $session_credits_result = $session_credits_stmt->get_result();
+        if ($session_credits_result->num_rows > 0) {
+            $session_credits_row = $session_credits_result->fetch_assoc();
+            $session_play_credits[$session_game_name] = intval($session_credits_row['credits_per_chance']);
+        } else {
+            $session_play_credits[$session_game_name] = 30; // Default
+        }
+        $session_credits_stmt->close();
+    }
+}
 
 $conn->close();
 ?>
@@ -315,7 +335,6 @@ $conn->close();
                     <div class="info-bit"><span>Game</span><strong><?php echo $available_games[$selected_game]; ?></strong></div>
                     <?php if ($is_always_available): ?>
                         <div class="info-bit"><span>Mode</span><strong>ALWAYS AVAILABLE</strong></div>
-                        <div class="info-bit"><span>Credits</span><strong><?php echo isset($current_session['credits_required']) ? $current_session['credits_required'] : '30'; ?> ⚡</strong></div>
                     <?php else: ?>
                         <div class="info-bit"><span>Opening</span><strong><?php echo date('h:i A', strtotime($current_session['session_time'])); ?> IST</strong></div>
                         <div class="info-bit"><span>Duration</span><strong><?php echo $current_session['duration_minutes']; ?> MIN</strong></div>
@@ -344,10 +363,6 @@ $conn->close();
                 </div>
 
                 <div id="always_available_section" style="display: <?php echo ($edit_session && $edit_session['always_available']) ? 'block' : 'none'; ?>;">
-                    <div class="form-group" style="margin-bottom:20px;">
-                        <label>CREDITS REQUIRED FOR PLAY (⚡)</label>
-                        <input type="number" name="credits_required" value="<?php echo $edit_session ? $edit_session['credits_required'] : 30; ?>" min="1" required>
-                    </div>
                     <div class="form-group" style="margin-bottom:25px;">
                         <label>PLAY CREDITS PER CHANCE (⚡)</label>
                         <input type="number" name="credits_per_chance" value="<?php echo $current_play_credits; ?>" min="1" required>
@@ -374,7 +389,7 @@ $conn->close();
 
         <div class="table-card">
             <table>
-                <thead><tr><th>Start Date & Time</th><th>End Date & Time</th><th>Duration</th><th>Credits</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Start Date & Time</th><th>End Date & Time</th><th>Duration</th><th>Play Credits</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
                     <?php foreach($all_sessions as $s): 
                         $is_always_available = isset($s['always_available']) && $s['always_available'] == 1;
@@ -396,12 +411,14 @@ $conn->close();
                                 $duration_display = $minutes . 'm';
                             }
                         }
+                        // Get play credits for this session
+                        $session_play_cost = isset($session_play_credits[$s['game_name']]) ? $session_play_credits[$s['game_name']] : 30;
                     ?>
                     <tr>
                         <td><?php echo $start_display; ?></td>
                         <td><?php echo $end_display; ?></td>
                         <td style="color:var(--primary-cyan);font-weight:bold;"><?php echo $duration_display; ?></td>
-                        <td style="color:var(--color-credits);font-weight:bold;"><?php echo isset($s['credits_required']) ? $s['credits_required'] : '30'; ?> ⚡</td>
+                        <td style="color:var(--color-credits);font-weight:bold;"><?php echo $session_play_cost; ?> ⚡</td>
                         <td><span class="status-pill <?php echo $s['is_active'] ? 'status-live' : 'status-end'; ?>"><?php echo $s['is_active'] ? 'LIVE' : 'ENDED'; ?></span></td>
                         <td>
                             <a href="?game=<?php echo $selected_game; ?>&edit=<?php echo $s['id']; ?>" style="color:var(--primary-cyan);text-decoration:none;font-weight:bold;font-size:0.8rem;">EDIT</a>
