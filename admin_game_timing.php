@@ -229,6 +229,7 @@ $conn->close();
             --color-costs: #ec4899;
             --color-prizes: #8b5cf6;
             --color-leaderboard: #10b981;
+            --color-shop: #fbbf24;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Rajdhani', sans-serif; background: var(--dark-bg); color: white; min-height: 100vh; display: flex; }
@@ -321,6 +322,7 @@ $conn->close();
             <a href="admin_game_timing.php" class="menu-item active"><i class="fas fa-calendar-check ic-sessions"></i> <span>Game Sessions</span></a>
             <a href="admin_game_credits.php" class="menu-item"><i class="fas fa-gamepad ic-costs"></i> <span>Play Costs</span></a>
             <a href="admin_game_leaderboard.php" class="menu-item"><i class="fas fa-ranking-star ic-leaderboard"></i> <span>Leaderboards</span></a>
+            <a href="admin_score_shop.php" class="menu-item"><i class="fas fa-store" style="color:var(--color-shop);text-shadow:0 0 10px var(--color-shop);"></i> <span>Score Shop</span></a>
         </div>
         <div class="sidebar-footer"><a href="admin_logout.php" class="logout-btn"><i class="fas fa-power-off"></i> <span>Authorization Exit</span></a></div>
     </nav>

@@ -454,6 +454,15 @@ switch ($action) {
         $insert_stmt->bind_param("isiiis", $user_id, $game_name, $score, $credits_used, $session_id, $game_mode);
         
         if ($insert_stmt->execute()) {
+            // Update available_score in user_profile (only if credits were used - real game, not demo)
+            if ($credits_used > 0) {
+                // Check if available_score column exists
+                $check_col = $conn->query("SHOW COLUMNS FROM user_profile LIKE 'available_score'");
+                if ($check_col->num_rows > 0) {
+                    $conn->query("UPDATE user_profile SET available_score = available_score + $score WHERE user_id = $user_id");
+                }
+            }
+            
             // Get updated total points for this user for this game
             $total_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND game_name = ? AND credits_used > 0");
             $total_stmt->bind_param("is", $user_id, $game_name);

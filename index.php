@@ -156,6 +156,14 @@ session_start();
                             <div class="item-value" id="mobileReferralValue">----</div>
                         </div>
                     </div>
+                    <!-- Shop Link -->
+                    <a href="shop.php" class="menu-item">
+                        <div class="item-icon">🛒</div>
+                        <div class="item-info">
+                            <div class="item-label">Score Shop</div>
+                            <div class="item-value">Buy Credits</div>
+                        </div>
+                    </a>
                     <!-- Profile Link -->
                     <a href="view_profile.php" class="menu-item">
                         <div class="item-icon">🌍</div>
@@ -2846,6 +2854,7 @@ session_start();
                 <h3>Quick Links</h3>
                 <ul>
                     <li><a href="index.php">Home</a></li>
+                    <li><a href="shop.php">Score Shop</a></li>
                     <li><a href="view_profile.php">My Profile</a></li>
                     <li><a href="terms.php">Terms and Conditions</a></li>
                     <li><a href="#" onclick="const m=document.getElementById('loginModal');if(m){m.classList.add('show');document.body.style.overflow='hidden';}else if(typeof openModal==='function'){openModal('login');}return false;">Login</a></li>
