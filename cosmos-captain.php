@@ -159,6 +159,11 @@ $conn->close();
             font-family: 'Courier New', Courier, monospace;
         }
 
+        #game-status-overlay.hidden {
+            display: none !important;
+            pointer-events: none;
+        }
+        
         #message-box {
             position: absolute;
             top: 50%;
@@ -340,7 +345,46 @@ $conn->close();
             </div>
             <?php endif; ?>
 
-            <div id="message-box">
+            <!-- Game Status Overlay (Pre-game) -->
+            <div id="game-status-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(10, 20, 30, 0.95) 0%, rgba(0, 5, 10, 0.98) 100%); z-index: 1000; display: flex; flex-direction: column; pointer-events: auto; align-items: center; justify-content: center; color: #00ffff; text-align: center; padding: 40px 20px; overflow-y: auto;">
+                <div class="status-title" style="font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 5px; color: var(--primary-glow); text-shadow: 0 0 20px rgba(0, 242, 255, 0.4), 2px 2px 0px #000; font-family: 'Orbitron', monospace;">🚀 COSMOS CAPTAIN</div>
+                
+                <?php if ($is_contest_active): ?>
+                    <div class="contest-badge" style="background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; margin: 0 0 15px 0; text-transform: uppercase; box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3); width: calc(100% - 30px); max-width: 500px; box-sizing: border-box; text-align: center;">
+                        🏆 <?php echo $game_mode === 'money' ? 'CASH CONTEST' : 'CREDIT CONTEST'; ?> 🏆
+                    </div>
+                    <div class="prize-pool" style="background: rgba(255, 215, 0, 0.1); border: 2px solid #FFD700; border-radius: 10px; padding: 15px 18px; margin: 0 0 15px 0; width: calc(100% - 30px); max-width: 500px; box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2); text-align: left; box-sizing: border-box;">
+                        <div style="color: #FFD700; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; font-size: 0.9rem; text-align: left;">Mission Rewards</div>
+                        <?php 
+                        $unit = $game_mode === 'money' ? '₹' : '';
+                        $suffix = $game_mode === 'money' ? '' : ' Credits';
+                        ?>
+                        <div class="prize-item" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255, 215, 0, 0.2); font-size: 0.85rem; text-align: left;">
+                            <span>🥇 1st Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['1st']) . $suffix; ?></span>
+                        </div>
+                        <div class="prize-item" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255, 215, 0, 0.2); font-size: 0.85rem; text-align: left;">
+                            <span>🥈 2nd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['2nd']) . $suffix; ?></span>
+                        </div>
+                        <div class="prize-item" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 0.85rem; text-align: left;">
+                            <span>🥉 3rd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['3rd']) . $suffix; ?></span>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <div id="timer-display" class="timer-display" style="font-size: clamp(3rem, 8vw, 5rem); font-weight: 900; color: #00ffff; margin: 20px 0; font-family: 'Orbitron', monospace; text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);">Loading...</div>
+                <div id="status-message" class="status-message" style="font-size: 1.2rem; color: rgba(0, 255, 255, 0.9); margin: 15px 0; max-width: 600px; line-height: 1.5;"></div>
+                <div class="credits-info" style="font-size: 0.95rem; padding: 12px 18px; margin: 0 0 15px 0; width: calc(100% - 30px); max-width: 500px; text-align: left; background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 10px; box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2); box-sizing: border-box;">
+                    Your Credits: <span id="user-credits-display" style="color: <?php echo htmlspecialchars($credits_color); ?>; font-weight: bold;"><?php echo number_format($user_credits); ?></span>
+                </div>
+
+                <div class="game-btn-container" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 12px; margin: 0; width: calc(100% - 30px); max-width: 500px; box-sizing: border-box;">
+                    <button id="start-game-btn" class="start-game-btn" style="display: none; width: 100%; max-width: none; padding: 14px 20px; font-size: 0.95rem; font-weight: 700; margin: 0; text-align: left; justify-content: flex-start; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); box-sizing: border-box; border: 2px solid; transition: all 0.3s ease; background: linear-gradient(135deg, #00ffff, #9d4edd); color: white; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-family: 'Orbitron', sans-serif;">START MISSION</button>
+                    <a href="index.php" class="game-btn btn-home" style="width: 100%; max-width: none; padding: 14px 20px; font-size: 0.95rem; font-weight: 700; margin: 0; text-align: left; justify-content: flex-start; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); box-sizing: border-box; border: 2px solid rgba(157, 78, 221, 0.5); background: rgba(157, 78, 221, 0.1); color: #9d4edd; text-decoration: none; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease;">🏠 BACK TO HOME</a>
+                </div>
+            </div>
+            
+            <!-- Old message box (hidden, used for game over) -->
+            <div id="message-box" style="display: none;">
                 <h1 id="msg-title">COSMOS CAPTAIN</h1>
                 <p id="msg-text">Commander, our scanners detect heavy asteroid fields. Destroy standard rocks to clear path, or target <span class="special-hint">Emerald Asteroids</span> to repair the hull.</p>
                 <button id="start-btn">Engage Engines</button>
@@ -422,10 +466,14 @@ $conn->close();
         const scoreEl = document.getElementById('score');
         const healthBar = document.getElementById('health-bar');
         const startBtn = document.getElementById('start-btn');
+        const startGameBtn = document.getElementById('start-game-btn');
         const messageBox = document.getElementById('message-box');
+        const gameStatusOverlay = document.getElementById('game-status-overlay');
         const msgTitle = document.getElementById('msg-title');
         const msgText = document.getElementById('msg-text');
         const gameContainer = document.getElementById('game-container');
+        const timerDisplay = document.getElementById('timer-display');
+        const statusMessage = document.getElementById('status-message');
         const creditsModal = document.getElementById('credits-confirmation-modal');
         const confirmPayBtn = document.getElementById('confirm-pay-btn');
         const cancelPayBtn = document.getElementById('cancel-pay-btn');
@@ -515,12 +563,6 @@ $conn->close();
         
         // Initialize game integration (credits, sessions)
         function initGameIntegration() {
-            if (!IS_LOGGED_IN) {
-                msgText.textContent = 'Please login to play Cosmos Captain.';
-                startBtn.style.display = 'none';
-                return;
-            }
-            
             // Fetch user total score
             fetchUserTotalScore();
             
@@ -537,6 +579,11 @@ $conn->close();
                 });
             
             // Check game status and get session
+            checkGameStatus();
+        }
+        
+        // Check game status
+        function checkGameStatus() {
             fetch(`game_api.php?action=check_status&game_name=${GAME_NAME}`)
                 .then(response => response.json())
                 .then(data => {
@@ -549,16 +596,64 @@ $conn->close();
                         if (data.session && data.session.credits_required) {
                             creditsRequired = data.session.credits_required;
                         }
+                        
+                        showGameReady();
                     } else {
                         if (data.message) {
-                            msgText.textContent = 'Game is not currently available. ' + data.message;
-                            startBtn.style.display = 'none';
+                            showNoSession(data.message);
+                        } else {
+                            showNoSession('Game is not currently available.');
                         }
                     }
                 })
                 .catch(error => {
                     console.error('Error checking game status:', error);
+                    showNoSession('Error loading game status.');
                 });
+        }
+        
+        // Show game ready state
+        function showGameReady() {
+            if (timerDisplay) timerDisplay.textContent = '';
+            const requiredCredits = creditsRequired || 30;
+            if (statusMessage) {
+                if (IS_LOGGED_IN) {
+                    if (IS_CONTEST_ACTIVE) {
+                        statusMessage.textContent = `🏆 Contest is LIVE! Play with ${requiredCredits} credits and reach the top 3 to win prizes!`;
+                    } else {
+                        statusMessage.textContent = `Mission ready! Use ${requiredCredits} credits to start.`;
+                    }
+                } else {
+                    statusMessage.textContent = `Login or Register to start mission (${requiredCredits} credits required).`;
+                }
+            }
+            
+            if (startGameBtn) {
+                if (IS_LOGGED_IN) {
+                    if (currentUserCredits >= requiredCredits) {
+                        startGameBtn.style.display = 'flex';
+                        startGameBtn.innerHTML = `START MISSION &nbsp; ⚡ ${requiredCredits}`;
+                        startGameBtn.disabled = false;
+                    } else {
+                        startGameBtn.style.display = 'flex';
+                        startGameBtn.innerHTML = `LOCKED &nbsp; ⚡ ${requiredCredits}`;
+                        startGameBtn.disabled = true;
+                    }
+                } else {
+                    startGameBtn.style.display = 'none';
+                }
+            }
+        }
+        
+        // Show no session message
+        function showNoSession(message = '') {
+            if (timerDisplay) timerDisplay.textContent = '';
+            if (statusMessage) {
+                statusMessage.textContent = message || 'Game is not currently available.';
+            }
+            if (startGameBtn) {
+                startGameBtn.style.display = 'none';
+            }
         }
         
         // Show credits confirmation modal
@@ -673,6 +768,11 @@ $conn->close();
                     currentUserCredits = data.remaining_credits;
                     updateCreditsDisplay(data.remaining_credits);
                     gameStarted = true;
+                    // Update credits display in overlay
+                    const userCreditsDisplay = document.getElementById('user-credits-display');
+                    if (userCreditsDisplay) {
+                        userCreditsDisplay.textContent = data.remaining_credits.toLocaleString();
+                    }
                     // Show total score box
                     const totalScoreBox = document.getElementById('total-score-box');
                     if (totalScoreBox) {
@@ -1080,7 +1180,7 @@ $conn->close();
             
             msgText.textContent = gameOverText;
             startBtn.textContent = "Relaunch Shuttle";
-            messageBox.classList.remove('hidden');
+            messageBox.style.display = 'block';
             
             // Hide total score box
             const totalScoreBox = document.getElementById('total-score-box');
@@ -1098,7 +1198,50 @@ $conn->close();
             creditsUsed = 0;
         }
 
-        // Initialize start button
+        // Initialize start game button (pre-game overlay)
+        if (startGameBtn) {
+            startGameBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (!IS_LOGGED_IN) {
+                    alert('Please login to play Cosmos Captain.');
+                    window.location.href = 'index.php';
+                    return;
+                }
+                
+                if (gameStarted) {
+                    return;
+                }
+                
+                // Check if user has enough credits
+                if (currentUserCredits < creditsRequired) {
+                    alert(`Insufficient credits! You need ${creditsRequired} credits to play.`);
+                    return;
+                }
+                
+                // Confirm before deducting credits
+                const confirmMsg = IS_CONTEST_ACTIVE 
+                    ? `Join the contest? This will deduct ${creditsRequired} credits. Your high score will be recorded for prizes!`
+                    : `This will deduct ${creditsRequired} credits from your account. Continue?`;
+
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+                
+                // Deduct credits and start game
+                const canStart = await startGameWithCredits();
+                if (canStart) {
+                    if (gameStatusOverlay) {
+                        gameStatusOverlay.classList.add('hidden');
+                    }
+                    resetGame();
+                    gameActive = true;
+                }
+            });
+        }
+        
+        // Initialize start button (for game over restart)
         if (startBtn) {
             startBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -1112,7 +1255,7 @@ $conn->close();
                 
                 if (gameStarted) {
                     // Game already started, just hide message box and continue
-                    messageBox.classList.add('hidden');
+                    messageBox.style.display = 'none';
                     resetGame();
                     gameActive = true;
                     return;

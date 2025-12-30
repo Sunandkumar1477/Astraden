@@ -478,13 +478,6 @@ $conn->close();
             </div>
             <?php endif; ?>
             
-            <!-- Claim Credits Section -->
-            <div class="action-box" style="background: rgba(0, 255, 0, 0.05); border: 1px solid #00ff00; margin-top: 25px;">
-                <h3 style="color: #00ff00;">🎁 Claim Credits</h3>
-                <p>Submit your transaction code to claim credits.</p>
-                <button onclick="showClaimCreditsModal()" class="btn-action" style="background: linear-gradient(90deg, #00ff00, #008800);">Claim Credits</button>
-            </div>
-            
             <!-- Security Section -->
             <div class="action-box security-box">
                 <h3>🔐 Privacy</h3>
@@ -543,30 +536,6 @@ $conn->close();
         </div>
     </div>
     
-    <!-- Claim Credits Modal -->
-    <div class="modal-overlay" id="claimCreditsModal" style="display: none;">
-        <div class="password-modal" style="border-color: #00ff00;">
-            <div style="text-align: right;">
-                <button onclick="closeClaimCreditsModal()" style="background:none; border:none; color:#fff; font-size:1.5rem;">&times;</button>
-            </div>
-            <h2 style="font-family:'Orbitron'; color:#00ff00; margin-bottom:20px; text-align:center;">🎁 Claim Credits</h2>
-            
-            <div id="claim-msg-container"></div>
-
-            <form id="claimCreditsForm" onsubmit="return handleClaimCredits(event)">
-                <div class="form-group">
-                    <label>Transaction Code</label>
-                    <input type="text" id="transaction_code" name="transaction_code" class="form-control" placeholder="Enter 4-character code" maxlength="4" pattern="[A-Za-z0-9]{4}" required>
-                    <small style="color: rgba(255,255,255,0.6); font-size:0.75rem; margin-top:5px; display:block;">Enter your 4-character transaction code</small>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" onclick="closeClaimCreditsModal()" class="btn" style="flex:1">Cancel</button>
-                    <button type="submit" class="btn-primary btn" style="flex:2; background: linear-gradient(90deg, #00ff00, #008800);">Submit</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
     <!-- Delete Account Modal -->
     <div class="modal-overlay" id="deleteAccountModal" style="display: none;">
         <div class="delete-modal">
@@ -603,65 +572,6 @@ $conn->close();
         
         function showChangePasswordModal() { document.getElementById('changePasswordModal').style.display = 'flex'; resetPasswordForm(); }
         function closeChangePasswordModal() { document.getElementById('changePasswordModal').style.display = 'none'; }
-        
-        function showClaimCreditsModal() { 
-            document.getElementById('claimCreditsModal').style.display = 'flex'; 
-            document.getElementById('claimCreditsForm').reset();
-            document.getElementById('claim-msg-container').innerHTML = '';
-        }
-        function closeClaimCreditsModal() { document.getElementById('claimCreditsModal').style.display = 'none'; }
-        
-        function handleClaimCredits(event) {
-            event.preventDefault();
-            const form = event.target;
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const msgContainer = document.getElementById('claim-msg-container');
-            const transactionCode = document.getElementById('transaction_code').value.trim().toUpperCase();
-            
-            if (!transactionCode || transactionCode.length !== 4) {
-                msgContainer.innerHTML = '<div style="color: var(--danger); padding: 10px; background: rgba(255, 77, 77, 0.1); border-radius: 8px; margin-bottom: 15px;">Please enter a valid 4-character transaction code.</div>';
-                return false;
-            }
-            
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-            msgContainer.innerHTML = '<div style="color: var(--cyan); padding: 10px; background: rgba(0, 255, 255, 0.1); border-radius: 8px; margin-bottom: 15px;">Processing...</div>';
-            
-            const formData = new FormData();
-            formData.append('transaction_code', transactionCode);
-            
-            fetch('claim_credits.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    msgContainer.innerHTML = '<div style="color: #00ff00; padding: 10px; background: rgba(0, 255, 0, 0.1); border-radius: 8px; margin-bottom: 15px;">' + data.message + '</div>';
-                    form.reset();
-                    // Update credits display if available
-                    const creditsValue = document.querySelector('.credits-value');
-                    if (creditsValue && data.credits !== undefined) {
-                        creditsValue.textContent = parseInt(data.credits).toLocaleString();
-                    }
-                    setTimeout(() => {
-                        closeClaimCreditsModal();
-                        location.reload();
-                    }, 2000);
-                } else {
-                    msgContainer.innerHTML = '<div style="color: var(--danger); padding: 10px; background: rgba(255, 77, 77, 0.1); border-radius: 8px; margin-bottom: 15px;">' + data.message + '</div>';
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit';
-                }
-            })
-            .catch(error => {
-                msgContainer.innerHTML = '<div style="color: var(--danger); padding: 10px; background: rgba(255, 77, 77, 0.1); border-radius: 8px; margin-bottom: 15px;">An error occurred. Please try again later.</div>';
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit';
-            });
-            
-            return false;
-        }
         
         function resetPasswordForm() {
             document.getElementById('changePasswordForm').reset();
