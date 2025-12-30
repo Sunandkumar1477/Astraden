@@ -134,7 +134,7 @@ switch ($action) {
                 $session_start = 0;
                 $session_end = PHP_INT_MAX; // No end time
                 $time_until_start = 0;
-                // Use credits from session, not from games table
+                // Use credits from session (stored in credits_required)
                 $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
             } else {
                 // Time-restricted mode - check time window
@@ -145,9 +145,41 @@ switch ($action) {
                 // Calculate end time
                 $session_end = $session_start + ($session['duration_minutes'] * 60);
                 
-                $is_active = ($now_timestamp >= $session_start && $now_timestamp <= $session_end);
-                $time_until_start = $session_start - $now_timestamp;
-                // Use credits from games table for time-restricted sessions
+                // Check if session time has expired
+                if ($now_timestamp > $session_end) {
+                    // Session expired - automatically convert to always available mode
+                    $update_stmt = $conn->prepare("UPDATE game_sessions SET always_available = 1, session_date = CURDATE(), session_time = '00:00:00', duration_minutes = 0 WHERE id = ?");
+                    $update_stmt->bind_param("i", $session['id']);
+                    $update_stmt->execute();
+                    $update_stmt->close();
+                    
+                    // Update session data
+                    $is_always_available = 1;
+                    $is_active = true;
+                    $session_start = 0;
+                    $session_end = PHP_INT_MAX;
+                    $time_until_start = 0;
+                    // Use stored play credits from credits_required
+                    $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
+                } else {
+                    // Session is still within time window
+                    $is_active = ($now_timestamp >= $session_start && $now_timestamp <= $session_end);
+                    $time_until_start = $session_start - $now_timestamp;
+                    // Use stored play credits from credits_required (set by admin when creating session)
+                    $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
+                }
+            }
+            
+            // Reload session if it was converted to always available
+            if ($is_always_available && isset($session['always_available']) && $session['always_available'] == 0) {
+                $reload_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ?");
+                $reload_stmt->bind_param("i", $session['id']);
+                $reload_stmt->execute();
+                $reload_result = $reload_stmt->get_result();
+                if ($reload_result->num_rows > 0) {
+                    $session = $reload_result->fetch_assoc();
+                }
+                $reload_stmt->close();
             }
             
             echo json_encode([
@@ -250,7 +282,7 @@ switch ($action) {
             // Always available mode - use credits from session, no time check
             $credits_required = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
         } else {
-            // Time-restricted mode - check time window and use credits from games table
+            // Time-restricted mode - check time window
             $now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
             $now_timestamp = $now->getTimestamp();
             $session_datetime_str = $session['session_date'] . ' ' . $session['session_time'];
@@ -258,33 +290,41 @@ switch ($action) {
             $session_start = $session_start_dt->getTimestamp();
             $session_end = $session_start + ($session['duration_minutes'] * 60);
             
-            $is_session_active = ($now_timestamp >= $session_start && $now_timestamp <= $session_end);
-            
-            if (!$is_session_active) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Game session is not currently active. Please wait for the scheduled time.',
-                    'session_active' => false
-                ]);
+            // Check if session time has expired - auto convert to always available
+            if ($now_timestamp > $session_end) {
+                // Session expired - automatically convert to always available mode
+                $update_stmt = $conn->prepare("UPDATE game_sessions SET always_available = 1, session_date = CURDATE(), session_time = '00:00:00', duration_minutes = 0 WHERE id = ?");
+                $update_stmt->bind_param("i", $session_id);
+                $update_stmt->execute();
+                $update_stmt->close();
+                
+                // Reload session to get updated data
                 $session_stmt->close();
-                exit;
+                $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ? AND is_active = 1");
+                $session_stmt->bind_param("i", $session_id);
+                $session_stmt->execute();
+                $session_result = $session_stmt->get_result();
+                $session = $session_result->fetch_assoc();
+                $is_always_available = 1;
             }
             
-            // Get credits from games table for time-restricted sessions
-            $credits_required = 30; // Default fallback
-            $check_games_table = $conn->query("SHOW TABLES LIKE 'games'");
-            if ($check_games_table->num_rows > 0) {
-                $games_stmt = $conn->prepare("SELECT credits_per_chance, is_contest_active, contest_credits_required FROM games WHERE game_name = ?");
-                $games_stmt->bind_param("s", $game_name);
-                $games_stmt->execute();
-                $games_result = $games_stmt->get_result();
-                if ($games_result->num_rows > 0) {
-                    $game_data = $games_result->fetch_assoc();
-                    $is_contest_active = intval($game_data['is_contest_active']);
-                    $credits_required = $is_contest_active ? intval($game_data['contest_credits_required']) : intval($game_data['credits_per_chance']);
+            // Check if session is within time window (only for time-restricted sessions)
+            if (!$is_always_available) {
+                $is_session_active = ($now_timestamp >= $session_start && $now_timestamp <= $session_end);
+                
+                if (!$is_session_active) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Game session is not currently active. Please wait for the scheduled time.',
+                        'session_active' => false
+                    ]);
+                    $session_stmt->close();
+                    exit;
                 }
-                $games_stmt->close();
             }
+            
+            // Use stored play credits from credits_required (set by admin when creating session)
+            $credits_required = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
         }
         
         // Check user credits

@@ -63,7 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
             $session_date = date('Y-m-d');
             $session_time = '00:00:00';
             $duration = 0; // No duration limit
-            $credits_required = 0; // Not used in always available mode
+            // Store play credits in credits_required for always available mode
+            $credits_required = $credits_per_chance;
             
             if ($session_id > 0) {
                 $stmt = $conn->prepare("UPDATE game_sessions SET game_name=?, session_date=?, session_time=?, duration_minutes=?, credits_required=?, always_available=? WHERE id=?");
@@ -89,7 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
                 $duration = ($start_dt->diff($end_dt)->days * 24 * 60) + ($start_dt->diff($end_dt)->h * 60) + $start_dt->diff($end_dt)->i;
                 $session_date = $start_date;
                 $session_time = $start_time;
-                $credits_required = 30; // Default value for time-restricted sessions
+                // Store play credits in credits_required for time-restricted sessions (will be used when converting to always available)
+                $credits_required = $credits_per_chance;
 
                 if ($session_id > 0) {
                     $stmt = $conn->prepare("UPDATE game_sessions SET game_name=?, session_date=?, session_time=?, duration_minutes=?, credits_required=?, always_available=? WHERE id=?");
