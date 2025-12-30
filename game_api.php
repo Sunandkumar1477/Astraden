@@ -736,6 +736,32 @@ switch ($action) {
         }
         break;
         
+    case 'get_user_score':
+        // Get user's total score for a specific game
+        $game_name = $_GET['game_name'] ?? 'earth-defender';
+        
+        if (!$user_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Please login to view scores'
+            ]);
+            exit;
+        }
+        
+        // Get total score for this game
+        $total_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND game_name = ? AND credits_used > 0");
+        $total_stmt->bind_param("is", $user_id, $game_name);
+        $total_stmt->execute();
+        $total_res = $total_stmt->get_result()->fetch_assoc();
+        $user_total_points = intval($total_res['total_points'] ?? 0);
+        $total_stmt->close();
+        
+        echo json_encode([
+            'success' => true,
+            'user_total_points' => $user_total_points
+        ]);
+        break;
+        
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
 }

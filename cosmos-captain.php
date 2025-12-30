@@ -1,6 +1,7 @@
 <?php
 session_start();
-// Allow demo game without login - don't require check_user_session.php
+// Require login to play Cosmos Captain
+require_once 'check_user_session.php';
 require_once 'connection.php';
 
 // Get user credits (if logged in)
@@ -251,14 +252,16 @@ $conn->close();
                         <div class="score-label">Mission Score</div>
                         <div id="score" class="score-value">0000</div>
                     </div>
-                    <?php if ($is_logged_in): ?>
+                    <div class="stat-box" style="margin-top: 10px; display: none;" id="total-score-box">
+                        <div class="score-label">Total Score</div>
+                        <div id="total-score" class="score-value" style="color: #00ff00;">0</div>
+                    </div>
                     <div class="stat-box" style="margin-top: 10px;">
                         <div class="score-label">Credits</div>
                         <div id="credits-display" class="score-value" style="color: <?php echo $credits_color; ?>;">
                             ⚡ <span id="credits-value"><?php echo $user_credits; ?></span>
                         </div>
                     </div>
-                    <?php endif; ?>
                 </div>
             </div>
             
@@ -277,6 +280,9 @@ $conn->close();
                     Green Asteroids = +20 Health<br>
                     Collision = -25 Health
                 </div>
+                <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 15px; font-size: 14px;">
+                    Total Score: <span id="total-score-display">0</span>
+                </p>
             </div>
         </div>
     </div>
@@ -293,6 +299,8 @@ $conn->close();
         let creditsUsed = 0;
         let gameStarted = false;
         let gameInitialized = false;
+        let userTotalScore = 0;
+        let isTabVisible = true;
         
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -318,6 +326,54 @@ $conn->close();
         const SPECIAL_CHANCE = 0.15; 
         const STAR_COUNT = 150;
         const BULLET_SPEED = 18;
+        
+        // Sound effects using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+        
+        function playSound(frequency, duration, type = 'sine', volume = 0.3) {
+            if (!soundEnabled) return;
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                console.log('Sound error:', e);
+            }
+        }
+        
+        function playShootSound() {
+            playSound(800, 0.1, 'square', 0.2);
+        }
+        
+        function playExplosionSound() {
+            playSound(150, 0.3, 'sawtooth', 0.4);
+        }
+        
+        function playSpecialSound() {
+            playSound(600, 0.2, 'sine', 0.3);
+            setTimeout(() => playSound(800, 0.2, 'sine', 0.3), 100);
+        }
+        
+        function playDamageSound() {
+            playSound(200, 0.4, 'sawtooth', 0.5);
+        }
+        
+        function playGameOverSound() {
+            playSound(100, 0.5, 'sawtooth', 0.6);
+            setTimeout(() => playSound(80, 0.5, 'sawtooth', 0.6), 200);
+        }
 
         function init() {
             resize();
@@ -336,9 +392,13 @@ $conn->close();
         // Initialize game integration (credits, sessions)
         function initGameIntegration() {
             if (!IS_LOGGED_IN) {
-                // Demo mode - allow playing without credits
+                msgText.textContent = 'Please login to play Cosmos Captain.';
+                startBtn.style.display = 'none';
                 return;
             }
+            
+            // Fetch user total score
+            fetchUserTotalScore();
             
             // Check game status and get session
             fetch(`game_api.php?action=check_status&game_name=${GAME_NAME}`)
@@ -359,15 +419,52 @@ $conn->close();
                 });
         }
         
+        // Fetch user total score
+        function fetchUserTotalScore() {
+            fetch(`game_api.php?action=get_user_score&game_name=${GAME_NAME}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        userTotalScore = data.user_total_points || 0;
+                        updateTotalScoreDisplay();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching total score:', error);
+                });
+        }
+        
+        // Update total score display
+        function updateTotalScoreDisplay() {
+            const totalScoreEl = document.getElementById('total-score');
+            const totalScoreDisplay = document.getElementById('total-score-display');
+            const totalScoreBox = document.getElementById('total-score-box');
+            
+            if (totalScoreEl) {
+                totalScoreEl.textContent = userTotalScore.toLocaleString();
+            }
+            if (totalScoreDisplay) {
+                totalScoreDisplay.textContent = userTotalScore.toLocaleString();
+            }
+            if (totalScoreBox && gameActive) {
+                totalScoreBox.style.display = 'block';
+            }
+        }
+        
         // Start game (deduct credits)
         function startGameWithCredits() {
             if (!IS_LOGGED_IN) {
-                // Demo mode
-                gameStarted = true;
-                return Promise.resolve(true);
+                alert('Please login to play Cosmos Captain.');
+                window.location.href = 'index.php';
+                return Promise.resolve(false);
             }
             
             if (gameStarted) return Promise.resolve(true);
+            
+            if (!currentSessionId) {
+                alert('No active game session. Please try again.');
+                return Promise.resolve(false);
+            }
             
             // Deduct credits
             const formData = new FormData();
@@ -384,6 +481,11 @@ $conn->close();
                     creditsUsed = data.credits_used;
                     updateCreditsDisplay(data.remaining_credits);
                     gameStarted = true;
+                    // Show total score box
+                    const totalScoreBox = document.getElementById('total-score-box');
+                    if (totalScoreBox) {
+                        totalScoreBox.style.display = 'block';
+                    }
                     return true;
                 } else {
                     alert(data.message || 'Failed to start game');
@@ -402,14 +504,11 @@ $conn->close();
         
         // Save score when game ends
         function saveScore(score) {
-            // Only save if game was started with credits (not demo mode)
             if (!IS_LOGGED_IN) {
-                // Demo mode - show score but don't save
                 return;
             }
             
             if (!gameStarted || creditsUsed === 0 || !currentSessionId) {
-                // No credits used or no session, don't save
                 return;
             }
             
@@ -421,7 +520,7 @@ $conn->close();
             formData.append('session_id', currentSessionId);
             formData.append('credits_used', creditsUsed);
             formData.append('game_name', GAME_NAME);
-            formData.append('is_demo', 'false'); // Explicitly mark as not demo
+            formData.append('is_demo', 'false');
             
             fetch('game_api.php?action=save_score', {
                 method: 'POST',
@@ -432,12 +531,12 @@ $conn->close();
                 console.log("Score save response:", data);
                 if (data.success) {
                     console.log('Score saved:', finalScore);
-                    if (data.is_contest) {
-                        console.log('Contest score saved');
-                    }
                     if (data.total_score !== undefined) {
-                        console.log('Total score for this game:', data.total_score);
+                        userTotalScore = data.total_score;
+                        updateTotalScoreDisplay();
                     }
+                    // Fetch updated total score across all games
+                    fetchUserTotalScore();
                 } else {
                     console.error('Failed to save score:', data.message);
                 }
@@ -581,8 +680,10 @@ $conn->close();
                         if (ast.isSpecial) {
                             ship.health = Math.min(ship.maxHealth, ship.health + 20);
                             createExplosion(ast.x, ast.y, '#2eff8c');
+                            playSpecialSound();
                         } else {
                             createExplosion(ast.x, ast.y, '#ff9d00');
+                            playExplosionSound();
                         }
                         asteroids.splice(i, 1);
                         score += 100;
@@ -668,12 +769,14 @@ $conn->close();
             ship.targetX = clientX;
             bullets.push(new Bullet(ship.x, ship.y - 30, clientX, clientY));
             createMuzzleFlash(ship.x, ship.y - 30);
+            playShootSound();
         }
 
         function takeDamage(amount) {
             ship.health -= amount;
             gameContainer.classList.add('hit-effect');
             setTimeout(() => gameContainer.classList.remove('hit-effect'), 300);
+            playDamageSound();
             updateUI();
             if (ship.health <= 0) gameOver();
         }
@@ -753,23 +856,41 @@ $conn->close();
 
         function gameOver() {
             gameActive = false;
+            playGameOverSound();
             createExplosion(ship.x, ship.y, '#ff4d4d');
             msgTitle.textContent = "SHIP CRITICALLY DAMAGED";
             
             // Save score
             saveScore(score);
             
-            if (!IS_LOGGED_IN) {
-                msgText.textContent = `Commander, the hull has failed. Mission terminated.\n\nFinal Score: ${score}\n\nLogin to save your scores!`;
-            } else {
-                msgText.textContent = `Commander, the hull has failed. Mission terminated.\n\nFinal Score: ${score}`;
-                if (IS_CONTEST_ACTIVE) {
-                    msgText.textContent += '\n\n🏆 Contest score saved!';
-                }
+            let gameOverText = `Commander, the hull has failed. Mission terminated.\n\nFinal Score: ${score.toLocaleString()}`;
+            
+            if (IS_LOGGED_IN) {
+                // Show total score after saving
+                setTimeout(() => {
+                    const totalScoreDisplay = document.getElementById('total-score-display');
+                    const totalScoreContainer = document.getElementById('total-score-container');
+                    if (totalScoreDisplay && totalScoreContainer) {
+                        totalScoreDisplay.textContent = userTotalScore.toLocaleString();
+                        totalScoreContainer.style.display = 'block';
+                    }
+                    if (IS_CONTEST_ACTIVE) {
+                        gameOverText += '\n\n🏆 Contest score saved!';
+                    }
+                    gameOverText += `\n\nTotal Score: ${userTotalScore.toLocaleString()}`;
+                    msgText.textContent = gameOverText;
+                }, 500);
             }
             
+            msgText.textContent = gameOverText;
             startBtn.textContent = "Relaunch Shuttle";
             messageBox.classList.remove('hidden');
+            
+            // Hide total score box
+            const totalScoreBox = document.getElementById('total-score-box');
+            if (totalScoreBox) {
+                totalScoreBox.style.display = 'none';
+            }
             
             // Reset game started flag for next play
             gameStarted = false;
@@ -777,19 +898,37 @@ $conn->close();
         }
 
         startBtn.addEventListener('click', async () => {
-            // Check if we need to deduct credits
-            if (IS_LOGGED_IN && !gameStarted) {
+            if (!IS_LOGGED_IN) {
+                alert('Please login to play Cosmos Captain.');
+                window.location.href = 'index.php';
+                return;
+            }
+            
+            if (!gameStarted) {
                 const canStart = await startGameWithCredits();
                 if (!canStart) {
-                    return; // Don't start if credits deduction failed
+                    return;
                 }
-            } else if (!IS_LOGGED_IN) {
-                gameStarted = true; // Demo mode
             }
             
             messageBox.classList.add('hidden');
             resetGame();
             gameActive = true;
+        });
+        
+        // Handle visibility change - game continues when minimized
+        document.addEventListener('visibilitychange', function() {
+            isTabVisible = !document.hidden;
+            // Game continues running even when tab is hidden
+        });
+        
+        // Handle page focus/blur
+        window.addEventListener('blur', function() {
+            // Game continues
+        });
+        
+        window.addEventListener('focus', function() {
+            isTabVisible = true;
         });
 
         window.addEventListener('resize', resize);
