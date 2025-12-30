@@ -310,41 +310,6 @@ $conn->close();
             color: #ff006e; 
         }
         
-        /* Claim credits section - simplified */
-        .claim-section {
-            background: rgba(15, 15, 25, 0.9);
-            border: 1px solid #9d4edd;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .claim-info-box {
-            background: rgba(0,0,0,0.4);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .claim-info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-        }
-        .claim-info-row:last-child {
-            margin-bottom: 0;
-        }
-        .claim-label {
-            color: rgba(255,255,255,0.8);
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .claim-value {
-            font-weight: 900;
-            font-size: 1.3rem;
-        }
-        
         /* Responsive - Mobile optimized */
         @media (max-width: 768px) {
             body {
@@ -367,8 +332,7 @@ $conn->close();
                 gap: 12px;
             }
             .games-scores,
-            .purchase-section,
-            .claim-section {
+            .purchase-section {
                 padding: 15px;
             }
             .games-scores h2,
@@ -391,14 +355,6 @@ $conn->close();
             .btn-purchase {
                 padding: 12px;
                 font-size: 0.95rem;
-            }
-            .claim-info-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 5px;
-            }
-            .claim-value {
-                font-size: 1.1rem;
             }
         }
         
@@ -532,55 +488,6 @@ $conn->close();
             <?php endif; ?>
         </div>
         
-        <!-- Claim Credits Section -->
-        <div class="claim-section">
-            <h2><i class="fas fa-gift"></i> Claim Credits</h2>
-            <?php if($claim_credits_score > 0): ?>
-            <div style="text-align: center;">
-                <p style="color: rgba(255,255,255,0.9); margin-bottom: 15px; font-size: 1rem; font-weight: 700;">
-                    🎁 Claim credits instantly with your score!
-                </p>
-                <div class="claim-info-box">
-                    <div class="claim-info-row" style="background: rgba(157, 78, 221, 0.1);">
-                        <span class="claim-label">Score Required:</span>
-                        <span class="claim-value" style="color: #9d4edd;"><?php echo number_format($claim_credits_score); ?></span>
-                    </div>
-                    <div class="claim-info-row" style="background: rgba(251, 191, 36, 0.1);">
-                        <span class="claim-label">Your Total Score:</span>
-                        <span class="claim-value" style="color: #fbbf24;"><?php echo number_format($total_score); ?></span>
-                    </div>
-                    <div class="claim-info-row" style="background: rgba(0, 255, 204, 0.1);">
-                        <span class="claim-label">Credits You'll Get:</span>
-                        <span class="claim-value" style="color: #00ffcc;">1 ⚡</span>
-                    </div>
-                </div>
-                <form method="POST" action="claim_credits_with_score.php" id="claimForm">
-                    <button type="submit" class="btn-purchase" style="background: linear-gradient(135deg, #9d4edd, #00ffff);" id="claimBtn" <?php echo $total_score < $claim_credits_score ? 'disabled' : ''; ?>>
-                        <i class="fas fa-gift"></i> CLAIM 1 CREDIT NOW
-                    </button>
-                </form>
-                <?php if($total_score < $claim_credits_score): ?>
-                    <p style="color: #ff006e; margin-top: 15px; font-size: 0.9rem; font-weight: 700; padding: 12px; background: rgba(255, 0, 110, 0.1); border-radius: 8px; border: 1px solid #ff006e;">
-                        ⚠️ You need <?php echo number_format($claim_credits_score - $total_score); ?> more score to claim credits. Keep playing to earn more!
-                    </p>
-                <?php else: ?>
-                    <p style="color: #00ffcc; margin-top: 12px; font-size: 0.85rem; font-weight: 600;">
-                        ✓ You have enough score! Click the button above to claim your credit.
-                    </p>
-                <?php endif; ?>
-            </div>
-            <?php else: ?>
-            <div style="padding: 20px; text-align: center;">
-                <p style="color: rgba(255,255,255,0.6); font-size: 1rem; margin-bottom: 10px;">
-                    Claim credits feature is currently disabled.
-                </p>
-                <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">
-                    Admin needs to set the claim credits score in Score Shop Settings.
-                </p>
-            </div>
-            <?php endif; ?>
-        </div>
-        
         <div class="purchase-section">
             <h2><i class="fas fa-shopping-cart"></i> Buy Credits with Score</h2>
             <form id="purchaseForm" method="POST" action="purchase_credits_with_score.php">
@@ -596,11 +503,9 @@ $conn->close();
                     </select>
                 </div>
                 
-                <div class="form-group">
-                    <label>Amount of Credits to Buy</label>
-                    <input type="number" name="credits_amount" id="creditsAmount" min="1" value="1" required>
-                    <div class="rate-info" id="rateInfo">Conversion rate: Loading...</div>
-                </div>
+                <button type="submit" class="btn-purchase" id="purchaseBtn" style="margin-bottom: 20px;">
+                    <i class="fas fa-shopping-cart"></i> PURCHASE CREDITS
+                </button>
                 
                 <div class="purchase-summary">
                     <h3>Purchase Summary</h3>
@@ -622,9 +527,11 @@ $conn->close();
                     </div>
                 </div>
                 
-                <button type="submit" class="btn-purchase" id="purchaseBtn">
-                    <i class="fas fa-shopping-cart"></i> PURCHASE CREDITS
-                </button>
+                <div class="form-group">
+                    <label>Amount of Credits to Buy</label>
+                    <input type="number" name="credits_amount" id="creditsAmount" min="1" value="1" required>
+                    <div class="rate-info" id="rateInfo">Conversion rate: Loading...</div>
+                </div>
             </form>
         </div>
         
