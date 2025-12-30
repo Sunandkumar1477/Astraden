@@ -428,15 +428,15 @@ body {
     align-items: center;
     gap: 5px;
     padding: 6px 14px;
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    border: 2px solid #FFD700;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2));
+    border: 2px solid var(--primary-cyan);
     border-radius: 25px;
     font-size: 0.85rem;
     font-weight: 700;
-    color: #000;
-    text-shadow: none;
+    color: var(--primary-cyan);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
     margin-top: 10px;
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 255, 255, 0.4), 0 0 15px rgba(157, 78, 221, 0.3);
     font-family: 'Orbitron', sans-serif;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -463,8 +463,9 @@ body {
 
 .credits-badge .power-icon {
     font-size: 1rem;
-    filter: none;
-    text-shadow: none;
+    color: var(--primary-cyan);
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
 }
 
 .game-prizes {

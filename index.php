@@ -587,10 +587,10 @@ session_start();
                     You need to be logged in to play games. Please log in or create an account to continue.
                 </p>
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                    <button type="button" class="submit-btn" onclick="redirectToLogin()" style="flex: 1; min-width: 150px; background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));">
+                    <button type="button" class="submit-btn" onclick="openLoginFromRequired()" style="flex: 1; min-width: 150px; background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));">
                         Login
                     </button>
-                    <button type="button" class="submit-btn" onclick="redirectToRegister()" style="flex: 1; min-width: 150px; background: rgba(157, 78, 221, 0.3); border: 2px solid var(--primary-purple); color: var(--primary-purple);">
+                    <button type="button" class="submit-btn" onclick="openRegisterFromRequired()" style="flex: 1; min-width: 150px; background: rgba(157, 78, 221, 0.3); border: 2px solid var(--primary-purple); color: var(--primary-purple);">
                         Register
                     </button>
                 </div>
@@ -1867,19 +1867,25 @@ session_start();
             }
         }
         
-        // Redirect to login page
-        function redirectToLogin() {
-            window.location.href = 'login.php';
+        // Open login modal from login required modal
+        function openLoginFromRequired() {
+            closeModal('loginRequired');
+            setTimeout(() => {
+                openModal('login');
+            }, 300);
         }
         
-        // Redirect to register page
-        function redirectToRegister() {
-            window.location.href = 'register.php';
+        // Open register modal from login required modal
+        function openRegisterFromRequired() {
+            closeModal('loginRequired');
+            setTimeout(() => {
+                openModal('register');
+            }, 300);
         }
         
-        // Make redirect functions globally accessible
-        window.redirectToLogin = redirectToLogin;
-        window.redirectToRegister = redirectToRegister;
+        // Make functions globally accessible
+        window.openLoginFromRequired = openLoginFromRequired;
+        window.openRegisterFromRequired = openRegisterFromRequired;
         
         // Make closeModal globally accessible
         window.closeModal = closeModal;
