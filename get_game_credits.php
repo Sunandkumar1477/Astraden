@@ -4,6 +4,8 @@ require_once 'connection.php';
 
 header('Content-Type: application/json');
 
+date_default_timezone_set('Asia/Kolkata');
+
 $game_name = $_GET['game'] ?? null;
 
 // Check if games table exists
@@ -16,6 +18,46 @@ if ($check_table->num_rows == 0) {
 // Columns to fetch
 $cols = "game_name, credits_per_chance, is_active, is_contest_active, game_mode, contest_credits_required, contest_first_prize, contest_second_prize, contest_third_prize, first_prize, second_prize, third_prize";
 
+// Function to get credits from active session if available
+function getSessionCredits($conn, $game_name) {
+    $check_sessions_table = $conn->query("SHOW TABLES LIKE 'game_sessions'");
+    if ($check_sessions_table->num_rows == 0) {
+        return null;
+    }
+    
+    $session_stmt = $conn->prepare("SELECT credits_required, always_available, session_date, session_time, duration_minutes FROM game_sessions WHERE game_name = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1");
+    $session_stmt->bind_param("s", $game_name);
+    $session_stmt->execute();
+    $session_result = $session_stmt->get_result();
+    
+    if ($session_result->num_rows > 0) {
+        $session = $session_result->fetch_assoc();
+        $is_always_available = isset($session['always_available']) && $session['always_available'] == 1;
+        
+        if ($is_always_available) {
+            // Always available session - use its credits
+            $session_stmt->close();
+            return isset($session['credits_required']) ? intval($session['credits_required']) : null;
+        } else {
+            // Time-restricted session - check if it's currently active
+            $now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
+            $now_timestamp = $now->getTimestamp();
+            $session_datetime_str = $session['session_date'] . ' ' . $session['session_time'];
+            $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
+            $session_start = $session_start_dt->getTimestamp();
+            $session_end = $session_start + ($session['duration_minutes'] * 60);
+            
+            if ($now_timestamp >= $session_start && $now_timestamp <= $session_end) {
+                // Session is active - use its credits
+                $session_stmt->close();
+                return isset($session['credits_required']) ? intval($session['credits_required']) : null;
+            }
+        }
+    }
+    $session_stmt->close();
+    return null;
+}
+
 if ($game_name) {
     $stmt = $conn->prepare("SELECT $cols FROM games WHERE game_name = ?");
     $stmt->bind_param("s", $game_name);
@@ -24,7 +66,16 @@ if ($game_name) {
     
     if ($game) {
         $is_contest = intval($game['is_contest_active']);
-        $final_credits = $is_contest ? intval($game['contest_credits_required']) : intval($game['credits_per_chance']);
+        
+        // Check if there's an active session with credits set
+        $session_credits = getSessionCredits($conn, $game_name);
+        
+        // Use session credits if available, otherwise use games table credits
+        if ($session_credits !== null) {
+            $final_credits = $session_credits;
+        } else {
+            $final_credits = $is_contest ? intval($game['contest_credits_required']) : intval($game['credits_per_chance']);
+        }
         
         echo json_encode([
             'success' => true,
@@ -51,7 +102,16 @@ if ($game_name) {
     $response = [];
     foreach ($games as $g) {
         $is_contest = intval($g['is_contest_active']);
-        $final_credits = $is_contest ? intval($g['contest_credits_required']) : intval($g['credits_per_chance']);
+        
+        // Check if there's an active session with credits set
+        $session_credits = getSessionCredits($conn, $g['game_name']);
+        
+        // Use session credits if available, otherwise use games table credits
+        if ($session_credits !== null) {
+            $final_credits = $session_credits;
+        } else {
+            $final_credits = $is_contest ? intval($g['contest_credits_required']) : intval($g['credits_per_chance']);
+        }
         
         $response[$g['game_name']] = [
             'credits_per_chance' => $final_credits,
