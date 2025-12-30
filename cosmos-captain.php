@@ -238,6 +238,44 @@ $conn->close();
             display: flex !important;
         }
         
+        #credits-confirmation-modal button,
+        #exit-confirm-modal button {
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 10002;
+        }
+        
+        #confirm-pay-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        
+        #cancel-pay-btn:hover {
+            background: rgba(255, 77, 77, 0.4) !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+        }
+        
+        #confirm-pay-btn:active, #cancel-pay-btn:active {
+            transform: scale(0.98);
+        }
+        
+        #exit-yes-btn:hover {
+            background: rgba(255, 77, 77, 0.4) !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+        }
+        
+        #exit-no-btn:hover {
+            background: rgba(0, 242, 255, 0.4) !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+        
+        #exit-yes-btn:active, #exit-no-btn:active {
+            transform: scale(0.98);
+        }
+        
         #exit-game-btn:hover {
             background: rgba(255, 77, 77, 0.4) !important;
             transform: scale(1.05);
@@ -317,58 +355,47 @@ $conn->close();
             </div>
             
             <!-- Exit Confirmation Modal -->
-            <div id="exit-confirm-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1001; display: none; align-items: center; justify-content: center;">
-                <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid #ff4d4d; border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 77, 77, 0.5);">
-                    <h2 style="color: #ff4d4d; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px #ff4d4d;">⚠️ EXIT GAME?</h2>
-                    <p style="color: #ccc; margin-bottom: 20px; font-size: 16px;">Are you sure you want to exit?</p>
-                    <p style="color: #888; margin-bottom: 25px; font-size: 14px;">Your current score will be saved automatically.</p>
-                    <div style="display: flex; gap: 15px; justify-content: center;">
-                        <button id="exit-no-btn" style="background: rgba(0, 242, 255, 0.2); color: var(--primary-glow); border: 2px solid var(--primary-glow); padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">
-                            NO, CONTINUE
-                        </button>
-                        <button id="exit-yes-btn" style="background: rgba(255, 77, 77, 0.2); color: #ff4d4d; border: 2px solid #ff4d4d; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">
-                            YES, EXIT
-                        </button>
-                    </div>
+            
+        </div>
+    </div>
+    
+    <!-- Exit Confirmation Modal - Outside ui-layer for proper pointer events -->
+    <div id="exit-confirm-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10001; display: none; align-items: center; justify-content: center; pointer-events: auto;">
+        <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid #ff4d4d; border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 77, 77, 0.5); pointer-events: auto; position: relative; z-index: 10002;">
+            <h2 style="color: #ff4d4d; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px #ff4d4d;">⚠️ EXIT GAME?</h2>
+            <p style="color: #ccc; margin-bottom: 20px; font-size: 16px;">Are you sure you want to exit?</p>
+            <p style="color: #888; margin-bottom: 25px; font-size: 14px;">Your current score will be saved automatically.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="exit-no-btn" style="background: rgba(0, 242, 255, 0.2); color: var(--primary-glow); border: 2px solid var(--primary-glow); padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; pointer-events: auto; z-index: 10003;">
+                    NO, CONTINUE
+                </button>
+                <button id="exit-yes-btn" style="background: rgba(255, 77, 77, 0.2); color: #ff4d4d; border: 2px solid #ff4d4d; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; pointer-events: auto; z-index: 10003;">
+                    YES, EXIT
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Credits Confirmation Modal - Outside ui-layer for proper pointer events -->
+    <div id="credits-confirmation-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10000; display: none; align-items: center; justify-content: center; pointer-events: auto;">
+        <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid var(--primary-glow); border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(0, 242, 255, 0.5); pointer-events: auto; position: relative; z-index: 10001;">
+            <h2 style="color: var(--primary-glow); margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px var(--primary-glow);">Confirm Credits Payment</h2>
+            <p style="color: #ccc; margin-bottom: 15px; font-size: 16px;">To start the game, you need to pay:</p>
+            <div style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary-glow); border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <div style="font-size: 32px; color: #FFD700; font-weight: bold; margin-bottom: 5px;">
+                    ⚡ <span id="credits-to-pay">30</span> Credits
+                </div>
+                <div style="font-size: 14px; color: #888; margin-top: 5px;">
+                    Your Credits: <span id="current-credits-display" style="color: #FFD700;">0</span>
                 </div>
             </div>
-            
-            <!-- Credits Confirmation Modal -->
-            <div id="credits-confirmation-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; display: none; align-items: center; justify-content: center;">
-                <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid var(--primary-glow); border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);">
-                    <h2 style="color: var(--primary-glow); margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px var(--primary-glow);">Confirm Credits Payment</h2>
-                    <p style="color: #ccc; margin-bottom: 15px; font-size: 16px;">To start the game, you need to pay:</p>
-                    <div style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary-glow); border-radius: 8px; padding: 15px; margin: 20px 0;">
-                        <div style="font-size: 32px; color: #FFD700; font-weight: bold; margin-bottom: 5px;">
-                            ⚡ <span id="credits-to-pay">30</span> Credits
-                        </div>
-                        <div style="font-size: 14px; color: #888; margin-top: 5px;">
-                            Your Credits: <span id="current-credits-display" style="color: #FFD700;">0</span>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
-                        <button id="confirm-pay-btn" style="background: var(--primary-glow); color: black; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">
-                            Pay & Start
-                        </button>
-                        <button id="cancel-pay-btn" style="background: rgba(255, 77, 77, 0.2); color: #ff4d4d; border: 2px solid #ff4d4d; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">
-                            Cancel
-                        </button>
-        <style>
-            #confirm-pay-btn:hover {
-                transform: scale(1.05);
-                box-shadow: 0 0 20px var(--primary-glow);
-            }
-            #cancel-pay-btn:hover {
-                background: rgba(255, 77, 77, 0.4);
-                transform: scale(1.05);
-                box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
-            }
-            #confirm-pay-btn:active, #cancel-pay-btn:active {
-                transform: scale(0.98);
-            }
-        </style>
-                    </div>
-                </div>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                <button id="confirm-pay-btn" style="background: var(--primary-glow); color: black; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; pointer-events: auto; z-index: 10002;">
+                    Pay & Start
+                </button>
+                <button id="cancel-pay-btn" style="background: rgba(255, 77, 77, 0.2); color: #ff4d4d; border: 2px solid #ff4d4d; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; pointer-events: auto; z-index: 10002;">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
@@ -536,6 +563,7 @@ $conn->close();
         
         // Show credits confirmation modal
         function showCreditsConfirmation() {
+            console.log('Showing credits confirmation modal');
             if (creditsToPayEl) {
                 creditsToPayEl.textContent = creditsRequired;
             }
@@ -545,6 +573,16 @@ $conn->close();
             if (creditsModal) {
                 creditsModal.classList.remove('hidden');
                 creditsModal.style.display = 'flex';
+                creditsModal.style.pointerEvents = 'auto';
+                // Ensure buttons are clickable
+                if (confirmPayBtn) {
+                    confirmPayBtn.style.pointerEvents = 'auto';
+                    confirmPayBtn.style.cursor = 'pointer';
+                }
+                if (cancelPayBtn) {
+                    cancelPayBtn.style.pointerEvents = 'auto';
+                    cancelPayBtn.style.cursor = 'pointer';
+                }
             }
         }
         
@@ -1091,11 +1129,14 @@ $conn->close();
             });
         }
         
-        // Confirm payment button
+        // Confirm payment button - use multiple event types for better compatibility
         if (confirmPayBtn) {
+            // Click handler
             confirmPayBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
+                console.log('Confirm pay button clicked');
                 hideCreditsConfirmation();
                 
                 // Deduct credits and start game
@@ -1106,15 +1147,44 @@ $conn->close();
                     gameActive = true;
                 }
             });
+            
+            // Touch handler for mobile
+            confirmPayBtn.addEventListener('touchstart', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                console.log('Confirm pay button touched');
+                hideCreditsConfirmation();
+                
+                // Deduct credits and start game
+                const canStart = await startGameWithCredits();
+                if (canStart) {
+                    messageBox.classList.add('hidden');
+                    resetGame();
+                    gameActive = true;
+                }
+            }, { passive: false });
         }
         
-        // Cancel payment button
+        // Cancel payment button - use multiple event types for better compatibility
         if (cancelPayBtn) {
+            // Click handler
             cancelPayBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
+                console.log('Cancel pay button clicked');
                 hideCreditsConfirmation();
             });
+            
+            // Touch handler for mobile
+            cancelPayBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                console.log('Cancel pay button touched');
+                hideCreditsConfirmation();
+            }, { passive: false });
         }
         
         // Close modal when clicking outside
