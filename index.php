@@ -842,21 +842,29 @@ session_start();
                         const timing = data.timing;
                         const badgeElement = document.getElementById('timing-badge-earth-defender');
                         
+                        // Check if session is always available
+                        const isAlwaysAvailable = timing.always_available === true;
+                        
                         if (badgeElement) {
-                            badgeElement.style.display = 'flex';
-                            
-                            // Update timing display
-                            const durationEl = document.getElementById('timing-duration-earth-defender');
-                            const timeEl = document.getElementById('timing-time-earth-defender');
-                            const dateEl = document.getElementById('timing-date-earth-defender');
-                            
-                            if (durationEl) durationEl.textContent = timing.duration;
-                            if (timeEl) timeEl.textContent = timing.time;
-                            if (dateEl) dateEl.textContent = timing.date;
+                            // Hide the entire badge if always available (since we don't show time/date)
+                            if (isAlwaysAvailable) {
+                                badgeElement.style.display = 'none';
+                            } else {
+                                badgeElement.style.display = 'flex';
+                                
+                                // Update timing display only for time-restricted sessions
+                                const durationEl = document.getElementById('timing-duration-earth-defender');
+                                const timeEl = document.getElementById('timing-time-earth-defender');
+                                const dateEl = document.getElementById('timing-date-earth-defender');
+                                
+                                if (durationEl) durationEl.textContent = timing.duration;
+                                if (timeEl) timeEl.textContent = timing.time;
+                                if (dateEl) dateEl.textContent = timing.date;
+                            }
                         }
                         
-                        // Setup countdown timer
-                        if (timing.time_until_start_seconds !== undefined && timing.time_until_start_seconds > 0 && !timing.is_started) {
+                        // Setup countdown timer (only for time-restricted sessions)
+                        if (!isAlwaysAvailable && timing.time_until_start_seconds !== undefined && timing.time_until_start_seconds > 0 && !timing.is_started) {
                             const countdownBadge = document.getElementById('countdown-badge-earth-defender');
                             if (countdownBadge) {
                                 countdownBadge.style.display = 'flex';
@@ -885,7 +893,7 @@ session_start();
                                 }, 1000);
                             }
                         } else {
-                            // Hide countdown if game has started or no time until start
+                            // Hide countdown if game has started, no time until start, or always available
                             const countdownBadge = document.getElementById('countdown-badge-earth-defender');
                             if (countdownBadge) {
                                 countdownBadge.style.display = 'none';
@@ -894,6 +902,14 @@ session_start();
                             if (gameCountdownData['earth-defender'] && gameCountdownData['earth-defender'].intervalId) {
                                 clearInterval(gameCountdownData['earth-defender'].intervalId);
                                 gameCountdownData['earth-defender'].intervalId = null;
+                            }
+                        }
+                        
+                        // Ensure countdown is hidden for always available sessions
+                        if (isAlwaysAvailable) {
+                            const countdownBadge = document.getElementById('countdown-badge-earth-defender');
+                            if (countdownBadge) {
+                                countdownBadge.style.display = 'none';
                             }
                         }
                     } else {
