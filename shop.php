@@ -473,9 +473,6 @@ $conn->close();
             <a href="index.php" class="home-btn-desktop" style="padding: 8px 15px; background: linear-gradient(135deg, #00ffff, #0099cc); border: 2px solid #00ffff; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease; display: flex; align-items: center; gap: 6px;" title="Home">
                 <i class="fas fa-home"></i> Home
             </a>
-            <a href="shop.php" class="shop-btn-desktop" style="display: none;" id="shopBtnDesktop" title="Shop - Total Score: <?php echo number_format($total_score); ?>">
-                <i class="fas fa-store"></i> Shop (<span id="shopBtnScore"><?php echo number_format($total_score); ?></span>)
-            </a>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
                 <span class="referral-icon">🎁</span>
                 <span class="referral-code-value" id="referralCodeValue">----</span>
@@ -633,10 +630,6 @@ $conn->close();
                         if (displayUsername) displayUsername.textContent = data.user.username;
                         if (mobileDisplayUsername) mobileDisplayUsername.textContent = data.user.username;
                         if (dropdownDisplayUsername) dropdownDisplayUsername.textContent = data.user.username;
-                        
-                        // Show shop button (desktop)
-                        const shopBtnDesktop = document.getElementById('shopBtnDesktop');
-                        if (shopBtnDesktop) shopBtnDesktop.style.display = 'flex';
                         
                         // Show credits
                         if (data.user.credits !== undefined) {
