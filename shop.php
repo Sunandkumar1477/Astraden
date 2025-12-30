@@ -232,40 +232,54 @@ $conn->close();
             <?php endif; ?>
         </div>
         
-        <?php if($claim_credits_score > 0): ?>
-        <div class="purchase-section" style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(157, 78, 221, 0.1), rgba(0, 255, 255, 0.1)); border: 2px solid #9d4edd;">
+        <!-- Claim Credits Section -->
+        <div class="purchase-section" style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(157, 78, 221, 0.15), rgba(0, 255, 255, 0.15)); border: 2px solid #9d4edd; box-shadow: 0 0 30px rgba(157, 78, 221, 0.3);">
             <h2><i class="fas fa-gift"></i> Claim Credits</h2>
+            <?php if($claim_credits_score > 0): ?>
             <div style="padding: 20px; text-align: center;">
-                <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px; font-size: 1.1rem;">
-                    Claim credits instantly with your score!
+                <p style="color: rgba(255,255,255,0.9); margin-bottom: 25px; font-size: 1.2rem; font-weight: 700;">
+                    🎁 Claim credits instantly with your score!
                 </p>
-                <div style="background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="color: rgba(255,255,255,0.7);">Score Required:</span>
-                        <span style="color: #9d4edd; font-weight: 900; font-size: 1.5rem;"><?php echo number_format($claim_credits_score); ?></span>
+                <div style="background: rgba(0,0,0,0.4); border-radius: 15px; padding: 25px; margin-bottom: 25px; border: 1px solid rgba(157, 78, 221, 0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 10px; background: rgba(157, 78, 221, 0.1); border-radius: 10px;">
+                        <span style="color: rgba(255,255,255,0.8); font-size: 1rem; font-weight: 600;">Score Required:</span>
+                        <span style="color: #9d4edd; font-weight: 900; font-size: 1.8rem; text-shadow: 0 0 10px #9d4edd;"><?php echo number_format($claim_credits_score); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="color: rgba(255,255,255,0.7);">Your Total Score:</span>
-                        <span style="color: #fbbf24; font-weight: 900; font-size: 1.5rem;"><?php echo number_format($total_score); ?></span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 10px;">
+                        <span style="color: rgba(255,255,255,0.8); font-size: 1rem; font-weight: 600;">Your Total Score:</span>
+                        <span style="color: #fbbf24; font-weight: 900; font-size: 1.8rem; text-shadow: 0 0 10px #fbbf24;"><?php echo number_format($total_score); ?></span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: rgba(255,255,255,0.7);">Credits You'll Get:</span>
-                        <span style="color: #00ffcc; font-weight: 900; font-size: 1.5rem;">1 ⚡</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0, 255, 204, 0.1); border-radius: 10px;">
+                        <span style="color: rgba(255,255,255,0.8); font-size: 1rem; font-weight: 600;">Credits You'll Get:</span>
+                        <span style="color: #00ffcc; font-weight: 900; font-size: 1.8rem; text-shadow: 0 0 10px #00ffcc;">1 ⚡</span>
                     </div>
                 </div>
                 <form method="POST" action="claim_credits_with_score.php" id="claimForm">
-                    <button type="submit" class="btn-purchase" style="background: linear-gradient(135deg, #9d4edd, #00ffff);" id="claimBtn" <?php echo $total_score < $claim_credits_score ? 'disabled' : ''; ?>>
-                        <i class="fas fa-gift"></i> CLAIM 1 CREDIT
+                    <button type="submit" class="btn-purchase" style="background: linear-gradient(135deg, #9d4edd, #00ffff); font-size: 1.2rem; padding: 20px; box-shadow: 0 0 20px rgba(157, 78, 221, 0.5);" id="claimBtn" <?php echo $total_score < $claim_credits_score ? 'disabled' : ''; ?>>
+                        <i class="fas fa-gift"></i> CLAIM 1 CREDIT NOW
                     </button>
                 </form>
                 <?php if($total_score < $claim_credits_score): ?>
-                    <p style="color: #ff006e; margin-top: 15px; font-size: 0.9rem;">
-                        You need <?php echo number_format($claim_credits_score - $total_score); ?> more score to claim credits.
+                    <p style="color: #ff006e; margin-top: 20px; font-size: 1rem; font-weight: 700; padding: 15px; background: rgba(255, 0, 110, 0.1); border-radius: 10px; border: 1px solid #ff006e;">
+                        ⚠️ You need <?php echo number_format($claim_credits_score - $total_score); ?> more score to claim credits. Keep playing to earn more!
+                    </p>
+                <?php else: ?>
+                    <p style="color: #00ffcc; margin-top: 15px; font-size: 0.9rem; font-weight: 600;">
+                        ✓ You have enough score! Click the button above to claim your credit.
                     </p>
                 <?php endif; ?>
             </div>
+            <?php else: ?>
+            <div style="padding: 30px; text-align: center;">
+                <p style="color: rgba(255,255,255,0.6); font-size: 1.1rem; margin-bottom: 15px;">
+                    Claim credits feature is currently disabled.
+                </p>
+                <p style="color: rgba(255,255,255,0.4); font-size: 0.9rem;">
+                    Admin needs to set the claim credits score in Score Shop Settings.
+                </p>
+            </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
         
         <div class="purchase-section">
             <h2><i class="fas fa-shopping-cart"></i> Buy Credits with Score</h2>
