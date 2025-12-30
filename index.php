@@ -181,6 +181,9 @@ session_start();
         <!-- Desktop User Info (hidden on mobile) -->
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
+            <a href="shop.php" class="shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Score Shop">
+                <i class="fas fa-store"></i> Score Shop
+            </a>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
             <span class="referral-icon">🎁</span>
             <span class="referral-code-value" id="referralCodeValue">----</span>
@@ -257,12 +260,21 @@ session_start();
                     </div>
                     <button class="add-credits-btn" onclick="showQRCode(event)" disabled id="addCreditsBtn">Add Credits</button>
                     <button class="claim-credits-btn" onclick="checkClaimTimingAndOpen()" id="claimCreditsBtn" style="display: block !important;">Claim Credits</button>
+                    <a href="shop.php" class="shop-credits-btn" style="display: block !important; margin-top: 10px; text-align: center; padding: 12px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: none; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.9rem;">
+                        <i class="fas fa-store"></i> Buy Credits with Score
+                    </a>
                 </div>
             </div>
         </div>
             <a href="logout.php" class="logout-btn">Logout</a>
         </div>
     </div>
+
+    <!-- Shop Button -->
+    <a href="shop.php" class="profile-planet-btn hidden" id="shopPlanetBtn" title="Score Shop" style="right: 20px; bottom: 100px;">
+        <span class="profile-icon">🛒</span>
+        <span class="profile-text">Shop</span>
+    </a>
 
     <!-- Profile Planet Button -->
     <a href="view_profile.php" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile">
@@ -1252,6 +1264,14 @@ session_start();
                         
                         // Show profile button
                         document.getElementById('profilePlanetBtn').classList.remove('hidden');
+                        
+                        // Show shop button (floating)
+                        const shopBtn = document.getElementById('shopPlanetBtn');
+                        if (shopBtn) shopBtn.classList.remove('hidden');
+                        
+                        // Show shop button (desktop)
+                        const shopBtnDesktop = document.getElementById('shopBtnDesktop');
+                        if (shopBtnDesktop) shopBtnDesktop.style.display = 'flex';
                         
                         // Show referral code if available
                         if (data.referral_code) {
