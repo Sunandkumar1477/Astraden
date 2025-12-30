@@ -160,7 +160,7 @@ session_start();
                     <a href="shop.php" class="menu-item">
                         <div class="item-icon">🛒</div>
                         <div class="item-info">
-                            <div class="item-label">Score Shop</div>
+                            <div class="item-label">Shop</div>
                             <div class="item-value">Buy Credits</div>
                         </div>
                     </a>
@@ -182,7 +182,7 @@ session_start();
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
             <a href="shop.php" class="shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Score Shop">
-                <i class="fas fa-store"></i> Score Shop
+                <i class="fas fa-store"></i> Shop
             </a>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
             <span class="referral-icon">🎁</span>
@@ -271,7 +271,7 @@ session_start();
     </div>
 
     <!-- Shop Button -->
-    <a href="shop.php" class="profile-planet-btn hidden" id="shopPlanetBtn" title="Score Shop" style="right: 20px; bottom: 100px;">
+    <a href="shop.php" class="profile-planet-btn hidden" id="shopPlanetBtn" title="Shop" style="right: 20px; bottom: 100px;">
         <span class="profile-icon">🛒</span>
         <span class="profile-text">Shop</span>
     </a>
@@ -2874,7 +2874,7 @@ session_start();
                 <h3>Quick Links</h3>
                 <ul>
                     <li><a href="index.php">Home</a></li>
-                    <li><a href="shop.php">Score Shop</a></li>
+                    <li><a href="shop.php">Shop</a></li>
                     <li><a href="view_profile.php">My Profile</a></li>
                     <li><a href="terms.php">Terms and Conditions</a></li>
                     <li><a href="#" onclick="const m=document.getElementById('loginModal');if(m){m.classList.add('show');document.body.style.overflow='hidden';}else if(typeof openModal==='function'){openModal('login');}return false;">Login</a></li>

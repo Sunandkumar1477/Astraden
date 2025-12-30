@@ -53,11 +53,14 @@ $conn->close();
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Score Shop - Astra Den</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Shop - Astra Den</title>
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
+    <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
     <style>
         .shop-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
@@ -107,12 +110,82 @@ $conn->close();
         }
     </style>
 </head>
-<body class="no-select">
+<body class="no-select" oncontextmenu="return false;">
+    <!-- Space Background -->
     <div id="space-background"></div>
+    
+    <!-- User Info Bar (shown when logged in) -->
+    <div class="user-info-bar hidden" id="userInfoBar">
+        <!-- Mobile Dropdown Button (shown only on mobile) -->
+        <div class="user-info-container mobile-only">
+            <button class="user-dropdown-btn" id="mobileUserDropdownBtn" onclick="toggleMobileUserDropdown(event)">
+                <div class="user-btn-content">
+                    <span class="user-label">User</span>
+                    <span class="username-display" id="mobileDisplayUsername">User</span>
+                </div>
+                <span class="dropdown-arrow">▼</span>
+            </button>
+            <div class="user-dropdown-content" id="mobileUserDropdown">
+                <div class="dropdown-header">
+                    <div class="user-profile-summary">
+                        <div class="user-profile-icon" id="mobileUserProfileIcon">👤</div>
+                        <div>
+                            <div class="user-profile-name" id="dropdownDisplayUsername">User</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-body">
+                    <!-- Credits Info -->
+                    <div class="menu-item" id="mobileCreditsItem" style="display: none;" onclick="toggleMobileCreditsDropdown(event)">
+                        <div class="item-icon">⚡</div>
+                        <div class="item-info">
+                            <div class="item-label">Credits</div>
+                            <div class="item-value" id="mobileCreditsValue" style="color: #FFD700;">0</div>
+                        </div>
+                    </div>
+                    <!-- Shop Link -->
+                    <a href="shop.php" class="menu-item">
+                        <div class="item-icon">🛒</div>
+                        <div class="item-info">
+                            <div class="item-label">Shop</div>
+                            <div class="item-value">Buy Credits</div>
+                        </div>
+                    </a>
+                    <!-- Profile Link -->
+                    <a href="view_profile.php" class="menu-item">
+                        <div class="item-icon">🌍</div>
+                        <div class="item-info">
+                            <div class="item-label">Profile</div>
+                            <div class="item-value">View Profile</div>
+                        </div>
+                    </a>
+                    <!-- Logout Link -->
+                    <a href="logout.php" class="logout-link">Logout</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desktop User Info (hidden on mobile) -->
+        <div class="desktop-user-info">
+            <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
+            <a href="shop.php" class="shop-btn-desktop" style="display: none;" id="shopBtnDesktop" title="Shop">
+                <i class="fas fa-store"></i> Shop
+            </a>
+            <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
+                <span class="referral-icon">🎁</span>
+                <span class="referral-code-value" id="referralCodeValue">----</span>
+            </div>
+            <div class="user-credits" id="userCredits" style="display: none;" onclick="toggleCreditsDropdown(event)" title="Credits">
+                <span class="power-icon">⚡</span>
+                <span class="user-credits-value" id="creditsValue">0</span>
+            </div>
+            <a href="logout.php" class="logout-btn">Logout</a>
+        </div>
+    </div>
     
     <div class="shop-container">
         <div class="shop-header">
-            <h1><i class="fas fa-store"></i> SCORE SHOP</h1>
+            <h1><i class="fas fa-store"></i> SHOP</h1>
             <p>Convert your game scores into credits!</p>
         </div>
         
@@ -210,6 +283,132 @@ $conn->close();
     </div>
     
     <script>
+        // Initialize space background
+        function createStars() {
+            const spaceBg = document.getElementById('space-background');
+            if (!spaceBg) return;
+            
+            // Clear existing stars
+            spaceBg.innerHTML = '';
+            
+            // Create stars
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                spaceBg.appendChild(star);
+            }
+            
+            // Create shooting stars occasionally
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    const shootingStar = document.createElement('div');
+                    shootingStar.className = 'shooting-star';
+                    shootingStar.style.left = Math.random() * 100 + '%';
+                    shootingStar.style.top = '-100px';
+                    spaceBg.appendChild(shootingStar);
+                    setTimeout(() => shootingStar.remove(), 3000);
+                }
+            }, 2000);
+        }
+        
+        // Check session and show user info
+        function checkSession() {
+            fetch('check_session.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logged_in) {
+                        const userInfoBar = document.getElementById('userInfoBar');
+                        if (userInfoBar) userInfoBar.classList.remove('hidden');
+                        
+                        const displayUsername = document.getElementById('displayUsername');
+                        const mobileDisplayUsername = document.getElementById('mobileDisplayUsername');
+                        const dropdownDisplayUsername = document.getElementById('dropdownDisplayUsername');
+                        
+                        if (displayUsername) displayUsername.textContent = data.user.username;
+                        if (mobileDisplayUsername) mobileDisplayUsername.textContent = data.user.username;
+                        if (dropdownDisplayUsername) dropdownDisplayUsername.textContent = data.user.username;
+                        
+                        // Show shop button (desktop)
+                        const shopBtnDesktop = document.getElementById('shopBtnDesktop');
+                        if (shopBtnDesktop) shopBtnDesktop.style.display = 'flex';
+                        
+                        // Show credits
+                        if (data.user.credits !== undefined) {
+                            const creditsValue = document.getElementById('creditsValue');
+                            const mobileCreditsValue = document.getElementById('mobileCreditsValue');
+                            const userCredits = document.getElementById('userCredits');
+                            const mobileCreditsItem = document.getElementById('mobileCreditsItem');
+                            
+                            if (creditsValue) creditsValue.textContent = data.user.credits;
+                            if (mobileCreditsValue) mobileCreditsValue.textContent = data.user.credits;
+                            if (userCredits) userCredits.style.display = 'flex';
+                            if (mobileCreditsItem) mobileCreditsItem.style.display = 'flex';
+                        }
+                        
+                        // Show referral code if available
+                        if (data.referral_code) {
+                            const referralElement = document.getElementById('userReferralCode');
+                            const referralValueElement = document.getElementById('referralCodeValue');
+                            if (referralElement) referralElement.style.display = 'flex';
+                            if (referralValueElement) referralValueElement.textContent = data.referral_code;
+                        }
+                    }
+                })
+                .catch(error => console.error('Error checking session:', error));
+        }
+        
+        // Toggle functions for dropdowns
+        function toggleMobileUserDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('mobileUserDropdown');
+            const btn = document.getElementById('mobileUserDropdownBtn');
+            if (dropdown && btn) {
+                dropdown.classList.toggle('show');
+                btn.classList.toggle('active');
+            }
+        }
+        
+        function toggleCreditsDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('creditsDropdown');
+            if (dropdown) dropdown.classList.toggle('show');
+        }
+        
+        function toggleReferralDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('referralDropdown');
+            if (dropdown) dropdown.classList.toggle('show');
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.user-dropdown-btn') && !event.target.closest('.user-dropdown-content')) {
+                const dropdown = document.getElementById('mobileUserDropdown');
+                const btn = document.getElementById('mobileUserDropdownBtn');
+                if (dropdown && btn) {
+                    dropdown.classList.remove('show');
+                    btn.classList.remove('active');
+                }
+            }
+            if (!event.target.closest('.user-credits') && !event.target.closest('.credits-dropdown')) {
+                const dropdown = document.getElementById('creditsDropdown');
+                if (dropdown) dropdown.classList.remove('show');
+            }
+            if (!event.target.closest('.user-referral-code') && !event.target.closest('.referral-dropdown')) {
+                const dropdown = document.getElementById('referralDropdown');
+                if (dropdown) dropdown.classList.remove('show');
+            }
+        });
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            checkSession();
+        });
+        
         const conversionRates = <?php echo json_encode($conversion_rates); ?>;
         const scoresPerGame = <?php echo json_encode($scores_per_game); ?>;
         const totalScore = <?php echo $total_score; ?>;
