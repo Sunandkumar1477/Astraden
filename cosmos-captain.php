@@ -221,6 +221,32 @@ $conn->close();
         .hidden {
             display: none !important;
         }
+        
+        #credits-confirmation-modal {
+            display: none;
+        }
+        
+        #credits-confirmation-modal:not(.hidden) {
+            display: flex !important;
+        }
+        
+        #exit-confirm-modal {
+            display: none;
+        }
+        
+        #exit-confirm-modal:not(.hidden) {
+            display: flex !important;
+        }
+        
+        #exit-game-btn:hover {
+            background: rgba(255, 77, 77, 0.4) !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+        }
+        
+        #exit-game-btn:active {
+            transform: scale(0.98);
+        }
 
         @keyframes damage-flash {
             0% { background-color: rgba(255, 0, 0, 0.3); }
@@ -263,6 +289,11 @@ $conn->close();
                         </div>
                     </div>
                 </div>
+                <div style="position: absolute; top: 20px; right: 20px; pointer-events: auto;">
+                    <button id="exit-game-btn" style="display: none; background: rgba(255, 77, 77, 0.2); border: 2px solid #ff4d4d; color: #ff4d4d; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                        ⛔ EXIT
+                    </button>
+                </div>
             </div>
             
             <?php if ($is_contest_active): ?>
@@ -285,8 +316,25 @@ $conn->close();
                 </p>
             </div>
             
+            <!-- Exit Confirmation Modal -->
+            <div id="exit-confirm-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1001; display: none; align-items: center; justify-content: center;">
+                <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid #ff4d4d; border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 77, 77, 0.5);">
+                    <h2 style="color: #ff4d4d; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px #ff4d4d;">⚠️ EXIT GAME?</h2>
+                    <p style="color: #ccc; margin-bottom: 20px; font-size: 16px;">Are you sure you want to exit?</p>
+                    <p style="color: #888; margin-bottom: 25px; font-size: 14px;">Your current score will be saved automatically.</p>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button id="exit-no-btn" style="background: rgba(0, 242, 255, 0.2); color: var(--primary-glow); border: 2px solid var(--primary-glow); padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">
+                            NO, CONTINUE
+                        </button>
+                        <button id="exit-yes-btn" style="background: rgba(255, 77, 77, 0.2); color: #ff4d4d; border: 2px solid #ff4d4d; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">
+                            YES, EXIT
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Credits Confirmation Modal -->
-            <div id="credits-confirmation-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+            <div id="credits-confirmation-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; display: none; align-items: center; justify-content: center;">
                 <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid var(--primary-glow); border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);">
                     <h2 style="color: var(--primary-glow); margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px var(--primary-glow);">Confirm Credits Payment</h2>
                     <p style="color: #ccc; margin-bottom: 15px; font-size: 16px;">To start the game, you need to pay:</p>
@@ -356,6 +404,10 @@ $conn->close();
         const cancelPayBtn = document.getElementById('cancel-pay-btn');
         const creditsToPayEl = document.getElementById('credits-to-pay');
         const currentCreditsDisplay = document.getElementById('current-credits-display');
+        const exitBtn = document.getElementById('exit-game-btn');
+        const exitModal = document.getElementById('exit-confirm-modal');
+        const exitYesBtn = document.getElementById('exit-yes-btn');
+        const exitNoBtn = document.getElementById('exit-no-btn');
 
         let width, height;
         let score = 0;
@@ -492,6 +544,7 @@ $conn->close();
             }
             if (creditsModal) {
                 creditsModal.classList.remove('hidden');
+                creditsModal.style.display = 'flex';
             }
         }
         
@@ -499,6 +552,23 @@ $conn->close();
         function hideCreditsConfirmation() {
             if (creditsModal) {
                 creditsModal.classList.add('hidden');
+                creditsModal.style.display = 'none';
+            }
+        }
+        
+        // Show exit confirmation modal
+        function showExitConfirmation() {
+            if (exitModal) {
+                exitModal.classList.remove('hidden');
+                exitModal.style.display = 'flex';
+            }
+        }
+        
+        // Hide exit confirmation modal
+        function hideExitConfirmation() {
+            if (exitModal) {
+                exitModal.classList.add('hidden');
+                exitModal.style.display = 'none';
             }
         }
         
@@ -569,6 +639,10 @@ $conn->close();
                     const totalScoreBox = document.getElementById('total-score-box');
                     if (totalScoreBox) {
                         totalScoreBox.style.display = 'block';
+                    }
+                    // Show exit button
+                    if (exitBtn) {
+                        exitBtn.style.display = 'block';
                     }
                     return true;
                 } else {
@@ -976,39 +1050,52 @@ $conn->close();
                 totalScoreBox.style.display = 'none';
             }
             
+            // Hide exit button
+            if (exitBtn) {
+                exitBtn.style.display = 'none';
+            }
+            
             // Reset game started flag for next play
             gameStarted = false;
             creditsUsed = 0;
         }
 
-        startBtn.addEventListener('click', async () => {
-            if (!IS_LOGGED_IN) {
-                alert('Please login to play Cosmos Captain.');
-                window.location.href = 'index.php';
-                return;
-            }
-            
-            if (gameStarted) {
-                // Game already started, just hide message box and continue
-                messageBox.classList.add('hidden');
-                resetGame();
-                gameActive = true;
-                return;
-            }
-            
-            // Check if user has enough credits
-            if (currentUserCredits < creditsRequired) {
-                alert(`Insufficient credits! You need ${creditsRequired} credits to play.`);
-                return;
-            }
-            
-            // Show confirmation modal
-            showCreditsConfirmation();
-        });
+        // Initialize start button
+        if (startBtn) {
+            startBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (!IS_LOGGED_IN) {
+                    alert('Please login to play Cosmos Captain.');
+                    window.location.href = 'index.php';
+                    return;
+                }
+                
+                if (gameStarted) {
+                    // Game already started, just hide message box and continue
+                    messageBox.classList.add('hidden');
+                    resetGame();
+                    gameActive = true;
+                    return;
+                }
+                
+                // Check if user has enough credits
+                if (currentUserCredits < creditsRequired) {
+                    alert(`Insufficient credits! You need ${creditsRequired} credits to play.`);
+                    return;
+                }
+                
+                // Show confirmation modal
+                showCreditsConfirmation();
+            });
+        }
         
         // Confirm payment button
         if (confirmPayBtn) {
-            confirmPayBtn.addEventListener('click', async () => {
+            confirmPayBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 hideCreditsConfirmation();
                 
                 // Deduct credits and start game
@@ -1023,7 +1110,9 @@ $conn->close();
         
         // Cancel payment button
         if (cancelPayBtn) {
-            cancelPayBtn.addEventListener('click', () => {
+            cancelPayBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 hideCreditsConfirmation();
             });
         }
@@ -1033,6 +1122,58 @@ $conn->close();
             creditsModal.addEventListener('click', (e) => {
                 if (e.target === creditsModal) {
                     hideCreditsConfirmation();
+                }
+            });
+        }
+        
+        // Exit button handler
+        if (exitBtn) {
+            exitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (gameActive && gameStarted) {
+                    showExitConfirmation();
+                }
+            });
+        }
+        
+        // Exit confirmation handlers
+        if (exitYesBtn) {
+            exitYesBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                hideExitConfirmation();
+                
+                // Save score before exiting
+                if (gameStarted && creditsUsed > 0) {
+                    saveScore(score);
+                    // Wait a bit for score to save
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                // Hide exit button
+                if (exitBtn) {
+                    exitBtn.style.display = 'none';
+                }
+                
+                // Redirect to index
+                window.location.href = 'index.php';
+            });
+        }
+        
+        if (exitNoBtn) {
+            exitNoBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                hideExitConfirmation();
+            });
+        }
+        
+        // Close exit modal when clicking outside
+        if (exitModal) {
+            exitModal.addEventListener('click', (e) => {
+                if (e.target === exitModal) {
+                    hideExitConfirmation();
                 }
             });
         }
