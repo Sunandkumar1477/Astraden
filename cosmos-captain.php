@@ -284,6 +284,44 @@ $conn->close();
                     Total Score: <span id="total-score-display">0</span>
                 </p>
             </div>
+            
+            <!-- Credits Confirmation Modal -->
+            <div id="credits-confirmation-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+                <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid var(--primary-glow); border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);">
+                    <h2 style="color: var(--primary-glow); margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px var(--primary-glow);">Confirm Credits Payment</h2>
+                    <p style="color: #ccc; margin-bottom: 15px; font-size: 16px;">To start the game, you need to pay:</p>
+                    <div style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary-glow); border-radius: 8px; padding: 15px; margin: 20px 0;">
+                        <div style="font-size: 32px; color: #FFD700; font-weight: bold; margin-bottom: 5px;">
+                            ⚡ <span id="credits-to-pay">30</span> Credits
+                        </div>
+                        <div style="font-size: 14px; color: #888; margin-top: 5px;">
+                            Your Credits: <span id="current-credits-display" style="color: #FFD700;">0</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                        <button id="confirm-pay-btn" style="background: var(--primary-glow); color: black; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">
+                            Pay & Start
+                        </button>
+                        <button id="cancel-pay-btn" style="background: rgba(255, 77, 77, 0.2); color: #ff4d4d; border: 2px solid #ff4d4d; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">
+                            Cancel
+                        </button>
+        <style>
+            #confirm-pay-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px var(--primary-glow);
+            }
+            #cancel-pay-btn:hover {
+                background: rgba(255, 77, 77, 0.4);
+                transform: scale(1.05);
+                box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+            }
+            #confirm-pay-btn:active, #cancel-pay-btn:active {
+                transform: scale(0.98);
+            }
+        </style>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -301,6 +339,8 @@ $conn->close();
         let gameInitialized = false;
         let userTotalScore = 0;
         let isTabVisible = true;
+        let creditsRequired = 30;
+        let currentUserCredits = USER_CREDITS;
         
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -311,6 +351,11 @@ $conn->close();
         const msgTitle = document.getElementById('msg-title');
         const msgText = document.getElementById('msg-text');
         const gameContainer = document.getElementById('game-container');
+        const creditsModal = document.getElementById('credits-confirmation-modal');
+        const confirmPayBtn = document.getElementById('confirm-pay-btn');
+        const cancelPayBtn = document.getElementById('cancel-pay-btn');
+        const creditsToPayEl = document.getElementById('credits-to-pay');
+        const currentCreditsDisplay = document.getElementById('current-credits-display');
 
         let width, height;
         let score = 0;
@@ -400,13 +445,31 @@ $conn->close();
             // Fetch user total score
             fetchUserTotalScore();
             
+            // Fetch credits required
+            fetch(`get_game_credits.php?game=${GAME_NAME}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.credits_per_chance) {
+                        creditsRequired = data.credits_per_chance;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching credits:', error);
+                });
+            
             // Check game status and get session
             fetch(`game_api.php?action=check_status&game_name=${GAME_NAME}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.is_active) {
                         currentSessionId = data.session.id;
-                        updateCreditsDisplay(data.user_credits || USER_CREDITS);
+                        currentUserCredits = data.user_credits || USER_CREDITS;
+                        updateCreditsDisplay(currentUserCredits);
+                        
+                        // Update credits required from session if available
+                        if (data.session && data.session.credits_required) {
+                            creditsRequired = data.session.credits_required;
+                        }
                     } else {
                         if (data.message) {
                             msgText.textContent = 'Game is not currently available. ' + data.message;
@@ -417,6 +480,26 @@ $conn->close();
                 .catch(error => {
                     console.error('Error checking game status:', error);
                 });
+        }
+        
+        // Show credits confirmation modal
+        function showCreditsConfirmation() {
+            if (creditsToPayEl) {
+                creditsToPayEl.textContent = creditsRequired;
+            }
+            if (currentCreditsDisplay) {
+                currentCreditsDisplay.textContent = currentUserCredits;
+            }
+            if (creditsModal) {
+                creditsModal.classList.remove('hidden');
+            }
+        }
+        
+        // Hide credits confirmation modal
+        function hideCreditsConfirmation() {
+            if (creditsModal) {
+                creditsModal.classList.add('hidden');
+            }
         }
         
         // Fetch user total score
@@ -479,6 +562,7 @@ $conn->close();
             .then(data => {
                 if (data.success) {
                     creditsUsed = data.credits_used;
+                    currentUserCredits = data.remaining_credits;
                     updateCreditsDisplay(data.remaining_credits);
                     gameStarted = true;
                     // Show total score box
@@ -904,17 +988,54 @@ $conn->close();
                 return;
             }
             
-            if (!gameStarted) {
-                const canStart = await startGameWithCredits();
-                if (!canStart) {
-                    return;
-                }
+            if (gameStarted) {
+                // Game already started, just hide message box and continue
+                messageBox.classList.add('hidden');
+                resetGame();
+                gameActive = true;
+                return;
             }
             
-            messageBox.classList.add('hidden');
-            resetGame();
-            gameActive = true;
+            // Check if user has enough credits
+            if (currentUserCredits < creditsRequired) {
+                alert(`Insufficient credits! You need ${creditsRequired} credits to play.`);
+                return;
+            }
+            
+            // Show confirmation modal
+            showCreditsConfirmation();
         });
+        
+        // Confirm payment button
+        if (confirmPayBtn) {
+            confirmPayBtn.addEventListener('click', async () => {
+                hideCreditsConfirmation();
+                
+                // Deduct credits and start game
+                const canStart = await startGameWithCredits();
+                if (canStart) {
+                    messageBox.classList.add('hidden');
+                    resetGame();
+                    gameActive = true;
+                }
+            });
+        }
+        
+        // Cancel payment button
+        if (cancelPayBtn) {
+            cancelPayBtn.addEventListener('click', () => {
+                hideCreditsConfirmation();
+            });
+        }
+        
+        // Close modal when clicking outside
+        if (creditsModal) {
+            creditsModal.addEventListener('click', (e) => {
+                if (e.target === creditsModal) {
+                    hideCreditsConfirmation();
+                }
+            });
+        }
         
         // Handle visibility change - game continues when minimized
         document.addEventListener('visibilitychange', function() {
