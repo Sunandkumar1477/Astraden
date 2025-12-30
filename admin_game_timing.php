@@ -72,7 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
                 $stmt->execute();
                 $message = "Session updated - Always Available mode.";
             } else {
-                $conn->query("UPDATE game_sessions SET is_active = 0 WHERE game_name = '$game_name'");
+                // Don't deactivate other sessions - allow both time-restricted and always-available to coexist
+                // Only deactivate other always-available sessions when creating a new always-available session
+                $conn->query("UPDATE game_sessions SET is_active = 0 WHERE game_name = '$game_name' AND always_available = 1");
                 $stmt = $conn->prepare("INSERT INTO game_sessions (game_name, session_date, session_time, duration_minutes, credits_required, always_available, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)");
                 $stmt->bind_param("sssiii", $game_name, $session_date, $session_time, $duration, $credits_required, $always_available);
                 $stmt->execute();
@@ -99,7 +101,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
                     $stmt->execute();
                     $message = "Session updated.";
                 } else {
-                    $conn->query("UPDATE game_sessions SET is_active = 0 WHERE game_name = '$game_name'");
+                    // Don't deactivate other sessions - allow both time-restricted and always-available to coexist
+                    // Only deactivate other time-restricted sessions when creating a new time-restricted session
+                    $conn->query("UPDATE game_sessions SET is_active = 0 WHERE game_name = '$game_name' AND always_available = 0");
                     $stmt = $conn->prepare("INSERT INTO game_sessions (game_name, session_date, session_time, duration_minutes, credits_required, always_available, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)");
                     $stmt->bind_param("sssiii", $game_name, $session_date, $session_time, $duration, $credits_required, $always_available);
                     $stmt->execute();

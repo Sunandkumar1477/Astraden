@@ -111,76 +111,74 @@ switch ($action) {
         $now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
         $now_timestamp = $now->getTimestamp();
         
-        $stmt = $conn->prepare("
+        // First, check for active time-restricted session
+        $time_restricted_stmt = $conn->prepare("
             SELECT * FROM game_sessions 
             WHERE game_name = ? 
             AND is_active = 1 
+            AND always_available = 0
             ORDER BY created_at DESC 
             LIMIT 1
         ");
-        $stmt->bind_param("s", $game_name);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $time_restricted_stmt->bind_param("s", $game_name);
+        $time_restricted_stmt->execute();
+        $time_restricted_result = $time_restricted_stmt->get_result();
         
-        if ($result->num_rows > 0) {
-            $session = $result->fetch_assoc();
+        $session = null;
+        $is_always_available = false;
+        $is_active = false;
+        $session_start = 0;
+        $session_end = PHP_INT_MAX;
+        $time_until_start = 0;
+        
+        if ($time_restricted_result->num_rows > 0) {
+            $time_restricted_session = $time_restricted_result->fetch_assoc();
+            $session_datetime_str = $time_restricted_session['session_date'] . ' ' . $time_restricted_session['session_time'];
+            $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
+            $session_start = $session_start_dt->getTimestamp();
+            $session_end = $session_start + ($time_restricted_session['duration_minutes'] * 60);
             
-            // Check if session is always available
-            $is_always_available = isset($session['always_available']) && $session['always_available'] == 1;
+            // Check if time-restricted session is currently active
+            if ($now_timestamp >= $session_start && $now_timestamp <= $session_end) {
+                // Time-restricted session is active - use it
+                $session = $time_restricted_session;
+                $is_active = true;
+                $time_until_start = 0;
+                $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
+            }
+        }
+        $time_restricted_stmt->close();
+        
+        // If no active time-restricted session, check for always-available session
+        if (!$is_active) {
+            $always_available_stmt = $conn->prepare("
+                SELECT * FROM game_sessions 
+                WHERE game_name = ? 
+                AND is_active = 1 
+                AND always_available = 1
+                ORDER BY created_at DESC 
+                LIMIT 1
+            ");
+            $always_available_stmt->bind_param("s", $game_name);
+            $always_available_stmt->execute();
+            $always_available_result = $always_available_stmt->get_result();
             
-            if ($is_always_available) {
-                // Always available mode - no time restrictions
+            if ($always_available_result->num_rows > 0) {
+                $session = $always_available_result->fetch_assoc();
+                $is_always_available = true;
                 $is_active = true;
                 $session_start = 0;
-                $session_end = PHP_INT_MAX; // No end time
+                $session_end = PHP_INT_MAX;
                 $time_until_start = 0;
-                // Use credits from session (stored in credits_required)
                 $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
-            } else {
-                // Time-restricted mode - check time window
-                $session_datetime_str = $session['session_date'] . ' ' . $session['session_time'];
-                $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
-                $session_start = $session_start_dt->getTimestamp();
-                
-                // Calculate end time
-                $session_end = $session_start + ($session['duration_minutes'] * 60);
-                
-                // Check if session time has expired
-                if ($now_timestamp > $session_end) {
-                    // Session expired - automatically convert to always available mode
-                    $update_stmt = $conn->prepare("UPDATE game_sessions SET always_available = 1, session_date = CURDATE(), session_time = '00:00:00', duration_minutes = 0 WHERE id = ?");
-                    $update_stmt->bind_param("i", $session['id']);
-                    $update_stmt->execute();
-                    $update_stmt->close();
-                    
-                    // Update session data
-                    $is_always_available = 1;
-                    $is_active = true;
-                    $session_start = 0;
-                    $session_end = PHP_INT_MAX;
-                    $time_until_start = 0;
-                    // Use stored play credits from credits_required
-                    $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
-                } else {
-                    // Session is still within time window
-                    $is_active = ($now_timestamp >= $session_start && $now_timestamp <= $session_end);
-                    $time_until_start = $session_start - $now_timestamp;
-                    // Use stored play credits from credits_required (set by admin when creating session)
-                    $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
-                }
             }
-            
-            // Reload session if it was converted to always available
-            if ($is_always_available && isset($session['always_available']) && $session['always_available'] == 0) {
-                $reload_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ?");
-                $reload_stmt->bind_param("i", $session['id']);
-                $reload_stmt->execute();
-                $reload_result = $reload_stmt->get_result();
-                if ($reload_result->num_rows > 0) {
-                    $session = $reload_result->fetch_assoc();
-                }
-                $reload_stmt->close();
-            }
+            $always_available_stmt->close();
+        } else {
+            // Time-restricted session is active
+            $is_always_available = false;
+        }
+        
+        if ($session) {
             
             echo json_encode([
                 'success' => true,
@@ -255,77 +253,107 @@ switch ($action) {
         }
         $contest_stmt->close();
 
-        // Get active session (if session_id not provided, get latest active)
+        // Get current IST time
+        $now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
+        $now_timestamp = $now->getTimestamp();
+        
+        // Get active session (if session_id provided, use it; otherwise find the active one)
         if ($session_id > 0) {
             $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ? AND is_active = 1");
             $session_stmt->bind_param("i", $session_id);
-        } else {
-            $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE game_name = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1");
-            $session_stmt->bind_param("s", $game_name);
-        }
-        $session_stmt->execute();
-        $session_result = $session_stmt->get_result();
-        
-        if ($session_result->num_rows === 0) {
-            echo json_encode(['success' => false, 'message' => 'Invalid or inactive game session']);
-            $session_stmt->close();
-            exit;
-        }
-        
-        $session = $session_result->fetch_assoc();
-        $session_id = $session['id'];
-        
-        // Check if session is always available
-        $is_always_available = isset($session['always_available']) && $session['always_available'] == 1;
-        
-        if ($is_always_available) {
-            // Always available mode - use credits from session, no time check
-            $credits_required = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
-        } else {
-            // Time-restricted mode - check time window
-            $now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
-            $now_timestamp = $now->getTimestamp();
-            $session_datetime_str = $session['session_date'] . ' ' . $session['session_time'];
-            $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
-            $session_start = $session_start_dt->getTimestamp();
-            $session_end = $session_start + ($session['duration_minutes'] * 60);
+            $session_stmt->execute();
+            $session_result = $session_stmt->get_result();
             
-            // Check if session time has expired - auto convert to always available
-            if ($now_timestamp > $session_end) {
-                // Session expired - automatically convert to always available mode
-                $update_stmt = $conn->prepare("UPDATE game_sessions SET always_available = 1, session_date = CURDATE(), session_time = '00:00:00', duration_minutes = 0 WHERE id = ?");
-                $update_stmt->bind_param("i", $session_id);
-                $update_stmt->execute();
-                $update_stmt->close();
-                
-                // Reload session to get updated data
+            if ($session_result->num_rows === 0) {
+                echo json_encode(['success' => false, 'message' => 'Invalid or inactive game session']);
                 $session_stmt->close();
-                $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ? AND is_active = 1");
-                $session_stmt->bind_param("i", $session_id);
-                $session_stmt->execute();
-                $session_result = $session_stmt->get_result();
-                $session = $session_result->fetch_assoc();
-                $is_always_available = 1;
+                exit;
             }
             
-            // Check if session is within time window (only for time-restricted sessions)
+            $session = $session_result->fetch_assoc();
+            $session_id = $session['id'];
+            $is_always_available = isset($session['always_available']) && $session['always_available'] == 1;
+            
             if (!$is_always_available) {
+                // Check if time-restricted session is active
+                $session_datetime_str = $session['session_date'] . ' ' . $session['session_time'];
+                $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
+                $session_start = $session_start_dt->getTimestamp();
+                $session_end = $session_start + ($session['duration_minutes'] * 60);
                 $is_session_active = ($now_timestamp >= $session_start && $now_timestamp <= $session_end);
                 
                 if (!$is_session_active) {
-                    echo json_encode([
-                        'success' => false,
-                        'message' => 'Game session is not currently active. Please wait for the scheduled time.',
-                        'session_active' => false
-                    ]);
-                    $session_stmt->close();
-                    exit;
+                    // Time-restricted session not active - check for always-available session
+                    $always_available_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE game_name = ? AND is_active = 1 AND always_available = 1 ORDER BY created_at DESC LIMIT 1");
+                    $always_available_stmt->bind_param("s", $game_name);
+                    $always_available_stmt->execute();
+                    $always_available_result = $always_available_stmt->get_result();
+                    
+                    if ($always_available_result->num_rows > 0) {
+                        $session = $always_available_result->fetch_assoc();
+                        $session_id = $session['id'];
+                        $is_always_available = true;
+                    } else {
+                        echo json_encode([
+                            'success' => false,
+                            'message' => 'Game session is not currently active. Please wait for the scheduled time.',
+                            'session_active' => false
+                        ]);
+                        $session_stmt->close();
+                        $always_available_stmt->close();
+                        exit;
+                    }
+                    $always_available_stmt->close();
                 }
             }
+            $session_stmt->close();
+        } else {
+            // No session_id provided - find the active session (prioritize time-restricted)
+            // First check for active time-restricted session
+            $time_restricted_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE game_name = ? AND is_active = 1 AND always_available = 0 ORDER BY created_at DESC LIMIT 1");
+            $time_restricted_stmt->bind_param("s", $game_name);
+            $time_restricted_stmt->execute();
+            $time_restricted_result = $time_restricted_stmt->get_result();
             
-            // Use stored play credits from credits_required (set by admin when creating session)
-            $credits_required = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
+            $session = null;
+            if ($time_restricted_result->num_rows > 0) {
+                $time_restricted_session = $time_restricted_result->fetch_assoc();
+                $session_datetime_str = $time_restricted_session['session_date'] . ' ' . $time_restricted_session['session_time'];
+                $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
+                $session_start = $session_start_dt->getTimestamp();
+                $session_end = $session_start + ($time_restricted_session['duration_minutes'] * 60);
+                
+                if ($now_timestamp >= $session_start && $now_timestamp <= $session_end) {
+                    // Time-restricted session is active
+                    $session = $time_restricted_session;
+                    $is_always_available = false;
+                }
+            }
+            $time_restricted_stmt->close();
+            
+            // If no active time-restricted session, check for always-available
+            if (!$session) {
+                $always_available_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE game_name = ? AND is_active = 1 AND always_available = 1 ORDER BY created_at DESC LIMIT 1");
+                $always_available_stmt->bind_param("s", $game_name);
+                $always_available_stmt->execute();
+                $always_available_result = $always_available_stmt->get_result();
+                
+                if ($always_available_result->num_rows > 0) {
+                    $session = $always_available_result->fetch_assoc();
+                    $is_always_available = true;
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Invalid or inactive game session']);
+                    $always_available_stmt->close();
+                    exit;
+                }
+                $always_available_stmt->close();
+            }
+            
+            $session_id = $session['id'];
         }
+        
+        // Use stored play credits from credits_required
+        $credits_required = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
         
         // Check user credits
         $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");

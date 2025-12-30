@@ -20,24 +20,64 @@ if ($check_table->num_rows == 0) {
     exit;
 }
 
-// Get active session for the game
-$stmt = $conn->prepare("
+// Get current IST time
+$now = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
+$now_timestamp = $now->getTimestamp();
+
+// First check for active time-restricted session
+$time_restricted_stmt = $conn->prepare("
     SELECT * FROM game_sessions 
     WHERE game_name = ? 
     AND is_active = 1 
+    AND always_available = 0
     ORDER BY created_at DESC 
     LIMIT 1
 ");
-$stmt->bind_param("s", $game_name);
-$stmt->execute();
-$result = $stmt->get_result();
+$time_restricted_stmt->bind_param("s", $game_name);
+$time_restricted_stmt->execute();
+$time_restricted_result = $time_restricted_stmt->get_result();
 
-if ($result->num_rows > 0) {
-    $session = $result->fetch_assoc();
+$session = null;
+$is_always_available = false;
+
+if ($time_restricted_result->num_rows > 0) {
+    $time_restricted_session = $time_restricted_result->fetch_assoc();
+    $session_datetime_str = $time_restricted_session['session_date'] . ' ' . $time_restricted_session['session_time'];
+    $session_start_dt = new DateTime($session_datetime_str, new DateTimeZone('Asia/Kolkata'));
+    $session_start = $session_start_dt->getTimestamp();
+    $session_end = $session_start + ($time_restricted_session['duration_minutes'] * 60);
     
-    // Check if session is always available
-    $is_always_available = isset($session['always_available']) && $session['always_available'] == 1;
+    // Check if time-restricted session is currently active
+    if ($now_timestamp >= $session_start && $now_timestamp <= $session_end) {
+        // Time-restricted session is active - use it
+        $session = $time_restricted_session;
+        $is_always_available = false;
+    }
+}
+$time_restricted_stmt->close();
+
+// If no active time-restricted session, check for always-available session
+if (!$session) {
+    $always_available_stmt = $conn->prepare("
+        SELECT * FROM game_sessions 
+        WHERE game_name = ? 
+        AND is_active = 1 
+        AND always_available = 1
+        ORDER BY created_at DESC 
+        LIMIT 1
+    ");
+    $always_available_stmt->bind_param("s", $game_name);
+    $always_available_stmt->execute();
+    $always_available_result = $always_available_stmt->get_result();
     
+    if ($always_available_result->num_rows > 0) {
+        $session = $always_available_result->fetch_assoc();
+        $is_always_available = true;
+    }
+    $always_available_stmt->close();
+}
+
+if ($session) {
     if ($is_always_available) {
         // Always available mode - no time/date restrictions
         echo json_encode([
