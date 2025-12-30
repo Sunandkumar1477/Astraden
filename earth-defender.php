@@ -351,7 +351,7 @@ $conn->close();
         }
 
         #game-over {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -371,6 +371,8 @@ $conn->close();
             box-shadow: 0 0 80px rgba(255, 51, 51, 0.5);
             font-family: 'Orbitron', sans-serif;
             z-index: 2000;
+            visibility: visible;
+            opacity: 1;
         }
 
         @media (min-width: 769px) {
@@ -1366,8 +1368,8 @@ $conn->close();
                 🏆 VIEW PRIZE CLAIM
             </a>
             <div class="game-btn-container">
-                <button class="game-btn btn-primary" onclick="location.reload()">🎮 REBOOT SYSTEM</button>
-                <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
+                <button class="game-btn btn-primary" onclick="location.reload()">🎮 PLAY AGAIN</button>
+                <a href="index.php" class="game-btn btn-home" onclick="return true;">🏠 BACK TO HOME</a>
             </div>
         </div>
 
@@ -3016,8 +3018,21 @@ $conn->close();
                 contestTimerInterval = null;
             }
             
+            // Ensure game-status-overlay is hidden
+            const statusOverlay = document.getElementById('game-status-overlay');
+            if (statusOverlay) {
+                statusOverlay.style.display = 'none';
+                statusOverlay.classList.add('hidden');
+            }
+            
             const gameOverDiv = document.getElementById('game-over');
-            gameOverDiv.style.display = 'block';
+            // Make sure game-over div is visible and stays visible
+            gameOverDiv.style.display = 'flex';
+            gameOverDiv.style.visibility = 'visible';
+            gameOverDiv.style.opacity = '1';
+            gameOverDiv.style.pointerEvents = 'auto';
+            gameOverDiv.style.zIndex = '2000';
+            
             const finalScoreEl = document.getElementById('final-score');
             finalScoreEl.innerText = state.score;
             
