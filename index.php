@@ -164,6 +164,14 @@ session_start();
                             <div class="item-value">Score: <span id="mobileShopScoreIndex">0</span></div>
                         </div>
                     </a>
+                    <!-- Claim Prize Link -->
+                    <a href="prize_claim.php" class="menu-item">
+                        <div class="item-icon">🏆</div>
+                        <div class="item-info">
+                            <div class="item-label">Claim Prize</div>
+                            <div class="item-value">View Prize Claim</div>
+                        </div>
+                    </a>
                     <!-- Profile Link -->
                     <a href="view_profile.php" class="menu-item">
                         <div class="item-icon">🌍</div>
@@ -181,6 +189,9 @@ session_start();
         <!-- Desktop User Info (hidden on mobile) -->
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
+            <a href="prize_claim.php" class="shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #FFD700, #ff8c00); border: 2px solid #FFD700; border-radius: 8px; color: #000; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);" id="claimPrizeBtnDesktop" title="Claim Prize">
+                <i class="fas fa-trophy"></i> Claim Prize
+            </a>
             <a href="shop.php" class="shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Shop">
                 <i class="fas fa-store"></i> Shop (<span id="shopBtnScoreIndex">0</span>)
             </a>
@@ -274,6 +285,12 @@ session_start();
     <a href="shop.php" class="profile-planet-btn hidden" id="shopPlanetBtn" title="Shop" style="right: 20px; bottom: 100px;">
         <span class="profile-icon">🛒</span>
         <span class="profile-text">Shop</span>
+    </a>
+
+    <!-- Claim Prize Planet Button -->
+    <a href="prize_claim.php" class="profile-planet-btn hidden" id="claimPrizePlanetBtn" title="Claim Prize" style="right: 20px; bottom: 180px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2)); border: 2px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
+        <span class="profile-icon" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);">🏆</span>
+        <span class="profile-text" style="color: #FFD700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);">Prize</span>
     </a>
 
     <!-- Profile Planet Button -->
@@ -1200,6 +1217,14 @@ session_start();
                         // Show profile button
                         document.getElementById('profilePlanetBtn').classList.remove('hidden');
                         
+                        // Show claim prize button (floating)
+                        const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
+                        if (claimPrizeBtn) claimPrizeBtn.classList.remove('hidden');
+                        
+                        // Show claim prize button (desktop)
+                        const claimPrizeBtnDesktop = document.getElementById('claimPrizeBtnDesktop');
+                        if (claimPrizeBtnDesktop) claimPrizeBtnDesktop.style.display = 'flex';
+                        
                         // Show shop button (floating)
                         const shopBtn = document.getElementById('shopPlanetBtn');
                         if (shopBtn) shopBtn.classList.remove('hidden');
@@ -1324,6 +1349,10 @@ session_start();
                         document.getElementById('userInfoBar').classList.add('hidden');
                         document.getElementById('authButtons').classList.remove('hidden');
                         document.getElementById('profilePlanetBtn').classList.add('hidden');
+                        const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
+                        if (claimPrizeBtn) claimPrizeBtn.classList.add('hidden');
+                        const claimPrizeBtnDesktop = document.getElementById('claimPrizeBtnDesktop');
+                        if (claimPrizeBtnDesktop) claimPrizeBtnDesktop.style.display = 'none';
                         document.getElementById('userCredits').style.display = 'none';
                         document.getElementById('userReferralCode').style.display = 'none';
                     }

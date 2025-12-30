@@ -5,13 +5,14 @@ require_once 'connection.php';
 // Set timezone to India (IST)
 date_default_timezone_set('Asia/Kolkata');
 
-$game_name = $_GET['game'] ?? 'earth-defender';
+$game_name = $_GET['game'] ?? 'all';
 $session_id = intval($_GET['session_id'] ?? 0);
 
 // Get game display name
 $game_display_names = [
     'earth-defender' => '🛡️ Earth Defender',
-    'cosmos-captain' => '🚀 Cosmos Captain'
+    'cosmos-captain' => '🚀 Cosmos Captain',
+    'all' => 'All Games'
 ];
 $game_display_name = $game_display_names[$game_name] ?? ucfirst(str_replace('-', ' ', $game_name));
 
@@ -19,10 +20,35 @@ $game_display_name = $game_display_names[$game_name] ?? ucfirst(str_replace('-',
 $session_data = null;
 $leaderboard = [];
 $error = '';
+$available_sessions = [];
+
+// If no session_id provided, get list of available time-duration sessions
+if ($session_id <= 0) {
+    $sessions_stmt = $conn->prepare("
+        SELECT gs.*, g.game_name as game_display_name
+        FROM game_sessions gs
+        LEFT JOIN games g ON gs.game_name = g.game_name
+        WHERE gs.is_active = 1 
+        AND gs.always_available = 0
+        AND gs.duration_minutes > 0
+        ORDER BY gs.session_date DESC, gs.session_time DESC
+        LIMIT 20
+    ");
+    $sessions_stmt->execute();
+    $sessions_result = $sessions_stmt->get_result();
+    $available_sessions = $sessions_result->fetch_all(MYSQLI_ASSOC);
+    $sessions_stmt->close();
+}
 
 if ($session_id > 0) {
-    $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ? AND game_name = ?");
-    $session_stmt->bind_param("is", $session_id, $game_name);
+    // If game_name is 'all', don't filter by game_name
+    if ($game_name === 'all') {
+        $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ?");
+        $session_stmt->bind_param("i", $session_id);
+    } else {
+        $session_stmt = $conn->prepare("SELECT * FROM game_sessions WHERE id = ? AND game_name = ?");
+        $session_stmt->bind_param("is", $session_id, $game_name);
+    }
     $session_stmt->execute();
     $session_result = $session_stmt->get_result();
     
@@ -47,7 +73,29 @@ if ($session_id > 0) {
             ORDER BY gl.score DESC
             LIMIT 10
         ");
-        $leaderboard_stmt->bind_param("is", $session_id, $game_name);
+        // If game_name is 'all', don't filter by game_name
+        if ($game_name === 'all') {
+            $leaderboard_stmt = $conn->prepare("
+                SELECT 
+                    gl.score,
+                    gl.played_at,
+                    gl.game_name,
+                    u.id as user_id,
+                    u.username,
+                    up.full_name,
+                    up.credits_color
+                FROM game_leaderboard gl
+                JOIN users u ON gl.user_id = u.id
+                LEFT JOIN user_profile up ON u.id = up.user_id
+                WHERE gl.session_id = ? 
+                AND gl.credits_used > 0
+                ORDER BY gl.score DESC
+                LIMIT 10
+            ");
+            $leaderboard_stmt->bind_param("i", $session_id);
+        } else {
+            $leaderboard_stmt->bind_param("is", $session_id, $game_name);
+        }
         $leaderboard_stmt->execute();
         $leaderboard_result = $leaderboard_stmt->get_result();
         $leaderboard = $leaderboard_result->fetch_all(MYSQLI_ASSOC);
@@ -72,7 +120,8 @@ if ($session_id > 0) {
     }
     $session_stmt->close();
 } else {
-    $error = 'Invalid session ID';
+    // No session_id provided - show list of available sessions
+    $error = '';
 }
 
 // Format session date/time if available
@@ -310,9 +359,58 @@ $conn->close();
             <div class="game-name"><?php echo htmlspecialchars($game_display_name); ?></div>
         </div>
         
-        <?php if ($error): ?>
+        <?php if ($error && $session_id > 0): ?>
             <div class="error-message">
                 <p><?php echo htmlspecialchars($error); ?></p>
+                <a href="index.php" class="back-button">Back to Home</a>
+            </div>
+        <?php elseif (empty($session_data) && empty($available_sessions)): ?>
+            <div class="error-message">
+                <p>No prize claim sessions available at the moment.</p>
+                <a href="index.php" class="back-button">Back to Home</a>
+            </div>
+        <?php elseif (!empty($available_sessions) && $session_id <= 0): ?>
+            <div class="session-info">
+                <h2>Select a Session</h2>
+                <p style="color: rgba(0, 255, 255, 0.8); margin-bottom: 20px;">Choose a time-duration session to view prize claim leaderboard:</p>
+            </div>
+            
+            <div class="leaderboard-container">
+                <h2 class="leaderboard-title">Available Prize Sessions</h2>
+                <div style="display: grid; gap: 15px;">
+                    <?php foreach ($available_sessions as $session): 
+                        $session_date = $session['session_date'];
+                        $session_time = $session['session_time'];
+                        $duration_minutes = $session['duration_minutes'];
+                        $session_start_dt = new DateTime($session_date . ' ' . $session_time, new DateTimeZone('Asia/Kolkata'));
+                        $session_end_dt = clone $session_start_dt;
+                        $session_end_dt->modify('+' . $duration_minutes . ' minutes');
+                        
+                        $game_display = $game_display_names[$session['game_name']] ?? ucfirst(str_replace('-', ' ', $session['game_name']));
+                    ?>
+                        <a href="prize_claim.php?game=<?php echo htmlspecialchars($session['game_name']); ?>&session_id=<?php echo $session['id']; ?>" 
+                           style="display: block; background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; border-radius: 10px; padding: 20px; text-decoration: none; color: #fff; transition: all 0.3s;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <h3 style="color: #00ffff; margin-bottom: 8px; font-size: 1.2rem;"><?php echo htmlspecialchars($game_display); ?></h3>
+                                    <p style="color: #ccc; font-size: 0.9rem; margin: 3px 0;">
+                                        <strong>Start:</strong> <?php echo $session_start_dt->format('d M Y, h:i A'); ?> IST
+                                    </p>
+                                    <p style="color: #ccc; font-size: 0.9rem; margin: 3px 0;">
+                                        <strong>End:</strong> <?php echo $session_end_dt->format('d M Y, h:i A'); ?> IST
+                                    </p>
+                                    <p style="color: #ffd700; font-weight: bold; margin-top: 8px;">
+                                        Duration: <?php echo $duration_minutes; ?> minutes
+                                    </p>
+                                </div>
+                                <div style="color: #00ffff; font-size: 1.5rem;">→</div>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
                 <a href="index.php" class="back-button">Back to Home</a>
             </div>
         <?php elseif ($session_data): ?>
