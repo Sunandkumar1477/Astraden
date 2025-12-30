@@ -16,7 +16,10 @@ try {
     // Silently handle errors - column might already exist
 }
 
-$available_games = ['earth-defender' => '🛡️ Earth Defender'];
+$available_games = [
+    'earth-defender' => '🛡️ Earth Defender',
+    'cosmos-captain' => '🚀 Cosmos Captain'
+];
 $selected_game_view = $_GET['game_view'] ?? 'all';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_all_scores'])) {

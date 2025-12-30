@@ -26,7 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_prizes'])) {
 }
 
 $games = $conn->query("SELECT * FROM games ORDER BY display_name ASC")->fetch_all(MYSQLI_ASSOC);
-$available_games = ['earth-defender' => '🛡️ Earth Defender'];
+$available_games = [
+    'earth-defender' => '🛡️ Earth Defender',
+    'cosmos-captain' => '🚀 Cosmos Captain'
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">

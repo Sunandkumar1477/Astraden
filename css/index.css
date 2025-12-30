@@ -817,6 +817,11 @@ body {
         letter-spacing: 1px;
         margin-top: 12px;
     }
+    
+    /* Hide play button for Cosmos Captain on mobile - game not playable on mobile */
+    .game-card[data-game="cosmos-captain"] .play-btn {
+        display: none !important;
+    }
 
     /* Reduce animations for performance - MOBILE OPTIMIZATION */
     .nebula {
@@ -1037,6 +1042,11 @@ body {
     .play-btn {
         padding: 12px;
         font-size: 0.95rem;
+    }
+    
+    /* Hide play button for Cosmos Captain on mobile - game not playable on mobile */
+    .game-card[data-game="cosmos-captain"] .play-btn {
+        display: none !important;
     }
 
     .nebula {
@@ -4706,8 +4716,22 @@ body.mobile-device .play-btn:active {
     }
     
     /* Hide game titles and section titles on mobile */
-    .section-title,
+    .section-title {
+        display: none !important;
+    }
+    
+    /* Show Cosmos Captain game title on mobile */
+    .game-card[data-game="cosmos-captain"] .game-title {
+        display: block !important;
+    }
+    
+    /* Hide other game titles on mobile */
     .game-title {
+        display: none !important;
+    }
+    
+    /* Hide play button for Cosmos Captain on mobile - game not playable on mobile */
+    .game-card[data-game="cosmos-captain"] .play-btn {
         display: none !important;
     }
     

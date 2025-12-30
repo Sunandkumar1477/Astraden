@@ -68,7 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_rate'])) {
     }
 }
 
-$available_games = ['all' => 'All Games', 'earth-defender' => '🛡️ Earth Defender'];
+$available_games = [
+    'all' => 'All Games', 
+    'earth-defender' => '🛡️ Earth Defender',
+    'cosmos-captain' => '🚀 Cosmos Captain'
+];
 $settings = $conn->query("SELECT * FROM score_shop_settings ORDER BY game_name ASC")->fetch_all(MYSQLI_ASSOC);
 $settings_map = [];
 foreach ($settings as $s) {

@@ -402,21 +402,26 @@ $conn->close();
         
         // Save score when game ends
         function saveScore(score) {
+            // Only save if game was started with credits (not demo mode)
             if (!IS_LOGGED_IN) {
                 // Demo mode - show score but don't save
                 return;
             }
             
-            if (!gameStarted || creditsUsed === 0) {
-                // No credits used, don't save
+            if (!gameStarted || creditsUsed === 0 || !currentSessionId) {
+                // No credits used or no session, don't save
                 return;
             }
             
+            const finalScore = Math.floor(score || 0);
+            console.log("Submitting final score:", finalScore, "for session:", currentSessionId);
+            
             const formData = new FormData();
-            formData.append('game_name', GAME_NAME);
-            formData.append('score', score);
+            formData.append('score', finalScore);
             formData.append('session_id', currentSessionId);
             formData.append('credits_used', creditsUsed);
+            formData.append('game_name', GAME_NAME);
+            formData.append('is_demo', 'false'); // Explicitly mark as not demo
             
             fetch('game_api.php?action=save_score', {
                 method: 'POST',
@@ -424,10 +429,14 @@ $conn->close();
             })
             .then(response => response.json())
             .then(data => {
+                console.log("Score save response:", data);
                 if (data.success) {
-                    console.log('Score saved:', score);
+                    console.log('Score saved:', finalScore);
                     if (data.is_contest) {
                         console.log('Contest score saved');
+                    }
+                    if (data.total_score !== undefined) {
+                        console.log('Total score for this game:', data.total_score);
                     }
                 } else {
                     console.error('Failed to save score:', data.message);
