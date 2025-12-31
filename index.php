@@ -2705,6 +2705,8 @@ require_once 'security_headers.php';
             // Show kids zone with slide in from the right
             setTimeout(() => {
                 kidsZoneContainer.style.display = 'block';
+                kidsZoneContainer.style.visibility = 'visible';
+                kidsZoneContainer.style.opacity = '1';
                 kidsZoneContainer.style.transform = 'translateX(100%)';
                 setTimeout(() => {
                     kidsZoneContainer.classList.add('show');

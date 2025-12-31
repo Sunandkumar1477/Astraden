@@ -6026,10 +6026,14 @@ body.mobile-device .play-btn:active {
     overflow-y: auto;
     transform: translateX(100%);
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: visible;
+    opacity: 1;
 }
 
 .kids-zone-container.show {
     transform: translateX(0);
+    visibility: visible;
+    opacity: 1;
 }
 
 .kids-zone-header {
@@ -6038,6 +6042,10 @@ body.mobile-device .play-btn:active {
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 1;
+    visibility: visible;
+    opacity: 1;
 }
 
 .kids-zone-header h1 {
@@ -6112,6 +6120,11 @@ body.mobile-device .play-btn:active {
     max-width: 1400px;
     margin: 0 auto;
     padding: 40px 20px;
+    position: relative;
+    z-index: 1;
+    visibility: visible;
+    opacity: 1;
+    min-height: 400px;
 }
 
 .kids-zone-games .games-grid {
@@ -6139,6 +6152,9 @@ body.mobile-device .play-btn:active {
     position: relative !important;
     overflow: visible !important;
     will-change: transform;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 2 !important;
 }
 
 .kids-game-card:hover {
@@ -6147,20 +6163,47 @@ body.mobile-device .play-btn:active {
     border-color: var(--primary-purple) !important;
 }
 
+.kids-game-card .game-icon {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 .kids-game-card .game-title {
     color: var(--primary-cyan) !important;
     font-family: 'Rajdhani', sans-serif !important;
     font-weight: 700 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .kids-game-card .game-description {
     color: rgba(255, 255, 255, 0.8) !important;
     font-family: 'Rajdhani', sans-serif !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .kids-game-card .game-type {
     color: var(--primary-purple) !important;
     font-family: 'Rajdhani', sans-serif !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.kids-game-card .play-btn {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.kids-game-card .credits-badge {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 @media (min-width: 1024px) {
