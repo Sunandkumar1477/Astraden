@@ -4137,35 +4137,53 @@ body.mobile-device .play-btn:active {
     }
 }
 
-/* Desktop Styles - Match Admin Login */
+/* Desktop Styles - Match Admin Login Exactly */
 @media (min-width: 1024px) {
     .auth-modal {
+        background: rgba(15, 15, 25, 0.95);
+        border: 2px solid var(--primary-cyan);
         max-width: 450px;
         padding: 50px 40px;
-        border-width: 2px;
         border-radius: 20px;
         box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-modal::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple));
     }
     
     .modal-header {
+        text-align: center;
         margin-bottom: 40px;
     }
     
     .modal-header h2 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--primary-cyan);
         font-size: 1.8rem;
+        text-transform: uppercase;
         letter-spacing: 5px;
         margin-bottom: 10px;
-        color: var(--primary-cyan);
     }
     
     .modal-header p {
-        font-size: 0.9rem;
         color: rgba(255, 255, 255, 0.5);
+        font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 2px;
     }
     
     .auth-form {
+        display: flex;
+        flex-direction: column;
     }
     
     .form-group {
@@ -4173,20 +4191,25 @@ body.mobile-device .play-btn:active {
     }
     
     .form-group label {
+        display: block;
+        color: var(--primary-purple);
+        font-weight: 700;
+        text-transform: uppercase;
         font-size: 0.8rem;
         letter-spacing: 1px;
         margin-bottom: 10px;
-        color: var(--primary-purple);
     }
     
     .form-group input {
+        width: 100%;
         padding: 15px;
-        font-size: 1rem;
-        border-width: 1px;
-        border-color: rgba(0, 255, 255, 0.3);
-        border-radius: 10px;
         background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        border-radius: 10px;
         color: white;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1rem;
+        outline: none;
         transition: all 0.3s;
     }
     
@@ -4200,12 +4223,19 @@ body.mobile-device .play-btn:active {
     }
     
     .submit-btn {
-        padding: 16px;
-        font-size: 1rem;
-        letter-spacing: 3px;
-        border-radius: 10px;
-        margin-top: 10px;
         width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
     }
     
     .submit-btn:hover {
@@ -4258,6 +4288,7 @@ body.mobile-device .play-btn:active {
         padding: 12px;
         border-radius: 8px;
         margin-bottom: 25px;
+        text-align: center;
         font-size: 0.9rem;
         font-weight: 600;
     }
@@ -4269,14 +4300,40 @@ body.mobile-device .play-btn:active {
         padding: 12px;
         border-radius: 8px;
         margin-bottom: 25px;
+        text-align: center;
         font-size: 0.9rem;
         font-weight: 600;
     }
     
     .modal-overlay {
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        background: rgba(0, 0, 0, 0.92);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        background: rgba(0, 0, 0, 0.9);
+    }
+    
+    .close-modal {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: transparent;
+        border: 2px solid var(--primary-cyan);
+        color: var(--primary-cyan);
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-weight: bold;
+        z-index: 10;
+    }
+    
+    .close-modal:hover {
+        background: rgba(0, 255, 255, 0.2);
+        transform: rotate(90deg);
     }
 }
 
