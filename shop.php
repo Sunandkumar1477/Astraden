@@ -1,38 +1,63 @@
 <?php
 session_start();
+// Security headers and performance optimizations
+require_once 'security_headers.php';
 require_once 'check_user_session.php';
 require_once 'connection.php';
 
 // Get user scores per game and total
 $user_id = $_SESSION['user_id'];
 
-// Get user's credits
-$user_profile = $conn->query("SELECT credits FROM user_profile WHERE user_id = $user_id")->fetch_assoc();
-$user_credits = intval($user_profile['credits'] ?? 0);
-
-// Get scores per game (from actual game_leaderboard)
-$scores_per_game = [];
-$games_query = $conn->query("
-    SELECT game_name, SUM(score) as total_score 
-    FROM game_leaderboard 
-    WHERE user_id = $user_id AND credits_used > 0 AND score > 0
-    GROUP BY game_name
-");
-while ($row = $games_query->fetch_assoc()) {
-    $scores_per_game[$row['game_name']] = intval($row['total_score']);
+// Security: Validate user_id
+$user_id = intval($_SESSION['user_id'] ?? 0);
+if ($user_id <= 0) {
+    header('Location: index.php');
+    exit;
 }
 
-// Get total score across all games
-$total_score_query = $conn->query("
+// Get user's credits (using prepared statement)
+$credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
+$credits_stmt->bind_param("i", $user_id);
+$credits_stmt->execute();
+$credits_result = $credits_stmt->get_result();
+$user_profile = $credits_result->fetch_assoc();
+$user_credits = intval($user_profile['credits'] ?? 0);
+$credits_stmt->close();
+
+// Get scores per game (from actual game_leaderboard) - using prepared statement
+$scores_per_game = [];
+$games_stmt = $conn->prepare("
+    SELECT game_name, SUM(score) as total_score 
+    FROM game_leaderboard 
+    WHERE user_id = ? AND credits_used > 0 AND score > 0
+    GROUP BY game_name
+");
+$games_stmt->bind_param("i", $user_id);
+$games_stmt->execute();
+$games_result = $games_stmt->get_result();
+while ($row = $games_result->fetch_assoc()) {
+    $scores_per_game[$row['game_name']] = intval($row['total_score']);
+}
+$games_stmt->close();
+
+// Get total score across all games - using prepared statement
+$total_score_stmt = $conn->prepare("
     SELECT SUM(score) as total_score 
     FROM game_leaderboard 
-    WHERE user_id = $user_id AND credits_used > 0 AND score > 0
+    WHERE user_id = ? AND credits_used > 0 AND score > 0
 ");
-$total_score_data = $total_score_query->fetch_assoc();
+$total_score_stmt->bind_param("i", $user_id);
+$total_score_stmt->execute();
+$total_score_result = $total_score_stmt->get_result();
+$total_score_data = $total_score_result->fetch_assoc();
 $total_score = intval($total_score_data['total_score'] ?? 0);
+$total_score_stmt->close();
 
-// Sync available_score with actual total score
-$conn->query("UPDATE user_profile SET available_score = $total_score WHERE user_id = $user_id");
+// Sync available_score with actual total score - using prepared statement
+$update_stmt = $conn->prepare("UPDATE user_profile SET available_score = ? WHERE user_id = ?");
+$update_stmt->bind_param("ii", $total_score, $user_id);
+$update_stmt->execute();
+$update_stmt->close();
 
 // Available score is the total score (can be used to buy credits)
 $available_score = $total_score;

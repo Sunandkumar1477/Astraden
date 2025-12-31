@@ -1,5 +1,7 @@
 <?php
 session_start();
+// Security headers and performance optimizations
+require_once 'security_headers.php';
 // Require login to play Cosmos Captain
 require_once 'check_user_session.php';
 require_once 'connection.php';
@@ -714,7 +716,7 @@ $conn->close();
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + duration);
             } catch (e) {
-                console.log('Sound error:', e);
+                // Sound error - silent fail
             }
         }
         
@@ -797,7 +799,6 @@ $conn->close();
                     }
                 })
                 .catch(error => {
-                    console.error('Error fetching credits:', error);
                     // Show button even if credits fetch fails (if user is logged in)
                     if (IS_LOGGED_IN) {
                         showGameReady();
@@ -835,7 +836,6 @@ $conn->close();
             fetch(`game_api.php?action=check_status&game_name=${GAME_NAME}`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Game status response:', data);
                     
                     // Always update credits if available
                     if (data.user_credits !== undefined) {
@@ -874,7 +874,6 @@ $conn->close();
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking game status:', error);
                     // Even on error, show button if user is logged in
                     if (IS_LOGGED_IN) {
                         showGameReady();
@@ -943,7 +942,6 @@ $conn->close();
         
         // Show credits confirmation modal
         function showCreditsConfirmation() {
-            console.log('Showing credits confirmation modal');
             if (creditsToPayEl) {
                 creditsToPayEl.textContent = creditsRequired;
             }
@@ -1014,7 +1012,6 @@ $conn->close();
                     return 0;
                 })
                 .catch(error => {
-                    console.error('Error fetching total score:', error);
                     return 0;
                 });
         }
@@ -1065,7 +1062,6 @@ $conn->close();
                         }
                     })
                     .catch(error => {
-                        console.error('Error getting session:', error);
                         alert('Failed to get game session. Please try again.');
                         return false;
                     });
@@ -1092,7 +1088,6 @@ $conn->close();
                 return response.json();
             })
             .then(data => {
-                console.log('Deduct credits response:', data);
                 if (data.success) {
                     // Use creditsRequired (which we already know) instead of data.credits_used
                     creditsUsed = creditsRequired;
@@ -1120,10 +1115,8 @@ $conn->close();
                         sessionCheckInterval = setInterval(checkSessionValidity, 5000); // Check every 5 seconds
                         sessionCheckActive = true;
                     }
-                    console.log('Game started successfully. creditsUsed:', creditsUsed, 'remaining:', currentUserCredits);
                     return true;
                 } else {
-                    console.error('Failed to deduct credits:', data);
                     alert(data.message || 'Failed to start game');
                     if (data.redirect) {
                         window.location.href = data.redirect;
@@ -1132,8 +1125,7 @@ $conn->close();
                 }
             })
             .catch(error => {
-                console.error('Error starting game:', error);
-                alert('Failed to start game: ' + error.message);
+                alert('Failed to start game. Please try again.');
                 return false;
             });
         }
@@ -1149,7 +1141,6 @@ $conn->close();
             }
             
             const finalScore = Math.floor(score || 0);
-            console.log("Submitting final score:", finalScore, "for session:", currentSessionId);
             
             const formData = new FormData();
             formData.append('score', finalScore);
@@ -1164,26 +1155,21 @@ $conn->close();
             })
             .then(response => response.json())
             .then(data => {
-                console.log("Score save response:", data);
                 if (data.success) {
-                    console.log('Score saved:', finalScore);
                     // Update total score from response - use game-specific total_score (Cosmos Captain only)
                     if (data.total_score !== undefined) {
                         userTotalScore = data.total_score;
                         updateTotalScoreDisplay();
-                        console.log('Updated Cosmos Captain total score:', userTotalScore);
                         return data.total_score;
                     } else {
                         // If not in response, fetch it
                         return fetchUserTotalScore();
                     }
                 } else {
-                    console.error('Failed to save score:', data.message);
                     return 0;
                 }
             })
             .catch(error => {
-                console.error('Error saving score:', error);
                 return 0;
             });
         }
@@ -1500,7 +1486,7 @@ $conn->close();
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking session:', error);
+                    // Session check error - silent fail
                 });
         }
         
@@ -1518,7 +1504,7 @@ $conn->close();
             
             // Save current score if game was active
             if (score > 0 && creditsUsed > 0 && currentSessionId) {
-                saveScore(score).catch(err => console.error('Error saving score on logout:', err));
+                saveScore(score).catch(() => {});
             }
             
             // Show logout modal
@@ -1604,7 +1590,7 @@ $conn->close();
                     showScoreSavedModal(score, fetchedTotal || userTotalScore);
                 }
             } catch (error) {
-                console.error('Error saving score:', error);
+                // Error saving score - silent fail
             }
         }
         
@@ -1823,7 +1809,6 @@ $conn->close();
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                console.log('Confirm pay button clicked');
                 hideCreditsConfirmation();
                 
                 // Deduct credits and start game
@@ -1846,7 +1831,6 @@ $conn->close();
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                console.log('Confirm pay button touched');
                 hideCreditsConfirmation();
                 
                 // Deduct credits and start game
@@ -1872,7 +1856,6 @@ $conn->close();
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                console.log('Cancel pay button clicked');
                 hideCreditsConfirmation();
                 // Show game status overlay again
                 showGameStatusOverlay();
@@ -1883,7 +1866,6 @@ $conn->close();
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                console.log('Cancel pay button touched');
                 hideCreditsConfirmation();
                 // Show game status overlay again
                 showGameStatusOverlay();

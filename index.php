@@ -1,5 +1,7 @@
 <?php
 session_start();
+// Security headers and performance optimizations
+require_once 'security_headers.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -13,17 +15,19 @@ session_start();
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0f">
     <title>Astra Den - Select Your Game</title>
-    <!-- Favicon - Must be early in head for proper display -->
+    <!-- Favicon - Professional implementation -->
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
     <link rel="alternate icon" type="image/png" href="Alogo.svg">
     <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
     <link rel="icon" type="image/svg+xml" sizes="any" href="Alogo.svg">
+    <link rel="manifest" href="data:application/json,{}">
     
-    <!-- Google Fonts - Space Theme -->
+    <!-- Google Fonts - Optimized with font-display swap -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"></noscript>
     
     <!-- Font Awesome for WhatsApp Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -816,7 +820,6 @@ session_start();
             function sanitizeGameName(gameName) {
                 const allowed = /^[a-z0-9-]+$/i;
                 if (!allowed.test(gameName)) {
-                    console.error('Invalid game name');
                     return null;
                 }
                 return gameName.toLowerCase();
@@ -860,7 +863,6 @@ session_start();
                         }, 500);
                     })
                     .catch(error => {
-                        console.error('Error checking session:', error);
                         // On error, show login modal as fallback
                         openModal('loginRequired');
                     });
@@ -983,7 +985,7 @@ session_start();
                         }
                     }
                 } catch (error) {
-                    console.error('Error loading game credits:', error);
+                    // Error loading credits - silent fail
                 }
             }
 
@@ -1147,7 +1149,7 @@ session_start();
                         }
                     }
                 } catch (error) {
-                    console.error(`Error loading game timing for ${gameName}:`, error);
+                    // Error loading timing - silent fail
                 }
             }
             
@@ -1466,8 +1468,8 @@ session_start();
                                     if (dropdownUserRank) dropdownUserRank.textContent = 'Rank: N/A';
                                 }
                             })
-                            .catch(error => {
-                                console.error('Profile check error:', error);
+                            .catch(() => {
+                                // Profile check error - silent fail
                             });
                     } else {
                         isUserLoggedIn = false; // Update login status
@@ -1483,7 +1485,7 @@ session_start();
                     }
                 })
                 .catch(error => {
-                    console.error('Session check error:', error);
+                    // Session check error - silent fail
                 });
         }
 
@@ -1512,7 +1514,6 @@ session_start();
                         btn.style.borderColor = 'var(--primary-purple)';
                     }, 2000);
                 }).catch(err => {
-                    console.error('Failed to copy:', err);
                     alert('Failed to copy code. Please copy manually: ' + codeText);
                 });
             } else {
@@ -1607,7 +1608,6 @@ session_start();
                             }
                         })
                         .catch(error => {
-                            console.error('Error checking timing:', error);
                             // Allow if check fails (fallback)
                             if (selectedCreditsPrice > 0) {
                                 document.getElementById('qrAmount').textContent = `Amount: ₹${Math.round(selectedCreditsPrice)}/-`;
@@ -1618,7 +1618,7 @@ session_start();
                         });
                 })
                 .catch(error => {
-                    console.error('Error checking credit sale status:', error);
+                    // Error checking sale status - silent fail
                     // Fallback: check timing only
                     fetch('check_credit_timing.php?type=add_credits')
                         .then(response => response.json())
@@ -1689,7 +1689,6 @@ session_start();
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading credit packages:', error);
                     const container = document.getElementById('creditsOptionsContainer');
                     container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 0, 0, 0.6);">Error loading credit packages. Please refresh the page.</div>';
                 });
@@ -1783,7 +1782,6 @@ session_start();
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading credit packages:', error);
                     const container = document.getElementById('mobileCreditsOptionsContainer');
                     if (container) {
                         container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 0, 0, 0.6);">Error loading credit packages. Please refresh the page.</div>';
@@ -1856,12 +1854,12 @@ session_start();
                                 }
                             })
                             .catch(error => {
-                                console.error('Error checking credit timing:', error);
+                                // Error checking timing - silent fail
                             });
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking credit sale status:', error);
+                    // Error checking sale status - silent fail
                 });
         }
         
@@ -1940,7 +1938,7 @@ session_start();
                     errorEl.classList.add('show');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Submit';
-                    console.error('Claim credits error:', error);
+                    // Claim credits error - silent fail
                 });
         }
 
@@ -1983,7 +1981,7 @@ session_start();
                 modal.classList.add('show');
                 document.body.style.overflow = 'hidden';
             } else {
-                console.error('Modal not found:', modalId, 'for type:', type);
+                // Modal not found - silent fail
             }
         }
         
@@ -2151,7 +2149,6 @@ session_start();
                 }
             })
             .catch(error => {
-                console.error('Registration error:', error);
                 errorEl.textContent = 'An error occurred. Please try again.';
                 errorEl.classList.add('show');
                 submitBtn.disabled = false;
@@ -2224,7 +2221,6 @@ session_start();
                 }
             })
             .catch(error => {
-                console.error('Login error:', error);
                 errorEl.textContent = 'An error occurred. Please try again.';
                 errorEl.classList.add('show');
                 submitBtn.disabled = false;
@@ -2525,7 +2521,6 @@ session_start();
                             }
                         })
                         .catch(error => {
-                            console.error('Error checking add credits timing:', error);
                             addTimingLoaded = true;
                             if (claimTimingLoaded) {
                                 updateTimingNotice();
@@ -2533,7 +2528,7 @@ session_start();
                         });
                 })
                 .catch(error => {
-                    console.error('Error checking credit sale status:', error);
+                    // Error checking sale status - silent fail
                     // Fallback: check timing only
                     fetch('check_credit_timing.php?type=add_credits')
                         .then(response => response.json())
@@ -2620,7 +2615,6 @@ session_start();
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking system settings:', error);
                     // Default to showing if error
                     loadCreditPackages();
                     checkCreditTiming();
@@ -2658,7 +2652,7 @@ session_start();
                         }
                         updateTimingNotice();
                     })
-                    .catch(error => console.error('Error checking credit sale status:', error));
+                    .catch(() => {});
             }, 60000);
         });
         
@@ -2734,7 +2728,7 @@ session_start();
                 errorEl.classList.add('show');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Request';
-                console.error('Forgot password error:', error);
+                // Forgot password error - silent fail
             });
         }
         

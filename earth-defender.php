@@ -1,5 +1,7 @@
 <?php
 session_start();
+// Security headers and performance optimizations
+require_once 'security_headers.php';
 // Allow demo game without login - don't require check_user_session.php
 require_once 'connection.php';
 
@@ -1532,7 +1534,6 @@ $conn->close();
                 e.preventDefault();
                 e.stopPropagation();
             }
-            console.log('Toggle instructions called');
             const panel = document.getElementById('instructions-panel');
             if (panel) {
                 // Ensure panel is above everything
@@ -1549,8 +1550,6 @@ $conn->close();
                     panel.classList.add('show');
                     document.body.style.overflow = 'hidden';
                 }
-            } else {
-                console.error('Instructions panel not found');
             }
             return false;
         };
@@ -1814,7 +1813,6 @@ $conn->close();
                     hideContestTimers();
                 }
             } catch (error) {
-                console.error('Error checking game status:', error);
                 showNoSession(null);
                 hideContestTimers();
                 // Ensure demo button is always visible even on error
@@ -2035,7 +2033,6 @@ $conn->close();
                     }
                 }
             } catch (error) {
-                console.error('Error starting game:', error);
                 alert('An error occurred. Please try again.');
             }
         });
@@ -2045,7 +2042,6 @@ $conn->close();
             console.log('=== startDemoGame called ===');
             
             if (state.gameStarted) {
-                console.log('Game already started');
                 return;
             }
             
@@ -2065,11 +2061,6 @@ $conn->close();
             state.health = 100;
             state.bombs = 3;
             
-            console.log('Game state set:', {
-                gameStarted: state.gameStarted,
-                isPlaying: state.isPlaying,
-                isDemoMode: state.isDemoMode
-            });
             
             // Hide overlay with multiple methods - CRITICAL
             const overlay = document.getElementById('game-status-overlay');
@@ -2081,9 +2072,6 @@ $conn->close();
                 overlay.style.opacity = '0';
                 overlay.style.zIndex = '-1';
                 overlay.style.position = 'absolute';
-                console.log('Overlay hidden');
-            } else {
-                console.error('Overlay element not found!');
             }
             
             // Hide contest timer
@@ -2142,7 +2130,6 @@ $conn->close();
             newBtn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Demo button clicked via onclick');
                 startDemoGame();
                 return false;
             };
@@ -2151,7 +2138,6 @@ $conn->close();
             newBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Demo button clicked via addEventListener');
                 startDemoGame();
                 return false;
             }, false);
@@ -2160,12 +2146,10 @@ $conn->close();
             newBtn.addEventListener('touchend', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Demo button touched');
                 startDemoGame();
                 return false;
             }, { passive: false });
             
-            console.log('Demo button handler attached successfully');
         }
         
         // Attach immediately and on DOM ready
@@ -2258,7 +2242,6 @@ $conn->close();
                     oscillator.start(this.audioContext.currentTime);
                     oscillator.stop(this.audioContext.currentTime + duration);
                 } catch (e) {
-                    console.warn('Sound playback error:', e);
                 }
             },
             
@@ -2781,7 +2764,6 @@ $conn->close();
                 }
             } else {
                 // Tab is now visible - stop background loop, resume normal animation
-                console.log('Tab visible - resuming normal mode');
                 if (backgroundGameLoop) {
                     clearInterval(backgroundGameLoop);
                     backgroundGameLoop = null;
@@ -3206,7 +3188,7 @@ $conn->close();
                         }
                     }
                 } catch (error) {
-                    console.error('Error saving score:', error);
+                    // Error saving score - silent fail
                 }
             }
         }
@@ -3240,7 +3222,6 @@ $conn->close();
                 
                 // Handle No (Continue Playing)
                 noBtn.onclick = function(e) {
-                    console.log("No clicked");
                     e.preventDefault();
                     e.stopPropagation();
                     modal.style.display = 'none';
@@ -3253,7 +3234,6 @@ $conn->close();
                 
                 // Handle Yes (Save & Exit)
                 yesBtn.onclick = async function(e) {
-                    console.log("Yes clicked");
                     e.preventDefault();
                     e.stopPropagation();
                     modal.style.display = 'none';
@@ -3282,7 +3262,7 @@ $conn->close();
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking session:', error);
+                    // Error checking session - silent fail
                 });
         }
         
@@ -3304,7 +3284,7 @@ $conn->close();
             
             // Save current score if game was active
             if (state.score > 0 && state.creditsUsed > 0 && state.gameSessionId) {
-                gameOver().catch(err => console.error('Error saving score on logout:', err));
+                gameOver().catch(() => {});
             }
             
             // Show logout modal

@@ -7,6 +7,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
 session_start();
+// Security headers and performance optimizations
+require_once 'security_headers.php';
 require_once 'connection.php';
 
 // Clear any output buffer

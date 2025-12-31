@@ -1,5 +1,7 @@
 <?php
 session_start();
+// Security headers and performance optimizations
+require_once 'security_headers.php';
 require_once 'connection.php';
 
 // Set timezone to India (IST) - CRITICAL for correct time calculations
@@ -7,7 +9,13 @@ date_default_timezone_set('Asia/Kolkata');
 
 header('Content-Type: application/json');
 
-$action = $_GET['action'] ?? '';
+// Security: Validate and sanitize action parameter
+$action = trim($_GET['action'] ?? '');
+// Only allow alphanumeric and hyphens
+if (!preg_match('/^[a-z0-9_-]+$/i', $action)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid action']);
+    exit;
+}
 
 // Allow check_status, leaderboard, and user_rank without login (for demo mode and guests)
 // Other actions still require login
@@ -65,7 +73,12 @@ if ($check_sessions->num_rows == 0 || $check_leaderboard->num_rows == 0) {
 switch ($action) {
     case 'check_status':
         // Check if game session is active
-        $game_name = $_GET['game'] ?? $_GET['game_name'] ?? 'earth-defender';
+        // Security: Validate game name
+        $game_name = trim($_GET['game'] ?? $_GET['game_name'] ?? 'earth-defender');
+        if (!preg_match('/^[a-z0-9-]+$/', $game_name)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid game name']);
+            exit;
+        }
         
         // Get user's total points for this game
         $user_total_points = 0;
@@ -404,11 +417,17 @@ switch ($action) {
         
     case 'save_score':
         // Save game score (demo mode doesn't save, requires login for real games)
+        // Security: Validate and sanitize all inputs
         $score = intval($_POST['score'] ?? 0);
         $session_id = intval($_POST['session_id'] ?? 0);
         $credits_used = intval($_POST['credits_used'] ?? 0);
         $is_demo = isset($_POST['is_demo']) && $_POST['is_demo'] === 'true';
-        $game_name = $_POST['game_name'] ?? 'earth-defender';
+        $game_name = trim($_POST['game_name'] ?? 'earth-defender');
+        // Validate game name to prevent injection
+        if (!preg_match('/^[a-z0-9-]+$/', $game_name)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid game name']);
+            exit;
+        }
 
         // Check if contest mode is active
         $is_contest_active = 0;
