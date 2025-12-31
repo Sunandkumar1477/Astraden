@@ -819,6 +819,10 @@ $conn->close();
             if (currentCreditsDisplay) {
                 currentCreditsDisplay.textContent = currentUserCredits;
             }
+            // Hide game status overlay when showing credits modal
+            if (gameStatusOverlay) {
+                gameStatusOverlay.classList.add('hidden');
+            }
             if (creditsModal) {
                 creditsModal.classList.remove('hidden');
                 creditsModal.style.display = 'flex';
@@ -840,6 +844,13 @@ $conn->close();
             if (creditsModal) {
                 creditsModal.classList.add('hidden');
                 creditsModal.style.display = 'none';
+            }
+        }
+        
+        // Show game status overlay (for when user cancels payment)
+        function showGameStatusOverlay() {
+            if (gameStatusOverlay) {
+                gameStatusOverlay.classList.remove('hidden');
             }
         }
         
@@ -1534,24 +1545,8 @@ $conn->close();
                     return;
                 }
                 
-                // Confirm before deducting credits
-                const confirmMsg = IS_CONTEST_ACTIVE 
-                    ? `Join the contest? This will deduct ${creditsRequired} credits. Your high score will be recorded for prizes!`
-                    : `This will deduct ${creditsRequired} credits from your account. Continue?`;
-
-                if (!confirm(confirmMsg)) {
-                    return;
-                }
-                
-                // Deduct credits and start game
-                const canStart = await startGameWithCredits();
-                if (canStart) {
-                    if (gameStatusOverlay) {
-                        gameStatusOverlay.classList.add('hidden');
-                    }
-                    resetGame();
-                    gameActive = true;
-                }
+                // Show credits payment modal instead of browser confirm
+                showCreditsConfirmation();
             });
         }
         
@@ -1678,7 +1673,13 @@ $conn->close();
                 // Deduct credits and start game
                 const canStart = await startGameWithCredits();
                 if (canStart) {
-                    messageBox.classList.add('hidden');
+                    // Hide game status overlay and message box
+                    if (gameStatusOverlay) {
+                        gameStatusOverlay.classList.add('hidden');
+                    }
+                    if (messageBox) {
+                        messageBox.classList.add('hidden');
+                    }
                     resetGame();
                     gameActive = true;
                 }
@@ -1695,7 +1696,13 @@ $conn->close();
                 // Deduct credits and start game
                 const canStart = await startGameWithCredits();
                 if (canStart) {
-                    messageBox.classList.add('hidden');
+                    // Hide game status overlay and message box
+                    if (gameStatusOverlay) {
+                        gameStatusOverlay.classList.add('hidden');
+                    }
+                    if (messageBox) {
+                        messageBox.classList.add('hidden');
+                    }
                     resetGame();
                     gameActive = true;
                 }
@@ -1711,6 +1718,8 @@ $conn->close();
                 e.stopImmediatePropagation();
                 console.log('Cancel pay button clicked');
                 hideCreditsConfirmation();
+                // Show game status overlay again
+                showGameStatusOverlay();
             });
             
             // Touch handler for mobile
@@ -1720,6 +1729,8 @@ $conn->close();
                 e.stopImmediatePropagation();
                 console.log('Cancel pay button touched');
                 hideCreditsConfirmation();
+                // Show game status overlay again
+                showGameStatusOverlay();
             }, { passive: false });
         }
         
