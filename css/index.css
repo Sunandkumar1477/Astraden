@@ -4142,7 +4142,7 @@ body.mobile-device .play-btn:active {
     .auth-modal {
         background: rgba(15, 15, 25, 0.95);
         border: 2px solid var(--primary-cyan);
-        max-width: 400px;
+        max-width: 360px;
         padding: 35px 30px;
         border-radius: 20px;
         box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
@@ -4346,7 +4346,7 @@ body.mobile-device .play-btn:active {
 /* Extra Large Desktop Screens - Keep Small & Simple */
 @media (min-width: 1440px) {
     .auth-modal {
-        max-width: 400px;
+        max-width: 360px;
         padding: 35px 30px;
     }
     
