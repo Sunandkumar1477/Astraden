@@ -494,6 +494,25 @@ $conn->close();
         </div>
     </div>
     
+    <!-- Score Saved Modal - Shows after score is saved -->
+    <div id="score-saved-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10002; display: none; align-items: center; justify-content: center; pointer-events: auto;">
+        <div style="background: rgba(10, 20, 30, 0.95); border: 2px solid #00ffff; border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(0, 255, 255, 0.3); pointer-events: auto; position: relative; z-index: 10003;">
+            <h2 style="color: #00ffff; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px #00ffff;">✅ Score Saved!</h2>
+            <div style="margin-bottom: 20px;">
+                <p style="color: #fff; margin-bottom: 15px; font-size: 16px;">Mission Score:</p>
+                <div style="font-size: 32px; color: #00ffff; font-weight: bold; margin-bottom: 15px;">
+                    <span id="saved-mission-score">0</span>
+                </div>
+                <p style="color: #00ff00; margin-top: 15px; font-size: 14px; font-weight: bold;">
+                    Total Cosmos Captain Score: <span id="saved-total-score">0</span>
+                </p>
+            </div>
+            <button id="score-saved-ok-btn" style="background: var(--primary-glow); color: black; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; pointer-events: auto; z-index: 10004; width: 100%;">
+                OK
+            </button>
+        </div>
+    </div>
+    
     <!-- Credits Confirmation Modal - Outside ui-layer for proper pointer events -->
     <div id="credits-confirmation-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10000; display: none; align-items: center; justify-content: center; pointer-events: auto;">
         <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid var(--primary-glow); border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(0, 242, 255, 0.5); pointer-events: auto; position: relative; z-index: 10001;">
@@ -559,6 +578,10 @@ $conn->close();
         const exitYesBtn = document.getElementById('exit-yes-btn');
         const exitNoBtn = document.getElementById('exit-no-btn');
         const backToMenuBtn = document.getElementById('back-to-menu-btn');
+        const scoreSavedModal = document.getElementById('score-saved-modal');
+        const scoreSavedOkBtn = document.getElementById('score-saved-ok-btn');
+        const savedMissionScoreEl = document.getElementById('saved-mission-score');
+        const savedTotalScoreEl = document.getElementById('saved-total-score');
 
         let width, height;
         let score = 0;
@@ -1283,15 +1306,57 @@ $conn->close();
             requestAnimationFrame(gameLoop);
         }
 
+        // Function to show score saved modal
+        function showScoreSavedModal(missionScore, totalScore) {
+            if (scoreSavedModal && savedMissionScoreEl && savedTotalScoreEl) {
+                savedMissionScoreEl.textContent = missionScore.toLocaleString();
+                savedTotalScoreEl.textContent = totalScore.toLocaleString();
+                scoreSavedModal.classList.remove('hidden');
+                scoreSavedModal.style.display = 'flex';
+            }
+        }
+        
+        // Function to hide score saved modal
+        function hideScoreSavedModal() {
+            if (scoreSavedModal) {
+                scoreSavedModal.classList.add('hidden');
+                scoreSavedModal.style.display = 'none';
+            }
+        }
+        
+        // Function to save score and show modal
+        async function saveScoreAndShowModal() {
+            if (!gameStarted || creditsUsed === 0 || !currentSessionId || score <= 0) {
+                return;
+            }
+            
+            try {
+                const savedTotalScore = await saveScore(score);
+                if (savedTotalScore !== undefined && savedTotalScore > 0) {
+                    userTotalScore = savedTotalScore;
+                    updateTotalScoreDisplay();
+                    // Show score saved modal
+                    showScoreSavedModal(score, savedTotalScore);
+                } else {
+                    // Fetch total score if not returned
+                    const fetchedTotal = await fetchUserTotalScore();
+                    showScoreSavedModal(score, fetchedTotal || userTotalScore);
+                }
+            } catch (error) {
+                console.error('Error saving score:', error);
+            }
+        }
+        
         async function gameOver() {
             gameActive = false;
             playGameOverSound();
             createExplosion(ship.x, ship.y, '#ff4d4d');
             msgTitle.textContent = "GAME OVER";
             
-            // DO NOT save score automatically on game over
-            // Score will ONLY be saved when user clicks "YES, SAVE & EXIT" button
-            // Just show the game over screen with current score
+            // Save score and show modal when game ends
+            if (gameStarted && creditsUsed > 0 && currentSessionId && score > 0) {
+                await saveScoreAndShowModal();
+            }
             
             // Update final score display
             const finalScoreDisplay = document.getElementById('final-score-display');
@@ -1398,16 +1463,61 @@ $conn->close();
         
         // Back to menu button handler
         if (backToMenuBtn) {
-            backToMenuBtn.addEventListener('click', (e) => {
+            backToMenuBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // DO NOT save score automatically
-                // Score will ONLY be saved when user clicks "YES, SAVE & EXIT" button
-                // Just redirect to index page without saving
+                // Save score and show modal when back to menu is clicked
+                if (gameStarted && creditsUsed > 0 && currentSessionId && score > 0) {
+                    gameActive = false;
+                    await saveScoreAndShowModal();
+                } else {
+                    // If no score to save, just redirect
+                    window.location.href = 'index.php';
+                }
+            });
+        }
+        
+        // Score saved modal OK button handler
+        if (scoreSavedOkBtn) {
+            scoreSavedOkBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                hideScoreSavedModal();
                 
-                // Redirect to index page
-                window.location.href = 'index.php';
+                // Reset game state
+                gameStarted = false;
+                creditsUsed = 0;
+                score = 0;
+                gameActive = false;
+                
+                // Show credits payment modal to play again
+                if (IS_LOGGED_IN && currentUserCredits >= creditsRequired) {
+                    showCreditsConfirmation();
+                } else {
+                    // If not enough credits, redirect to index
+                    window.location.href = 'index.php';
+                }
+            });
+        }
+        
+        // Close score saved modal when clicking outside
+        if (scoreSavedModal) {
+            scoreSavedModal.addEventListener('click', (e) => {
+                if (e.target === scoreSavedModal) {
+                    hideScoreSavedModal();
+                    // Reset game state
+                    gameStarted = false;
+                    creditsUsed = 0;
+                    score = 0;
+                    gameActive = false;
+                    // Show credits payment modal
+                    if (IS_LOGGED_IN && currentUserCredits >= creditsRequired) {
+                        showCreditsConfirmation();
+                    } else {
+                        window.location.href = 'index.php';
+                    }
+                }
             });
         }
         
@@ -1511,11 +1621,18 @@ $conn->close();
         
         // Exit button handler
         if (exitBtn) {
-            exitBtn.addEventListener('click', (e) => {
+            exitBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (gameActive && gameStarted) {
-                    showExitConfirmation();
+                    // Save score and show modal when exit button is clicked
+                    if (creditsUsed > 0 && currentSessionId && score > 0) {
+                        gameActive = false;
+                        await saveScoreAndShowModal();
+                    } else {
+                        // If no score, just show exit confirmation
+                        showExitConfirmation();
+                    }
                 }
             });
         }
@@ -1559,31 +1676,19 @@ $conn->close();
                 
                 // Set game as not active
                 gameActive = false;
-                gameStarted = false;
                 
                 // Hide exit button
                 if (exitBtn) {
                     exitBtn.style.display = 'none';
                 }
                 
-                // ONLY save score when user clicks "YES, SAVE & EXIT"
+                // Save score and show modal when user clicks "YES, SAVE & EXIT"
                 if (creditsUsed > 0 && currentSessionId && score > 0) {
-                    try {
-                        console.log('User clicked YES, SAVE & EXIT - Saving score:', score);
-                        const savedTotalScore = await saveScore(score);
-                        console.log('Score saved successfully. New Cosmos Captain total:', savedTotalScore);
-                        // Wait a moment to ensure save completes before redirecting
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    } catch (error) {
-                        console.error('Error saving score on exit:', error);
-                        // Still redirect even if save fails
-                    }
+                    await saveScoreAndShowModal();
                 } else {
-                    console.log('No score to save or game not started properly');
+                    // If no score to save, just redirect
+                    window.location.replace('index.php');
                 }
-                
-                // Redirect to index
-                window.location.replace('index.php');
             });
         }
         
@@ -1614,10 +1719,12 @@ $conn->close();
         }
         
         // Handle browser back button
-        window.addEventListener('popstate', function(event) {
-            // Only show exit confirmation if game is actively playing
-            // Do NOT save score here - only show confirmation
-            if (gameActive && gameStarted) {
+        window.addEventListener('popstate', async function(event) {
+            // Save score and show modal when back button is pressed
+            if (gameActive && gameStarted && creditsUsed > 0 && currentSessionId && score > 0) {
+                gameActive = false;
+                await saveScoreAndShowModal();
+            } else if (gameActive && gameStarted) {
                 showExitConfirmation();
             }
         });
