@@ -20,31 +20,63 @@ $create_table = $conn->query("
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
     $show_credit_purchase = isset($_POST['show_credit_purchase']) ? 1 : 0;
+    $auto_credits_enabled = isset($_POST['auto_credits_enabled']) ? 1 : 0;
+    $new_user_credits = isset($_POST['new_user_credits']) ? (int)$_POST['new_user_credits'] : 0;
+    $referral_credits = isset($_POST['referral_credits']) ? (int)$_POST['referral_credits'] : 0;
     
-    // Insert or update the setting
-    $stmt = $conn->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES ('show_credit_purchase', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
-    $stmt->bind_param("ss", $show_credit_purchase, $show_credit_purchase);
-    
-    if ($stmt->execute()) {
-        $message = "System settings updated successfully!";
-        // Log admin action
-        $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'update_system_settings', 'Updated credit purchase visibility setting', '{$_SERVER['REMOTE_ADDR']}')");
+    // Validate credit amounts
+    if ($auto_credits_enabled && $new_user_credits < 0) {
+        $error = "New user credits cannot be negative.";
+    } elseif ($auto_credits_enabled && $referral_credits < 0) {
+        $error = "Referral credits cannot be negative.";
     } else {
-        $error = "Failed to update settings. Please try again.";
+        // Insert or update all settings
+        $settings = [
+            'show_credit_purchase' => $show_credit_purchase,
+            'auto_credits_enabled' => $auto_credits_enabled,
+            'new_user_credits' => $new_user_credits,
+            'referral_credits' => $referral_credits
+        ];
+        
+        $success = true;
+        foreach ($settings as $key => $value) {
+            $stmt = $conn->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+            $stmt->bind_param("sss", $key, $value, $value);
+            if (!$stmt->execute()) {
+                $success = false;
+            }
+            $stmt->close();
+        }
+        
+        if ($success) {
+            $message = "System settings updated successfully!";
+            // Log admin action
+            $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'update_system_settings', 'Updated system settings including auto-credits', '{$_SERVER['REMOTE_ADDR']}')");
+        } else {
+            $error = "Failed to update settings. Please try again.";
+        }
     }
-    $stmt->close();
 }
 
 // Get current settings
-$settings_stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'show_credit_purchase'");
-$settings_stmt->execute();
-$settings_result = $settings_stmt->get_result();
-$show_credit_purchase = 1; // Default to showing
-if ($settings_result->num_rows > 0) {
-    $setting = $settings_result->fetch_assoc();
-    $show_credit_purchase = (int)$setting['setting_value'];
+function getSetting($conn, $key, $default = 0) {
+    $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = ?");
+    $stmt->bind_param("s", $key);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $setting = $result->fetch_assoc();
+        $stmt->close();
+        return is_numeric($setting['setting_value']) ? (int)$setting['setting_value'] : $setting['setting_value'];
+    }
+    $stmt->close();
+    return $default;
 }
-$settings_stmt->close();
+
+$show_credit_purchase = getSetting($conn, 'show_credit_purchase', 1);
+$auto_credits_enabled = getSetting($conn, 'auto_credits_enabled', 0);
+$new_user_credits = getSetting($conn, 'new_user_credits', 0);
+$referral_credits = getSetting($conn, 'referral_credits', 0);
 
 $conn->close();
 ?>
@@ -131,6 +163,12 @@ $conn->close();
         .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-cyan); }
         input:checked + .slider:before { transform: translateX(30px); }
+        
+        .input-group { margin-bottom: 25px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; }
+        .input-group label { display: block; color: var(--primary-cyan); font-weight: 700; margin-bottom: 8px; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; }
+        .input-group input[type="number"] { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 8px; color: white; font-size: 1rem; font-family: 'Rajdhani', sans-serif; }
+        .input-group input[type="number"]:focus { outline: none; border-color: var(--primary-cyan); box-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
+        .input-group small { display: block; color: rgba(255,255,255,0.4); margin-top: 5px; font-size: 0.85rem; }
 
         .btn-save { background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); border: none; color: white; padding: 15px 40px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 900; cursor: pointer; display: block; margin: 30px auto 0; }
 
@@ -185,7 +223,54 @@ $conn->close();
                     </div>
                 </div>
 
+                <div class="config-card" style="margin-top: 30px;">
+                    <h3>Automatic Credits on Registration</h3>
+                    
+                    <div class="toggle-group">
+                        <label class="switch">
+                            <input type="checkbox" name="auto_credits_enabled" id="auto_credits_enabled" <?php echo $auto_credits_enabled ? 'checked' : ''; ?>>
+                            <span class="slider"></span>
+                        </label>
+                        <div>
+                            <strong style="display:block;color:var(--primary-cyan);">ENABLE AUTO CREDITS</strong>
+                            <small style="color:rgba(255,255,255,0.4);">When enabled, new users will automatically receive credits upon registration. You can set the amount below.</small>
+                        </div>
+                    </div>
+
+                    <div class="input-group" id="new_user_credits_group" style="<?php echo $auto_credits_enabled ? '' : 'opacity: 0.5; pointer-events: none;'; ?>">
+                        <label for="new_user_credits">NEW USER CREDITS</label>
+                        <input type="number" name="new_user_credits" id="new_user_credits" value="<?php echo $new_user_credits; ?>" min="0" step="1" required>
+                        <small>Amount of credits automatically awarded to new users when they register.</small>
+                    </div>
+
+                    <div class="input-group" id="referral_credits_group" style="<?php echo $auto_credits_enabled ? '' : 'opacity: 0.5; pointer-events: none;'; ?>">
+                        <label for="referral_credits">REFERRAL REWARD CREDITS</label>
+                        <input type="number" name="referral_credits" id="referral_credits" value="<?php echo $referral_credits; ?>" min="0" step="1" required>
+                        <small>Amount of credits automatically awarded to the referrer when a new user registers using their referral code.</small>
+                    </div>
+                </div>
+
                 <button type="submit" name="update_settings" class="btn-save">SAVE SETTINGS</button>
+                
+                <script>
+                    document.getElementById('auto_credits_enabled').addEventListener('change', function() {
+                        const enabled = this.checked;
+                        const newUserGroup = document.getElementById('new_user_credits_group');
+                        const referralGroup = document.getElementById('referral_credits_group');
+                        
+                        if (enabled) {
+                            newUserGroup.style.opacity = '1';
+                            newUserGroup.style.pointerEvents = 'auto';
+                            referralGroup.style.opacity = '1';
+                            referralGroup.style.pointerEvents = 'auto';
+                        } else {
+                            newUserGroup.style.opacity = '0.5';
+                            newUserGroup.style.pointerEvents = 'none';
+                            referralGroup.style.opacity = '0.5';
+                            referralGroup.style.pointerEvents = 'none';
+                        }
+                    });
+                </script>
             </form>
         </div>
     </main>

@@ -164,6 +164,88 @@ if ($referred_by) {
 if ($stmt->execute()) {
     $user_id = $stmt->insert_id;
     
+    // Get system settings for auto-credits
+    $auto_credits_enabled = 0;
+    $new_user_credits = 0;
+    $referral_credits = 0;
+    
+    try {
+        $settings_stmt = $conn->prepare("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('auto_credits_enabled', 'new_user_credits', 'referral_credits')");
+        $settings_stmt->execute();
+        $settings_result = $settings_stmt->get_result();
+        
+        while ($setting = $settings_result->fetch_assoc()) {
+            if ($setting['setting_key'] === 'auto_credits_enabled') {
+                $auto_credits_enabled = (int)$setting['setting_value'];
+            } elseif ($setting['setting_key'] === 'new_user_credits') {
+                $new_user_credits = (int)$setting['setting_value'];
+            } elseif ($setting['setting_key'] === 'referral_credits') {
+                $referral_credits = (int)$setting['setting_value'];
+            }
+        }
+        $settings_stmt->close();
+    } catch (Exception $e) {
+        // Settings table might not exist or have these keys, continue without auto-credits
+    }
+    
+    // Award credits to new user if auto-credits is enabled
+    if ($auto_credits_enabled && $new_user_credits > 0) {
+        try {
+            // Check if user_credits table exists and has the user
+            $credit_check = $conn->prepare("SELECT id FROM user_credits WHERE user_id = ?");
+            $credit_check->bind_param("i", $user_id);
+            $credit_check->execute();
+            $credit_result = $credit_check->get_result();
+            
+            if ($credit_result->num_rows > 0) {
+                // Update existing credits
+                $credit_update = $conn->prepare("UPDATE user_credits SET credits = credits + ? WHERE user_id = ?");
+                $credit_update->bind_param("ii", $new_user_credits, $user_id);
+                $credit_update->execute();
+                $credit_update->close();
+            } else {
+                // Insert new credits record
+                $credit_insert = $conn->prepare("INSERT INTO user_credits (user_id, credits) VALUES (?, ?)");
+                $credit_insert->bind_param("ii", $user_id, $new_user_credits);
+                $credit_insert->execute();
+                $credit_insert->close();
+            }
+            $credit_check->close();
+        } catch (Exception $e) {
+            // Credits table might not exist, continue without awarding credits
+            error_log("Error awarding new user credits: " . $e->getMessage());
+        }
+    }
+    
+    // Award referral credits to referrer if referral code was used and auto-credits is enabled
+    if ($referred_by && $auto_credits_enabled && $referral_credits > 0) {
+        try {
+            // Check if referrer's credits record exists
+            $ref_credit_check = $conn->prepare("SELECT id FROM user_credits WHERE user_id = ?");
+            $ref_credit_check->bind_param("i", $referred_by);
+            $ref_credit_check->execute();
+            $ref_credit_result = $ref_credit_check->get_result();
+            
+            if ($ref_credit_result->num_rows > 0) {
+                // Update existing credits
+                $ref_credit_update = $conn->prepare("UPDATE user_credits SET credits = credits + ? WHERE user_id = ?");
+                $ref_credit_update->bind_param("ii", $referral_credits, $referred_by);
+                $ref_credit_update->execute();
+                $ref_credit_update->close();
+            } else {
+                // Insert new credits record
+                $ref_credit_insert = $conn->prepare("INSERT INTO user_credits (user_id, credits) VALUES (?, ?)");
+                $ref_credit_insert->bind_param("ii", $referred_by, $referral_credits);
+                $ref_credit_insert->execute();
+                $ref_credit_insert->close();
+            }
+            $ref_credit_check->close();
+        } catch (Exception $e) {
+            // Credits table might not exist, continue without awarding referral credits
+            error_log("Error awarding referral credits: " . $e->getMessage());
+        }
+    }
+    
     // Get IP address and user agent for logging
     function getClientIP() {
         $ipaddress = '';
