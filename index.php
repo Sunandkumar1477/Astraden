@@ -626,9 +626,9 @@ session_start();
         <!-- All Games Grid -->
         <div class="all-games-container">
             <div class="games-grid">
-                <div class="game-card" data-game="earth-defender" data-type="defense" onclick="launchGame('earth-defender'); return false;" style="cursor: pointer;">
+                <div class="game-card" data-game="earth-defender" data-type="defense" onclick="if (!event.target.closest('.sound-toggle-btn')) launchGame('earth-defender', event); return false;" style="cursor: pointer;">
                     <!-- Sound Toggle Button -->
-                    <button class="sound-toggle-btn" id="sound-toggle-earth-defender" onclick="event.stopPropagation(); toggleSound('earth-defender');" title="Toggle Sound">
+                    <button class="sound-toggle-btn" id="sound-toggle-earth-defender" title="Toggle Sound">
                         <span class="sound-icon">🔊</span>
                     </button>
                     <!-- Countdown Timer Badge -->
@@ -682,9 +682,9 @@ session_start();
                     </div>
                     <button class="play-btn" onclick="launchGame('earth-defender')">Start Mission</button>
                 </div>
-                <div class="game-card" data-game="cosmos-captain" data-type="action" onclick="launchGame('cosmos-captain'); return false;" style="cursor: pointer;">
+                <div class="game-card" data-game="cosmos-captain" data-type="action" onclick="if (!event.target.closest('.sound-toggle-btn')) launchGame('cosmos-captain', event); return false;" style="cursor: pointer;">
                     <!-- Sound Toggle Button -->
-                    <button class="sound-toggle-btn" id="sound-toggle-cosmos-captain" onclick="event.stopPropagation(); toggleSound('cosmos-captain');" title="Toggle Sound">
+                    <button class="sound-toggle-btn" id="sound-toggle-cosmos-captain" title="Toggle Sound">
                         <span class="sound-icon">🔊</span>
                     </button>
                     <!-- Countdown Timer Badge -->
@@ -791,7 +791,12 @@ session_start();
             }
 
             // Launch game with security checks
-            function launchGame(gameName) {
+            function launchGame(gameName, event) {
+                // Prevent launching if clicking on sound button
+                if (event && event.target && (event.target.closest('.sound-toggle-btn') || event.target.classList.contains('sound-toggle-btn'))) {
+                    return;
+                }
+                
                 const sanitized = sanitizeGameName(gameName);
                 if (!sanitized || !gamePaths[sanitized]) {
                     alert('Game not found or invalid!');
@@ -869,6 +874,36 @@ session_start();
                         btn.classList.remove('muted');
                         if (icon) icon.textContent = '🔊';
                     }
+                });
+                
+                // Add event listeners to all sound buttons for better desktop support
+                buttons.forEach(btn => {
+                    // Remove any existing listeners by cloning the button
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    
+                    // Add multiple event types for better compatibility
+                    newBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        const gameName = newBtn.id.replace('sound-toggle-', '');
+                        toggleSound(gameName);
+                    });
+                    
+                    newBtn.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                    });
+                    
+                    newBtn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        const gameName = newBtn.id.replace('sound-toggle-', '');
+                        toggleSound(gameName);
+                    }, { passive: false });
                 });
             }
 
