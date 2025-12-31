@@ -173,6 +173,10 @@ if (isset($_GET['edit'])) {
 }
 
 $current_session = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' AND is_active = 1 LIMIT 1")->fetch_assoc();
+
+// Get all active sessions for both games to show live status
+$all_active_sessions = $conn->query("SELECT * FROM game_sessions WHERE is_active = 1 ORDER BY game_name, created_at DESC")->fetch_all(MYSQLI_ASSOC);
+
 $all_sessions = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' ORDER BY session_date DESC, session_time DESC LIMIT 10")->fetch_all(MYSQLI_ASSOC);
 
 // Get play credits for all sessions to display in table
@@ -193,8 +197,6 @@ foreach ($all_sessions as $s) {
         $session_credits_stmt->close();
     }
 }
-
-$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -336,6 +338,63 @@ $conn->close();
         <?php if($message): ?><div class="msg"><?php echo $message; ?></div><?php endif; ?>
         <?php if($error): ?><div class="error-msg"><?php echo $error; ?></div><?php endif; ?>
 
+        <!-- Live Status for All Games -->
+        <div class="config-card" style="margin-bottom: 30px;">
+            <h3 style="color: var(--primary-cyan); font-family: 'Orbitron', sans-serif; margin-bottom: 20px; font-size: 1.1rem; text-transform: uppercase;">📊 LIVE GAME STATUS</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <?php 
+                foreach ($available_games as $game_key => $game_display):
+                    $game_active_session = null;
+                    foreach ($all_active_sessions as $active_sess) {
+                        if ($active_sess['game_name'] === $game_key) {
+                            $game_active_session = $active_sess;
+                            break;
+                        }
+                    }
+                    
+                    // Get play credits for this game
+                    $game_credits_stmt = $conn->prepare("SELECT credits_per_chance FROM games WHERE game_name = ?");
+                    $game_credits_stmt->bind_param("s", $game_key);
+                    $game_credits_stmt->execute();
+                    $game_credits_result = $game_credits_stmt->get_result();
+                    $game_play_credits = 30;
+                    if ($game_credits_result->num_rows > 0) {
+                        $game_credits_row = $game_credits_result->fetch_assoc();
+                        $game_play_credits = intval($game_credits_row['credits_per_chance']);
+                    }
+                    $game_credits_stmt->close();
+                ?>
+                <div style="background: rgba(0, 255, 255, 0.05); border: 2px solid <?php echo $game_active_session ? '#00ffcc' : 'rgba(255,255,255,0.1)'; ?>; border-radius: 12px; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="color: <?php echo $game_active_session ? '#00ffcc' : 'rgba(255,255,255,0.5)'; ?>; font-family: 'Orbitron', sans-serif; font-size: 1rem; margin: 0;">
+                            <?php echo $game_display; ?>
+                        </h4>
+                        <span class="status-pill <?php echo $game_active_session ? 'status-live' : 'status-end'; ?>" style="font-size: 0.7rem;">
+                            <?php echo $game_active_session ? '🟢 LIVE' : '⚫ OFFLINE'; ?>
+                        </span>
+                    </div>
+                    <?php if ($game_active_session): 
+                        $is_always_avail = isset($game_active_session['always_available']) && $game_active_session['always_available'] == 1;
+                        $session_play_cost = isset($game_active_session['credits_required']) ? intval($game_active_session['credits_required']) : $game_play_credits;
+                    ?>
+                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7); line-height: 1.8;">
+                            <div><strong style="color: #00ffcc;">Mode:</strong> <?php echo $is_always_avail ? 'Always Available' : 'Time Restricted'; ?></div>
+                            <?php if (!$is_always_avail): ?>
+                                <div><strong style="color: #00ffcc;">Start:</strong> <?php echo date('d M Y, h:i A', strtotime($game_active_session['session_date'] . ' ' . $game_active_session['session_time'])); ?> IST</div>
+                                <div><strong style="color: #00ffcc;">Duration:</strong> <?php echo $game_active_session['duration_minutes']; ?> minutes</div>
+                            <?php endif; ?>
+                            <div><strong style="color: #00ffcc;">Play Cost:</strong> <?php echo $session_play_cost; ?> ⚡</div>
+                        </div>
+                    <?php else: ?>
+                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.4);">
+                            No active session. Create a session to make this game live.
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
         <?php if($current_session): 
             $is_always_available = isset($current_session['always_available']) && $current_session['always_available'] == 1;
         ?>
@@ -400,7 +459,7 @@ $conn->close();
 
         <div class="table-card">
             <table>
-                <thead><tr><th>Start Date & Time</th><th>End Date & Time</th><th>Duration</th><th>Play Credits</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Game</th><th>Start Date & Time</th><th>End Date & Time</th><th>Duration</th><th>Play Credits</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
                     <?php foreach($all_sessions as $s): 
                         $is_always_available = isset($s['always_available']) && $s['always_available'] == 1;
@@ -426,13 +485,14 @@ $conn->close();
                         $session_play_cost = isset($s['credits_required']) ? intval($s['credits_required']) : 30;
                     ?>
                     <tr>
+                        <td style="color:var(--primary-purple);font-weight:bold;"><?php echo $available_games[$s['game_name']] ?? ucfirst(str_replace('-', ' ', $s['game_name'])); ?></td>
                         <td><?php echo $start_display; ?></td>
                         <td><?php echo $end_display; ?></td>
                         <td style="color:var(--primary-cyan);font-weight:bold;"><?php echo $duration_display; ?></td>
                         <td style="color:var(--color-credits);font-weight:bold;"><?php echo $session_play_cost; ?> ⚡</td>
                         <td><span class="status-pill <?php echo $s['is_active'] ? 'status-live' : 'status-end'; ?>"><?php echo $s['is_active'] ? 'LIVE' : 'ENDED'; ?></span></td>
                         <td>
-                            <a href="?game=<?php echo $selected_game; ?>&edit=<?php echo $s['id']; ?>" style="color:var(--primary-cyan);text-decoration:none;font-weight:bold;font-size:0.8rem;">EDIT</a>
+                            <a href="?game=<?php echo $s['game_name']; ?>&edit=<?php echo $s['id']; ?>" style="color:var(--primary-cyan);text-decoration:none;font-weight:bold;font-size:0.8rem;">EDIT</a>
                             <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this session?');">
                                 <input type="hidden" name="session_id" value="<?php echo $s['id']; ?>">
                                 <button type="submit" name="delete_session" class="btn-delete">DELETE</button>
@@ -482,3 +542,9 @@ $conn->close();
     </script>
 </body>
 </html>
+<?php
+// Close connection at the end
+if (isset($conn)) {
+    $conn->close();
+}
+?>
