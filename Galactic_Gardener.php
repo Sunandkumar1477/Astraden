@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Galactic Gardener - Deep Space Explorer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -18,7 +18,7 @@
             color: #e0e7ff;
             font-family: 'Plus Jakarta Sans', sans-serif;
             user-select: none;
-            touch-action: none;
+            touch-action: none; /* Prevents default browser gestures like pull-to-refresh */
         }
 
         canvas { display: block; }
@@ -45,7 +45,7 @@
             position: absolute;
             inset: 0;
             pointer-events: none;
-            padding: 2rem;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -61,14 +61,14 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 2px;
-            padding: 1.2rem;
+            padding: 0.8rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
         .btn-start {
             font-family: 'Orbitron', sans-serif;
             letter-spacing: 0.5em;
-            padding: 1.5rem 4rem;
+            padding: 1rem 2.5rem;
             border: 1px solid rgba(129, 140, 248, 0.3);
             background: linear-gradient(180deg, rgba(129, 140, 248, 0.1) 0%, rgba(10, 10, 20, 0.5) 100%);
             transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -84,9 +84,34 @@
             background: rgba(129, 140, 248, 0.2);
         }
 
-        .compass {
+        /* Mobile Fire Button */
+        #mobile-fire-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
             width: 80px;
             height: 80px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 2px solid rgba(99, 102, 241, 0.5);
+            border-radius: 50%;
+            display: none; /* Shown via JS if touch device */
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            active: scale(0.9);
+        }
+
+        #mobile-fire-btn:active {
+            background: rgba(99, 102, 241, 0.5);
+            transform: scale(0.9);
+        }
+
+        .compass {
+            width: 70px;
+            height: 70px;
             border: 1px solid rgba(255,255,255,0.05);
             border-radius: 50%;
             position: relative;
@@ -98,7 +123,7 @@
             top: 50%;
             left: 50%;
             width: 2px;
-            height: 30px;
+            height: 25px;
             background: linear-gradient(to top, transparent, #ef4444);
             transform-origin: bottom center;
             transform: translate(-50%, -100%);
@@ -110,7 +135,7 @@
             top: 50%;
             left: 50%;
             width: 2px;
-            height: 25px;
+            height: 20px;
             background: linear-gradient(to top, transparent, #22c55e);
             transform-origin: bottom center;
             transform: translate(-50%, -100%);
@@ -119,12 +144,12 @@
         }
 
         .label {
-            font-size: 10px;
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 0.2em;
+            letter-spacing: 0.1em;
             color: #6366f1;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         #damage-flash {
@@ -144,35 +169,35 @@
 
     <div id="startScreen" class="ui-screen">
         <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 50px 50px;"></div>
-        <h1 class="text-5xl font-bold tracking-[0.6em] mb-6 text-white font-['Orbitron'] text-center">GALACTIC GARDENER</h1>
-        <p class="text-indigo-300 tracking-[0.3em] mb-16 opacity-50 uppercase text-[10px]">Deep Space Exploration & Extraction</p>
+        <h1 class="text-4xl md:text-5xl font-bold tracking-[0.4em] mb-4 text-white font-['Orbitron'] text-center px-4">GALACTIC GARDENER</h1>
+        <p class="text-indigo-300 tracking-[0.2em] mb-12 opacity-50 uppercase text-[9px] text-center px-4">Interstellar Defense Protocol</p>
         <button class="btn-start" onclick="beginMission()">INITIALIZE VOYAGE</button>
     </div>
 
     <div id="hud" class="hud">
         <div class="flex justify-between items-start">
-            <div class="flex flex-col gap-4">
-                <div class="glass flex flex-col gap-2">
-                    <span class="label">Ship Integrity</span>
-                    <div class="w-56 h-[4px] bg-gray-900 rounded-full overflow-hidden">
-                        <div id="health-bar" class="h-full bg-green-500 transition-all duration-300 shadow-[0_0_10px_#22c55e]" style="width: 100%"></div>
+            <div class="flex flex-col gap-3">
+                <div class="glass flex flex-col gap-1">
+                    <span class="label">Hull Integrity</span>
+                    <div class="w-40 md:w-56 h-[4px] bg-gray-900 rounded-full overflow-hidden">
+                        <div id="health-bar" class="h-full bg-green-500 transition-all duration-300" style="width: 100%"></div>
                     </div>
                 </div>
-                <div class="glass flex flex-col gap-2">
-                    <span class="label">Engine Thrust</span>
-                    <div class="w-56 h-[2px] bg-gray-900 rounded-full overflow-hidden">
-                        <div id="fuel-bar" class="h-full bg-indigo-500 transition-all duration-300 shadow-[0_0_10px_#6366f1]" style="width: 0%"></div>
+                <div class="glass flex flex-col gap-1">
+                    <span class="label">Propulsion Output</span>
+                    <div class="w-40 md:w-56 h-[2px] bg-gray-900 rounded-full overflow-hidden">
+                        <div id="fuel-bar" class="h-full bg-indigo-500 transition-all duration-300" style="width: 0%"></div>
                     </div>
-                    <div class="flex justify-between text-[9px] font-mono mt-1 opacity-40">
-                        <span>REACTOR: STABLE</span>
+                    <div class="flex justify-between text-[8px] font-mono mt-0.5 opacity-40">
+                        <span>REACTOR: NOMINAL</span>
                         <span id="fuel-txt">0%</span>
                     </div>
                 </div>
             </div>
-            <div class="flex gap-6">
-                <div class="glass text-right min-w-[160px]">
-                    <span class="label">Total Score</span>
-                    <div id="score-val" class="text-2xl font-['Orbitron'] text-indigo-400">00000</div>
+            <div class="flex flex-col items-end gap-2">
+                <div class="glass text-right min-w-[120px] md:min-w-[160px]">
+                    <span class="label">Stellar Score</span>
+                    <div id="score-val" class="text-xl md:text-2xl font-['Orbitron'] text-indigo-400">00000</div>
                 </div>
             </div>
         </div>
@@ -183,11 +208,16 @@
                     <div id="compass-needle" class="compass-needle"></div>
                     <div id="health-needle" class="health-needle"></div>
                 </div>
-                <div class="text-[9px] mt-3 text-center opacity-30 font-bold uppercase tracking-widest">
-                    <span class="text-red-400">Threat</span> / <span class="text-green-400">Resource</span>
+                <div class="text-[8px] mt-2 text-center opacity-30 font-bold uppercase tracking-widest">
+                    <span class="text-red-400">Threat</span> / <span class="text-green-400">Repair</span>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Mobile Button -->
+    <div id="mobile-fire-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -204,6 +234,7 @@
         const compassNeedle = document.getElementById('compass-needle');
         const healthNeedle = document.getElementById('health-needle');
         const damageFlash = document.getElementById('damage-flash');
+        const mobileFireBtn = document.getElementById('mobile-fire-btn');
 
         let width, height;
         let isStarted = false;
@@ -229,28 +260,23 @@
             thrustLevel: 0
         };
 
+        // Detect touch capability for Fire button visibility
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (isTouchDevice) {
+            mobileFireBtn.style.display = 'flex';
+        }
+
         // --- Audio Context ---
         let audioCtx, masterGain;
 
         function initAudio() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            masterGain = audioCtx.createGain();
-            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            masterGain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 3);
-            masterGain.connect(audioCtx.destination);
-
-            const createPad = (freq, vol) => {
-                const osc = audioCtx.createOscillator();
-                const g = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.value = freq;
-                g.gain.value = vol;
-                osc.connect(g);
-                g.connect(masterGain);
-                osc.start();
-            };
-            createPad(50, 0.04);
-            createPad(100, 0.02);
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                masterGain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 3);
+                masterGain.connect(audioCtx.destination);
+            } catch (e) { console.log("Audio not supported"); }
         }
 
         function playSound(freq, type = 'triangle', duration = 0.5, volume = 0.05) {
@@ -431,10 +457,17 @@
             playSound(100, 'sawtooth', 0.4, 0.1);
             setTimeout(() => damageFlash.style.opacity = '0', 200);
             if (player.health <= 0) {
-                // Restart logic simplified
                 player.health = 100;
                 player.score = Math.floor(player.score * 0.5);
                 scoreVal.innerText = player.score.toString().padStart(5, '0');
+            }
+        }
+
+        function shoot() {
+            if (player.shootCooldown <= 0) {
+                bullets.push(new Bullet(width/2 + Math.cos(player.angle)*25, height/2 + Math.sin(player.angle)*25, player.angle));
+                player.shootCooldown = 12;
+                playSound(800, 'square', 0.1, 0.04);
             }
         }
 
@@ -445,16 +478,46 @@
             hud.classList.add('hud-active');
             initAudio();
             resize();
-            for(let i=0; i<400; i++) stars.push(new Star());
+            for(let i=0; i<300; i++) stars.push(new Star());
             for(let i=0; i<10; i++) nebulae.push(new NebulaCloud());
             for(let i=0; i<12; i++) asteroids.push(new Asteroid());
             animate();
         }
 
+        // --- Interaction Listeners ---
         window.addEventListener('mousedown', () => mouse.pressed = true);
         window.addEventListener('mouseup', () => mouse.pressed = false);
         window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        window.addEventListener('keydown', (e) => keys[e.code] = true);
+        
+        // Touch Interaction
+        window.addEventListener('touchstart', (e) => {
+            if (e.target === mobileFireBtn || mobileFireBtn.contains(e.target)) return;
+            mouse.pressed = true;
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        }, { passive: false });
+        
+        window.addEventListener('touchmove', (e) => {
+            if (e.target === mobileFireBtn || mobileFireBtn.contains(e.target)) return;
+            e.preventDefault(); // Stop scrolling
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            mouse.pressed = false;
+        });
+
+        // Mobile fire button
+        mobileFireBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            shoot();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (e.code === 'Space') shoot();
+        });
         window.addEventListener('keyup', (e) => keys[e.code] = false);
         window.addEventListener('resize', resize);
 
@@ -488,6 +551,7 @@
             }
             ctx.fillStyle = '#020205'; ctx.fillRect(-20, -20, width+40, height+40);
 
+            // Calculation logic
             const targetAngle = Math.atan2(mouse.y - height/2, mouse.x - width/2);
             let angleDiff = targetAngle - player.angle;
             while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
@@ -501,11 +565,6 @@
                 if (frame % 4 === 0) playSound(50, 'sine', 0.2, 0.02);
             } else { player.thrustLevel = Math.max(0, player.thrustLevel - 2); }
 
-            if (keys['Space'] && player.shootCooldown <= 0) {
-                bullets.push(new Bullet(width/2 + Math.cos(player.angle)*25, height/2 + Math.sin(player.angle)*25, player.angle));
-                player.shootCooldown = 12;
-                playSound(800, 'square', 0.1, 0.04);
-            }
             if (player.shootCooldown > 0) player.shootCooldown--;
             player.vx *= 0.985; player.vy *= 0.985;
 
@@ -541,7 +600,7 @@
                         }
                         for(let i=0; i<8; i++) particles.push(new Stardust(a.x, a.y, (Math.random()-0.5)*6, (Math.random()-0.5)*6, a.isHealth ? '#22c55e' : '#94a3b8'));
                         asteroids.splice(idx, 1); bullets.splice(bidx, 1);
-                        setTimeout(() => asteroids.push(new Asteroid(null, null, Math.random() < 0.1)), 2000);
+                        setTimeout(() => asteroids.push(new Asteroid(null, null, Math.random() < 0.15)), 2000);
                     }
                 });
             });
@@ -555,9 +614,8 @@
             // HUD & Scanner
             healthBar.style.width = player.health + '%';
             fuelBar.style.width = player.thrustLevel + '%';
-            fuelTxt.innerText = player.thrustLevel + '%';
+            fuelTxt.innerText = Math.floor(player.thrustLevel) + '%';
             
-            // Scanner Logic: Find nearest asteroid and health asteroid
             let nearestAsteroid = null, nearestHealth = null;
             let minDistA = Infinity, minDistH = Infinity;
             asteroids.forEach(a => {
@@ -578,7 +636,12 @@
 
             requestAnimationFrame(animate);
         }
-        window.onload = resize;
+        window.onload = () => {
+            resize();
+            // Show HUD preview
+            ctx.fillStyle = '#020205';
+            ctx.fillRect(0, 0, width, height);
+        };
     </script>
 </body>
 </html>
