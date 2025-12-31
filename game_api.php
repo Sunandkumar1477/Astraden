@@ -881,6 +881,51 @@ switch ($action) {
         $leaderboard_stmt->close();
         break;
         
+    case 'check_session_validity':
+        // Check if current session is still valid (not logged in elsewhere)
+        if (!$user_id) {
+            echo json_encode(['success' => false, 'valid' => false, 'message' => 'Not logged in']);
+            exit;
+        }
+        
+        $session_token = $_SESSION['session_token'] ?? null;
+        $is_valid = false;
+        
+        // Check if session_token column exists
+        $has_session_column = false;
+        try {
+            $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'session_token'");
+            if ($check_column) {
+                $has_session_column = $check_column->num_rows > 0;
+                $check_column->close();
+            }
+        } catch (Exception $e) {
+            $has_session_column = false;
+        }
+        
+        if ($has_session_column && $session_token !== null) {
+            try {
+                $verify_stmt = $conn->prepare("SELECT id FROM users WHERE id = ? AND session_token = ?");
+                $verify_stmt->bind_param("is", $user_id, $session_token);
+                $verify_stmt->execute();
+                $verify_result = $verify_stmt->get_result();
+                $is_valid = $verify_result->num_rows > 0;
+                $verify_stmt->close();
+            } catch (Exception $e) {
+                $is_valid = true; // If error, assume valid to not interrupt gameplay
+            }
+        } else {
+            // If no session token system, assume valid
+            $is_valid = true;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'valid' => $is_valid,
+            'message' => $is_valid ? 'Session valid' : 'Session invalid - logged in elsewhere'
+        ]);
+        break;
+        
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
 }

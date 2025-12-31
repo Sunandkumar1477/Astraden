@@ -346,14 +346,40 @@ $conn->close();
                 font-size: 14px;
             }
             
+            /* Move exit button below Hull Integrity on mobile */
+            .hud-top > div:first-child {
+                position: relative;
+            }
+            
+            #exit-btn-container {
+                position: static !important;
+                top: auto !important;
+                right: auto !important;
+                left: auto !important;
+                margin-top: 10px;
+                margin-left: 0;
+                margin-right: 0;
+            }
+            
+            .hud-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .hud-top > div:first-child {
+                width: 100%;
+            }
+            
+            .hud-top > div:last-child {
+                align-self: flex-end;
+                width: auto;
+            }
+            
             #exit-game-btn {
                 padding: 8px 15px;
                 font-size: 12px;
-                /* Move exit button to left side on mobile to avoid score overlap */
-                position: absolute !important;
-                top: 20px !important;
-                left: 20px !important;
-                right: auto !important;
+                width: auto;
             }
         }
     </style>
@@ -372,6 +398,12 @@ $conn->close();
                             <div id="health-bar"></div>
                         </div>
                     </div>
+                    <!-- Exit button - positioned below Hull Integrity on mobile, top-right on desktop -->
+                    <div style="position: absolute; top: 20px; right: 20px; pointer-events: auto; z-index: 1000;" id="exit-btn-container">
+                        <button id="exit-game-btn" style="display: none; background: rgba(255, 51, 51, 0.2); border: 2px solid #ff3333; color: #ff3333; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 0 15px rgba(255, 51, 51, 0.3);">
+                            ⛔ EXIT GAME
+                        </button>
+                    </div>
                 </div>
                 <div style="text-align: right;">
                     <div class="stat-box">
@@ -389,11 +421,6 @@ $conn->close();
                             ⚡ <span id="credits-value"><?php echo $user_credits; ?></span>
                         </div>
                     </div>
-                </div>
-                <div style="position: absolute; top: 20px; right: 20px; pointer-events: auto; z-index: 1000;">
-                    <button id="exit-game-btn" style="display: none; background: rgba(255, 51, 51, 0.2); border: 2px solid #ff3333; color: #ff3333; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 0 15px rgba(255, 51, 51, 0.3);">
-                        ⛔ EXIT GAME
-                    </button>
                 </div>
             </div>
             
@@ -470,6 +497,27 @@ $conn->close();
             
             <!-- Exit Confirmation Modal -->
             
+        </div>
+    </div>
+    
+    <!-- Logged Out From Another Device Modal -->
+    <div id="another-device-logout-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 10005; display: none; align-items: center; justify-content: center; pointer-events: auto;">
+        <div style="background: rgba(10, 20, 30, 0.95); border: 2px solid #FFD700; border-radius: 15px; padding: 30px; max-width: 450px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); pointer-events: auto; position: relative; z-index: 10006;">
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
+                <h2 style="color: #FFD700; margin: 0 0 20px 0; font-size: 1.5rem; letter-spacing: 2px; text-shadow: 0 0 10px #FFD700;">Session Terminated</h2>
+            </div>
+            <div style="margin-bottom: 25px;">
+                <p style="color: #fff; margin-bottom: 15px; font-size: 1rem; line-height: 1.6;">
+                    Your account has been accessed from another device. For security reasons, your session on this device has been automatically terminated.
+                </p>
+                <p style="color: rgba(255, 255, 255, 0.8); margin: 0; font-size: 0.9rem; line-height: 1.5;">
+                    If this was not you, please secure your account immediately.
+                </p>
+            </div>
+            <button id="another-device-ok-btn" style="background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; pointer-events: auto; z-index: 10007; width: 100%;">
+                Return to Home
+            </button>
         </div>
     </div>
     
@@ -900,6 +948,11 @@ $conn->close();
                     }
                     // Initialize exit prevention
                     preventExitDuringGame();
+                    // Start session validity checking
+                    if (IS_LOGGED_IN && !sessionCheckInterval) {
+                        sessionCheckInterval = setInterval(checkSessionValidity, 5000); // Check every 5 seconds
+                        sessionCheckActive = true;
+                    }
                     console.log('Game started successfully. creditsUsed:', creditsUsed, 'remaining:', currentUserCredits);
                     return true;
                 } else {
@@ -1267,6 +1320,47 @@ $conn->close();
             ctx.restore();
         }
 
+        // Check session validity periodically
+        function checkSessionValidity() {
+            if (!IS_LOGGED_IN || !gameStarted || !gameActive) return;
+            
+            fetch('game_api.php?action=check_session_validity')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && !data.valid) {
+                        // Session invalid - user logged in elsewhere
+                        handleAnotherDeviceLogout();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking session:', error);
+                });
+        }
+        
+        // Handle logout from another device
+        function handleAnotherDeviceLogout() {
+            // Stop game
+            gameActive = false;
+            gameStarted = false;
+            
+            // Stop session checking
+            if (sessionCheckInterval) {
+                clearInterval(sessionCheckInterval);
+                sessionCheckInterval = null;
+            }
+            
+            // Save current score if game was active
+            if (score > 0 && creditsUsed > 0 && currentSessionId) {
+                saveScore(score).catch(err => console.error('Error saving score on logout:', err));
+            }
+            
+            // Show logout modal
+            if (anotherDeviceModal) {
+                anotherDeviceModal.classList.remove('hidden');
+                anotherDeviceModal.style.display = 'flex';
+            }
+        }
+        
         function gameLoop() {
             ctx.clearRect(0, 0, width, height);
             stars.forEach(star => {
@@ -1517,6 +1611,25 @@ $conn->close();
                     } else {
                         window.location.href = 'index.php';
                     }
+                }
+            });
+        }
+        
+        // Another device logout modal OK button
+        if (anotherDeviceOkBtn) {
+            anotherDeviceOkBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Redirect to index page
+                window.location.href = 'index.php?logout=another_device';
+            });
+        }
+        
+        // Close another device modal when clicking outside (shouldn't happen, but just in case)
+        if (anotherDeviceModal) {
+            anotherDeviceModal.addEventListener('click', (e) => {
+                if (e.target === anotherDeviceModal) {
+                    window.location.href = 'index.php?logout=another_device';
                 }
             });
         }

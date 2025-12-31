@@ -1373,6 +1373,27 @@ $conn->close();
             </div>
         </div>
 
+        <!-- Logged Out From Another Device Modal -->
+        <div id="another-device-logout-modal" class="custom-modal" style="z-index: 10005;">
+            <div class="modal-content" style="border-color: #FFD700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);">
+                <div class="modal-header">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
+                    <h2 style="color: #FFD700; text-shadow: 0 0 10px #FFD700;">Session Terminated</h2>
+                </div>
+                <div class="modal-body">
+                    <p style="color: #fff; margin-bottom: 15px; line-height: 1.6;">
+                        Your account has been accessed from another device. For security reasons, your session on this device has been automatically terminated.
+                    </p>
+                    <p class="modal-warning" style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; line-height: 1.5;">
+                        If this was not you, please secure your account immediately.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button id="another-device-ok-btn" class="modal-btn primary" style="background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; width: 100%;">Return to Home</button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Custom Exit Confirmation Modal -->
         <div id="exit-confirm-modal" class="custom-modal">
             <div class="modal-content">
@@ -1539,6 +1560,9 @@ $conn->close();
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+        // --- Game Configuration ---
+        const IS_LOGGED_IN = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+
         // --- Game State ---
         const state = {
             score: 0,
@@ -1563,6 +1587,9 @@ $conn->close();
         
         // Track if game ended due to time
         let gameEndedByTime = false;
+        
+        // Session validity check interval
+        let sessionCheckInterval = null;
         
         // Apply different styling for time-duration sessions
         function applyTimeDurationStyling(isTimeDuration) {
@@ -1994,6 +2021,11 @@ $conn->close();
                     document.getElementById('game-status-overlay').classList.add('hidden');
                     // Update credits display
                     document.getElementById('user-credits-display').textContent = data.credits_remaining.toLocaleString();
+                    
+                    // Start session validity checking (only if logged in)
+                    if (IS_LOGGED_IN && !state.isDemoMode && !sessionCheckInterval) {
+                        sessionCheckInterval = setInterval(checkSessionValidity, 5000); // Check every 5 seconds
+                    }
                 } else {
                     // Show specific error message from server
                     if (data.message) {
@@ -3237,12 +3269,68 @@ $conn->close();
             }
         }
 
+        // Check session validity periodically
+        function checkSessionValidity() {
+            if (!IS_LOGGED_IN || !state.gameStarted || state.isDemoMode) return;
+            
+            fetch('game_api.php?action=check_session_validity')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && !data.valid) {
+                        // Session invalid - user logged in elsewhere
+                        handleAnotherDeviceLogout();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking session:', error);
+                });
+        }
+        
+        // Handle logout from another device
+        function handleAnotherDeviceLogout() {
+            // Stop game
+            state.isPlaying = false;
+            state.gameStarted = false;
+            
+            // Stop session checking
+            if (sessionCheckInterval) {
+                clearInterval(sessionCheckInterval);
+                sessionCheckInterval = null;
+            }
+            
+            // Stop other intervals
+            if (contestTimerInterval) clearInterval(contestTimerInterval);
+            if (backgroundGameLoop) clearInterval(backgroundGameLoop);
+            
+            // Save current score if game was active
+            if (state.score > 0 && state.creditsUsed > 0 && state.gameSessionId) {
+                gameOver().catch(err => console.error('Error saving score on logout:', err));
+            }
+            
+            // Show logout modal
+            const modal = document.getElementById('another-device-logout-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+        
         // Attach to HUD exit button
         document.getElementById('exit-game-btn-hud').addEventListener('click', function(e) {
             if (state.isPlaying) {
                 showExitConfirmation();
             }
         });
+        
+        // Another device logout modal OK button
+        const anotherDeviceOkBtn = document.getElementById('another-device-ok-btn');
+        if (anotherDeviceOkBtn) {
+            anotherDeviceOkBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Redirect to index page
+                window.location.href = 'index.php?logout=another_device';
+            });
+        }
 
         // Prevention of accidental exit during gameplay
         function preventExitDuringGame() {

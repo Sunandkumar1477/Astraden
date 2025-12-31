@@ -170,12 +170,13 @@ if ($has_session_column && !$force_login) {
                 $different_browser = $session_data['last_session_user_agent'] !== $user_agent;
             }
             
-            // Return confirmation request
+            // Return confirmation request with professional message
             ob_end_clean();
+            $message = 'Your account is currently active on another device or browser. Would you like to continue your session on this device?';
             echo json_encode([
                 'success' => false,
                 'requires_confirmation' => true,
-                'message' => 'You are already logged in on another device or browser. Do you want to continue on this device? This will automatically log you out from the other device.',
+                'message' => $message,
                 'same_device' => $same_ip && $different_browser
             ]);
             $stmt->close();

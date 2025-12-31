@@ -59,6 +59,33 @@ session_start();
         }, 5000);
     </script>
     <?php endif; ?>
+    
+    <!-- Logged Out From Another Device Message -->
+    <?php if (isset($_GET['logout']) && $_GET['logout'] == 'another_device'): ?>
+    <div id="anotherDeviceMessage" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10001; background: rgba(255, 215, 0, 0.2); border: 2px solid #FFD700; color: #FFD700; padding: 15px 25px; border-radius: 10px; font-weight: 700; text-align: center; max-width: 500px; box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);">
+        🔐 You have been logged out because your account was accessed from another device. For security reasons, only one active session is allowed at a time.
+    </div>
+    <script>
+        // Remove URL parameter after showing message
+        if (window.history.replaceState) {
+            const url = new URL(window.location);
+            url.searchParams.delete('logout');
+            window.history.replaceState({}, '', url);
+        }
+        
+        // Hide message after 8 seconds
+        setTimeout(function() {
+            const msg = document.getElementById('anotherDeviceMessage');
+            if (msg) {
+                msg.style.opacity = '0';
+                msg.style.transition = 'opacity 0.5s ease';
+                setTimeout(function() {
+                    msg.style.display = 'none';
+                }, 500);
+            }
+        }, 8000);
+    </script>
+    <?php endif; ?>
 
     <!-- Loading Screen -->
     <div class="loading" id="loading">
@@ -529,12 +556,17 @@ session_start();
         <div class="auth-modal">
             <button class="close-modal" onclick="closeModal('loginConfirmation')">&times;</button>
             <div class="modal-header">
-                <h2>Already Logged In</h2>
+                <h2>⚠️ Account Already Active</h2>
             </div>
             <div style="padding: 20px;">
-                <p id="loginConfirmationMessage" style="color: rgba(0, 255, 255, 0.9); margin-bottom: 25px; line-height: 1.6;"></p>
+                <p id="loginConfirmationMessage" style="color: rgba(0, 255, 255, 0.9); margin-bottom: 25px; line-height: 1.6; text-align: center;"></p>
+                <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+                    <p style="color: #FFD700; font-size: 0.9rem; margin: 0; text-align: center; line-height: 1.5;">
+                        <strong>Note:</strong> If you continue on this device, you will be automatically logged out from your previous device. Any active game session will be terminated.
+                    </p>
+                </div>
                 <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button type="button" class="submit-btn" id="loginConfirmBtn" style="flex: 1; background: linear-gradient(135deg, #00ffff, #9d4edd);">Continue on This Device</button>
+                    <button type="button" class="submit-btn" id="loginConfirmBtn" style="flex: 1; background: linear-gradient(135deg, #00ffff, #9d4edd);">Yes, Continue on This Device</button>
                     <button type="button" class="submit-btn" id="loginCancelBtn" style="flex: 1; background: rgba(0, 255, 255, 0.2); border: 2px solid #00ffff; color: #00ffff;">Cancel</button>
                 </div>
             </div>
