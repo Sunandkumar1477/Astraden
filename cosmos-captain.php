@@ -702,6 +702,12 @@ $conn->close();
             
             // Show button immediately if user is logged in (before async calls complete)
             if (IS_LOGGED_IN && startGameBtn) {
+                // Clear loading text immediately
+                if (timerDisplay) {
+                    timerDisplay.textContent = '';
+                    timerDisplay.style.display = 'none';
+                }
+                // Show button immediately
                 showGameReady();
             }
             
@@ -746,10 +752,22 @@ $conn->close();
             // This ensures the button appears even if status check is slow
             if (IS_LOGGED_IN) {
                 setTimeout(() => {
-                    if (startGameBtn && startGameBtn.style.display === 'none') {
+                    if (startGameBtn) {
+                        const isHidden = startGameBtn.style.display === 'none' || 
+                                        startGameBtn.style.display === '' ||
+                                        window.getComputedStyle(startGameBtn).display === 'none';
+                        if (isHidden) {
+                            showGameReady();
+                        }
+                    }
+                }, 500);
+                
+                // Additional fallback after 2 seconds
+                setTimeout(() => {
+                    if (startGameBtn && IS_LOGGED_IN) {
                         showGameReady();
                     }
-                }, 1000);
+                }, 2000);
             }
         }
         
@@ -815,8 +833,14 @@ $conn->close();
         
         // Show game ready state
         function showGameReady() {
-            if (timerDisplay) timerDisplay.textContent = '';
+            // Always clear loading text
+            if (timerDisplay) {
+                timerDisplay.textContent = '';
+                timerDisplay.style.display = 'none';
+            }
+            
             const requiredCredits = creditsRequired || 30;
+            
             if (statusMessage) {
                 if (IS_LOGGED_IN) {
                     if (IS_CONTEST_ACTIVE) {
@@ -829,20 +853,24 @@ $conn->close();
                 }
             }
             
-            if (startGameBtn) {
-                if (IS_LOGGED_IN) {
-                    if (currentUserCredits >= requiredCredits) {
-                        startGameBtn.style.display = 'flex';
-                        startGameBtn.innerHTML = `🚀 START MISSION - ⚡ ${requiredCredits} Credits`;
-                        startGameBtn.disabled = false;
-                    } else {
-                        startGameBtn.style.display = 'flex';
-                        startGameBtn.innerHTML = `🔒 LOCKED - ⚡ ${requiredCredits} Credits Required`;
-                        startGameBtn.disabled = true;
-                    }
+            // Always show button if user is logged in
+            if (startGameBtn && IS_LOGGED_IN) {
+                startGameBtn.style.display = 'flex';
+                startGameBtn.style.visibility = 'visible';
+                
+                if (currentUserCredits >= requiredCredits) {
+                    startGameBtn.innerHTML = `🚀 START MISSION - ⚡ ${requiredCredits} Credits`;
+                    startGameBtn.disabled = false;
+                    startGameBtn.style.opacity = '1';
+                    startGameBtn.style.cursor = 'pointer';
                 } else {
-                    startGameBtn.style.display = 'none';
+                    startGameBtn.innerHTML = `🔒 LOCKED - ⚡ ${requiredCredits} Credits Required`;
+                    startGameBtn.disabled = true;
+                    startGameBtn.style.opacity = '0.6';
+                    startGameBtn.style.cursor = 'not-allowed';
                 }
+            } else if (startGameBtn && !IS_LOGGED_IN) {
+                startGameBtn.style.display = 'none';
             }
         }
         
@@ -1931,6 +1959,24 @@ $conn->close();
             e.preventDefault();
             handleInput(e);
         }, { passive: false });
+        
+        // Ensure button shows immediately when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                if (IS_LOGGED_IN && startGameBtn) {
+                    setTimeout(() => {
+                        showGameReady();
+                    }, 100);
+                }
+            });
+        } else {
+            // DOM already loaded
+            if (IS_LOGGED_IN && startGameBtn) {
+                setTimeout(() => {
+                    showGameReady();
+                }, 100);
+            }
+        }
 
         init();
     </script>
