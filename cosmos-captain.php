@@ -117,6 +117,37 @@ $conn->close();
             align-items: flex-start;
             pointer-events: auto;
         }
+        
+        .hud-left {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .hud-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            text-align: right;
+        }
+        
+        #exit-btn-container {
+            pointer-events: auto;
+            z-index: 1000;
+        }
+        
+        /* Desktop: Exit button on the side */
+        @media (min-width: 769px) {
+            .hud-left {
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            #exit-btn-container {
+                margin-top: 0;
+            }
+        }
 
         .stat-box {
             background: rgba(0, 0, 0, 0.6);
@@ -346,40 +377,49 @@ $conn->close();
                 font-size: 14px;
             }
             
-            /* Move exit button below Hull Integrity on mobile */
-            .hud-top > div:first-child {
-                position: relative;
-            }
-            
-            #exit-btn-container {
-                position: static !important;
-                top: auto !important;
-                right: auto !important;
-                left: auto !important;
-                margin-top: 10px;
-                margin-left: 0;
-                margin-right: 0;
-            }
-            
+            /* Mobile: Exit button in first box line, score boxes in column below */
             .hud-top {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
+                gap: 15px;
             }
             
-            .hud-top > div:first-child {
+            .hud-left {
                 width: 100%;
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
+                justify-content: space-between;
             }
             
-            .hud-top > div:last-child {
-                align-self: flex-end;
-                width: auto;
+            .hud-left .stat-box {
+                flex: 1;
+            }
+            
+            #exit-btn-container {
+                flex-shrink: 0;
+                margin-top: 0;
+            }
+            
+            .hud-right {
+                width: 100%;
+                align-items: flex-start;
+                margin-top: 10px;
+            }
+            
+            .hud-right .stat-box {
+                width: 100%;
+                margin-top: 10px;
+            }
+            
+            .hud-right .stat-box:first-child {
+                margin-top: 0;
             }
             
             #exit-game-btn {
                 padding: 8px 15px;
                 font-size: 12px;
-                width: auto;
+                white-space: nowrap;
             }
         }
     </style>
@@ -391,21 +431,21 @@ $conn->close();
 
         <div id="ui-layer">
             <div class="hud-top">
-                <div>
+                <div class="hud-left">
                     <div class="stat-box">
                         <div class="score-label">Hull Integrity</div>
                         <div class="health-container">
                             <div id="health-bar"></div>
                         </div>
                     </div>
-                    <!-- Exit button - positioned below Hull Integrity on mobile, top-right on desktop -->
-                    <div style="position: absolute; top: 20px; right: 20px; pointer-events: auto; z-index: 1000;" id="exit-btn-container">
+                    <!-- Exit button - in same line on mobile, on side for desktop -->
+                    <div id="exit-btn-container">
                         <button id="exit-game-btn" style="display: none; background: rgba(255, 51, 51, 0.2); border: 2px solid #ff3333; color: #ff3333; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 0 15px rgba(255, 51, 51, 0.3);">
                             ⛔ EXIT GAME
                         </button>
                     </div>
                 </div>
-                <div style="text-align: right;">
+                <div class="hud-right">
                     <div class="stat-box">
                         <div class="score-label">Mission Score</div>
                         <div id="score" class="score-value">0000</div>
