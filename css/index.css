@@ -6015,24 +6015,26 @@ body.mobile-device .play-btn:active {
 
 /* Kids Zone Container */
 .kids-zone-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-    z-index: 1000;
-    overflow-y: auto;
-    transform: translateX(100%);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    visibility: visible;
-    opacity: 1;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%) !important;
+    z-index: 1000 !important;
+    overflow-y: auto !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: none;
 }
 
 .kids-zone-container.show {
-    transform: translateX(0);
-    visibility: visible;
-    opacity: 1;
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
 }
 
 .kids-zone-header {
@@ -6240,9 +6242,21 @@ body.mobile-device .play-btn:active {
 /* Medium mobile devices (500px - 767px) */
 @media (min-width: 500px) and (max-width: 767px) {
     .kids-zone-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 1000 !important;
+        overflow-y: auto !important;
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
+    }
+    
+    .kids-zone-container.show {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        transform: translateX(0) !important;
     }
     
     .kids-zone-games {
@@ -6495,9 +6509,21 @@ body.mobile-device .play-btn:active {
 /* Mobile devices (below 768px) - general styles */
 @media (max-width: 767px) {
     .kids-zone-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 1000 !important;
+        overflow-y: auto !important;
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
+    }
+    
+    .kids-zone-container.show {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        transform: translateX(0) !important;
     }
     
     .kids-zone-games {
@@ -6637,9 +6663,21 @@ body.mobile-device .play-btn:active {
 /* Small mobile devices (below 500px) */
 @media (max-width: 499px) {
     .kids-zone-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 1000 !important;
+        overflow-y: auto !important;
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
+    }
+    
+    .kids-zone-container.show {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        transform: translateX(0) !important;
     }
     
     .kids-zone-btn {

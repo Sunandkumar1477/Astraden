@@ -790,8 +790,8 @@ require_once 'security_headers.php';
     </div>
 
     <!-- Kids Zone Container (Hidden by default) -->
-    <div class="kids-zone-container" id="kidsZoneContainer" style="display: none;">
-        <div class="kids-zone-header">
+    <div class="kids-zone-container" id="kidsZoneContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; overflow-y: auto;">
+        <div class="kids-zone-header" style="display: block; visibility: visible; opacity: 1;">
             <h1>🌈 Kids Zone 🌈</h1>
             <p>Fun Learning Games for Kids!</p>
             <button class="exit-kids-zone-btn" onclick="exitKidsZone()">← Back to Games</button>
@@ -810,8 +810,8 @@ require_once 'security_headers.php';
             </div>
         </div>
         
-        <div class="kids-zone-games">
-            <div class="games-grid">
+        <div class="kids-zone-games" style="display: block; visibility: visible; opacity: 1;">
+            <div class="games-grid" style="display: grid; visibility: visible; opacity: 1;">
                 <div class="game-card kids-game-card" data-game="learn-abc" onclick="launchLearnABC(event);" style="cursor: pointer;">
                     <div class="game-icon">🔤</div>
                     <div class="game-title">Learn ABC</div>
@@ -2693,6 +2693,19 @@ require_once 'security_headers.php';
             
             if (!mainContainer || !kidsZoneContainer) return;
             
+            // Show kids zone container immediately - no delay
+            kidsZoneContainer.style.display = 'block';
+            kidsZoneContainer.style.visibility = 'visible';
+            kidsZoneContainer.style.opacity = '1';
+            kidsZoneContainer.style.position = 'fixed';
+            kidsZoneContainer.style.top = '0';
+            kidsZoneContainer.style.left = '0';
+            kidsZoneContainer.style.width = '100%';
+            kidsZoneContainer.style.height = '100%';
+            kidsZoneContainer.style.zIndex = '1000';
+            kidsZoneContainer.style.transform = 'translateX(100%)';
+            kidsZoneContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            
             // Reset main container position first
             mainContainer.style.transform = 'translateX(0)';
             mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -2704,13 +2717,8 @@ require_once 'security_headers.php';
             
             // Show kids zone with slide in from the right
             setTimeout(() => {
-                kidsZoneContainer.style.display = 'block';
-                kidsZoneContainer.style.visibility = 'visible';
-                kidsZoneContainer.style.opacity = '1';
-                kidsZoneContainer.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    kidsZoneContainer.classList.add('show');
-                }, 50);
+                kidsZoneContainer.classList.add('show');
+                kidsZoneContainer.style.transform = 'translateX(0)';
             }, 250);
             
             // Load Learn ABC and Numbers credits
