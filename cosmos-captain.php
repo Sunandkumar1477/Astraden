@@ -385,9 +385,9 @@ $conn->close();
                         </div>
                     </div>
                 </div>
-                <div style="position: absolute; top: 20px; right: 20px; pointer-events: auto; z-index: 1;">
-                    <button id="exit-game-btn" style="display: none; background: rgba(255, 77, 77, 0.2); border: 2px solid #ff4d4d; color: #ff4d4d; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-                        ⛔ EXIT
+                <div style="position: absolute; top: 20px; right: 20px; pointer-events: auto; z-index: 1000;">
+                    <button id="exit-game-btn" style="display: none; background: rgba(255, 51, 51, 0.2); border: 2px solid #ff3333; color: #ff3333; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 0 15px rgba(255, 51, 51, 0.3);">
+                        ⛔ EXIT GAME
                     </button>
                 </div>
             </div>
@@ -470,16 +470,20 @@ $conn->close();
     
     <!-- Exit Confirmation Modal - Outside ui-layer for proper pointer events -->
     <div id="exit-confirm-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10001; display: none; align-items: center; justify-content: center; pointer-events: auto;">
-        <div style="background: rgba(10, 10, 20, 0.95); border: 2px solid #ff4d4d; border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 77, 77, 0.5); pointer-events: auto; position: relative; z-index: 10002;">
-            <h2 style="color: #ff4d4d; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 10px #ff4d4d;">⚠️ EXIT GAME?</h2>
-            <p style="color: #ccc; margin-bottom: 20px; font-size: 16px;">Are you sure you want to exit?</p>
-            <p style="color: #888; margin-bottom: 25px; font-size: 14px;">Your current score will be saved automatically.</p>
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button id="exit-no-btn" style="background: rgba(0, 242, 255, 0.2); color: var(--primary-glow); border: 2px solid var(--primary-glow); padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; pointer-events: auto; z-index: 10003;">
-                    NO, CONTINUE
+        <div style="background: rgba(10, 20, 30, 0.95); border: 2px solid #00ffff; border-radius: 15px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(0, 255, 255, 0.3); pointer-events: auto; position: relative; z-index: 10002;">
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: #ff3333; margin: 0 0 20px 0; font-size: 1.5rem; letter-spacing: 2px; text-shadow: 0 0 10px #ff3333;">⚠️ SYSTEM ALERT</h2>
+            </div>
+            <div style="margin-bottom: 25px;">
+                <p style="color: #fff; margin-bottom: 10px; font-size: 1rem; line-height: 1.5;">ARE YOU SURE YOU WANT TO CLOSE THIS GAME?</p>
+                <p style="color: #ffaa00; margin: 0; font-size: 0.9rem; font-weight: bold;">Your game will end and your score will be saved automatically.</p>
+            </div>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button id="exit-no-btn" style="background: rgba(0, 242, 255, 0.2); color: var(--primary-glow); border: 2px solid var(--primary-glow); padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; pointer-events: auto; z-index: 10003; min-width: 150px;">
+                    NO, CONTINUE PLAYING
                 </button>
-                <button id="exit-yes-btn" style="background: rgba(255, 77, 77, 0.2); color: #ff4d4d; border: 2px solid #ff4d4d; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; pointer-events: auto; z-index: 10003;">
-                    YES, EXIT
+                <button id="exit-yes-btn" style="background: rgba(255, 51, 51, 0.2); color: #ff3333; border: 2px solid #ff3333; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; pointer-events: auto; z-index: 10003; min-width: 150px;">
+                    YES, SAVE & EXIT
                 </button>
             </div>
         </div>
@@ -781,16 +785,19 @@ $conn->close();
         
         // Fetch user total score
         function fetchUserTotalScore() {
-            fetch(`game_api.php?action=get_user_score&game_name=${GAME_NAME}`)
+            return fetch(`game_api.php?action=get_user_score&game_name=${GAME_NAME}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         userTotalScore = data.user_total_points || 0;
                         updateTotalScoreDisplay();
+                        return userTotalScore;
                     }
+                    return 0;
                 })
                 .catch(error => {
                     console.error('Error fetching total score:', error);
+                    return 0;
                 });
         }
         
@@ -863,6 +870,8 @@ $conn->close();
                     if (exitBtn) {
                         exitBtn.style.display = 'block';
                     }
+                    // Initialize exit prevention
+                    preventExitDuringGame();
                     console.log('Game started successfully. creditsUsed:', creditsUsed, 'remaining:', currentUserCredits);
                     return true;
                 } else {
@@ -884,11 +893,11 @@ $conn->close();
         // Save score when game ends
         function saveScore(score) {
             if (!IS_LOGGED_IN) {
-                return;
+                return Promise.resolve();
             }
             
             if (!gameStarted || creditsUsed === 0 || !currentSessionId) {
-                return;
+                return Promise.resolve();
             }
             
             const finalScore = Math.floor(score || 0);
@@ -901,7 +910,7 @@ $conn->close();
             formData.append('game_name', GAME_NAME);
             formData.append('is_demo', 'false');
             
-            fetch('game_api.php?action=save_score', {
+            return fetch('game_api.php?action=save_score', {
                 method: 'POST',
                 body: formData
             })
@@ -910,18 +919,23 @@ $conn->close();
                 console.log("Score save response:", data);
                 if (data.success) {
                     console.log('Score saved:', finalScore);
+                    // Update total score from response
                     if (data.total_score !== undefined) {
                         userTotalScore = data.total_score;
                         updateTotalScoreDisplay();
+                        return data.total_score;
+                    } else {
+                        // If total_score not in response, fetch it
+                        return fetchUserTotalScore();
                     }
-                    // Fetch updated total score across all games
-                    fetchUserTotalScore();
                 } else {
                     console.error('Failed to save score:', data.message);
+                    return 0;
                 }
             })
             .catch(error => {
                 console.error('Error saving score:', error);
+                return 0;
             });
         }
         
@@ -1263,14 +1277,29 @@ $conn->close();
             requestAnimationFrame(gameLoop);
         }
 
-        function gameOver() {
+        async function gameOver() {
             gameActive = false;
             playGameOverSound();
             createExplosion(ship.x, ship.y, '#ff4d4d');
             msgTitle.textContent = "GAME OVER";
             
-            // Save score
-            saveScore(score);
+            // Save score (await to ensure it completes)
+            if (gameStarted && creditsUsed > 0 && currentSessionId) {
+                try {
+                    const savedTotalScore = await saveScore(score);
+                    if (savedTotalScore !== undefined && savedTotalScore > 0) {
+                        userTotalScore = savedTotalScore;
+                        updateTotalScoreDisplay();
+                    } else {
+                        // Fetch updated total score if not returned from save
+                        await fetchUserTotalScore();
+                    }
+                } catch (error) {
+                    console.error('Error in gameOver save:', error);
+                    // Still try to fetch total score
+                    await fetchUserTotalScore();
+                }
+            }
             
             // Update final score display
             const finalScoreDisplay = document.getElementById('final-score-display');
@@ -1500,27 +1529,59 @@ $conn->close();
             });
         }
         
+        // Initialize exit prevention when game starts
+        function initExitPrevention() {
+            if (gameActive && gameStarted) {
+                preventExitDuringGame();
+            }
+        }
+        
+        // Function to show exit confirmation
+        function showExitConfirmation() {
+            if (exitModal) {
+                exitModal.classList.remove('hidden');
+                exitModal.style.display = 'flex';
+            }
+        }
+        
+        // Function to hide exit confirmation
+        function hideExitConfirmation() {
+            if (exitModal) {
+                exitModal.classList.add('hidden');
+                exitModal.style.display = 'none';
+            }
+        }
+        
+        // Prevention of accidental exit during gameplay
+        function preventExitDuringGame() {
+            // Push a dummy state to history to catch the back button
+            window.history.pushState({ inGame: true }, "");
+        }
+        
         // Exit confirmation handlers
         if (exitYesBtn) {
             exitYesBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
                 hideExitConfirmation();
                 
-                // Save score before exiting
-                if (gameStarted && creditsUsed > 0) {
-                    saveScore(score);
-                    // Wait a bit for score to save
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
+                // Set game as not active
+                gameActive = false;
+                gameStarted = false;
                 
                 // Hide exit button
                 if (exitBtn) {
                     exitBtn.style.display = 'none';
                 }
                 
+                // Save score before exiting (call gameOver which handles saving)
+                if (creditsUsed > 0 && currentSessionId) {
+                    await gameOver();
+                }
+                
                 // Redirect to index
-                window.location.href = 'index.php';
+                window.location.replace('index.php');
             });
         }
         
@@ -1528,7 +1589,12 @@ $conn->close();
             exitNoBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
                 hideExitConfirmation();
+                // Re-enable exit prevention
+                if (gameActive && gameStarted) {
+                    preventExitDuringGame();
+                }
             });
         }
         
@@ -1537,9 +1603,37 @@ $conn->close();
             exitModal.addEventListener('click', (e) => {
                 if (e.target === exitModal) {
                     hideExitConfirmation();
+                    // Re-enable exit prevention
+                    if (gameActive && gameStarted) {
+                        preventExitDuringGame();
+                    }
                 }
             });
         }
+        
+        // Handle browser back button
+        window.addEventListener('popstate', async function(event) {
+            // Only show exit confirmation if game is actively playing
+            if (gameActive && gameStarted) {
+                showExitConfirmation();
+            }
+        });
+        
+        // Handle beforeunload (browser close/refresh)
+        window.addEventListener('beforeunload', function(e) {
+            if (gameActive && gameStarted && creditsUsed > 0) {
+                // Save score before leaving
+                if (navigator.sendBeacon) {
+                    const formData = new FormData();
+                    formData.append('score', Math.floor(score || 0));
+                    formData.append('session_id', currentSessionId);
+                    formData.append('credits_used', creditsUsed);
+                    formData.append('game_name', GAME_NAME);
+                    formData.append('is_demo', 'false');
+                    navigator.sendBeacon('game_api.php?action=save_score', formData);
+                }
+            }
+        });
         
         // Handle visibility change - game continues when minimized
         document.addEventListener('visibilitychange', function() {
