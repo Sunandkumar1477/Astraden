@@ -783,9 +783,9 @@ $conn->close();
             }
         }
         
-        // Fetch user total score across ALL games
+        // Fetch user total score for Cosmos Captain game only
         function fetchUserTotalScore() {
-            return fetch(`game_api.php?action=get_user_score&all_games=true`)
+            return fetch(`game_api.php?action=get_user_score&game_name=${GAME_NAME}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -919,17 +919,14 @@ $conn->close();
                 console.log("Score save response:", data);
                 if (data.success) {
                     console.log('Score saved:', finalScore);
-                    // Update total score from response - use total_score_all_games if available
-                    if (data.total_score_all_games !== undefined) {
-                        userTotalScore = data.total_score_all_games;
+                    // Update total score from response - use game-specific total_score (Cosmos Captain only)
+                    if (data.total_score !== undefined) {
+                        userTotalScore = data.total_score;
                         updateTotalScoreDisplay();
-                        return data.total_score_all_games;
-                    } else if (data.total_score !== undefined) {
-                        // Fallback to game-specific total, then fetch all games total
-                        fetchUserTotalScore();
+                        console.log('Updated Cosmos Captain total score:', userTotalScore);
                         return data.total_score;
                     } else {
-                        // If neither available, fetch it
+                        // If not in response, fetch it
                         return fetchUserTotalScore();
                     }
                 } else {
