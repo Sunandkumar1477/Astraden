@@ -796,6 +796,20 @@ require_once 'security_headers.php';
             <p>Fun Learning Games for Kids!</p>
             <button class="exit-kids-zone-btn" onclick="exitKidsZone()">← Back to Games</button>
         </div>
+        
+        <!-- Credits Confirmation Modal for Kids Zone -->
+        <div id="kids-credits-modal" class="kids-credits-modal" style="display: none;">
+            <div class="kids-credits-modal-content">
+                <h2>🎮 Pay Credits to Play</h2>
+                <p>This game costs <span id="kids-modal-credits-amount">20</span> credits</p>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-top: 10px;">You have <span id="kids-modal-user-credits">0</span> credits</p>
+                <div class="kids-modal-buttons">
+                    <button class="kids-confirm-pay-btn" id="kids-confirm-pay-btn">Pay & Play</button>
+                    <button class="kids-cancel-pay-btn" id="kids-cancel-pay-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
         <div class="kids-zone-games">
             <div class="games-grid">
                 <div class="game-card kids-game-card" data-game="learn-abc" onclick="launchLearnABC(event);" style="cursor: pointer;">
@@ -2679,13 +2693,19 @@ require_once 'security_headers.php';
             
             if (!mainContainer || !kidsZoneContainer) return;
             
-            // Hide main container with slide out
-            mainContainer.style.transform = 'translateX(-100%)';
+            // Reset main container position first
+            mainContainer.style.transform = 'translateX(0)';
             mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
             
-            // Show kids zone with slide in
+            // Hide main container with slide out to the left
+            setTimeout(() => {
+                mainContainer.style.transform = 'translateX(-100%)';
+            }, 10);
+            
+            // Show kids zone with slide in from the right
             setTimeout(() => {
                 kidsZoneContainer.style.display = 'block';
+                kidsZoneContainer.style.transform = 'translateX(100%)';
                 setTimeout(() => {
                     kidsZoneContainer.classList.add('show');
                 }, 50);
@@ -2702,16 +2722,18 @@ require_once 'security_headers.php';
             
             if (!mainContainer || !kidsZoneContainer) return;
             
-            // Hide kids zone with slide out
+            // Hide kids zone with slide out to the right
             kidsZoneContainer.classList.remove('show');
+            kidsZoneContainer.style.transform = 'translateX(100%)';
             
-            // Show main container with slide in
+            // Show main container with slide in from the left
             setTimeout(() => {
                 mainContainer.style.transform = 'translateX(0)';
+                mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
                 setTimeout(() => {
                     kidsZoneContainer.style.display = 'none';
                 }, 500);
-            }, 250);
+            }, 50);
         }
         
         // Load Learn ABC credits
@@ -2748,6 +2770,98 @@ require_once 'security_headers.php';
             }
         }
         
+        // Show kids credits confirmation modal
+        function showKidsCreditsModal(gameName, creditsRequired, gameUrl) {
+            const modal = document.getElementById('kids-credits-modal');
+            const creditsAmount = document.getElementById('kids-modal-credits-amount');
+            const userCredits = document.getElementById('kids-modal-user-credits');
+            
+            if (creditsAmount) creditsAmount.textContent = creditsRequired;
+            
+            // Get user credits
+            fetch('game_api.php?action=check_status&game=' + gameName)
+                .then(response => response.json())
+                .then(data => {
+                    if (userCredits) userCredits.textContent = data.user_credits || 0;
+                    
+                    if (data.user_credits < creditsRequired) {
+                        alert('Insufficient credits! You need ' + creditsRequired + ' credits to play.');
+                        return;
+                    }
+                    
+                    // Show modal
+                    if (modal) {
+                        modal.style.display = 'flex';
+                        
+                        // Set up confirm button
+                        const confirmBtn = document.getElementById('kids-confirm-pay-btn');
+                        const cancelBtn = document.getElementById('kids-cancel-pay-btn');
+                        
+                        if (confirmBtn) {
+                            confirmBtn.onclick = function() {
+                                payAndPlayKidsGame(gameName, creditsRequired, gameUrl);
+                            };
+                        }
+                        
+                        if (cancelBtn) {
+                            cancelBtn.onclick = function() {
+                                if (modal) modal.style.display = 'none';
+                            };
+                        }
+                    }
+                })
+                .catch(error => {
+                    alert('Error checking credits. Please try again.');
+                });
+        }
+        
+        // Pay credits and play kids game
+        function payAndPlayKidsGame(gameName, creditsRequired, gameUrl) {
+            const modal = document.getElementById('kids-credits-modal');
+            
+            // Get session for credit deduction
+            fetch('game_api.php?action=check_status&game=' + gameName)
+                .then(response => response.json())
+                .then(sessionData => {
+                    if (sessionData.success && sessionData.session) {
+                        // Deduct credits
+                        fetch('game_api.php?action=deduct_credits', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: new URLSearchParams({
+                                game_name: gameName,
+                                session_id: sessionData.session.id
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(deductData => {
+                            if (modal) modal.style.display = 'none';
+                            
+                            if (deductData.success) {
+                                // Redirect to game
+                                window.location.href = gameUrl;
+                            } else {
+                                alert(deductData.message || 'Failed to deduct credits');
+                            }
+                        })
+                        .catch(error => {
+                            if (modal) modal.style.display = 'none';
+                            alert('Error starting game. Please try again.');
+                        });
+                    } else {
+                        // No session, try direct play (for always available)
+                        if (modal) modal.style.display = 'none';
+                        window.location.href = gameUrl;
+                    }
+                })
+                .catch(error => {
+                    if (modal) modal.style.display = 'none';
+                    alert('Error checking game status. Please try again.');
+                });
+        }
+        
         // Launch Learn ABC with credit check
         function launchLearnABC(event) {
             if (event) {
@@ -2767,52 +2881,8 @@ require_once 'security_headers.php';
                     // Get credits required
                     const creditsRequired = parseInt(document.getElementById('credits-amount-learn-abc')?.textContent || '20');
                     
-                    // Check user credits
-                    fetch('game_api.php?action=check_status&game=learn-abc')
-                        .then(response => response.json())
-                        .then(gameData => {
-                            if (!gameData.success || gameData.user_credits < creditsRequired) {
-                                alert('Insufficient credits! You need ' + creditsRequired + ' credits to play Learn ABC.');
-                                return;
-                            }
-                            
-                            // Get session for credit deduction
-                            fetch('game_api.php?action=check_status&game=learn-abc')
-                                .then(response => response.json())
-                                .then(sessionData => {
-                                    if (sessionData.success && sessionData.session) {
-                                        // Deduct credits
-                                        fetch('game_api.php?action=deduct_credits', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/x-www-form-urlencoded',
-                                            },
-                                            body: new URLSearchParams({
-                                                game_name: 'learn-abc',
-                                                session_id: sessionData.session.id
-                                            })
-                                        })
-                                        .then(response => response.json())
-                                        .then(deductData => {
-                                            if (deductData.success) {
-                                                // Redirect to Learn ABC game
-                                                window.location.href = 'Learn_ABC.php';
-                                            } else {
-                                                alert(deductData.message || 'Failed to deduct credits');
-                                            }
-                                        })
-                                        .catch(error => {
-                                            alert('Error starting game. Please try again.');
-                                        });
-                                    } else {
-                                        // No session, try direct play (for always available)
-                                        window.location.href = 'Learn_ABC.php';
-                                    }
-                                });
-                        })
-                        .catch(error => {
-                            alert('Error checking game status. Please try again.');
-                        });
+                    // Show credits confirmation modal
+                    showKidsCreditsModal('learn-abc', creditsRequired, 'Learn_ABC.php');
                 })
                 .catch(error => {
                     openModal('loginRequired');
@@ -2838,52 +2908,8 @@ require_once 'security_headers.php';
                     // Get credits required
                     const creditsRequired = parseInt(document.getElementById('credits-amount-learn-numbers')?.textContent || '20');
                     
-                    // Check user credits
-                    fetch('game_api.php?action=check_status&game=learn-numbers')
-                        .then(response => response.json())
-                        .then(gameData => {
-                            if (!gameData.success || gameData.user_credits < creditsRequired) {
-                                alert('Insufficient credits! You need ' + creditsRequired + ' credits to play Learn Numbers.');
-                                return;
-                            }
-                            
-                            // Get session for credit deduction
-                            fetch('game_api.php?action=check_status&game=learn-numbers')
-                                .then(response => response.json())
-                                .then(sessionData => {
-                                    if (sessionData.success && sessionData.session) {
-                                        // Deduct credits
-                                        fetch('game_api.php?action=deduct_credits', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/x-www-form-urlencoded',
-                                            },
-                                            body: new URLSearchParams({
-                                                game_name: 'learn-numbers',
-                                                session_id: sessionData.session.id
-                                            })
-                                        })
-                                        .then(response => response.json())
-                                        .then(deductData => {
-                                            if (deductData.success) {
-                                                // Redirect to Learn Numbers game
-                                                window.location.href = 'lern_numbers.php';
-                                            } else {
-                                                alert(deductData.message || 'Failed to deduct credits');
-                                            }
-                                        })
-                                        .catch(error => {
-                                            alert('Error starting game. Please try again.');
-                                        });
-                                    } else {
-                                        // No session, try direct play (for always available)
-                                        window.location.href = 'lern_numbers.php';
-                                    }
-                                });
-                        })
-                        .catch(error => {
-                            alert('Error checking game status. Please try again.');
-                        });
+                    // Show credits confirmation modal
+                    showKidsCreditsModal('learn-numbers', creditsRequired, 'lern_numbers.php');
                 })
                 .catch(error => {
                     openModal('loginRequired');

@@ -5991,6 +5991,14 @@ body.mobile-device .play-btn:active {
     font-family: 'Rajdhani', sans-serif;
 }
 
+/* Ensure button is visible on desktop */
+@media (min-width: 769px) {
+    .kids-zone-btn {
+        display: flex !important;
+        visibility: visible !important;
+    }
+}
+
 .kids-zone-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 8px 30px rgba(255, 107, 157, 0.6);
@@ -6042,6 +6050,36 @@ body.mobile-device .play-btn:active {
     animation: bounce 2s infinite;
 }
 
+/* Reduce effects on mobile for better performance */
+@media (max-width: 768px) {
+    .kids-zone-header {
+        backdrop-filter: blur(5px);
+        padding: 30px 15px 20px;
+    }
+    
+    .kids-zone-header h1 {
+        animation: none;
+        font-size: 2rem;
+    }
+    
+    .kids-zone-container {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    }
+    
+    .kids-game-card {
+        backdrop-filter: blur(5px) !important;
+        transition: transform 0.2s ease !important;
+    }
+    
+    .kids-game-card:hover {
+        transform: none !important;
+    }
+    
+    .kids-zone-btn .kids-icon {
+        animation: none;
+    }
+}
+
 .kids-zone-header p {
     font-size: 1.5rem;
     color: #fff;
@@ -6078,9 +6116,10 @@ body.mobile-device .play-btn:active {
 
 .kids-zone-games .games-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 25px;
     width: 100%;
+    padding: 20px 0;
 }
 
 .kids-game-card {
@@ -6099,6 +6138,7 @@ body.mobile-device .play-btn:active {
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
     position: relative !important;
     overflow: visible !important;
+    will-change: transform;
 }
 
 .kids-game-card:hover {
@@ -6135,10 +6175,117 @@ body.mobile-device .play-btn:active {
     }
 }
 
+/* Kids Zone Credits Modal */
+.kids-credits-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.kids-credits-modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 30px;
+    text-align: center;
+    max-width: 400px;
+    border: 5px solid #ffd700;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.kids-credits-modal-content h2 {
+    font-size: 2rem;
+    color: #ff6b9d;
+    margin-bottom: 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+}
+
+.kids-credits-modal-content p {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #333;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.kids-modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.kids-confirm-pay-btn,
+.kids-cancel-pay-btn {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.kids-confirm-pay-btn {
+    background: linear-gradient(135deg, #4ecdc4, #95e1d3);
+    color: #fff;
+}
+
+.kids-confirm-pay-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.kids-cancel-pay-btn {
+    background: linear-gradient(135deg, #f38181, #ff6b9d);
+    color: #fff;
+}
+
+.kids-cancel-pay-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+    .kids-credits-modal-content {
+        padding: 30px 20px;
+        max-width: 90%;
+    }
+    
+    .kids-credits-modal-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .kids-credits-modal-content p {
+        font-size: 1rem;
+    }
+    
+    .kids-confirm-pay-btn,
+    .kids-cancel-pay-btn {
+        padding: 12px 25px;
+        font-size: 1rem;
+    }
+}
+
 @media (max-width: 768px) {
     .kids-zone-games .games-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 15px 0;
+    }
+    
+    .kids-game-card {
+        min-height: 200px;
+        padding: 15px;
     }
     .kids-zone-btn {
         top: auto;
