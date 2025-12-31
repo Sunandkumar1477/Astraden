@@ -6191,6 +6191,12 @@ body.mobile-device .play-btn:active {
     display: inline-block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    background: rgba(157, 78, 221, 0.1) !important;
+    border: 1px solid var(--primary-purple) !important;
+    border-radius: 12px !important;
 }
 
 .kids-game-card .play-btn {
@@ -6233,52 +6239,104 @@ body.mobile-device .play-btn:active {
 
 /* Medium mobile devices (500px - 767px) */
 @media (min-width: 500px) and (max-width: 767px) {
+    .kids-zone-container {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
     .kids-zone-games {
-        padding: 30px 15px;
+        padding: 30px 15px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: auto !important;
     }
     
     .kids-zone-games .games-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        padding: 20px 0;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 15px !important;
+        padding: 20px 0 !important;
+        width: 100% !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .kids-game-card {
-        min-height: 200px;
-        padding: 18px;
-        margin: 0;
+        min-height: 200px !important;
+        padding: 18px !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background: var(--card-bg) !important;
+        border: 2px solid var(--primary-cyan) !important;
+        border-radius: 15px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .kids-game-card .game-icon {
         font-size: 2.8rem !important;
         margin-bottom: 12px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        text-align: center !important;
     }
     
     .kids-game-card .game-title {
         font-size: 1.2rem !important;
         margin-bottom: 10px !important;
         line-height: 1.3 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: var(--primary-cyan) !important;
+        text-align: center !important;
+        font-weight: 700 !important;
     }
     
     .kids-game-card .game-description {
         font-size: 0.9rem !important;
         line-height: 1.4 !important;
         margin-bottom: 12px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: rgba(255, 255, 255, 0.8) !important;
+        text-align: center !important;
     }
     
     .kids-game-card .game-type {
         font-size: 0.8rem !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: var(--primary-purple) !important;
     }
     
     .kids-game-card .credits-badge {
         font-size: 0.75rem !important;
         padding: 5px 10px !important;
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        align-items: center !important;
+        gap: 5px !important;
     }
     
     .kids-game-card .play-btn {
         padding: 12px 24px !important;
         font-size: 0.95rem !important;
         margin-top: 10px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
     }
 }
 
@@ -6436,153 +6494,289 @@ body.mobile-device .play-btn:active {
 
 /* Mobile devices (below 768px) - general styles */
 @media (max-width: 767px) {
+    .kids-zone-container {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
     .kids-zone-games {
-        padding: 25px 15px;
+        padding: 25px 15px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: auto !important;
     }
     
     .kids-zone-games .games-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        padding: 15px 0;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        padding: 15px 0 !important;
+        width: 100% !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .kids-game-card {
-        min-height: 200px;
-        padding: 15px;
-        margin: 0;
+        min-height: 200px !important;
+        padding: 15px !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background: var(--card-bg) !important;
+        border: 2px solid var(--primary-cyan) !important;
+        border-radius: 15px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .kids-game-card .game-icon {
         font-size: 2.2rem !important;
         margin-bottom: 10px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        text-align: center !important;
     }
     
     .kids-game-card .game-title {
         font-size: 1rem !important;
         margin-bottom: 8px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: var(--primary-cyan) !important;
+        text-align: center !important;
+        font-weight: 700 !important;
     }
     
     .kids-game-card .game-description {
         font-size: 0.8rem !important;
         line-height: 1.3 !important;
         margin-bottom: 10px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: rgba(255, 255, 255, 0.8) !important;
+        text-align: center !important;
     }
     
     .kids-game-card .game-type {
         font-size: 0.7rem !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: var(--primary-purple) !important;
     }
     
     .kids-game-card .credits-badge {
         font-size: 0.65rem !important;
         padding: 4px 8px !important;
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        align-items: center !important;
+        gap: 5px !important;
     }
     
     .kids-game-card .play-btn {
         padding: 10px 20px !important;
         font-size: 0.85rem !important;
         margin-top: 8px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
     }
     
     .kids-zone-btn {
-        top: auto;
-        bottom: 20px;
-        right: 20px;
-        left: auto;
-        padding: 12px 20px;
-        font-size: 0.9rem;
-        position: fixed;
+        top: auto !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        left: auto !important;
+        padding: 12px 20px !important;
+        font-size: 0.9rem !important;
+        position: fixed !important;
         display: flex !important;
         visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 1001 !important;
     }
     
     .kids-zone-btn .kids-icon {
-        font-size: 1.2rem;
+        font-size: 1.2rem !important;
+        display: inline-block !important;
+        visibility: visible !important;
+    }
+    
+    .kids-zone-header {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .kids-zone-header h1 {
-        font-size: 2rem;
+        font-size: 2rem !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .kids-zone-header p {
-        font-size: 1.2rem;
+        font-size: 1.2rem !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 }
 
 /* Small mobile devices (below 500px) */
 @media (max-width: 499px) {
+    .kids-zone-container {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
     .kids-zone-btn {
-        bottom: 15px;
-        right: 15px;
-        padding: 10px 16px;
-        font-size: 0.85rem;
+        bottom: 15px !important;
+        right: 15px !important;
+        padding: 10px 16px !important;
+        font-size: 0.85rem !important;
         display: flex !important;
         visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 1001 !important;
     }
     
     .kids-zone-btn .kids-icon {
-        font-size: 1rem;
+        font-size: 1rem !important;
+        display: inline-block !important;
+        visibility: visible !important;
     }
     
     .kids-zone-btn .kids-text {
-        font-size: 0.85rem;
+        font-size: 0.85rem !important;
+        display: inline-block !important;
+        visibility: visible !important;
     }
     
     .kids-zone-header {
-        padding: 25px 15px 20px;
+        padding: 25px 15px 20px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .kids-zone-header h1 {
-        font-size: 1.5rem;
+        font-size: 1.5rem !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .kids-zone-header p {
-        font-size: 1rem;
+        font-size: 1rem !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .kids-zone-games {
-        padding: 20px 10px;
+        padding: 20px 10px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: auto !important;
     }
     
     .kids-zone-games .games-grid {
-        gap: 12px;
-        padding: 15px 0;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        padding: 15px 0 !important;
+        width: 100% !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .kids-game-card {
-        min-height: 200px;
-        padding: 15px;
-        margin: 0;
+        min-height: 200px !important;
+        padding: 15px !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background: var(--card-bg) !important;
+        border: 2px solid var(--primary-cyan) !important;
+        border-radius: 15px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .kids-game-card .game-icon {
         font-size: 2.2rem !important;
         margin-bottom: 10px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        text-align: center !important;
     }
     
     .kids-game-card .game-title {
         font-size: 1rem !important;
         margin-bottom: 8px !important;
         line-height: 1.2 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: var(--primary-cyan) !important;
+        text-align: center !important;
+        font-weight: 700 !important;
     }
     
     .kids-game-card .game-description {
         font-size: 0.8rem !important;
         line-height: 1.3 !important;
         margin-bottom: 10px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: rgba(255, 255, 255, 0.8) !important;
+        text-align: center !important;
     }
     
     .kids-game-card .game-type {
         font-size: 0.7rem !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: var(--primary-purple) !important;
     }
     
     .kids-game-card .credits-badge {
         font-size: 0.65rem !important;
         padding: 4px 8px !important;
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        align-items: center !important;
+        gap: 5px !important;
     }
     
     .kids-game-card .play-btn {
         padding: 10px 20px !important;
         font-size: 0.85rem !important;
         margin-top: 8px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
     }
 }
