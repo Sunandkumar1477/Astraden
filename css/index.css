@@ -6037,7 +6037,8 @@ body.mobile-device .play-btn:active {
     color: #fff;
     text-shadow: 3px 3px 0px #ff6b9d, 6px 6px 0px #ffd700;
     margin-bottom: 10px;
-    font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
     animation: bounce 2s infinite;
 }
 
@@ -6045,7 +6046,8 @@ body.mobile-device .play-btn:active {
     font-size: 1.5rem;
     color: #fff;
     text-shadow: 2px 2px 0px #ff6b9d;
-    font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
 }
 
 .exit-kids-zone-btn {
@@ -6069,34 +6071,75 @@ body.mobile-device .play-btn:active {
 }
 
 .kids-zone-games {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 40px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+}
+
+.kids-zone-games .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    width: 100%;
 }
 
 .kids-game-card {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 5px solid #ffd700 !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
-    min-height: 200px;
-    padding: 22px;
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
+    background: var(--card-bg) !important;
+    border: 2px solid var(--primary-cyan) !important;
+    border-radius: 15px !important;
+    padding: 25px !important;
+    min-height: 200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.kids-game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3) !important;
+    border-color: var(--primary-purple) !important;
+}
+
+.kids-game-card .game-title {
+    color: var(--primary-cyan) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 700 !important;
+}
+
+.kids-game-card .game-description {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+}
+
+.kids-game-card .game-type {
+    color: var(--primary-purple) !important;
+    font-family: 'Rajdhani', sans-serif !important;
 }
 
 @media (min-width: 1024px) {
+    .kids-zone-games .games-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+    }
+    
     .kids-game-card {
         min-height: 200px;
-        padding: 22px;
-        max-width: 500px;
+        padding: 25px;
     }
 }
 
 @media (max-width: 768px) {
+    .kids-zone-games .games-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
     .kids-zone-btn {
         top: auto;
         bottom: 20px;

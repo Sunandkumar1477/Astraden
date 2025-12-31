@@ -797,20 +797,37 @@ require_once 'security_headers.php';
             <button class="exit-kids-zone-btn" onclick="exitKidsZone()">← Back to Games</button>
         </div>
         <div class="kids-zone-games">
-            <div class="game-card kids-game-card" data-game="learn-abc" onclick="launchLearnABC(event);" style="cursor: pointer; background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 50%, #ffa8c5 100%);">
-                <div class="game-icon">🔤</div>
-                <div class="game-title" style="color: #fff;">Learn ABC</div>
-                <div class="game-description" style="color: rgba(255, 255, 255, 0.95);">
-                    Learn the alphabet with fun and interactive games! Tap letters in order and hear them speak.
+            <div class="games-grid">
+                <div class="game-card kids-game-card" data-game="learn-abc" onclick="launchLearnABC(event);" style="cursor: pointer;">
+                    <div class="game-icon">🔤</div>
+                    <div class="game-title">Learn ABC</div>
+                    <div class="game-description">
+                        Learn the alphabet with fun and interactive games! Tap letters in order and hear them speak.
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                        <span class="game-type">Learning</span>
+                        <span class="credits-badge" id="credits-badge-learn-abc">
+                            <span class="power-icon">⚡</span>
+                            <span id="credits-amount-learn-abc">20</span> Credits
+                        </span>
+                    </div>
+                    <button class="play-btn" onclick="launchLearnABC(event)">Start Learning</button>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                    <span class="game-type" style="color: rgba(255, 255, 255, 0.9);">Learning</span>
-                    <span class="credits-badge" id="credits-badge-learn-abc" style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3);">
-                        <span class="power-icon">⚡</span>
-                        <span id="credits-amount-learn-abc">20</span> Credits
-                    </span>
+                <div class="game-card kids-game-card" data-game="learn-numbers" onclick="launchLearnNumbers(event);" style="cursor: pointer;">
+                    <div class="game-icon">🔢</div>
+                    <div class="game-title">Learn Numbers</div>
+                    <div class="game-description">
+                        Learn numbers with fun and interactive games! Tap numbers in order and hear them speak.
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                        <span class="game-type">Learning</span>
+                        <span class="credits-badge" id="credits-badge-learn-numbers">
+                            <span class="power-icon">⚡</span>
+                            <span id="credits-amount-learn-numbers">20</span> Credits
+                        </span>
+                    </div>
+                    <button class="play-btn" onclick="launchLearnNumbers(event)">Start Learning</button>
                 </div>
-                <button class="play-btn" onclick="launchLearnABC(event)" style="background: linear-gradient(135deg, #ffd700, #ffa500); color: #000; font-weight: 700;">Start Learning</button>
             </div>
         </div>
     </div>
@@ -846,7 +863,8 @@ require_once 'security_headers.php';
             const gamePaths = {
                 'earth-defender': 'earth-defender.php',
                 'cosmos-captain': 'cosmos-captain.php',
-                'learn-abc': 'Learn_ABC.php'
+                'learn-abc': 'Learn_ABC.php',
+                'learn-numbers': 'lern_numbers.php'
             };
 
             // Validate game name to prevent path traversal
@@ -2673,8 +2691,9 @@ require_once 'security_headers.php';
                 }, 50);
             }, 250);
             
-            // Load Learn ABC credits
+            // Load Learn ABC and Numbers credits
             loadLearnABCCredits();
+            loadLearnNumbersCredits();
         }
         
         function exitKidsZone() {
@@ -2703,6 +2722,23 @@ require_once 'security_headers.php';
                 
                 if (data.success) {
                     const badgeElement = document.getElementById('credits-amount-learn-abc');
+                    if (badgeElement) {
+                        badgeElement.textContent = data.credits_per_chance || 20;
+                    }
+                }
+            } catch (error) {
+                // Silent fail
+            }
+        }
+        
+        // Load Learn Numbers credits
+        async function loadLearnNumbersCredits() {
+            try {
+                const response = await fetch('get_game_credits.php?game=learn-numbers');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const badgeElement = document.getElementById('credits-amount-learn-numbers');
                     if (badgeElement) {
                         badgeElement.textContent = data.credits_per_chance || 20;
                     }
@@ -2783,10 +2819,82 @@ require_once 'security_headers.php';
                 });
         }
         
+        // Launch Learn Numbers with credit check
+        function launchLearnNumbers(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            // Check if user is logged in
+            fetch('check_session.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.logged_in) {
+                        openModal('loginRequired');
+                        return;
+                    }
+                    
+                    // Get credits required
+                    const creditsRequired = parseInt(document.getElementById('credits-amount-learn-numbers')?.textContent || '20');
+                    
+                    // Check user credits
+                    fetch('game_api.php?action=check_status&game=learn-numbers')
+                        .then(response => response.json())
+                        .then(gameData => {
+                            if (!gameData.success || gameData.user_credits < creditsRequired) {
+                                alert('Insufficient credits! You need ' + creditsRequired + ' credits to play Learn Numbers.');
+                                return;
+                            }
+                            
+                            // Get session for credit deduction
+                            fetch('game_api.php?action=check_status&game=learn-numbers')
+                                .then(response => response.json())
+                                .then(sessionData => {
+                                    if (sessionData.success && sessionData.session) {
+                                        // Deduct credits
+                                        fetch('game_api.php?action=deduct_credits', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/x-www-form-urlencoded',
+                                            },
+                                            body: new URLSearchParams({
+                                                game_name: 'learn-numbers',
+                                                session_id: sessionData.session.id
+                                            })
+                                        })
+                                        .then(response => response.json())
+                                        .then(deductData => {
+                                            if (deductData.success) {
+                                                // Redirect to Learn Numbers game
+                                                window.location.href = 'lern_numbers.php';
+                                            } else {
+                                                alert(deductData.message || 'Failed to deduct credits');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            alert('Error starting game. Please try again.');
+                                        });
+                                    } else {
+                                        // No session, try direct play (for always available)
+                                        window.location.href = 'lern_numbers.php';
+                                    }
+                                });
+                        })
+                        .catch(error => {
+                            alert('Error checking game status. Please try again.');
+                        });
+                })
+                .catch(error => {
+                    openModal('loginRequired');
+                });
+        }
+        
         // Make functions globally available
         window.enterKidsZone = enterKidsZone;
         window.exitKidsZone = exitKidsZone;
         window.launchLearnABC = launchLearnABC;
+        window.launchLearnNumbers = launchLearnNumbers;
         
         // Add click handler to kids zone button
         document.addEventListener('DOMContentLoaded', function() {
