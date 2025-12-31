@@ -122,7 +122,7 @@
         </div>
     </header>
 
-    <main id="alphabet-grid" class="flex-1 w-full max-w-5xl p-4 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-3 md:gap-6 items-center justify-items-center overflow-y-auto">
+    <main id="alphabet-grid" class="flex-1 w-full max-w-5xl p-4 pb-24 md:pb-4 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-3 md:gap-6 items-center justify-items-center overflow-y-auto">
         <!-- Letters generated here -->
     </main>
 

@@ -24,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_session'])) {
 date_default_timezone_set('Asia/Kolkata');
 $available_games = [
     'earth-defender' => '🛡️ Earth Defender',
-    'cosmos-captain' => '🚀 Cosmos Captain'
+    'cosmos-captain' => '🚀 Cosmos Captain',
+    'learn-abc' => '🔤 Learn ABC'
 ];
 
 // Check and add always_available column
