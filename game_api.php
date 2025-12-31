@@ -478,12 +478,21 @@ switch ($action) {
             $total_res = $total_stmt->get_result()->fetch_assoc();
             $total_points = intval($total_res['total_points'] ?? 0);
             $total_stmt->close();
+            
+            // Get total score across ALL games for this user
+            $all_games_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND credits_used > 0");
+            $all_games_stmt->bind_param("i", $user_id);
+            $all_games_stmt->execute();
+            $all_games_res = $all_games_stmt->get_result()->fetch_assoc();
+            $total_all_games = intval($all_games_res['total_points'] ?? 0);
+            $all_games_stmt->close();
 
             echo json_encode([
                 'success' => true,
                 'message' => 'Score saved successfully',
                 'score' => $score,
                 'total_score' => $total_points,
+                'total_score_all_games' => $total_all_games,
                 'is_contest' => (bool)$is_contest_active,
                 'game_mode' => $game_mode
             ]);
@@ -745,8 +754,9 @@ switch ($action) {
         break;
         
     case 'get_user_score':
-        // Get user's total score for a specific game
+        // Get user's total score for a specific game or all games
         $game_name = $_GET['game_name'] ?? 'earth-defender';
+        $all_games = isset($_GET['all_games']) && $_GET['all_games'] === 'true';
         
         if (!$user_id) {
             echo json_encode([
@@ -756,13 +766,23 @@ switch ($action) {
             exit;
         }
         
-        // Get total score for this game
-        $total_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND game_name = ? AND credits_used > 0");
-        $total_stmt->bind_param("is", $user_id, $game_name);
-        $total_stmt->execute();
-        $total_res = $total_stmt->get_result()->fetch_assoc();
-        $user_total_points = intval($total_res['total_points'] ?? 0);
-        $total_stmt->close();
+        if ($all_games) {
+            // Get total score across ALL games
+            $total_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND credits_used > 0");
+            $total_stmt->bind_param("i", $user_id);
+            $total_stmt->execute();
+            $total_res = $total_stmt->get_result()->fetch_assoc();
+            $user_total_points = intval($total_res['total_points'] ?? 0);
+            $total_stmt->close();
+        } else {
+            // Get total score for this specific game
+            $total_stmt = $conn->prepare("SELECT SUM(score) as total_points FROM game_leaderboard WHERE user_id = ? AND game_name = ? AND credits_used > 0");
+            $total_stmt->bind_param("is", $user_id, $game_name);
+            $total_stmt->execute();
+            $total_res = $total_stmt->get_result()->fetch_assoc();
+            $user_total_points = intval($total_res['total_points'] ?? 0);
+            $total_stmt->close();
+        }
         
         echo json_encode([
             'success' => true,
