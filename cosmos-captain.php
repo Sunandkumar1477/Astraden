@@ -833,11 +833,11 @@ $conn->close();
                 if (IS_LOGGED_IN) {
                     if (currentUserCredits >= requiredCredits) {
                         startGameBtn.style.display = 'flex';
-                        startGameBtn.innerHTML = `START MISSION &nbsp; ⚡ ${requiredCredits}`;
+                        startGameBtn.innerHTML = `🚀 START MISSION - ⚡ ${requiredCredits} Credits`;
                         startGameBtn.disabled = false;
                     } else {
                         startGameBtn.style.display = 'flex';
-                        startGameBtn.innerHTML = `LOCKED &nbsp; ⚡ ${requiredCredits}`;
+                        startGameBtn.innerHTML = `🔒 LOCKED - ⚡ ${requiredCredits} Credits Required`;
                         startGameBtn.disabled = true;
                     }
                 } else {
