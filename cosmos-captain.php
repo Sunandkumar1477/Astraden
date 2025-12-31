@@ -1289,23 +1289,9 @@ $conn->close();
             createExplosion(ship.x, ship.y, '#ff4d4d');
             msgTitle.textContent = "GAME OVER";
             
-            // Save score (await to ensure it completes)
-            if (gameStarted && creditsUsed > 0 && currentSessionId) {
-                try {
-                    const savedTotalScore = await saveScore(score);
-                    if (savedTotalScore !== undefined && savedTotalScore > 0) {
-                        userTotalScore = savedTotalScore;
-                        updateTotalScoreDisplay();
-                    } else {
-                        // Fetch updated total score if not returned from save
-                        await fetchUserTotalScore();
-                    }
-                } catch (error) {
-                    console.error('Error in gameOver save:', error);
-                    // Still try to fetch total score
-                    await fetchUserTotalScore();
-                }
-            }
+            // DO NOT save score automatically on game over
+            // Score will ONLY be saved when user clicks "YES, SAVE & EXIT" button
+            // Just show the game over screen with current score
             
             // Update final score display
             const finalScoreDisplay = document.getElementById('final-score-display');
@@ -1416,10 +1402,9 @@ $conn->close();
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Save score before leaving (if not already saved)
-                if (gameStarted && creditsUsed > 0 && score > 0) {
-                    saveScore(score);
-                }
+                // DO NOT save score automatically
+                // Score will ONLY be saved when user clicks "YES, SAVE & EXIT" button
+                // Just redirect to index page without saving
                 
                 // Redirect to index page
                 window.location.href = 'index.php';
@@ -1581,16 +1566,20 @@ $conn->close();
                     exitBtn.style.display = 'none';
                 }
                 
-                // Save score before exiting
+                // ONLY save score when user clicks "YES, SAVE & EXIT"
                 if (creditsUsed > 0 && currentSessionId && score > 0) {
                     try {
+                        console.log('User clicked YES, SAVE & EXIT - Saving score:', score);
                         const savedTotalScore = await saveScore(score);
-                        console.log('Score saved on exit:', score, 'New total:', savedTotalScore);
-                        // Wait a moment to ensure save completes
-                        await new Promise(resolve => setTimeout(resolve, 300));
+                        console.log('Score saved successfully. New Cosmos Captain total:', savedTotalScore);
+                        // Wait a moment to ensure save completes before redirecting
+                        await new Promise(resolve => setTimeout(resolve, 500));
                     } catch (error) {
                         console.error('Error saving score on exit:', error);
+                        // Still redirect even if save fails
                     }
+                } else {
+                    console.log('No score to save or game not started properly');
                 }
                 
                 // Redirect to index
@@ -1625,36 +1614,21 @@ $conn->close();
         }
         
         // Handle browser back button
-        window.addEventListener('popstate', async function(event) {
+        window.addEventListener('popstate', function(event) {
             // Only show exit confirmation if game is actively playing
+            // Do NOT save score here - only show confirmation
             if (gameActive && gameStarted) {
-                // Save score before showing confirmation
-                if (creditsUsed > 0 && currentSessionId && score > 0) {
-                    try {
-                        await saveScore(score);
-                        console.log('Score saved on back button:', score);
-                    } catch (error) {
-                        console.error('Error saving score on back button:', error);
-                    }
-                }
                 showExitConfirmation();
             }
         });
         
         // Handle beforeunload (browser close/refresh)
+        // Do NOT save score automatically - user must click "YES, SAVE & EXIT"
         window.addEventListener('beforeunload', function(e) {
-            if (gameActive && gameStarted && creditsUsed > 0 && score > 0) {
-                // Save score before leaving using sendBeacon (works even when page is closing)
-                if (navigator.sendBeacon && currentSessionId) {
-                    const formData = new FormData();
-                    formData.append('score', Math.floor(score || 0));
-                    formData.append('session_id', currentSessionId);
-                    formData.append('credits_used', creditsUsed);
-                    formData.append('game_name', GAME_NAME);
-                    formData.append('is_demo', 'false');
-                    const sent = navigator.sendBeacon('game_api.php?action=save_score', formData);
-                    console.log('Score sent via beacon on page unload:', sent);
-                }
+            // Just prevent default to show browser warning, but don't save score
+            if (gameActive && gameStarted && creditsUsed > 0) {
+                // Browser will show its own confirmation dialog
+                // Score will only be saved if user clicks "YES, SAVE & EXIT" button
             }
         });
         
