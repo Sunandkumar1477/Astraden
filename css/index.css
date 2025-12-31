@@ -4137,13 +4137,13 @@ body.mobile-device .play-btn:active {
     }
 }
 
-/* Desktop Styles - Match Admin Login Exactly */
+/* Desktop Styles - Match Admin Login Exactly (Small & Simple) */
 @media (min-width: 1024px) {
     .auth-modal {
         background: rgba(15, 15, 25, 0.95);
         border: 2px solid var(--primary-cyan);
-        max-width: 450px;
-        padding: 50px 40px;
+        max-width: 400px;
+        padding: 35px 30px;
         border-radius: 20px;
         box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
         position: relative;
@@ -4162,23 +4162,23 @@ body.mobile-device .play-btn:active {
     
     .modal-header {
         text-align: center;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
     }
     
     .modal-header h2 {
         font-family: 'Orbitron', sans-serif;
         color: var(--primary-cyan);
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         text-transform: uppercase;
-        letter-spacing: 5px;
-        margin-bottom: 10px;
+        letter-spacing: 4px;
+        margin-bottom: 8px;
     }
     
     .modal-header p {
         color: rgba(255, 255, 255, 0.5);
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
-        letter-spacing: 2px;
+        letter-spacing: 1.5px;
     }
     
     .auth-form {
@@ -4187,7 +4187,7 @@ body.mobile-device .play-btn:active {
     }
     
     .form-group {
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
     
     .form-group label {
@@ -4195,20 +4195,20 @@ body.mobile-device .play-btn:active {
         color: var(--primary-purple);
         font-weight: 700;
         text-transform: uppercase;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         letter-spacing: 1px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
     
     .form-group input {
         width: 100%;
-        padding: 15px;
+        padding: 12px;
         background: rgba(0, 0, 0, 0.5);
         border: 1px solid rgba(0, 255, 255, 0.3);
         border-radius: 10px;
         color: white;
         font-family: 'Rajdhani', sans-serif;
-        font-size: 1rem;
+        font-size: 0.95rem;
         outline: none;
         transition: all 0.3s;
     }
@@ -4224,7 +4224,7 @@ body.mobile-device .play-btn:active {
     
     .submit-btn {
         width: 100%;
-        padding: 16px;
+        padding: 14px;
         background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
         border: none;
         border-radius: 10px;
@@ -4232,10 +4232,11 @@ body.mobile-device .play-btn:active {
         font-family: 'Orbitron', sans-serif;
         font-weight: 900;
         text-transform: uppercase;
-        letter-spacing: 3px;
+        letter-spacing: 2.5px;
         cursor: pointer;
         transition: all 0.3s;
-        margin-top: 10px;
+        margin-top: 8px;
+        font-size: 0.9rem;
     }
     
     .submit-btn:hover {
@@ -4245,9 +4246,9 @@ body.mobile-device .play-btn:active {
     }
     
     .switch-form {
-        margin-top: 25px;
-        font-size: 1rem;
-        padding-top: 20px;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        padding-top: 15px;
         border-top: 1px solid rgba(0, 255, 255, 0.2);
     }
     
@@ -4285,11 +4286,11 @@ body.mobile-device .play-btn:active {
         background: rgba(255, 0, 110, 0.1);
         border: 1px solid #ff006e;
         color: #ff006e;
-        padding: 12px;
+        padding: 10px;
         border-radius: 8px;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         text-align: center;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
     }
     
@@ -4297,11 +4298,11 @@ body.mobile-device .play-btn:active {
         background: rgba(0, 255, 0, 0.1);
         border: 1px solid #00ff00;
         color: #00ff00;
-        padding: 12px;
+        padding: 10px;
         border-radius: 8px;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         text-align: center;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
     }
     
@@ -4313,16 +4314,16 @@ body.mobile-device .play-btn:active {
     
     .close-modal {
         position: absolute;
-        top: 15px;
-        right: 15px;
+        top: 12px;
+        right: 12px;
         background: transparent;
         border: 2px solid var(--primary-cyan);
         color: var(--primary-cyan);
-        width: 35px;
-        height: 35px;
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
         cursor: pointer;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -4335,32 +4336,37 @@ body.mobile-device .play-btn:active {
         background: rgba(0, 255, 255, 0.2);
         transform: rotate(90deg);
     }
+    
+    .form-group small {
+        font-size: 0.75rem;
+        margin-top: 4px;
+    }
 }
 
-/* Extra Large Desktop Screens */
+/* Extra Large Desktop Screens - Keep Small & Simple */
 @media (min-width: 1440px) {
     .auth-modal {
-        max-width: 560px;
-        padding: 45px 50px;
+        max-width: 400px;
+        padding: 35px 30px;
     }
     
     .modal-header h2 {
-        font-size: 2.8rem;
-        letter-spacing: 5px;
+        font-size: 1.5rem;
+        letter-spacing: 4px;
     }
     
     .modal-header p {
-        font-size: 1.1rem;
+        font-size: 0.8rem;
     }
     
     .form-group input {
-        padding: 16px 20px;
-        font-size: 1.05rem;
+        padding: 12px;
+        font-size: 0.95rem;
     }
     
     .submit-btn {
-        padding: 18px 30px;
-        font-size: 1.15rem;
+        padding: 14px;
+        font-size: 0.9rem;
     }
 }
 
