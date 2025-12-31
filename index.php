@@ -651,10 +651,16 @@ require_once 'security_headers.php';
         </div>
     </div>
 
+    <!-- Kids Zone Button -->
+    <button id="kidsZoneBtn" class="kids-zone-btn" title="Enter Kids Zone">
+        <span class="kids-icon">🌈</span>
+        <span class="kids-text">Kids Zone</span>
+    </button>
+
     <!-- Main Container -->
-    <div class="container">
+    <div class="container" id="mainContainer">
         <!-- Header -->
-        <div class="header">
+        <div class="header" id="mainHeader">
             <h1>ASTRA DEN</h1>
             <p>Select Your Adventure</p>
         </div>
@@ -783,6 +789,32 @@ require_once 'security_headers.php';
         </div>
     </div>
 
+    <!-- Kids Zone Container (Hidden by default) -->
+    <div class="kids-zone-container" id="kidsZoneContainer" style="display: none;">
+        <div class="kids-zone-header">
+            <h1>🌈 Kids Zone 🌈</h1>
+            <p>Fun Learning Games for Kids!</p>
+            <button class="exit-kids-zone-btn" onclick="exitKidsZone()">← Back to Games</button>
+        </div>
+        <div class="kids-zone-games">
+            <div class="game-card kids-game-card" data-game="learn-abc" onclick="launchLearnABC(event);" style="cursor: pointer; background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 50%, #ffa8c5 100%);">
+                <div class="game-icon">🔤</div>
+                <div class="game-title" style="color: #fff;">Learn ABC</div>
+                <div class="game-description" style="color: rgba(255, 255, 255, 0.95);">
+                    Learn the alphabet with fun and interactive games! Tap letters in order and hear them speak.
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                    <span class="game-type" style="color: rgba(255, 255, 255, 0.9);">Learning</span>
+                    <span class="credits-badge" id="credits-badge-learn-abc" style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3);">
+                        <span class="power-icon">⚡</span>
+                        <span id="credits-amount-learn-abc">20</span> Credits
+                    </span>
+                </div>
+                <button class="play-btn" onclick="launchLearnABC(event)" style="background: linear-gradient(135deg, #ffd700, #ffa500); color: #000; font-weight: 700;">Start Learning</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Security: Prevent common hacking attempts
         (function() {
@@ -813,7 +845,8 @@ require_once 'security_headers.php';
             // Obfuscate game paths (basic security)
             const gamePaths = {
                 'earth-defender': 'earth-defender.php',
-                'cosmos-captain': 'cosmos-captain.php'
+                'cosmos-captain': 'cosmos-captain.php',
+                'learn-abc': 'Learn_ABC.php'
             };
 
             // Validate game name to prevent path traversal
@@ -2620,6 +2653,148 @@ require_once 'security_headers.php';
                     checkCreditTiming();
                 });
         }
+        
+        // Kids Zone Functions
+        function enterKidsZone() {
+            const mainContainer = document.getElementById('mainContainer');
+            const kidsZoneContainer = document.getElementById('kidsZoneContainer');
+            
+            if (!mainContainer || !kidsZoneContainer) return;
+            
+            // Hide main container with slide out
+            mainContainer.style.transform = 'translateX(-100%)';
+            mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Show kids zone with slide in
+            setTimeout(() => {
+                kidsZoneContainer.style.display = 'block';
+                setTimeout(() => {
+                    kidsZoneContainer.classList.add('show');
+                }, 50);
+            }, 250);
+            
+            // Load Learn ABC credits
+            loadLearnABCCredits();
+        }
+        
+        function exitKidsZone() {
+            const mainContainer = document.getElementById('mainContainer');
+            const kidsZoneContainer = document.getElementById('kidsZoneContainer');
+            
+            if (!mainContainer || !kidsZoneContainer) return;
+            
+            // Hide kids zone with slide out
+            kidsZoneContainer.classList.remove('show');
+            
+            // Show main container with slide in
+            setTimeout(() => {
+                mainContainer.style.transform = 'translateX(0)';
+                setTimeout(() => {
+                    kidsZoneContainer.style.display = 'none';
+                }, 500);
+            }, 250);
+        }
+        
+        // Load Learn ABC credits
+        async function loadLearnABCCredits() {
+            try {
+                const response = await fetch('get_game_credits.php?game=learn-abc');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const badgeElement = document.getElementById('credits-amount-learn-abc');
+                    if (badgeElement) {
+                        badgeElement.textContent = data.credits_per_chance || 20;
+                    }
+                }
+            } catch (error) {
+                // Silent fail
+            }
+        }
+        
+        // Launch Learn ABC with credit check
+        function launchLearnABC(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            // Check if user is logged in
+            fetch('check_session.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.logged_in) {
+                        openModal('loginRequired');
+                        return;
+                    }
+                    
+                    // Get credits required
+                    const creditsRequired = parseInt(document.getElementById('credits-amount-learn-abc')?.textContent || '20');
+                    
+                    // Check user credits
+                    fetch('game_api.php?action=check_status&game=learn-abc')
+                        .then(response => response.json())
+                        .then(gameData => {
+                            if (!gameData.success || gameData.user_credits < creditsRequired) {
+                                alert('Insufficient credits! You need ' + creditsRequired + ' credits to play Learn ABC.');
+                                return;
+                            }
+                            
+                            // Get session for credit deduction
+                            fetch('game_api.php?action=check_status&game=learn-abc')
+                                .then(response => response.json())
+                                .then(sessionData => {
+                                    if (sessionData.success && sessionData.session) {
+                                        // Deduct credits
+                                        fetch('game_api.php?action=deduct_credits', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/x-www-form-urlencoded',
+                                            },
+                                            body: new URLSearchParams({
+                                                game_name: 'learn-abc',
+                                                session_id: sessionData.session.id
+                                            })
+                                        })
+                                        .then(response => response.json())
+                                        .then(deductData => {
+                                            if (deductData.success) {
+                                                // Redirect to Learn ABC game
+                                                window.location.href = 'Learn_ABC.php';
+                                            } else {
+                                                alert(deductData.message || 'Failed to deduct credits');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            alert('Error starting game. Please try again.');
+                                        });
+                                    } else {
+                                        // No session, try direct play (for always available)
+                                        window.location.href = 'Learn_ABC.php';
+                                    }
+                                });
+                        })
+                        .catch(error => {
+                            alert('Error checking game status. Please try again.');
+                        });
+                })
+                .catch(error => {
+                    openModal('loginRequired');
+                });
+        }
+        
+        // Make functions globally available
+        window.enterKidsZone = enterKidsZone;
+        window.exitKidsZone = exitKidsZone;
+        window.launchLearnABC = launchLearnABC;
+        
+        // Add click handler to kids zone button
+        document.addEventListener('DOMContentLoaded', function() {
+            const kidsZoneBtn = document.getElementById('kidsZoneBtn');
+            if (kidsZoneBtn) {
+                kidsZoneBtn.addEventListener('click', enterKidsZone);
+            }
+        });
         
         // Check session on page load
         window.addEventListener('load', function() {
