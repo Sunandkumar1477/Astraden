@@ -700,6 +700,11 @@ $conn->close();
             createStars();
             resetGame();
             
+            // Show button immediately if user is logged in (before async calls complete)
+            if (IS_LOGGED_IN && startGameBtn) {
+                showGameReady();
+            }
+            
             // Initialize game integration
             if (!gameInitialized) {
                 initGameIntegration();
@@ -720,14 +725,32 @@ $conn->close();
                 .then(data => {
                     if (data.success && data.credits_per_chance) {
                         creditsRequired = data.credits_per_chance;
+                        // Show button immediately if user is logged in
+                        if (IS_LOGGED_IN) {
+                            showGameReady();
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching credits:', error);
+                    // Show button even if credits fetch fails (if user is logged in)
+                    if (IS_LOGGED_IN) {
+                        showGameReady();
+                    }
                 });
             
             // Check game status and get session
             checkGameStatus();
+            
+            // Fallback: Show button after a short delay if user is logged in
+            // This ensures the button appears even if status check is slow
+            if (IS_LOGGED_IN) {
+                setTimeout(() => {
+                    if (startGameBtn && startGameBtn.style.display === 'none') {
+                        showGameReady();
+                    }
+                }, 1000);
+            }
         }
         
         // Check game status
@@ -753,16 +776,40 @@ $conn->close();
                         
                         showGameReady();
                     } else {
-                        if (data.message) {
-                            showNoSession(data.message);
+                        // Even if game is not active, show button if user is logged in
+                        if (IS_LOGGED_IN) {
+                            // Update credits if available from response
+                            if (data.user_credits !== undefined) {
+                                currentUserCredits = data.user_credits || USER_CREDITS;
+                                updateCreditsDisplay(currentUserCredits);
+                            }
+                            // Still show the button - user can try to start
+                            showGameReady();
+                            if (data.message) {
+                                if (statusMessage) {
+                                    statusMessage.textContent = data.message;
+                                }
+                            }
                         } else {
-                            showNoSession('Game is not currently available.');
+                            if (data.message) {
+                                showNoSession(data.message);
+                            } else {
+                                showNoSession('Game is not currently available.');
+                            }
                         }
                     }
                 })
                 .catch(error => {
                     console.error('Error checking game status:', error);
-                    showNoSession('Error loading game status.');
+                    // Even on error, show button if user is logged in
+                    if (IS_LOGGED_IN) {
+                        showGameReady();
+                        if (statusMessage) {
+                            statusMessage.textContent = 'Mission ready! Use credits to start.';
+                        }
+                    } else {
+                        showNoSession('Error loading game status.');
+                    }
                 });
         }
         
