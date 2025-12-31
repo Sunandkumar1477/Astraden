@@ -175,7 +175,11 @@ if (isset($_GET['edit'])) {
 $current_session = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' AND is_active = 1 LIMIT 1")->fetch_assoc();
 
 // Get all active sessions for both games to show live status
-$all_active_sessions = $conn->query("SELECT * FROM game_sessions WHERE is_active = 1 ORDER BY game_name, created_at DESC")->fetch_all(MYSQLI_ASSOC);
+$all_active_sessions_result = $conn->query("SELECT * FROM game_sessions WHERE is_active = 1 ORDER BY game_name, created_at DESC");
+$all_active_sessions = [];
+if ($all_active_sessions_result) {
+    $all_active_sessions = $all_active_sessions_result->fetch_all(MYSQLI_ASSOC);
+}
 
 $all_sessions = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' ORDER BY session_date DESC, session_time DESC LIMIT 10")->fetch_all(MYSQLI_ASSOC);
 
@@ -343,26 +347,37 @@ foreach ($all_sessions as $s) {
             <h3 style="color: var(--primary-cyan); font-family: 'Orbitron', sans-serif; margin-bottom: 20px; font-size: 1.1rem; text-transform: uppercase;">📊 LIVE GAME STATUS</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                 <?php 
+                // Ensure connection is available
+                if (!isset($conn) || !$conn) {
+                    require_once 'connection.php';
+                }
+                
                 foreach ($available_games as $game_key => $game_display):
                     $game_active_session = null;
-                    foreach ($all_active_sessions as $active_sess) {
-                        if ($active_sess['game_name'] === $game_key) {
-                            $game_active_session = $active_sess;
-                            break;
+                    if (is_array($all_active_sessions) && count($all_active_sessions) > 0) {
+                        foreach ($all_active_sessions as $active_sess) {
+                            if (isset($active_sess['game_name']) && $active_sess['game_name'] === $game_key) {
+                                $game_active_session = $active_sess;
+                                break;
+                            }
                         }
                     }
                     
                     // Get play credits for this game
-                    $game_credits_stmt = $conn->prepare("SELECT credits_per_chance FROM games WHERE game_name = ?");
-                    $game_credits_stmt->bind_param("s", $game_key);
-                    $game_credits_stmt->execute();
-                    $game_credits_result = $game_credits_stmt->get_result();
-                    $game_play_credits = 30;
-                    if ($game_credits_result->num_rows > 0) {
-                        $game_credits_row = $game_credits_result->fetch_assoc();
-                        $game_play_credits = intval($game_credits_row['credits_per_chance']);
+                    $game_play_credits = 30; // Default
+                    if (isset($conn) && $conn) {
+                        $game_credits_stmt = $conn->prepare("SELECT credits_per_chance FROM games WHERE game_name = ?");
+                        if ($game_credits_stmt) {
+                            $game_credits_stmt->bind_param("s", $game_key);
+                            $game_credits_stmt->execute();
+                            $game_credits_result = $game_credits_stmt->get_result();
+                            if ($game_credits_result && $game_credits_result->num_rows > 0) {
+                                $game_credits_row = $game_credits_result->fetch_assoc();
+                                $game_play_credits = intval($game_credits_row['credits_per_chance'] ?? 30);
+                            }
+                            $game_credits_stmt->close();
+                        }
                     }
-                    $game_credits_stmt->close();
                 ?>
                 <div style="background: rgba(0, 255, 255, 0.05); border: 2px solid <?php echo $game_active_session ? '#00ffcc' : 'rgba(255,255,255,0.1)'; ?>; border-radius: 12px; padding: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
