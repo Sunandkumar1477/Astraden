@@ -349,6 +349,11 @@ $conn->close();
             #exit-game-btn {
                 padding: 8px 15px;
                 font-size: 12px;
+                /* Move exit button to left side on mobile to avoid score overlap */
+                position: absolute !important;
+                top: 20px !important;
+                left: 20px !important;
+                right: auto !important;
             }
         }
     </style>
@@ -1576,9 +1581,16 @@ $conn->close();
                     exitBtn.style.display = 'none';
                 }
                 
-                // Save score before exiting (call gameOver which handles saving)
-                if (creditsUsed > 0 && currentSessionId) {
-                    await gameOver();
+                // Save score before exiting
+                if (creditsUsed > 0 && currentSessionId && score > 0) {
+                    try {
+                        const savedTotalScore = await saveScore(score);
+                        console.log('Score saved on exit:', score, 'New total:', savedTotalScore);
+                        // Wait a moment to ensure save completes
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    } catch (error) {
+                        console.error('Error saving score on exit:', error);
+                    }
                 }
                 
                 // Redirect to index
@@ -1616,22 +1628,32 @@ $conn->close();
         window.addEventListener('popstate', async function(event) {
             // Only show exit confirmation if game is actively playing
             if (gameActive && gameStarted) {
+                // Save score before showing confirmation
+                if (creditsUsed > 0 && currentSessionId && score > 0) {
+                    try {
+                        await saveScore(score);
+                        console.log('Score saved on back button:', score);
+                    } catch (error) {
+                        console.error('Error saving score on back button:', error);
+                    }
+                }
                 showExitConfirmation();
             }
         });
         
         // Handle beforeunload (browser close/refresh)
         window.addEventListener('beforeunload', function(e) {
-            if (gameActive && gameStarted && creditsUsed > 0) {
-                // Save score before leaving
-                if (navigator.sendBeacon) {
+            if (gameActive && gameStarted && creditsUsed > 0 && score > 0) {
+                // Save score before leaving using sendBeacon (works even when page is closing)
+                if (navigator.sendBeacon && currentSessionId) {
                     const formData = new FormData();
                     formData.append('score', Math.floor(score || 0));
                     formData.append('session_id', currentSessionId);
                     formData.append('credits_used', creditsUsed);
                     formData.append('game_name', GAME_NAME);
                     formData.append('is_demo', 'false');
-                    navigator.sendBeacon('game_api.php?action=save_score', formData);
+                    const sent = navigator.sendBeacon('game_api.php?action=save_score', formData);
+                    console.log('Score sent via beacon on page unload:', sent);
                 }
             }
         });
