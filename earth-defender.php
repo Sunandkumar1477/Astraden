@@ -2193,7 +2193,8 @@ $conn->close();
         const SoundManager = {
             audioContext: null,
             masterVolume: 0.5, // Master volume control (0.0 to 1.0)
-            enabled: true,
+            // Check localStorage for mute state (default: false = unmuted)
+            enabled: localStorage.getItem('gameSoundMuted') !== 'true',
             
             init() {
                 try {

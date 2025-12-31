@@ -627,6 +627,10 @@ session_start();
         <div class="all-games-container">
             <div class="games-grid">
                 <div class="game-card" data-game="earth-defender" data-type="defense" onclick="launchGame('earth-defender'); return false;" style="cursor: pointer;">
+                    <!-- Sound Toggle Button -->
+                    <button class="sound-toggle-btn" id="sound-toggle-earth-defender" onclick="event.stopPropagation(); toggleSound('earth-defender');" title="Toggle Sound">
+                        <span class="sound-icon">🔊</span>
+                    </button>
                     <!-- Countdown Timer Badge -->
                     <div class="game-countdown-badge" id="countdown-badge-earth-defender" style="display: none;">
                         <span class="countdown-icon">⏰</span>
@@ -679,6 +683,10 @@ session_start();
                     <button class="play-btn" onclick="launchGame('earth-defender')">Start Mission</button>
                 </div>
                 <div class="game-card" data-game="cosmos-captain" data-type="action" onclick="launchGame('cosmos-captain'); return false;" style="cursor: pointer;">
+                    <!-- Sound Toggle Button -->
+                    <button class="sound-toggle-btn" id="sound-toggle-cosmos-captain" onclick="event.stopPropagation(); toggleSound('cosmos-captain');" title="Toggle Sound">
+                        <span class="sound-icon">🔊</span>
+                    </button>
                     <!-- Countdown Timer Badge -->
                     <div class="game-countdown-badge" id="countdown-badge-cosmos-captain" style="display: none;">
                         <span class="countdown-icon">⏰</span>
@@ -823,6 +831,56 @@ session_start();
 
             // Make launchGame available globally
             window.launchGame = launchGame;
+
+            // Sound Toggle Function
+            function toggleSound(gameName) {
+                // Get current mute state from localStorage (default: false = unmuted)
+                const currentState = localStorage.getItem('gameSoundMuted');
+                const isMuted = currentState === 'true';
+                
+                // Toggle state
+                const newState = !isMuted;
+                localStorage.setItem('gameSoundMuted', newState.toString());
+                
+                // Update button appearance for all games
+                const buttons = document.querySelectorAll('.sound-toggle-btn');
+                buttons.forEach(btn => {
+                    const icon = btn.querySelector('.sound-icon');
+                    if (newState) {
+                        btn.classList.add('muted');
+                        if (icon) icon.textContent = '🔇';
+                    } else {
+                        btn.classList.remove('muted');
+                        if (icon) icon.textContent = '🔊';
+                    }
+                });
+            }
+
+            // Initialize sound button states on page load
+            function initSoundButtons() {
+                const isMuted = localStorage.getItem('gameSoundMuted') === 'true';
+                const buttons = document.querySelectorAll('.sound-toggle-btn');
+                buttons.forEach(btn => {
+                    const icon = btn.querySelector('.sound-icon');
+                    if (isMuted) {
+                        btn.classList.add('muted');
+                        if (icon) icon.textContent = '🔇';
+                    } else {
+                        btn.classList.remove('muted');
+                        if (icon) icon.textContent = '🔊';
+                    }
+                });
+            }
+
+            // Make toggleSound available globally
+            window.toggleSound = toggleSound;
+
+            // Initialize sound buttons when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initSoundButtons);
+            } else {
+                initSoundButtons();
+            }
 
             // Load game credits and prizes badges
             async function loadGameCredits() {

@@ -568,7 +568,8 @@ $conn->close();
         
         // Sound effects using Web Audio API
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        let soundEnabled = true;
+        // Check localStorage for mute state (default: false = unmuted)
+        let soundEnabled = localStorage.getItem('gameSoundMuted') !== 'true';
         
         function playSound(frequency, duration, type = 'sine', volume = 0.3) {
             if (!soundEnabled) return;

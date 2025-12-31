@@ -262,6 +262,52 @@ body {
     z-index: 1;
 }
 
+/* Sound Toggle Button */
+.sound-toggle-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid var(--primary-cyan);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.sound-toggle-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.sound-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.sound-toggle-btn.muted {
+    border-color: #ff4d4d;
+    box-shadow: 0 0 10px rgba(255, 77, 77, 0.3);
+}
+
+.sound-toggle-btn.muted:hover {
+    background: rgba(255, 77, 77, 0.2);
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+}
+
+.sound-icon {
+    font-size: 1.2rem;
+    user-select: none;
+    pointer-events: none;
+}
+
 .game-countdown-badge {
     position: absolute;
     top: -10px;
@@ -1545,6 +1591,18 @@ body {
         display: flex;
         flex-direction: column;
         height: auto;
+    }
+    
+    /* Smaller sound toggle button on mobile */
+    .sound-toggle-btn {
+        width: 32px;
+        height: 32px;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .sound-icon {
+        font-size: 1rem;
     }
     
     /* Show all game titles - especially Earth Defender and Cosmos Captain */
