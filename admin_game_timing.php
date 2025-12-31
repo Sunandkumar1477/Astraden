@@ -80,8 +80,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
                 $conn->query("UPDATE game_sessions SET is_active = 0 WHERE game_name = '$game_name' AND always_available = 1");
                 $stmt = $conn->prepare("INSERT INTO game_sessions (game_name, session_date, session_time, duration_minutes, credits_required, always_available, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)");
                 $stmt->bind_param("sssiii", $game_name, $session_date, $session_time, $duration, $credits_required, $always_available);
-                $stmt->execute();
-                $message = "New session published - Always Available mode.";
+                if ($stmt->execute()) {
+                    $message = "New session published - Always Available mode for " . $available_games[$game_name] . ".";
+                    // Redirect to refresh and show the new session
+                    header("Location: admin_game_timing.php?game=" . urlencode($game_name) . "&msg=" . urlencode($message));
+                    exit;
+                } else {
+                    $error = "Failed to create session.";
+                }
             }
         }
     } else {
@@ -109,8 +115,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
                     $conn->query("UPDATE game_sessions SET is_active = 0 WHERE game_name = '$game_name' AND always_available = 0");
                     $stmt = $conn->prepare("INSERT INTO game_sessions (game_name, session_date, session_time, duration_minutes, credits_required, always_available, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)");
                     $stmt->bind_param("sssiii", $game_name, $session_date, $session_time, $duration, $credits_required, $always_available);
-                    $stmt->execute();
-                    $message = "New session published.";
+                    if ($stmt->execute()) {
+                        $message = "New session published for " . $available_games[$game_name] . ".";
+                        // Redirect to refresh and show the new session
+                        header("Location: admin_game_timing.php?game=" . urlencode($game_name) . "&msg=" . urlencode($message));
+                        exit;
+                    } else {
+                        $error = "Failed to create session.";
+                    }
                 }
             }
         } else {
@@ -120,6 +132,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_session'])) {
 }
 
 $selected_game = $_GET['game'] ?? 'earth-defender';
+// Get message from URL if redirected
+if (isset($_GET['msg']) && empty($message)) {
+    $message = urldecode($_GET['msg']);
+}
 $edit_session = null;
 $current_play_credits = 30; // Default value
 
@@ -181,7 +197,12 @@ if ($all_active_sessions_result) {
     $all_active_sessions = $all_active_sessions_result->fetch_all(MYSQLI_ASSOC);
 }
 
-$all_sessions = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' ORDER BY session_date DESC, session_time DESC LIMIT 10")->fetch_all(MYSQLI_ASSOC);
+// Get all sessions for both games to show in table
+$all_sessions_result = $conn->query("SELECT * FROM game_sessions ORDER BY game_name, session_date DESC, session_time DESC LIMIT 20");
+$all_sessions = [];
+if ($all_sessions_result) {
+    $all_sessions = $all_sessions_result->fetch_all(MYSQLI_ASSOC);
+}
 
 // Get play credits for all sessions to display in table
 $session_play_credits = [];
@@ -476,6 +497,13 @@ foreach ($all_sessions as $s) {
             <table>
                 <thead><tr><th>Game</th><th>Start Date & Time</th><th>End Date & Time</th><th>Duration</th><th>Play Credits</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
+                    <?php if (empty($all_sessions)): ?>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.4);">
+                                No game sessions found. Create a session using the form above.
+                            </td>
+                        </tr>
+                    <?php else: ?>
                     <?php foreach($all_sessions as $s): 
                         $is_always_available = isset($s['always_available']) && $s['always_available'] == 1;
                         if ($is_always_available) {
@@ -515,6 +543,7 @@ foreach ($all_sessions as $s) {
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
