@@ -191,58 +191,76 @@ if ($stmt->execute()) {
     // Award credits to new user if auto-credits is enabled
     if ($auto_credits_enabled && $new_user_credits > 0) {
         try {
-            // Check if user_credits table exists and has the user
-            $credit_check = $conn->prepare("SELECT id FROM user_credits WHERE user_id = ?");
+            // Check if user_profile exists for this user
+            $credit_check = $conn->prepare("SELECT id FROM user_profile WHERE user_id = ?");
             $credit_check->bind_param("i", $user_id);
             $credit_check->execute();
             $credit_result = $credit_check->get_result();
             
             if ($credit_result->num_rows > 0) {
-                // Update existing credits
-                $credit_update = $conn->prepare("UPDATE user_credits SET credits = credits + ? WHERE user_id = ?");
+                // Update existing credits in user_profile
+                $credit_update = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
                 $credit_update->bind_param("ii", $new_user_credits, $user_id);
                 $credit_update->execute();
                 $credit_update->close();
             } else {
-                // Insert new credits record
-                $credit_insert = $conn->prepare("INSERT INTO user_credits (user_id, credits) VALUES (?, ?)");
+                // Insert new user_profile record with credits
+                $credit_insert = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, ?)");
                 $credit_insert->bind_param("ii", $user_id, $new_user_credits);
                 $credit_insert->execute();
                 $credit_insert->close();
             }
             $credit_check->close();
         } catch (Exception $e) {
-            // Credits table might not exist, continue without awarding credits
+            // Log error for debugging
             error_log("Error awarding new user credits: " . $e->getMessage());
+            // Try to create user_profile if it doesn't exist
+            try {
+                $credit_insert = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, ?)");
+                $credit_insert->bind_param("ii", $user_id, $new_user_credits);
+                $credit_insert->execute();
+                $credit_insert->close();
+            } catch (Exception $e2) {
+                error_log("Error creating user_profile: " . $e2->getMessage());
+            }
         }
     }
     
     // Award referral credits to referrer if referral code was used and auto-credits is enabled
     if ($referred_by && $auto_credits_enabled && $referral_credits > 0) {
         try {
-            // Check if referrer's credits record exists
-            $ref_credit_check = $conn->prepare("SELECT id FROM user_credits WHERE user_id = ?");
+            // Check if referrer's user_profile exists
+            $ref_credit_check = $conn->prepare("SELECT id FROM user_profile WHERE user_id = ?");
             $ref_credit_check->bind_param("i", $referred_by);
             $ref_credit_check->execute();
             $ref_credit_result = $ref_credit_check->get_result();
             
             if ($ref_credit_result->num_rows > 0) {
-                // Update existing credits
-                $ref_credit_update = $conn->prepare("UPDATE user_credits SET credits = credits + ? WHERE user_id = ?");
+                // Update existing credits in user_profile
+                $ref_credit_update = $conn->prepare("UPDATE user_profile SET credits = credits + ? WHERE user_id = ?");
                 $ref_credit_update->bind_param("ii", $referral_credits, $referred_by);
                 $ref_credit_update->execute();
                 $ref_credit_update->close();
             } else {
-                // Insert new credits record
-                $ref_credit_insert = $conn->prepare("INSERT INTO user_credits (user_id, credits) VALUES (?, ?)");
+                // Insert new user_profile record with referral credits
+                $ref_credit_insert = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, ?)");
                 $ref_credit_insert->bind_param("ii", $referred_by, $referral_credits);
                 $ref_credit_insert->execute();
                 $ref_credit_insert->close();
             }
             $ref_credit_check->close();
         } catch (Exception $e) {
-            // Credits table might not exist, continue without awarding referral credits
+            // Log error for debugging
             error_log("Error awarding referral credits: " . $e->getMessage());
+            // Try to create user_profile if it doesn't exist
+            try {
+                $ref_credit_insert = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, ?)");
+                $ref_credit_insert->bind_param("ii", $referred_by, $referral_credits);
+                $ref_credit_insert->execute();
+                $ref_credit_insert->close();
+            } catch (Exception $e2) {
+                error_log("Error creating referrer user_profile: " . $e2->getMessage());
+            }
         }
     }
     
