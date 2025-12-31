@@ -402,13 +402,14 @@ $conn->close();
             }
             
             .hud-right {
-                width: 100%;
-                align-items: flex-start;
+                width: auto;
+                align-items: flex-end;
                 margin-top: 10px;
             }
             
             .hud-right .stat-box {
-                width: 100%;
+                width: auto;
+                min-width: 120px;
                 margin-top: 10px;
             }
             
