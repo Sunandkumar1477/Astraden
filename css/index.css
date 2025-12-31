@@ -6006,6 +6006,22 @@ body.mobile-device .play-btn:active {
 .kids-zone-btn .kids-icon {
     font-size: 1.5rem;
     animation: bounce 2s infinite;
+    transition: all 0.3s ease;
+}
+
+.kids-zone-btn.games-btn-active {
+    z-index: 1001 !important;
+    background: linear-gradient(135deg, #00ffff 0%, #9d4edd 50%, #00ffff 100%);
+    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+}
+
+.kids-zone-btn.games-btn-active:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(0, 255, 255, 0.6);
+}
+
+.kids-zone-btn.games-btn-active .kids-icon {
+    animation: bounce 2s infinite;
 }
 
 @keyframes bounce {

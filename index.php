@@ -794,7 +794,6 @@ require_once 'security_headers.php';
         <div class="kids-zone-header" style="display: block; visibility: visible; opacity: 1;">
             <h1>🌈 Kids Zone 🌈</h1>
             <p>Fun Learning Games for Kids!</p>
-            <button class="exit-kids-zone-btn" onclick="exitKidsZone()">← Back to Games</button>
         </div>
         
         <!-- Credits Confirmation Modal for Kids Zone -->
@@ -2690,8 +2689,19 @@ require_once 'security_headers.php';
         function enterKidsZone() {
             const mainContainer = document.getElementById('mainContainer');
             const kidsZoneContainer = document.getElementById('kidsZoneContainer');
+            const kidsZoneBtn = document.getElementById('kidsZoneBtn');
             
             if (!mainContainer || !kidsZoneContainer) return;
+            
+            // Transform button to "Games" button
+            if (kidsZoneBtn) {
+                const kidsIcon = kidsZoneBtn.querySelector('.kids-icon');
+                const kidsText = kidsZoneBtn.querySelector('.kids-text');
+                if (kidsIcon) kidsIcon.textContent = '🎮';
+                if (kidsText) kidsText.textContent = 'Games';
+                kidsZoneBtn.title = 'Back to Games';
+                kidsZoneBtn.classList.add('games-btn-active');
+            }
             
             // Show kids zone container immediately - no delay
             kidsZoneContainer.style.display = 'block';
@@ -2729,8 +2739,19 @@ require_once 'security_headers.php';
         function exitKidsZone() {
             const mainContainer = document.getElementById('mainContainer');
             const kidsZoneContainer = document.getElementById('kidsZoneContainer');
+            const kidsZoneBtn = document.getElementById('kidsZoneBtn');
             
             if (!mainContainer || !kidsZoneContainer) return;
+            
+            // Transform button back to "Kids Zone" button
+            if (kidsZoneBtn) {
+                const kidsIcon = kidsZoneBtn.querySelector('.kids-icon');
+                const kidsText = kidsZoneBtn.querySelector('.kids-text');
+                if (kidsIcon) kidsIcon.textContent = '🌈';
+                if (kidsText) kidsText.textContent = 'Kids Zone';
+                kidsZoneBtn.title = 'Enter Kids Zone';
+                kidsZoneBtn.classList.remove('games-btn-active');
+            }
             
             // Hide kids zone with slide out to the right
             kidsZoneContainer.classList.remove('show');
@@ -2936,7 +2957,15 @@ require_once 'security_headers.php';
         document.addEventListener('DOMContentLoaded', function() {
             const kidsZoneBtn = document.getElementById('kidsZoneBtn');
             if (kidsZoneBtn) {
-                kidsZoneBtn.addEventListener('click', enterKidsZone);
+                kidsZoneBtn.addEventListener('click', function() {
+                    const kidsZoneContainer = document.getElementById('kidsZoneContainer');
+                    // Check if Kids Zone is currently active
+                    if (kidsZoneContainer && kidsZoneContainer.classList.contains('show')) {
+                        exitKidsZone();
+                    } else {
+                        enterKidsZone();
+                    }
+                });
             }
         });
         
