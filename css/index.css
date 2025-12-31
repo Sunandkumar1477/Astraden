@@ -4131,8 +4131,8 @@ body.mobile-device .play-btn:active {
 /* Large tablets and small desktops */
 @media (min-width: 769px) and (max-width: 1024px) {
     .auth-modal {
-        max-width: 450px;
-        padding: 50px 40px;
+        max-width: 360px;
+        padding: 35px 30px;
         border-radius: 20px;
     }
 }
@@ -4142,8 +4142,8 @@ body.mobile-device .play-btn:active {
     .auth-modal {
         background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 30, 0.98) 100%);
         border: 1px solid rgba(0, 255, 255, 0.15);
-        max-width: 420px;
-        padding: 40px 35px;
+        max-width: 360px;
+        padding: 35px 30px;
         border-radius: 16px;
         box-shadow: 
             0 8px 32px rgba(0, 0, 0, 0.4),
@@ -4415,26 +4415,26 @@ body.mobile-device .play-btn:active {
 /* Extra Large Desktop Screens - Maintain Modern Design */
 @media (min-width: 1440px) {
     .auth-modal {
-        max-width: 440px;
-        padding: 45px 40px;
+        max-width: 380px;
+        padding: 38px 32px;
     }
     
     .modal-header h2 {
-        font-size: 1.875rem;
+        font-size: 1.75rem;
     }
     
     .modal-header p {
-        font-size: 0.938rem;
+        font-size: 0.875rem;
     }
     
     .form-group input {
-        padding: 14px 18px;
-        font-size: 0.969rem;
+        padding: 13px 16px;
+        font-size: 0.938rem;
     }
     
     .submit-btn {
-        padding: 15px 22px;
-        font-size: 0.969rem;
+        padding: 14px 20px;
+        font-size: 0.938rem;
     }
 }
 
