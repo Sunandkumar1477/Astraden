@@ -602,6 +602,8 @@ $conn->close();
         let creditsRequired = 30;
         let currentUserCredits = USER_CREDITS;
         let isTimeDurationSession = false; // Track if current session is time-duration (not always_available)
+        let sessionCheckInterval = null;
+        let sessionCheckActive = false;
         
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -630,6 +632,8 @@ $conn->close();
         const scoreSavedOkBtn = document.getElementById('score-saved-ok-btn');
         const savedMissionScoreEl = document.getElementById('saved-mission-score');
         const savedTotalScoreEl = document.getElementById('saved-total-score');
+        const anotherDeviceModal = document.getElementById('another-device-logout-modal');
+        const anotherDeviceOkBtn = document.getElementById('another-device-ok-btn');
 
         let width, height;
         let score = 0;
@@ -707,7 +711,21 @@ $conn->close();
                     timerDisplay.textContent = '';
                     timerDisplay.style.display = 'none';
                 }
-                // Show button immediately
+                // Force show button immediately with default credits
+                startGameBtn.style.display = 'flex';
+                startGameBtn.style.visibility = 'visible';
+                startGameBtn.style.opacity = '1';
+                if (currentUserCredits >= creditsRequired) {
+                    startGameBtn.innerHTML = `🚀 START MISSION - ⚡ ${creditsRequired} Credits`;
+                    startGameBtn.disabled = false;
+                    startGameBtn.style.cursor = 'pointer';
+                } else {
+                    startGameBtn.innerHTML = `🔒 LOCKED - ⚡ ${creditsRequired} Credits Required`;
+                    startGameBtn.disabled = true;
+                    startGameBtn.style.opacity = '0.6';
+                    startGameBtn.style.cursor = 'not-allowed';
+                }
+                // Also call showGameReady to update status message
                 showGameReady();
             }
             
@@ -776,10 +794,17 @@ $conn->close();
             fetch(`game_api.php?action=check_status&game_name=${GAME_NAME}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.is_active) {
-                        currentSessionId = data.session.id;
+                    console.log('Game status response:', data);
+                    
+                    // Always update credits if available
+                    if (data.user_credits !== undefined) {
                         currentUserCredits = data.user_credits || USER_CREDITS;
                         updateCreditsDisplay(currentUserCredits);
+                    }
+                    
+                    // If session exists (even if not active), use it
+                    if (data.success && data.session && data.session.id) {
+                        currentSessionId = data.session.id;
                         
                         // Check if this is a time-duration session (not always_available)
                         isTimeDurationSession = data.session && !data.session.always_available;
@@ -788,32 +813,22 @@ $conn->close();
                         applyTimeDurationStyling(isTimeDurationSession);
                         
                         // Update credits required from session if available
-                        if (data.session && data.session.credits_required) {
+                        if (data.session.credits_required) {
                             creditsRequired = data.session.credits_required;
                         }
-                        
+                    }
+                    
+                    // Always show button if user is logged in, regardless of active status
+                    if (IS_LOGGED_IN) {
                         showGameReady();
+                        if (data.message && statusMessage) {
+                            statusMessage.textContent = data.message;
+                        }
                     } else {
-                        // Even if game is not active, show button if user is logged in
-                        if (IS_LOGGED_IN) {
-                            // Update credits if available from response
-                            if (data.user_credits !== undefined) {
-                                currentUserCredits = data.user_credits || USER_CREDITS;
-                                updateCreditsDisplay(currentUserCredits);
-                            }
-                            // Still show the button - user can try to start
-                            showGameReady();
-                            if (data.message) {
-                                if (statusMessage) {
-                                    statusMessage.textContent = data.message;
-                                }
-                            }
+                        if (data.message) {
+                            showNoSession(data.message);
                         } else {
-                            if (data.message) {
-                                showNoSession(data.message);
-                            } else {
-                                showNoSession('Game is not currently available.');
-                            }
+                            showNoSession('Game is not currently available.');
                         }
                     }
                 })
@@ -990,11 +1005,36 @@ $conn->close();
             
             if (gameStarted) return Promise.resolve(true);
             
+            // If no session ID, try to get one first
             if (!currentSessionId) {
-                alert('No active game session. Please try again.');
-                return Promise.resolve(false);
+                // Try to get session from API
+                return fetch(`game_api.php?action=check_status&game_name=${GAME_NAME}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.session && data.session.id) {
+                            currentSessionId = data.session.id;
+                            if (data.session.credits_required) {
+                                creditsRequired = data.session.credits_required;
+                            }
+                            // Now proceed with starting the game
+                            return proceedWithGameStart();
+                        } else {
+                            alert('No active game session. Please contact admin or try again later.');
+                            return false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error getting session:', error);
+                        alert('Failed to get game session. Please try again.');
+                        return false;
+                    });
             }
             
+            return proceedWithGameStart();
+        }
+        
+        // Proceed with game start after session is confirmed
+        function proceedWithGameStart() {
             // Deduct credits
             const formData = new FormData();
             formData.append('game_name', GAME_NAME);
