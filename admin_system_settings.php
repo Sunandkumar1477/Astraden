@@ -194,6 +194,8 @@ $conn->close();
             <a href="admin_credit_pricing.php" class="menu-item"><i class="fas fa-tags ic-pricing"></i> <span>Pricing Plans</span></a>
             <a href="admin_credit_timing.php" class="menu-item"><i class="fas fa-clock ic-timing"></i> <span>Purchase Timing</span></a>
             <a href="admin_credit_sale_limit.php" class="menu-item"><i class="fas fa-gauge-high ic-limits"></i> <span>Sale Limits</span></a>
+            <div class="menu-category">Rewards & Coupons</div>
+            <a href="admin_rewards.php" class="menu-item"><i class="fas fa-gift ic-contest"></i> <span>Rewards & Coupons</span></a>
             <div class="menu-category">Game Operations</div>
             <a href="admin_game_timing.php" class="menu-item"><i class="fas fa-calendar-check ic-sessions"></i> <span>Game Sessions</span></a>
             <a href="admin_game_credits.php" class="menu-item"><i class="fas fa-gamepad ic-costs"></i> <span>Play Costs</span></a>

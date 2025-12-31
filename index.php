@@ -195,6 +195,14 @@ require_once 'security_headers.php';
                             <div class="item-value">Score: <span id="mobileShopScoreIndex">0</span></div>
                         </div>
                     </a>
+                    <!-- Rewards Link -->
+                    <a href="rewards.php" class="menu-item">
+                        <div class="item-icon">🎁</div>
+                        <div class="item-info">
+                            <div class="item-label">Rewards & Coupons</div>
+                            <div class="item-value">Buy with Credits</div>
+                        </div>
+                    </a>
                     <!-- Claim Prize Link -->
                     <a href="prize_claim.php" class="menu-item">
                         <div class="item-icon">🏆</div>

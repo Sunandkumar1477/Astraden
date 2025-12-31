@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Galactic Gardener - High Performance Mobile</title>
+    <title>Galactic Gardener - Mobile Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400&display=swap');
@@ -74,25 +74,62 @@
             text-transform: uppercase;
         }
 
-        #mobile-fire-btn {
+        /* Mobile Controls */
+        .mobile-ctrl {
             position: fixed;
-            bottom: 1.5rem;
-            right: 1.5rem;
-            width: 70px;
-            height: 70px;
-            background: rgba(99, 102, 241, 0.3);
+            z-index: 100;
+            display: none; /* Shown via JS if touch device */
+            pointer-events: auto;
+        }
+
+        #d-pad {
+            bottom: 2rem;
+            left: 2rem;
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "left . right"
+                ". down .";
+            gap: 10px;
+        }
+
+        .ctrl-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            color: white;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .ctrl-btn:active {
+            background: rgba(99, 102, 241, 0.6);
+            transform: scale(0.95);
+        }
+
+        #btn-up { grid-area: up; }
+        #btn-down { grid-area: down; }
+        #btn-left { grid-area: left; }
+        #btn-right { grid-area: right; }
+
+        #mobile-fire-btn {
+            bottom: 2rem;
+            right: 2rem;
+            width: 75px;
+            height: 75px;
+            background: rgba(239, 68, 68, 0.3);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 100;
-            pointer-events: auto;
-        }
-
-        #mobile-fire-btn:active {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0.95);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
         }
 
         .label {
@@ -119,7 +156,7 @@
 
     <div id="startScreen" class="ui-screen">
         <h1 class="text-3xl md:text-5xl font-bold tracking-widest mb-4 text-white font-['Orbitron'] text-center px-4">GALACTIC GARDENER</h1>
-        <p class="text-indigo-300 tracking-[0.2em] mb-12 opacity-50 uppercase text-[9px] text-center px-4">Deep Space Extraction Initiative</p>
+        <p class="text-indigo-300 tracking-[0.2em] mb-12 opacity-50 uppercase text-[9px] text-center px-4">Interstellar Extraction Probe</p>
         <button class="btn-start" onclick="beginMission()">Launch</button>
     </div>
 
@@ -146,8 +183,25 @@
         </div>
     </div>
 
-    <div id="mobile-fire-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+    <!-- D-Pad for Mobile -->
+    <div id="d-pad" class="mobile-ctrl">
+        <div id="btn-up" class="ctrl-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>
+        </div>
+        <div id="btn-down" class="ctrl-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div id="btn-left" class="ctrl-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        </div>
+        <div id="btn-right" class="ctrl-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+    </div>
+
+    <!-- Fire Button for Mobile -->
+    <div id="mobile-fire-btn" class="mobile-ctrl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -161,6 +215,12 @@
         const healthBar = document.getElementById('health-bar');
         const scoreVal = document.getElementById('score-val');
         const damageFlash = document.getElementById('damage-flash');
+        
+        const mobileCtrls = document.querySelectorAll('.mobile-ctrl');
+        const btnUp = document.getElementById('btn-up');
+        const btnDown = document.getElementById('btn-down');
+        const btnLeft = document.getElementById('btn-left');
+        const btnRight = document.getElementById('btn-right');
         const mobileFireBtn = document.getElementById('mobile-fire-btn');
 
         let width, height;
@@ -175,6 +235,15 @@
         let bullets = [];
         let asteroids = [];
 
+        // Controller State
+        const ctrl = {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            fire: false
+        };
+
         const player = {
             x: 0, y: 0,
             vx: 0, vy: 0,
@@ -184,6 +253,11 @@
             shootCooldown: 0,
             thrustLevel: 0
         };
+
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (isTouchDevice) {
+            mobileCtrls.forEach(el => el.style.display = (el.id === 'd-pad') ? 'grid' : 'flex');
+        }
 
         class NebulaCloud {
             constructor() {
@@ -264,8 +338,6 @@
                 this.vy = (Math.random() - 0.5) * 1.2;
                 this.rotation = Math.random() * 6;
                 this.rotSpeed = (Math.random() - 0.5) * 0.03;
-                
-                // Realistic shape generation
                 this.points = [];
                 const vertices = 8 + Math.floor(Math.random() * 6);
                 for (let i = 0; i < vertices; i++) {
@@ -276,8 +348,6 @@
                         y: Math.sin(angle) * jitter * this.radius
                     });
                 }
-
-                // Surface detail (craters)
                 this.craters = [];
                 const craterCount = 2 + Math.floor(Math.random() * 3);
                 for (let i = 0; i < craterCount; i++) {
@@ -290,7 +360,6 @@
                     });
                 }
             }
-
             update() {
                 this.x += this.vx - player.vx;
                 this.y += this.vy - player.vy;
@@ -301,61 +370,30 @@
                 if (this.y < -buffer) this.y = height + buffer;
                 else if (this.y > height + buffer) this.y = -buffer;
             }
-
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rotation);
-
-                // Volumetric Shading
-                const lightAngle = -Math.PI / 4;
-                const grad = ctx.createRadialGradient(
-                    -this.radius * 0.3, -this.radius * 0.3, 0,
-                    0, 0, this.radius
-                );
-
+                const grad = ctx.createRadialGradient(-this.radius * 0.3, -this.radius * 0.3, 0, 0, 0, this.radius);
                 if (this.isHealth) {
-                    grad.addColorStop(0, '#4ade80'); // Emerald highlight
-                    grad.addColorStop(0.5, '#166534'); // Core color
-                    grad.addColorStop(1, '#052e16'); // Dark edge
+                    grad.addColorStop(0, '#4ade80');
+                    grad.addColorStop(0.5, '#166534');
+                    grad.addColorStop(1, '#052e16');
                 } else {
-                    grad.addColorStop(0, '#94a3b8'); // Slate 400 highlight
-                    grad.addColorStop(0.4, '#475569'); // Mid gray
-                    grad.addColorStop(1, '#0f172a'); // Near black shadow
+                    grad.addColorStop(0, '#94a3b8');
+                    grad.addColorStop(0.4, '#475569');
+                    grad.addColorStop(1, '#0f172a');
                 }
-
-                // Draw main body
                 ctx.beginPath();
                 ctx.moveTo(this.points[0].x, this.points[0].y);
-                for (let i = 1; i < this.points.length; i++) {
-                    ctx.lineTo(this.points[i].x, this.points[i].y);
-                }
+                for (let i = 1; i < this.points.length; i++) ctx.lineTo(this.points[i].x, this.points[i].y);
                 ctx.closePath();
                 ctx.fillStyle = grad;
                 ctx.fill();
-
-                // Surface Craters
                 this.craters.forEach(c => {
-                    const craterGrad = ctx.createLinearGradient(
-                        c.x - c.r, c.y - c.r,
-                        c.x + c.r, c.y + c.r
-                    );
-                    craterGrad.addColorStop(0, 'rgba(0,0,0,0.4)');
-                    craterGrad.addColorStop(1, 'rgba(255,255,255,0.1)');
-                    
-                    ctx.fillStyle = craterGrad;
-                    ctx.beginPath();
-                    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill();
                 });
-
-                // Detailed rim light for health asteroids
-                if (this.isHealth) {
-                    ctx.strokeStyle = 'rgba(74, 222, 128, 0.5)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                }
-
                 ctx.restore();
             }
         }
@@ -417,31 +455,37 @@
             animate();
         }
 
-        window.addEventListener('touchstart', (e) => {
-            if (e.target === mobileFireBtn || mobileFireBtn.contains(e.target)) return;
-            mouse.pressed = true;
-            mouse.x = e.touches[0].clientX;
-            mouse.y = e.touches[0].clientY;
-        }, { passive: false });
+        // --- Controller Event Listeners ---
+        function bindBtn(btn, key) {
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); ctrl[key] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); ctrl[key] = false; });
+        }
+
+        bindBtn(btnUp, 'up');
+        bindBtn(btnDown, 'down');
+        bindBtn(btnLeft, 'left');
+        bindBtn(btnRight, 'right');
         
-        window.addEventListener('touchmove', (e) => {
-            if (e.target === mobileFireBtn || mobileFireBtn.contains(e.target)) return;
-            e.preventDefault();
-            mouse.x = e.touches[0].clientX;
-            mouse.y = e.touches[0].clientY;
-        }, { passive: false });
-
-        window.addEventListener('touchend', () => mouse.pressed = false);
-
-        mobileFireBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            shoot();
-        });
+        mobileFireBtn.addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
 
         window.addEventListener('mousedown', () => mouse.pressed = true);
         window.addEventListener('mouseup', () => mouse.pressed = false);
         window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        window.addEventListener('keydown', (e) => { if (e.code === 'Space') shoot(); });
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowUp' || e.code === 'KeyW') ctrl.up = true;
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') ctrl.down = true;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') ctrl.left = true;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') ctrl.right = true;
+            if (e.code === 'Space') shoot();
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowUp' || e.code === 'KeyW') ctrl.up = false;
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') ctrl.down = false;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') ctrl.left = false;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') ctrl.right = false;
+        });
+
         window.addEventListener('resize', resize);
 
         function drawShip() {
@@ -449,49 +493,32 @@
             ctx.translate(width/2, height/2);
             ctx.rotate(player.angle);
             
-            if(mouse.pressed) {
+            // Engines
+            if(ctrl.up || (mouse.pressed && !isTouchDevice)) {
                 const flareSize = 20 + Math.random() * 15;
                 const flareGrad = ctx.createRadialGradient(-15, 0, 0, -20, 0, flareSize);
                 flareGrad.addColorStop(0, '#fff');
                 flareGrad.addColorStop(0.3, '#6366f1');
                 flareGrad.addColorStop(1, 'transparent');
                 ctx.fillStyle = flareGrad;
-                ctx.beginPath();
-                ctx.arc(-20, 0, flareSize, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(-20, 0, flareSize, 0, Math.PI * 2); ctx.fill();
+            }
+            if(ctrl.down) {
+                const flareSize = 10;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath(); ctx.arc(15, 0, flareSize, 0, Math.PI * 2); ctx.fill();
             }
 
             const hullGrad = ctx.createLinearGradient(0, -10, 0, 10);
-            hullGrad.addColorStop(0, '#94a3b8'); 
-            hullGrad.addColorStop(0.5, '#475569'); 
-            hullGrad.addColorStop(1, '#1e293b'); 
-            
+            hullGrad.addColorStop(0, '#94a3b8'); hullGrad.addColorStop(1, '#1e293b'); 
             ctx.fillStyle = hullGrad;
-            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-            ctx.lineWidth = 1;
-
             ctx.beginPath();
-            ctx.moveTo(25, 0);       
-            ctx.lineTo(-5, -12);     
-            ctx.lineTo(-18, -8);     
-            ctx.lineTo(-18, 8);      
-            ctx.lineTo(-5, 12);      
-            ctx.closePath();
+            ctx.moveTo(25, 0); ctx.lineTo(-5, -12); ctx.lineTo(-18, -8); ctx.lineTo(-18, 8); ctx.lineTo(-5, 12); ctx.closePath();
             ctx.fill();
-            ctx.stroke();
-
             const glassGrad = ctx.createRadialGradient(8, -2, 0, 10, 0, 8);
-            glassGrad.addColorStop(0, '#bae6fd'); 
-            glassGrad.addColorStop(1, '#0c4a6e'); 
+            glassGrad.addColorStop(0, '#bae6fd'); glassGrad.addColorStop(1, '#0c4a6e'); 
             ctx.fillStyle = glassGrad;
-            ctx.beginPath();
-            ctx.ellipse(8, 0, 8, 4, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(-15, -14, 10, 5); 
-            ctx.fillRect(-15, 9, 10, 5);  
-            
+            ctx.beginPath(); ctx.ellipse(8, 0, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
         }
 
@@ -506,19 +533,46 @@
             ctx.fillStyle = '#010103';
             ctx.fillRect(0, 0, width, height);
 
-            const targetAngle = Math.atan2(mouse.y - height/2, mouse.x - width/2);
-            let angleDiff = targetAngle - player.angle;
-            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-            player.angle += angleDiff * 0.15;
-
-            if (mouse.pressed) {
-                player.vx += Math.cos(player.angle) * 0.2;
-                player.vy += Math.sin(player.angle) * 0.2;
-                player.thrustLevel = Math.min(100, player.thrustLevel + 4);
-                if (frame % 5 === 0) particles.push(new Stardust(width/2, height/2, -Math.cos(player.angle)*3, -Math.sin(player.angle)*3));
+            // Movement Logic
+            if (isTouchDevice) {
+                // Rotation
+                if (ctrl.left) player.angle -= 0.08;
+                if (ctrl.right) player.angle += 0.08;
+                // Propulsion
+                if (ctrl.up) {
+                    player.vx += Math.cos(player.angle) * 0.22;
+                    player.vy += Math.sin(player.angle) * 0.22;
+                    player.thrustLevel = Math.min(100, player.thrustLevel + 4);
+                } else if (ctrl.down) {
+                    player.vx -= Math.cos(player.angle) * 0.15;
+                    player.vy -= Math.sin(player.angle) * 0.15;
+                    player.thrustLevel = Math.max(0, player.thrustLevel - 2);
+                } else {
+                    player.thrustLevel = Math.max(0, player.thrustLevel - 3);
+                }
             } else {
-                player.thrustLevel = Math.max(0, player.thrustLevel - 3);
+                // PC Classic follow logic
+                const targetAngle = Math.atan2(mouse.y - height/2, mouse.x - width/2);
+                let angleDiff = targetAngle - player.angle;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                player.angle += angleDiff * 0.15;
+
+                if (mouse.pressed || ctrl.up) {
+                    const amt = ctrl.up ? 0.22 : 0.2;
+                    player.vx += Math.cos(player.angle) * amt;
+                    player.vy += Math.sin(player.angle) * amt;
+                    player.thrustLevel = Math.min(100, player.thrustLevel + 4);
+                } else if (ctrl.down) {
+                    player.vx -= Math.cos(player.angle) * 0.15;
+                    player.vy -= Math.sin(player.angle) * 0.15;
+                } else {
+                    player.thrustLevel = Math.max(0, player.thrustLevel - 3);
+                }
+            }
+
+            if (frame % 5 === 0 && player.thrustLevel > 20) {
+                particles.push(new Stardust(width/2, height/2, -Math.cos(player.angle)*3, -Math.sin(player.angle)*3));
             }
 
             if (player.shootCooldown > 0) player.shootCooldown--;
@@ -530,8 +584,7 @@
             
             asteroids.forEach((a, idx) => {
                 a.update(); a.draw();
-                const dShip = Math.hypot(a.x - width/2, a.y - height/2);
-                if (dShip < a.radius + 15) {
+                if (Math.hypot(a.x - width/2, a.y - height/2) < a.radius + 15) {
                     if (a.isHealth) {
                         player.health = Math.min(100, player.health + 20);
                         asteroids.splice(idx, 1);
@@ -542,16 +595,12 @@
                         setTimeout(() => asteroids.push(new Asteroid()), 1500);
                     }
                 }
-
                 bullets.forEach((b, bidx) => {
-                    const dBull = Math.hypot(a.x - b.x, a.y - b.y);
-                    if (dBull < a.radius) {
+                    if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius) {
                         if (!a.isHealth) {
                             player.score += 100;
                             scoreVal.innerText = player.score.toString().padStart(5, '0');
-                        } else {
-                            player.health = Math.min(100, player.health + 5);
-                        }
+                        } else { player.health = Math.min(100, player.health + 5); }
                         asteroids.splice(idx, 1);
                         bullets.splice(bidx, 1);
                         setTimeout(() => asteroids.push(new Asteroid(null, null, Math.random() < 0.15)), 2000);
