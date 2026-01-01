@@ -2752,13 +2752,37 @@ require_once 'security_headers.php';
                 if (kidsIcon) kidsIcon.textContent = '🎮';
                 if (kidsText) kidsText.textContent = 'Games';
                 kidsZonePlanetBtn.title = 'Back to Games';
-                // Set onclick handler to exit Kids Zone
+                
+                // Remove any existing event listeners by replacing onclick
+                kidsZonePlanetBtn.onclick = null;
+                // Remove all event listeners by cloning (but keep the element reference)
+                const oldOnclick = kidsZonePlanetBtn.onclick;
+                kidsZonePlanetBtn.onclick = null;
+                
+                // Set onclick handler to exit Kids Zone - ensure it works on desktop
                 kidsZonePlanetBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
                     exitKidsZone();
+                    return false;
                 };
+                
+                // Also add event listener for better compatibility (mobile uses this)
+                kidsZonePlanetBtn.addEventListener('click', function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    exitKidsZone();
+                    return false;
+                }, true); // Use capture phase
+                
                 kidsZonePlanetBtn.classList.add('games-btn-active');
+                kidsZonePlanetBtn.style.pointerEvents = 'auto';
+                kidsZonePlanetBtn.style.cursor = 'pointer';
+                kidsZonePlanetBtn.style.zIndex = '1001'; // Ensure it's clickable
             }
             
             // Transform top-right button to "Games" button (if exists)
@@ -2862,12 +2886,34 @@ require_once 'security_headers.php';
                 if (kidsIcon) kidsIcon.textContent = '🌈';
                 if (kidsText) kidsText.textContent = 'Kids Zone';
                 kidsZonePlanetBtn.title = 'Enter Kids Zone';
+                
+                // Remove existing handlers
+                kidsZonePlanetBtn.onclick = null;
+                
+                // Set onclick handler to enter Kids Zone
                 kidsZonePlanetBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
                     enterKidsZone();
+                    return false;
                 };
+                
+                // Also add event listener for better compatibility (like mobile)
+                kidsZonePlanetBtn.addEventListener('click', function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    enterKidsZone();
+                    return false;
+                }, true);
+                
                 kidsZonePlanetBtn.classList.remove('games-btn-active');
+                kidsZonePlanetBtn.style.pointerEvents = 'auto';
+                kidsZonePlanetBtn.style.cursor = 'pointer';
+                kidsZonePlanetBtn.style.zIndex = '998';
             }
             
             // Transform top-right button back to "Kids Zone" button (if exists)
