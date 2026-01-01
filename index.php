@@ -247,18 +247,10 @@ require_once 'security_headers.php';
         <!-- Desktop User Info (hidden on mobile) -->
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
-            <!-- Prize Button (Desktop) -->
-            <a href="prize_claim.php" class="desktop-info-btn prize-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #FFD700, #ff8c00); border: 2px solid #FFD700; border-radius: 8px; color: #000; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);" id="prizeBtnDesktop" title="Prize">
-                <i class="fas fa-trophy"></i> Prize
-            </a>
             <!-- Shop Button (Desktop) -->
             <a href="shop.php" class="desktop-info-btn shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Shop">
                 <i class="fas fa-store"></i> Shop (<span id="shopBtnScoreIndex">0</span>)
             </a>
-            <!-- Kids Zone Button (Desktop) -->
-            <button class="desktop-info-btn kids-zone-btn-desktop" id="kidsZoneBtnDesktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 50%, #ffa8c5 100%); border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 8px; color: #fff; font-weight: 700; font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);" title="Enter Kids Zone" onclick="enterKidsZone()">
-                <span class="kids-icon">🌈</span> Kids Zone
-            </button>
             <!-- Profile Button (Desktop) -->
             <a href="view_profile.php" class="desktop-info-btn profile-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2)); border: 2px solid var(--primary-cyan); border-radius: 8px; color: var(--primary-cyan); text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="profileBtnDesktop" title="View Profile">
                 <i class="fas fa-user"></i> Profile
@@ -349,20 +341,26 @@ require_once 'security_headers.php';
         </div>
     </div>
 
-    <!-- Shop Button -->
-    <a href="shop.php" class="profile-planet-btn hidden" id="shopPlanetBtn" title="Shop" style="right: 20px; bottom: 100px;">
-        <span class="profile-icon">🛒</span>
-        <span class="profile-text">Shop</span>
-    </a>
-
-    <!-- Claim Prize Planet Button -->
-    <a href="prize_claim.php" class="profile-planet-btn hidden" id="claimPrizePlanetBtn" title="Claim Prize" style="right: 20px; bottom: 180px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2)); border: 2px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
+    <!-- Prize Planet Button (Corner - Top) -->
+    <a href="prize_claim.php" class="profile-planet-btn hidden" id="claimPrizePlanetBtn" title="Prize" style="right: 20px; bottom: 260px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2)); border: 2px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
         <span class="profile-icon" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);">🏆</span>
         <span class="profile-text" style="color: #FFD700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);">Prize</span>
     </a>
 
-    <!-- Profile Planet Button -->
-    <a href="view_profile.php" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile">
+    <!-- Shop Button (Corner - Second) -->
+    <a href="shop.php" class="profile-planet-btn hidden" id="shopPlanetBtn" title="Shop" style="right: 20px; bottom: 180px;">
+        <span class="profile-icon">🛒</span>
+        <span class="profile-text">Shop</span>
+    </a>
+
+    <!-- Kids Zone Button (Corner - Third) - Will transform to Games button -->
+    <button class="profile-planet-btn hidden" id="kidsZonePlanetBtn" title="Enter Kids Zone" style="right: 20px; bottom: 100px; background: linear-gradient(135deg, rgba(255, 107, 157, 0.2), rgba(255, 143, 171, 0.2)); border: 3px solid rgba(255, 107, 157, 0.5); box-shadow: 0 0 20px rgba(255, 107, 157, 0.4); cursor: pointer;">
+        <span class="profile-icon kids-zone-icon">🌈</span>
+        <span class="profile-text kids-zone-text">Kids Zone</span>
+    </button>
+
+    <!-- Profile Planet Button (Corner - Bottom) -->
+    <a href="view_profile.php" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile" style="right: 20px; bottom: 20px;">
         <span class="profile-icon" id="profileIcon">🌍</span>
         <span class="profile-text">Profile</span>
     </a>
@@ -1442,21 +1440,22 @@ require_once 'security_headers.php';
                         if (mobileUsername) mobileUsername.textContent = data.user.username;
                         if (dropdownUsername) dropdownUsername.textContent = data.user.username;
                         
-                        // Show profile button (floating)
+                        // Show floating corner buttons
                         document.getElementById('profilePlanetBtn').classList.remove('hidden');
                         
-                        // Show prize button (floating)
                         const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
                         if (claimPrizeBtn) claimPrizeBtn.classList.remove('hidden');
                         
-                        // Show shop button (floating)
                         const shopBtn = document.getElementById('shopPlanetBtn');
                         if (shopBtn) shopBtn.classList.remove('hidden');
                         
-                        // Show desktop info buttons
-                        const prizeBtnDesktop = document.getElementById('prizeBtnDesktop');
-                        if (prizeBtnDesktop) prizeBtnDesktop.style.display = 'flex';
+                        const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
+                        if (kidsZonePlanetBtn) {
+                            kidsZonePlanetBtn.classList.remove('hidden');
+                            kidsZonePlanetBtn.onclick = enterKidsZone;
+                        }
                         
+                        // Show desktop info buttons (only Shop and Profile)
                         const shopBtnDesktop = document.getElementById('shopBtnDesktop');
                         const shopBtnScoreIndex = document.getElementById('shopBtnScoreIndex');
                         if (shopBtnDesktop) shopBtnDesktop.style.display = 'flex';
@@ -1464,9 +1463,6 @@ require_once 'security_headers.php';
                             shopBtnScoreIndex.textContent = data.total_score.toLocaleString();
                             shopBtnDesktop.title = 'Shop - Total Score: ' + data.total_score.toLocaleString();
                         }
-                        
-                        const kidsZoneBtnDesktop = document.getElementById('kidsZoneBtnDesktop');
-                        if (kidsZoneBtnDesktop) kidsZoneBtnDesktop.style.display = 'flex';
                         
                         const profileBtnDesktop = document.getElementById('profileBtnDesktop');
                         if (profileBtnDesktop) profileBtnDesktop.style.display = 'flex';
@@ -1586,14 +1582,12 @@ require_once 'security_headers.php';
                         if (claimPrizeBtn) claimPrizeBtn.classList.add('hidden');
                         const shopBtn = document.getElementById('shopPlanetBtn');
                         if (shopBtn) shopBtn.classList.add('hidden');
+                        const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
+                        if (kidsZonePlanetBtn) kidsZonePlanetBtn.classList.add('hidden');
                         
                         // Hide desktop info buttons
-                        const prizeBtnDesktop = document.getElementById('prizeBtnDesktop');
-                        if (prizeBtnDesktop) prizeBtnDesktop.style.display = 'none';
                         const shopBtnDesktop = document.getElementById('shopBtnDesktop');
                         if (shopBtnDesktop) shopBtnDesktop.style.display = 'none';
-                        const kidsZoneBtnDesktop = document.getElementById('kidsZoneBtnDesktop');
-                        if (kidsZoneBtnDesktop) kidsZoneBtnDesktop.style.display = 'none';
                         const profileBtnDesktop = document.getElementById('profileBtnDesktop');
                         if (profileBtnDesktop) profileBtnDesktop.style.display = 'none';
                         
@@ -2743,10 +2737,22 @@ require_once 'security_headers.php';
             const mainContainer = document.getElementById('mainContainer');
             const kidsZoneContainer = document.getElementById('kidsZoneContainer');
             const kidsZoneBtn = document.getElementById('kidsZoneBtn');
+            const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
             
             if (!mainContainer || !kidsZoneContainer) return;
             
-            // Transform button to "Games" button
+            // Transform floating corner button to "Games" button
+            if (kidsZonePlanetBtn) {
+                const kidsIcon = kidsZonePlanetBtn.querySelector('.kids-zone-icon');
+                const kidsText = kidsZonePlanetBtn.querySelector('.kids-zone-text');
+                if (kidsIcon) kidsIcon.textContent = '🎮';
+                if (kidsText) kidsText.textContent = 'Games';
+                kidsZonePlanetBtn.title = 'Back to Games';
+                kidsZonePlanetBtn.onclick = exitKidsZone;
+                kidsZonePlanetBtn.classList.add('games-btn-active');
+            }
+            
+            // Transform top-right button to "Games" button (if exists)
             if (kidsZoneBtn) {
                 const kidsIcon = kidsZoneBtn.querySelector('.kids-icon');
                 const kidsText = kidsZoneBtn.querySelector('.kids-text');
@@ -2793,10 +2799,22 @@ require_once 'security_headers.php';
             const mainContainer = document.getElementById('mainContainer');
             const kidsZoneContainer = document.getElementById('kidsZoneContainer');
             const kidsZoneBtn = document.getElementById('kidsZoneBtn');
+            const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
             
             if (!mainContainer || !kidsZoneContainer) return;
             
-            // Transform button back to "Kids Zone" button
+            // Transform floating corner button back to "Kids Zone" button
+            if (kidsZonePlanetBtn) {
+                const kidsIcon = kidsZonePlanetBtn.querySelector('.kids-zone-icon');
+                const kidsText = kidsZonePlanetBtn.querySelector('.kids-zone-text');
+                if (kidsIcon) kidsIcon.textContent = '🌈';
+                if (kidsText) kidsText.textContent = 'Kids Zone';
+                kidsZonePlanetBtn.title = 'Enter Kids Zone';
+                kidsZonePlanetBtn.onclick = enterKidsZone;
+                kidsZonePlanetBtn.classList.remove('games-btn-active');
+            }
+            
+            // Transform top-right button back to "Kids Zone" button (if exists)
             if (kidsZoneBtn) {
                 const kidsIcon = kidsZoneBtn.querySelector('.kids-icon');
                 const kidsText = kidsZoneBtn.querySelector('.kids-text');
@@ -3008,6 +3026,7 @@ require_once 'security_headers.php';
         
         // Add click handler to kids zone button
         document.addEventListener('DOMContentLoaded', function() {
+            // Main Kids Zone Button (top-right) click handler
             const kidsZoneBtn = document.getElementById('kidsZoneBtn');
             if (kidsZoneBtn) {
                 kidsZoneBtn.addEventListener('click', function() {
@@ -3020,6 +3039,8 @@ require_once 'security_headers.php';
                     }
                 });
             }
+            
+            // Kids Zone Planet Button (corner) click handler is set in checkSession()
         });
         
         // Check session on page load

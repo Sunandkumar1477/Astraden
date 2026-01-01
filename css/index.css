@@ -3411,6 +3411,29 @@ body.mobile-device .play-btn:active {
     background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(157, 78, 221, 0.3));
 }
 
+/* Kids Zone Planet Button Styling */
+#kidsZonePlanetBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(255, 107, 157, 0.8);
+    background: linear-gradient(135deg, rgba(255, 107, 157, 0.3), rgba(255, 143, 171, 0.3));
+}
+
+#kidsZonePlanetBtn.games-btn-active {
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2));
+    border: 3px solid var(--primary-cyan);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+}
+
+#kidsZonePlanetBtn.games-btn-active:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(157, 78, 221, 0.3));
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+}
+
+#kidsZonePlanetBtn.games-btn-active .profile-icon,
+#kidsZonePlanetBtn.games-btn-active .profile-text {
+    color: var(--primary-cyan);
+}
+
 /* Desktop Info Buttons */
 .desktop-info-btn {
     display: flex;
