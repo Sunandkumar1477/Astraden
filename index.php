@@ -2823,7 +2823,7 @@ require_once 'security_headers.php';
             mainContainer.style.visibility = 'visible';
             mainContainer.style.opacity = '1';
             mainContainer.style.position = 'relative';
-            mainContainer.style.zIndex = '1';
+            mainContainer.style.zIndex = '999'; // Higher z-index to appear above kids zone during transition
             
             // Force reflow to ensure styles are applied
             mainContainer.offsetHeight;
@@ -2836,15 +2836,24 @@ require_once 'security_headers.php';
             kidsZoneContainer.classList.remove('show');
             kidsZoneContainer.style.transform = 'translateX(100%)';
             kidsZoneContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            kidsZoneContainer.style.zIndex = '1000'; // Keep high during slide out
             
             // Now set transition and slide main container in from the left (reverse slide)
             setTimeout(() => {
                 mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
                 // Force reflow
                 mainContainer.offsetHeight;
-                // Now animate to visible position
+                // Now animate to visible position (home/index page)
                 mainContainer.style.transform = 'translateX(0)';
             }, 10);
+            
+            // After animation, ensure main container stays visible and reset z-index
+            setTimeout(() => {
+                mainContainer.style.zIndex = '1';
+                mainContainer.style.display = 'block';
+                mainContainer.style.visibility = 'visible';
+                mainContainer.style.opacity = '1';
+            }, 550);
             
             // Transform floating corner button back to "Kids Zone" button
             if (kidsZonePlanetBtn) {
@@ -2882,11 +2891,18 @@ require_once 'security_headers.php';
                 };
             }
             
-            // Hide kids zone container after animation completes
+            // Hide kids zone container after animation completes and ensure home page is visible
             setTimeout(() => {
                 kidsZoneContainer.style.display = 'none';
                 kidsZoneContainer.style.visibility = 'hidden';
                 kidsZoneContainer.style.opacity = '0';
+                kidsZoneContainer.style.zIndex = '1000'; // Reset for next time
+                // Ensure main container (home/index page) is fully visible and on top
+                mainContainer.style.zIndex = '1';
+                mainContainer.style.display = 'block';
+                mainContainer.style.visibility = 'visible';
+                mainContainer.style.opacity = '1';
+                mainContainer.style.transform = 'translateX(0)'; // Ensure it's in final position
             }, 550);
         }
         
