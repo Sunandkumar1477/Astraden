@@ -34,11 +34,22 @@ $create_table = $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
 
-// Add new columns if they don't exist
-$conn->query("ALTER TABLE `rewards` ADD COLUMN IF NOT EXISTS `showcase_date` DATETIME NULL COMMENT 'Date when coupon appears on rewards page'");
-$conn->query("ALTER TABLE `rewards` ADD COLUMN IF NOT EXISTS `display_days` INT(11) DEFAULT 0 COMMENT 'Number of days to display before expiring'");
-$conn->query("ALTER TABLE `rewards` ADD COLUMN IF NOT EXISTS `about_coupon` TEXT NULL COMMENT 'About coupon code description'");
-$conn->query("ALTER TABLE `rewards` ADD INDEX IF NOT EXISTS idx_showcase_date (`showcase_date`)");
+// Add new columns if they don't exist (check first to avoid errors)
+$check_columns = $conn->query("SHOW COLUMNS FROM `rewards` LIKE 'showcase_date'");
+if ($check_columns->num_rows == 0) {
+    $conn->query("ALTER TABLE `rewards` ADD COLUMN `showcase_date` DATETIME NULL COMMENT 'Date when coupon appears on rewards page'");
+    $conn->query("ALTER TABLE `rewards` ADD INDEX idx_showcase_date (`showcase_date`)");
+}
+
+$check_columns = $conn->query("SHOW COLUMNS FROM `rewards` LIKE 'display_days'");
+if ($check_columns->num_rows == 0) {
+    $conn->query("ALTER TABLE `rewards` ADD COLUMN `display_days` INT(11) DEFAULT 0 COMMENT 'Number of days to display before expiring'");
+}
+
+$check_columns = $conn->query("SHOW COLUMNS FROM `rewards` LIKE 'about_coupon'");
+if ($check_columns->num_rows == 0) {
+    $conn->query("ALTER TABLE `rewards` ADD COLUMN `about_coupon` TEXT NULL COMMENT 'About coupon code description'");
+}
 
 // Create user_coupon_purchases table if it doesn't exist
 $conn->query("
@@ -78,8 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Coupon code is required for coupons.";
         } elseif ($gift_type === 'coupon' && empty($expire_date)) {
             $error = "Expire date is required for coupons.";
+        } elseif ($gift_type === 'coupon' && empty($showcase_date)) {
+            $error = "Showcase date is required for coupons.";
         } elseif ($gift_type === 'coupon' && $display_days <= 0) {
             $error = "Display days must be greater than 0 for coupons.";
+        } elseif ($gift_type === 'coupon' && !empty($showcase_date) && !empty($expire_date) && strtotime($showcase_date) >= strtotime($expire_date)) {
+            $error = "Showcase date must be before expire date.";
         } else {
             $stmt = $conn->prepare("INSERT INTO rewards (gift_name, gift_type, credits_cost, time_duration, coupon_code, coupon_details, about_coupon, expire_date, showcase_date, display_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("ssissssssi", $gift_name, $gift_type, $credits_cost, $time_duration, $coupon_code, $coupon_details, $about_coupon, $expire_date, $showcase_date, $display_days);
@@ -282,12 +297,14 @@ $conn->close();
 
                 <div class="form-row" id="date_row_group" style="display: none;">
                     <div class="form-group">
-                        <label>EXPIRE DATE *</label>
-                        <input type="datetime-local" name="expire_date" required>
+                        <label>SHOWCASE DATE & TIME *</label>
+                        <input type="datetime-local" name="showcase_date" id="showcase_date" required>
+                        <small style="color: rgba(255,255,255,0.5); font-size: 0.75rem; display: block; margin-top: 5px;">When the coupon appears on rewards page</small>
                     </div>
                     <div class="form-group">
-                        <label>SHOWCASE DATE & TIME *</label>
-                        <input type="datetime-local" name="showcase_date" required>
+                        <label>EXPIRE DATE *</label>
+                        <input type="datetime-local" name="expire_date" id="expire_date" required>
+                        <small style="color: rgba(255,255,255,0.5); font-size: 0.75rem; display: block; margin-top: 5px;">When the coupon expires</small>
                     </div>
                 </div>
 
@@ -311,6 +328,8 @@ $conn->close();
                         <th>Credits Cost</th>
                         <th>Duration</th>
                         <th>Coupon Code</th>
+                        <th>Showcase Date</th>
+                        <th>Display Days</th>
                         <th>Expire Date</th>
                         <th>Status</th>
                         <th>Purchased By</th>
@@ -320,7 +339,7 @@ $conn->close();
                 <tbody>
                     <?php if(empty($rewards)): ?>
                     <tr>
-                        <td colspan="12" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">No rewards or coupons found. Add one above.</td>
+                        <td colspan="11" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">No rewards or coupons found. Add one above.</td>
                     </tr>
                     <?php else: ?>
                     <?php foreach($rewards as $r): ?>
