@@ -1452,11 +1452,20 @@ require_once 'security_headers.php';
                         const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
                         if (kidsZonePlanetBtn) {
                             kidsZonePlanetBtn.classList.remove('hidden');
-                            kidsZonePlanetBtn.onclick = function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
+                            const enterHandler = function(e) {
+                                if (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
                                 enterKidsZone();
+                                return false;
                             };
+                            kidsZonePlanetBtn.onclick = enterHandler;
+                            // Add touchstart for mobile devices
+                            kidsZonePlanetBtn.addEventListener('touchstart', function(e) {
+                                e.preventDefault();
+                                enterHandler(e);
+                            }, {passive: false});
                         }
                         
                         // Show desktop info buttons (only Shop and Profile)
@@ -2781,8 +2790,13 @@ require_once 'security_headers.php';
                 // Set onclick handler to exit Kids Zone
                 kidsZonePlanetBtn.onclick = kidsZonePlanetBtnExitHandler;
                 
-                // Also add event listener for better compatibility
-                kidsZonePlanetBtn.addEventListener('click', kidsZonePlanetBtnExitHandler, true);
+                // Also add event listener for better compatibility (desktop and mobile)
+                kidsZonePlanetBtn.addEventListener('click', kidsZonePlanetBtnExitHandler, {capture: true, passive: false});
+                // Add touchstart for mobile devices
+                kidsZonePlanetBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    kidsZonePlanetBtnExitHandler(e);
+                }, {passive: false});
                 
                 kidsZonePlanetBtn.classList.add('games-btn-active');
                 kidsZonePlanetBtn.style.pointerEvents = 'auto';
@@ -2798,12 +2812,21 @@ require_once 'security_headers.php';
                 if (kidsText) kidsText.textContent = 'Games';
                 kidsZoneBtn.title = 'Back to Games';
                 kidsZoneBtn.classList.add('games-btn-active');
-                // Update click handler for top-right button
-                kidsZoneBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                // Update click handler for top-right button (works on mobile and desktop)
+                const exitHandler = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
                     exitKidsZone();
+                    return false;
                 };
+                kidsZoneBtn.onclick = exitHandler;
+                // Add touchstart for mobile
+                kidsZoneBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    exitHandler(e);
+                }, {passive: false});
             }
             
             // Show kids zone container immediately - no delay
@@ -2823,11 +2846,13 @@ require_once 'security_headers.php';
             mainContainer.style.display = 'block';
             mainContainer.style.visibility = 'visible';
             mainContainer.style.opacity = '1';
+            mainContainer.style.position = 'relative';
+            mainContainer.style.zIndex = '1';
             mainContainer.style.transform = 'translateX(0)';
             mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
             
-            // Force reflow
-            mainContainer.offsetHeight;
+            // Force reflow for mobile compatibility
+            void mainContainer.offsetHeight;
             
             // Hide main container with slide out to the left
             setTimeout(() => {
@@ -2838,6 +2863,8 @@ require_once 'security_headers.php';
             setTimeout(() => {
                 kidsZoneContainer.classList.add('show');
                 kidsZoneContainer.style.transform = 'translateX(0)';
+                // Force reflow for mobile
+                void kidsZoneContainer.offsetHeight;
             }, 250);
             
             // Load Learn ABC and Numbers credits
@@ -2860,12 +2887,16 @@ require_once 'security_headers.php';
             mainContainer.style.position = 'relative';
             mainContainer.style.zIndex = '999'; // Higher z-index to appear above kids zone during transition
             
-            // Force reflow to ensure styles are applied
-            mainContainer.offsetHeight;
+            // Force reflow to ensure styles are applied (mobile compatibility)
+            void mainContainer.offsetHeight;
             
             // Set main container to start position (off-screen left) - must be set before transition
             mainContainer.style.transition = 'none';
             mainContainer.style.transform = 'translateX(-100%)';
+            mainContainer.style.width = '100%'; // Ensure full width on mobile
+            
+            // Force another reflow for mobile
+            void mainContainer.offsetHeight;
             
             // Hide kids zone with slide out to the right
             kidsZoneContainer.classList.remove('show');
@@ -2873,11 +2904,14 @@ require_once 'security_headers.php';
             kidsZoneContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
             kidsZoneContainer.style.zIndex = '1000'; // Keep high during slide out
             
+            // Force reflow for kids zone (mobile compatibility)
+            void kidsZoneContainer.offsetHeight;
+            
             // Now set transition and slide main container in from the left (reverse slide)
             setTimeout(() => {
                 mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-                // Force reflow
-                mainContainer.offsetHeight;
+                // Force reflow for mobile
+                void mainContainer.offsetHeight;
                 // Now animate to visible position (home/index page)
                 mainContainer.style.transform = 'translateX(0)';
             }, 10);
@@ -2917,8 +2951,13 @@ require_once 'security_headers.php';
                 // Set onclick handler to enter Kids Zone
                 kidsZonePlanetBtn.onclick = kidsZonePlanetBtnEnterHandler;
                 
-                // Also add event listener for better compatibility
-                kidsZonePlanetBtn.addEventListener('click', kidsZonePlanetBtnEnterHandler, true);
+                // Also add event listener for better compatibility (desktop and mobile)
+                kidsZonePlanetBtn.addEventListener('click', kidsZonePlanetBtnEnterHandler, {capture: true, passive: false});
+                // Add touchstart for mobile devices
+                kidsZonePlanetBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    kidsZonePlanetBtnEnterHandler(e);
+                }, {passive: false});
                 
                 kidsZonePlanetBtn.classList.remove('games-btn-active');
                 kidsZonePlanetBtn.style.pointerEvents = 'auto';
@@ -2934,17 +2973,26 @@ require_once 'security_headers.php';
                 if (kidsText) kidsText.textContent = 'Kids Zone';
                 kidsZoneBtn.title = 'Enter Kids Zone';
                 kidsZoneBtn.classList.remove('games-btn-active');
-                // Restore original click handler for top-right button
-                kidsZoneBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                // Restore original click handler for top-right button (works on mobile and desktop)
+                const toggleHandler = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
                     const container = document.getElementById('kidsZoneContainer');
                     if (container && container.classList.contains('show')) {
                         exitKidsZone();
                     } else {
                         enterKidsZone();
                     }
+                    return false;
                 };
+                kidsZoneBtn.onclick = toggleHandler;
+                // Add touchstart for mobile
+                kidsZoneBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    toggleHandler(e);
+                }, {passive: false});
             }
             
             // Hide kids zone container after animation completes and ensure home page is visible
@@ -3155,12 +3203,15 @@ require_once 'security_headers.php';
         
         // Add click handler to kids zone button
         document.addEventListener('DOMContentLoaded', function() {
-            // Main Kids Zone Button (top-right) click handler
+            // Main Kids Zone Button (top-right) click handler - works on both mobile and desktop
             const kidsZoneBtn = document.getElementById('kidsZoneBtn');
             if (kidsZoneBtn) {
-                kidsZoneBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                // Use both click and touchstart for better mobile compatibility
+                const handleKidsZoneClick = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
                     const kidsZoneContainer = document.getElementById('kidsZoneContainer');
                     // Check if Kids Zone is currently active
                     if (kidsZoneContainer && kidsZoneContainer.classList.contains('show')) {
@@ -3168,7 +3219,15 @@ require_once 'security_headers.php';
                     } else {
                         enterKidsZone();
                     }
-                });
+                    return false;
+                };
+                
+                kidsZoneBtn.addEventListener('click', handleKidsZoneClick, {passive: false});
+                // Add touchstart for better mobile response
+                kidsZoneBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    handleKidsZoneClick(e);
+                }, {passive: false});
             }
             
             // Kids Zone Planet Button (corner) click handler - set as fallback
@@ -3176,11 +3235,21 @@ require_once 'security_headers.php';
             if (kidsZonePlanetBtn) {
                 // Only set if not already set by checkSession
                 if (!kidsZonePlanetBtn.onclick) {
-                    kidsZonePlanetBtn.onclick = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
+                    const handlePlanetBtnClick = function(e) {
+                        if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
                         enterKidsZone();
+                        return false;
                     };
+                    
+                    kidsZonePlanetBtn.onclick = handlePlanetBtnClick;
+                    // Add touchstart for mobile
+                    kidsZonePlanetBtn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        handlePlanetBtnClick(e);
+                    }, {passive: false});
                 }
             }
         });

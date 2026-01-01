@@ -6301,15 +6301,23 @@ body.mobile-device .play-btn:active {
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%) !important;
     z-index: 1000 !important;
     overflow-y: auto !important;
+    -webkit-transform: translateX(100%) !important;
     transform: translateX(100%) !important;
+    -webkit-transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
     visibility: visible !important;
     opacity: 1 !important;
     display: none;
+    /* Mobile optimization */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
 }
 
 .kids-zone-container.show {
     transform: translateX(0) !important;
+    -webkit-transform: translateX(0) !important;
     visibility: visible !important;
     opacity: 1 !important;
     display: block !important;
@@ -6351,6 +6359,39 @@ body.mobile-device .play-btn:active {
     
     .kids-zone-container {
         background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        /* Ensure smooth transitions on mobile */
+        -webkit-transform: translateX(100%);
+        transform: translateX(100%);
+        -webkit-transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Prevent flickering on mobile */
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        -webkit-perspective: 1000px;
+        perspective: 1000px;
+    }
+    
+    .kids-zone-container.show {
+        -webkit-transform: translateX(0) !important;
+        transform: translateX(0) !important;
+    }
+    
+    /* Ensure main container slides smoothly on mobile */
+    #mainContainer {
+        -webkit-transform: translateX(0);
+        transform: translateX(0);
+        -webkit-transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        -webkit-perspective: 1000px;
+        perspective: 1000px;
+        width: 100% !important;
+        position: relative !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        overflow-x: hidden !important;
     }
     
     .kids-game-card {
