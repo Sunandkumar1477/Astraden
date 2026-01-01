@@ -139,6 +139,20 @@ if ($session_data) {
     $session_end_display = $session_end_dt->format('d M Y, h:i A') . ' IST';
 }
 
+// Get all active rewards
+$rewards = $conn->query("
+    SELECT r.*, 
+           CASE WHEN r.is_sold = 1 THEN 1 
+                WHEN r.expire_date IS NOT NULL AND r.expire_date < NOW() THEN 1 
+                WHEN r.gift_type = 'coupon' AND r.showcase_date IS NOT NULL AND r.showcase_date > NOW() THEN 1
+                WHEN r.gift_type = 'coupon' AND r.showcase_date IS NOT NULL AND r.display_days > 0 AND DATE_ADD(r.showcase_date, INTERVAL r.display_days DAY) < NOW() THEN 1
+                ELSE 0 END as is_unavailable
+    FROM rewards r 
+    WHERE r.is_active = 1 
+    AND (r.gift_type = 'reward' OR (r.gift_type = 'coupon' AND r.showcase_date IS NOT NULL AND r.showcase_date <= NOW() AND (r.display_days = 0 OR DATE_ADD(r.showcase_date, INTERVAL r.display_days DAY) >= NOW())))
+    ORDER BY r.gift_type DESC, r.created_at DESC
+")->fetch_all(MYSQLI_ASSOC);
+
 $conn->close();
 ?>
 <!DOCTYPE html>
@@ -146,7 +160,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prize Claim - <?php echo htmlspecialchars($game_display_name); ?></title>
+    <title>Reward Claim - <?php echo htmlspecialchars($game_display_name); ?></title>
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
     <style>
         * {
@@ -355,7 +369,7 @@ $conn->close();
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏆 Prize Claim</h1>
+            <h1>🏆 Reward Claim</h1>
             <div class="game-name"><?php echo htmlspecialchars($game_display_name); ?></div>
         </div>
         
@@ -366,17 +380,17 @@ $conn->close();
             </div>
         <?php elseif (empty($session_data) && empty($available_sessions)): ?>
             <div class="error-message">
-                <p>No prize claim sessions available at the moment.</p>
+                <p>No reward claim sessions available at the moment.</p>
                 <a href="index.php" class="back-button">Back to Home</a>
             </div>
         <?php elseif (!empty($available_sessions) && $session_id <= 0): ?>
             <div class="session-info">
                 <h2>Select a Session</h2>
-                <p style="color: rgba(0, 255, 255, 0.8); margin-bottom: 20px;">Choose a time-duration session to view prize claim leaderboard:</p>
+                <p style="color: rgba(0, 255, 255, 0.8); margin-bottom: 20px;">Choose a time-duration session to view reward claim leaderboard:</p>
             </div>
             
             <div class="leaderboard-container">
-                <h2 class="leaderboard-title">Available Prize Sessions</h2>
+                <h2 class="leaderboard-title">Available Reward Sessions</h2>
                 <div style="display: grid; gap: 15px;">
                     <?php foreach ($available_sessions as $session): 
                         $session_date = $session['session_date'];
@@ -466,6 +480,87 @@ $conn->close();
                 <a href="index.php" class="back-button">Back to Home</a>
             </div>
         <?php endif; ?>
+        
+        <!-- Rewards Section -->
+        <div class="leaderboard-container" style="margin-top: 40px;">
+            <h2 class="leaderboard-title">🎁 Available Rewards</h2>
+            
+            <?php if(empty($rewards)): ?>
+                <div class="empty-message">
+                    No rewards available at the moment. Check back later!
+                </div>
+            <?php else: ?>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
+                    <?php foreach($rewards as $reward): 
+                        $is_unavailable = $reward['is_unavailable'] || ($reward['expire_date'] && strtotime($reward['expire_date']) < time());
+                    ?>
+                    <div style="background: rgba(0, 255, 255, 0.1); border: 2px solid <?php echo $is_unavailable ? 'rgba(255, 0, 110, 0.5)' : ($reward['gift_type'] === 'coupon' ? '#fbbf24' : '#00ffff'); ?>; border-radius: 15px; padding: 20px; position: relative;">
+                        <?php if($is_unavailable): ?>
+                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(255, 0, 110, 0.2); color: #ff006e; padding: 5px 10px; border-radius: 5px; font-size: 0.75rem; font-weight: bold;">SOLD OUT</div>
+                        <?php else: ?>
+                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(0, 255, 255, 0.2); color: #00ffff; padding: 5px 10px; border-radius: 5px; font-size: 0.75rem; font-weight: bold;"><?php echo strtoupper($reward['gift_type']); ?></div>
+                        <?php endif; ?>
+                        
+                        <div style="text-align: center; font-size: 3rem; margin-bottom: 15px;">
+                            <?php echo $reward['gift_type'] === 'coupon' ? '🎫' : '🎁'; ?>
+                        </div>
+                        
+                        <h3 style="color: #00ffff; text-align: center; margin-bottom: 10px; font-size: 1.2rem;">
+                            <?php echo htmlspecialchars($reward['gift_name']); ?>
+                        </h3>
+                        
+                        <div style="text-align: center; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px; font-size: 0.9rem;">
+                            <?php echo ucfirst($reward['gift_type']); ?>
+                        </div>
+                        
+                        <?php if($reward['gift_type'] === 'coupon' && $reward['about_coupon']): ?>
+                            <div style="color: #fbbf24; margin-bottom: 10px; font-size: 0.9rem; text-align: center; font-weight: 600;">
+                                <?php echo nl2br(htmlspecialchars($reward['about_coupon'])); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if($reward['coupon_details']): ?>
+                            <div style="color: rgba(255, 255, 255, 0.8); margin-bottom: 10px; font-size: 0.85rem; line-height: 1.4;">
+                                <?php echo nl2br(htmlspecialchars($reward['coupon_details'])); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if($reward['time_duration']): ?>
+                            <div style="color: #9d4edd; margin-bottom: 10px; font-size: 0.9rem;">
+                                <i class="fas fa-clock"></i> <?php echo htmlspecialchars($reward['time_duration']); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if($reward['gift_type'] === 'coupon' && $reward['showcase_date']): ?>
+                            <div style="color: rgba(0, 255, 255, 0.7); font-size: 0.8rem; margin-bottom: 5px;">
+                                <i class="fas fa-calendar-alt"></i> Showcase: <?php echo date('d M Y H:i', strtotime($reward['showcase_date'])); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if($reward['expire_date']): ?>
+                            <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; margin-bottom: 10px;">
+                                <i class="fas fa-hourglass-end"></i> Expires: <?php echo date('d M Y H:i', strtotime($reward['expire_date'])); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <div style="text-align: center; font-size: 1.5rem; color: #ffd700; font-weight: bold; margin: 15px 0;">
+                            <?php echo number_format($reward['credits_cost']); ?> ⚡ Credits
+                        </div>
+                        
+                        <a href="rewards.php" style="display: block; text-align: center; padding: 12px; background: linear-gradient(135deg, #00ffff, #9d4edd); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; transition: all 0.3s; margin-top: 10px;"
+                           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0, 255, 255, 0.4)';"
+                           onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                            <?php if($is_unavailable): ?>
+                                SOLD OUT
+                            <?php else: ?>
+                                VIEW & PURCHASE
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 </body>
 </html>

@@ -222,12 +222,12 @@ require_once 'security_headers.php';
                             <div class="item-value">Buy with Credits</div>
                         </div>
                     </a>
-                    <!-- Claim Prize Link -->
+                    <!-- Claim Reward Link -->
                     <a href="prize_claim.php" class="menu-item">
                         <div class="item-icon">🏆</div>
                         <div class="item-info">
-                            <div class="item-label">Claim Prize</div>
-                            <div class="item-value">View Prize Claim</div>
+                            <div class="item-label">Claim Reward</div>
+                            <div class="item-value">View Reward Claim</div>
                         </div>
                     </a>
                     <!-- Profile Link -->
@@ -342,9 +342,9 @@ require_once 'security_headers.php';
     </div>
 
     <!-- Prize Planet Button (Corner - Top) -->
-    <a href="prize_claim.php" class="profile-planet-btn hidden" id="claimPrizePlanetBtn" title="Prize" style="right: 20px; bottom: 260px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2)); border: 2px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
+    <a href="prize_claim.php" class="profile-planet-btn hidden" id="claimPrizePlanetBtn" title="Reward" style="right: 20px; bottom: 260px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2)); border: 2px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
         <span class="profile-icon" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);">🏆</span>
-        <span class="profile-text" style="color: #FFD700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);">Prize</span>
+        <span class="profile-text" style="color: #FFD700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);">Reward</span>
     </a>
 
     <!-- Shop Button (Corner - Second) -->
