@@ -19,18 +19,30 @@ $user_profile = $credits_result->fetch_assoc();
 $user_credits = intval($user_profile['credits'] ?? 0);
 $credits_stmt->close();
 
-// Get all active rewards and coupons
+// Get user's purchased coupons
+$purchased_coupons_stmt = $conn->prepare("SELECT reward_id, coupon_code FROM user_coupon_purchases WHERE user_id = ?");
+$purchased_coupons_stmt->bind_param("i", $user_id);
+$purchased_coupons_stmt->execute();
+$purchased_coupons_result = $purchased_coupons_stmt->get_result();
+$purchased_coupons = [];
+while ($row = $purchased_coupons_result->fetch_assoc()) {
+    $purchased_coupons[$row['reward_id']] = $row['coupon_code'];
+}
+$purchased_coupons_stmt->close();
+
+// Get all active rewards and coupons with showcase date logic
 $rewards = $conn->query("
     SELECT r.*, 
            CASE WHEN r.is_sold = 1 THEN 1 
                 WHEN r.expire_date IS NOT NULL AND r.expire_date < NOW() THEN 1 
+                WHEN r.gift_type = 'coupon' AND r.showcase_date IS NOT NULL AND r.showcase_date > NOW() THEN 1
+                WHEN r.gift_type = 'coupon' AND r.showcase_date IS NOT NULL AND r.display_days > 0 AND DATE_ADD(r.showcase_date, INTERVAL r.display_days DAY) < NOW() THEN 1
                 ELSE 0 END as is_unavailable
     FROM rewards r 
     WHERE r.is_active = 1 
+    AND (r.gift_type = 'reward' OR (r.gift_type = 'coupon' AND r.showcase_date IS NOT NULL AND r.showcase_date <= NOW() AND (r.display_days = 0 OR DATE_ADD(r.showcase_date, INTERVAL r.display_days DAY) >= NOW())))
     ORDER BY r.gift_type DESC, r.created_at DESC
 ")->fetch_all(MYSQLI_ASSOC);
-
-$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -144,6 +156,10 @@ $conn->close();
                 <div class="reward-name"><?php echo htmlspecialchars($reward['gift_name']); ?></div>
                 <div class="reward-type"><?php echo ucfirst($reward['gift_type']); ?></div>
 
+                <?php if($reward['gift_type'] === 'coupon' && $reward['about_coupon']): ?>
+                    <div class="reward-details" style="font-weight: 600; color: #fbbf24; margin-bottom: 10px;"><?php echo nl2br(htmlspecialchars($reward['about_coupon'])); ?></div>
+                <?php endif; ?>
+
                 <?php if($reward['time_duration']): ?>
                     <div class="reward-duration"><i class="fas fa-clock"></i> <?php echo htmlspecialchars($reward['time_duration']); ?></div>
                 <?php endif; ?>
@@ -152,12 +168,29 @@ $conn->close();
                     <div class="reward-details"><?php echo nl2br(htmlspecialchars($reward['coupon_details'])); ?></div>
                 <?php endif; ?>
 
-                <?php if($reward['coupon_code']): ?>
-                    <div class="coupon-code"><?php echo htmlspecialchars($reward['coupon_code']); ?></div>
+                <?php 
+                // Show coupon code only if user purchased it
+                $user_purchased = isset($purchased_coupons[$reward['id']]);
+                if($reward['gift_type'] === 'coupon' && $user_purchased): ?>
+                    <div class="coupon-code" style="background: rgba(74, 222, 128, 0.1); border-color: #4ade80;">
+                        <strong>Your Code:</strong> <?php echo htmlspecialchars($purchased_coupons[$reward['id']]); ?>
+                    </div>
+                <?php elseif($reward['gift_type'] === 'coupon' && !$is_unavailable): ?>
+                    <div class="coupon-code" style="opacity: 0.5; border-style: dashed;">
+                        Code will be revealed after purchase
+                    </div>
+                <?php endif; ?>
+
+                <?php if($reward['gift_type'] === 'coupon' && $reward['showcase_date']): ?>
+                    <div class="expire-date" style="color: rgba(0, 255, 255, 0.7);">
+                        <i class="fas fa-calendar-alt"></i> Showcase: <?php echo date('d M Y H:i', strtotime($reward['showcase_date'])); ?>
+                    </div>
                 <?php endif; ?>
 
                 <?php if($reward['expire_date']): ?>
-                    <div class="expire-date">Expires: <?php echo date('d M Y H:i', strtotime($reward['expire_date'])); ?></div>
+                    <div class="expire-date">
+                        <i class="fas fa-hourglass-end"></i> Expires: <?php echo date('d M Y H:i', strtotime($reward['expire_date'])); ?>
+                    </div>
                 <?php endif; ?>
 
                 <div class="reward-cost"><?php echo number_format($reward['credits_cost']); ?> ⚡ Credits</div>
@@ -206,7 +239,11 @@ $conn->close();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Purchase successful! ' + (data.message || ''));
+                    if (data.coupon_code) {
+                        alert(`Purchase successful!\n\nYour coupon code: ${data.coupon_code}\n\nPlease save this code!`);
+                    } else {
+                        alert('Purchase successful!');
+                    }
                     window.location.href = 'rewards.php?success=1';
                 } else {
                     alert('Error: ' + (data.message || 'Purchase failed'));
@@ -223,4 +260,7 @@ $conn->close();
     </script>
 </body>
 </html>
+<?php
+$conn->close();
+?>
 

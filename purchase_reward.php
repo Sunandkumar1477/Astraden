@@ -77,13 +77,22 @@ try {
     $update_reward_stmt->execute();
     $update_reward_stmt->close();
     
+    // If it's a coupon, save to user_coupon_purchases table
+    if ($reward['gift_type'] === 'coupon' && !empty($reward['coupon_code'])) {
+        $insert_coupon_stmt = $conn->prepare("INSERT INTO user_coupon_purchases (user_id, reward_id, coupon_code) VALUES (?, ?, ?)");
+        $insert_coupon_stmt->bind_param("iis", $user_id, $reward_id, $reward['coupon_code']);
+        $insert_coupon_stmt->execute();
+        $insert_coupon_stmt->close();
+    }
+    
     // Commit transaction
     $conn->commit();
     
     echo json_encode([
         'success' => true,
         'message' => 'Reward purchased successfully!',
-        'remaining_credits' => $new_credits
+        'remaining_credits' => $new_credits,
+        'coupon_code' => ($reward['gift_type'] === 'coupon' ? $reward['coupon_code'] : null)
     ]);
     
 } catch (Exception $e) {

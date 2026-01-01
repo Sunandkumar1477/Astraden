@@ -15,7 +15,10 @@ $create_table = $conn->query("
       `time_duration` VARCHAR(50) NULL COMMENT 'Duration for time-based rewards',
       `coupon_code` VARCHAR(100) NULL COMMENT 'Coupon code if type is coupon',
       `coupon_details` TEXT NULL COMMENT 'Coupon details and benefits',
+      `about_coupon` TEXT NULL COMMENT 'About coupon code description',
       `expire_date` DATETIME NULL COMMENT 'Expiration date for coupons',
+      `showcase_date` DATETIME NULL COMMENT 'Date when coupon appears on rewards page',
+      `display_days` INT(11) DEFAULT 0 COMMENT 'Number of days to display before expiring',
       `is_sold` TINYINT(1) DEFAULT 0 COMMENT '1 if purchased, 0 if available',
       `purchased_by` INT(11) NULL COMMENT 'User ID who purchased',
       `purchased_at` DATETIME NULL COMMENT 'Purchase timestamp',
@@ -26,7 +29,30 @@ $create_table = $conn->query("
       INDEX idx_gift_type (`gift_type`),
       INDEX idx_is_sold (`is_sold`),
       INDEX idx_is_active (`is_active`),
-      INDEX idx_expire_date (`expire_date`)
+      INDEX idx_expire_date (`expire_date`),
+      INDEX idx_showcase_date (`showcase_date`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+");
+
+// Add new columns if they don't exist
+$conn->query("ALTER TABLE `rewards` ADD COLUMN IF NOT EXISTS `showcase_date` DATETIME NULL COMMENT 'Date when coupon appears on rewards page'");
+$conn->query("ALTER TABLE `rewards` ADD COLUMN IF NOT EXISTS `display_days` INT(11) DEFAULT 0 COMMENT 'Number of days to display before expiring'");
+$conn->query("ALTER TABLE `rewards` ADD COLUMN IF NOT EXISTS `about_coupon` TEXT NULL COMMENT 'About coupon code description'");
+$conn->query("ALTER TABLE `rewards` ADD INDEX IF NOT EXISTS idx_showcase_date (`showcase_date`)");
+
+// Create user_coupon_purchases table if it doesn't exist
+$conn->query("
+    CREATE TABLE IF NOT EXISTS `user_coupon_purchases` (
+      `id` INT(11) NOT NULL AUTO_INCREMENT,
+      `user_id` INT(11) NOT NULL,
+      `reward_id` INT(11) NOT NULL,
+      `coupon_code` VARCHAR(100) NOT NULL,
+      `purchased_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (`id`),
+      INDEX idx_user_id (`user_id`),
+      INDEX idx_reward_id (`reward_id`),
+      FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+      FOREIGN KEY (`reward_id`) REFERENCES `rewards`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
 
@@ -39,7 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $time_duration = trim($_POST['time_duration'] ?? '');
         $coupon_code = trim($_POST['coupon_code'] ?? '');
         $coupon_details = trim($_POST['coupon_details'] ?? '');
+        $about_coupon = trim($_POST['about_coupon'] ?? '');
         $expire_date = !empty($_POST['expire_date']) ? $_POST['expire_date'] : null;
+        $showcase_date = !empty($_POST['showcase_date']) ? $_POST['showcase_date'] : null;
+        $display_days = intval($_POST['display_days'] ?? 0);
         
         if (empty($gift_name)) {
             $error = "Gift name is required.";
@@ -47,9 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Credits cost cannot be negative.";
         } elseif ($gift_type === 'coupon' && empty($coupon_code)) {
             $error = "Coupon code is required for coupons.";
+        } elseif ($gift_type === 'coupon' && empty($expire_date)) {
+            $error = "Expire date is required for coupons.";
+        } elseif ($gift_type === 'coupon' && $display_days <= 0) {
+            $error = "Display days must be greater than 0 for coupons.";
         } else {
-            $stmt = $conn->prepare("INSERT INTO rewards (gift_name, gift_type, credits_cost, time_duration, coupon_code, coupon_details, expire_date) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssissss", $gift_name, $gift_type, $credits_cost, $time_duration, $coupon_code, $coupon_details, $expire_date);
+            $stmt = $conn->prepare("INSERT INTO rewards (gift_name, gift_type, credits_cost, time_duration, coupon_code, coupon_details, about_coupon, expire_date, showcase_date, display_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssissssssi", $gift_name, $gift_type, $credits_cost, $time_duration, $coupon_code, $coupon_details, $about_coupon, $expire_date, $showcase_date, $display_days);
             
             if ($stmt->execute()) {
                 $message = "Reward/Coupon added successfully!";
@@ -67,12 +100,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $time_duration = trim($_POST['time_duration'] ?? '');
         $coupon_code = trim($_POST['coupon_code'] ?? '');
         $coupon_details = trim($_POST['coupon_details'] ?? '');
+        $about_coupon = trim($_POST['about_coupon'] ?? '');
         $expire_date = !empty($_POST['expire_date']) ? $_POST['expire_date'] : null;
+        $showcase_date = !empty($_POST['showcase_date']) ? $_POST['showcase_date'] : null;
+        $display_days = intval($_POST['display_days'] ?? 0);
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         
         if ($reward_id > 0 && !empty($gift_name)) {
-            $stmt = $conn->prepare("UPDATE rewards SET gift_name = ?, gift_type = ?, credits_cost = ?, time_duration = ?, coupon_code = ?, coupon_details = ?, expire_date = ?, is_active = ? WHERE id = ?");
-            $stmt->bind_param("ssissssii", $gift_name, $gift_type, $credits_cost, $time_duration, $coupon_code, $coupon_details, $expire_date, $is_active, $reward_id);
+            $stmt = $conn->prepare("UPDATE rewards SET gift_name = ?, gift_type = ?, credits_cost = ?, time_duration = ?, coupon_code = ?, coupon_details = ?, about_coupon = ?, expire_date = ?, showcase_date = ?, display_days = ?, is_active = ? WHERE id = ?");
+            $stmt->bind_param("ssissssssiii", $gift_name, $gift_type, $credits_cost, $time_duration, $coupon_code, $coupon_details, $about_coupon, $expire_date, $showcase_date, $display_days, $is_active, $reward_id);
             
             if ($stmt->execute()) {
                 $message = "Reward/Coupon updated successfully!";
@@ -234,14 +270,31 @@ $conn->close();
                     <input type="text" name="coupon_code" placeholder="e.g., SAVE50, WELCOME2024">
                 </div>
 
+                <div class="form-group" id="about_coupon_group" style="display: none;">
+                    <label>ABOUT COUPON *</label>
+                    <textarea name="about_coupon" placeholder="Describe what this coupon is about..."></textarea>
+                </div>
+
                 <div class="form-group" id="coupon_details_group" style="display: none;">
                     <label>COUPON DETAILS & BENEFITS</label>
                     <textarea name="coupon_details" placeholder="Describe the coupon benefits and details..."></textarea>
                 </div>
 
-                <div class="form-group" id="expire_date_group" style="display: none;">
-                    <label>EXPIRE DATE</label>
-                    <input type="datetime-local" name="expire_date">
+                <div class="form-row" id="date_row_group" style="display: none;">
+                    <div class="form-group">
+                        <label>EXPIRE DATE *</label>
+                        <input type="datetime-local" name="expire_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SHOWCASE DATE & TIME *</label>
+                        <input type="datetime-local" name="showcase_date" required>
+                    </div>
+                </div>
+
+                <div class="form-group" id="display_days_group" style="display: none;">
+                    <label>DISPLAY DAYS *</label>
+                    <input type="number" name="display_days" min="1" placeholder="e.g., if expire in 5 days, show only 3 days" required>
+                    <small style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">Number of days to display before expiring (e.g., if coupon expires in 5 days, enter 3 to show only for 3 days)</small>
                 </div>
 
                 <button type="submit" name="add_reward" class="btn-save">ADD REWARD/COUPON</button>
@@ -267,7 +320,7 @@ $conn->close();
                 <tbody>
                     <?php if(empty($rewards)): ?>
                     <tr>
-                        <td colspan="10" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">No rewards or coupons found. Add one above.</td>
+                        <td colspan="12" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">No rewards or coupons found. Add one above.</td>
                     </tr>
                     <?php else: ?>
                     <?php foreach($rewards as $r): ?>
@@ -278,6 +331,8 @@ $conn->close();
                         <td><?php echo number_format($r['credits_cost']); ?> ⚡</td>
                         <td><?php echo htmlspecialchars($r['time_duration'] ?: '-'); ?></td>
                         <td><?php echo htmlspecialchars($r['coupon_code'] ?: '-'); ?></td>
+                        <td><?php echo $r['showcase_date'] ? date('d M Y H:i', strtotime($r['showcase_date'])) : '-'; ?></td>
+                        <td><?php echo $r['display_days'] > 0 ? $r['display_days'] . ' days' : '-'; ?></td>
                         <td><?php echo $r['expire_date'] ? date('d M Y H:i', strtotime($r['expire_date'])) : '-'; ?></td>
                         <td>
                             <?php if($r['is_sold']): ?>
@@ -307,19 +362,33 @@ $conn->close();
         function toggleCouponFields() {
             const giftType = document.getElementById('gift_type').value;
             const couponCodeGroup = document.getElementById('coupon_code_group');
+            const aboutCouponGroup = document.getElementById('about_coupon_group');
             const couponDetailsGroup = document.getElementById('coupon_details_group');
-            const expireDateGroup = document.getElementById('expire_date_group');
+            const dateRowGroup = document.getElementById('date_row_group');
+            const displayDaysGroup = document.getElementById('display_days_group');
             
             if (giftType === 'coupon') {
                 couponCodeGroup.style.display = 'block';
+                aboutCouponGroup.style.display = 'block';
                 couponDetailsGroup.style.display = 'block';
-                expireDateGroup.style.display = 'block';
+                dateRowGroup.style.display = 'grid';
+                displayDaysGroup.style.display = 'block';
                 couponCodeGroup.querySelector('input').required = true;
+                aboutCouponGroup.querySelector('textarea').required = true;
+                dateRowGroup.querySelector('input[name="expire_date"]').required = true;
+                dateRowGroup.querySelector('input[name="showcase_date"]').required = true;
+                displayDaysGroup.querySelector('input').required = true;
             } else {
                 couponCodeGroup.style.display = 'none';
+                aboutCouponGroup.style.display = 'none';
                 couponDetailsGroup.style.display = 'none';
-                expireDateGroup.style.display = 'none';
+                dateRowGroup.style.display = 'none';
+                displayDaysGroup.style.display = 'none';
                 couponCodeGroup.querySelector('input').required = false;
+                aboutCouponGroup.querySelector('textarea').required = false;
+                dateRowGroup.querySelector('input[name="expire_date"]').required = false;
+                dateRowGroup.querySelector('input[name="showcase_date"]').required = false;
+                displayDaysGroup.querySelector('input').required = false;
             }
         }
     </script>
