@@ -205,6 +205,27 @@
         </div>
     </div>
 
+    <!-- Level Confirmation Modal -->
+    <div id="level-confirm-overlay" class="fixed inset-0 z-[105] hidden flex items-center justify-center bg-slate-950/95 backdrop-blur-xl">
+        <div class="text-center p-8 md:p-12 glass-panel rounded-[2rem] md:rounded-[4rem] border border-blue-400/30 shadow-[0_0_100px_rgba(59,130,246,0.3)] max-w-md md:max-w-lg w-full mx-4">
+            <div id="confirm-level-icon" class="text-6xl md:text-8xl mb-4 floating-anim">🚀</div>
+            <h2 id="confirm-level-title" class="text-3xl md:text-5xl font-black text-white mb-3">MISSION READY</h2>
+            <div id="confirm-level-info" class="text-blue-200 mb-6 text-lg md:text-xl space-y-2">
+                <p id="confirm-level-range" class="font-bold">Numbers: <span id="confirm-range-text">1-10</span></p>
+                <p id="confirm-level-planet" class="text-sm md:text-base opacity-80">Planet <span id="confirm-planet-num">1</span></p>
+                <p class="text-sm md:text-base opacity-70 mt-4">Tap numbers in order from <span id="confirm-start-num">1</span> to <span id="confirm-end-num">10</span></p>
+            </div>
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <button id="confirm-play-btn" class="px-8 md:px-12 py-4 md:py-5 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 rounded-full text-xl md:text-2xl font-bold shadow-2xl transition-all active:scale-95">
+                    PLAY 🚀
+                </button>
+                <button id="confirm-cancel-btn" class="px-8 md:px-12 py-4 md:py-5 bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-500 hover:to-slate-400 rounded-full text-xl md:text-2xl font-bold shadow-2xl transition-all active:scale-95">
+                    CANCEL
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="success-overlay" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-blue-950/90 backdrop-blur-md">
         <div class="text-center p-12 glass-panel rounded-[4rem] border border-blue-400/30 shadow-[0_0_100px_rgba(59,130,246,0.3)]">
             <div class="text-8xl mb-6">🏆</div>
@@ -233,6 +254,11 @@
         const nextLevelBtn = document.getElementById('next-level-btn');
         const backHomeBtn = document.getElementById('back-home-btn');
         const backToKidsZoneBtn = document.getElementById('back-to-kids-zone-btn');
+        const levelConfirmOverlay = document.getElementById('level-confirm-overlay');
+        const confirmPlayBtn = document.getElementById('confirm-play-btn');
+        const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+        
+        let selectedLevelIndex = null;
 
         let currentNumbers = [];
         let currentIndex = 0;
@@ -294,10 +320,25 @@
                 `;
                 card.onpointerdown = (e) => {
                     e.preventDefault();
-                    startLevel(idx);
+                    showLevelConfirmation(idx);
                 };
                 levelGrid.appendChild(card);
             });
+        }
+
+        function showLevelConfirmation(rangeIdx) {
+            selectedLevelIndex = rangeIdx;
+            const range = ranges[rangeIdx];
+            
+            // Update confirmation modal with level info
+            document.getElementById('confirm-level-icon').innerText = range.icon;
+            document.getElementById('confirm-range-text').innerText = `${range.start}-${range.end}`;
+            document.getElementById('confirm-planet-num').innerText = rangeIdx + 1;
+            document.getElementById('confirm-start-num').innerText = range.start;
+            document.getElementById('confirm-end-num').innerText = range.end;
+            
+            // Show confirmation modal
+            levelConfirmOverlay.classList.remove('hidden');
         }
 
         function startLevel(rangeIdx) {
@@ -311,6 +352,7 @@
             }
             currentIndex = 0;
             selectionOverlay.classList.add('hidden');
+            levelConfirmOverlay.classList.add('hidden');
             successOverlay.classList.add('hidden');
             levelDisplay.innerText = `${range.icon} MISSION: ${range.start} TO ${range.end}`;
             renderNumbers();
@@ -452,6 +494,28 @@
                 e.preventDefault();
                 // Go back to index page (Kids Zone)
                 window.location.href = 'index.php';
+            };
+        }
+
+        // Play button - start the selected level
+        if (confirmPlayBtn) {
+            confirmPlayBtn.onpointerdown = (e) => {
+                e.preventDefault();
+                if (selectedLevelIndex !== null) {
+                    startLevel(selectedLevelIndex);
+                    selectedLevelIndex = null;
+                }
+            };
+        }
+
+        // Cancel button - close modal and return to level selection
+        if (confirmCancelBtn) {
+            confirmCancelBtn.onpointerdown = (e) => {
+                e.preventDefault();
+                levelConfirmOverlay.classList.add('hidden');
+                selectedLevelIndex = null;
+                // Ensure selection overlay is visible
+                selectionOverlay.classList.remove('hidden');
             };
         }
 
