@@ -6443,20 +6443,32 @@ body.mobile-device .play-btn:active {
     }
     
     .kids-zone-game-badges .credits-badge {
-        font-size: 1rem;
-        padding: 10px 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
         background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2));
         border: 2px solid var(--primary-cyan);
         border-radius: 25px;
+        font-size: 0.85rem;
         font-weight: 700;
         color: var(--primary-cyan);
-        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
-        transition: all 0.3s ease;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        box-shadow: 0 2px 8px rgba(0, 255, 255, 0.4), 0 0 15px rgba(157, 78, 221, 0.3);
+        font-family: 'Orbitron', sans-serif;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .kids-zone-game-badges .credits-badge:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 255, 255, 0.5), 0 0 20px rgba(157, 78, 221, 0.4);
+    }
+    
+    .kids-zone-game-badges .credits-badge .power-icon {
+        font-size: 1rem;
+        color: var(--primary-cyan);
+        filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
     }
 }
 
