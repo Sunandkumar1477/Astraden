@@ -6764,6 +6764,17 @@ body.mobile-device .play-btn:active {
     font-family: 'Rajdhani', sans-serif;
 }
 
+/* Hide "Pay Credits to Play" heading and text on desktop only */
+@media (min-width: 1024px) {
+    .kids-credits-modal-content h2 {
+        display: none !important;
+    }
+    
+    .kids-credits-modal-content p {
+        display: none !important;
+    }
+}
+
 .kids-modal-buttons {
     display: flex;
     gap: 15px;
