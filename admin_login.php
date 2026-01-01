@@ -140,12 +140,30 @@ if ($conn && !$conn->connect_error) $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Access - Astraden</title>
-    <!-- Favicon - Must be early in head for proper display -->
+    <!-- Favicon - Comprehensive implementation for all browsers and devices -->
+    <!-- Standard favicon for modern browsers -->
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="alternate icon" type="image/png" href="Alogo.svg">
+    <!-- Fallback for older browsers -->
+    <link rel="icon" type="image/png" sizes="32x32" href="Alogo.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="Alogo.svg">
+    <!-- Shortcut icon for legacy support -->
+    <link rel="shortcut icon" href="Alogo.svg">
+    <!-- Apple Touch Icons for iOS devices -->
     <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
-    <link rel="icon" type="image/svg+xml" sizes="any" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="144x144" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="120x120" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="114x114" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="76x76" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="72x72" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="60x60" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="57x57" href="Alogo.svg">
+    <!-- Android Chrome icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="Alogo.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="Alogo.svg">
+    <!-- Windows tiles -->
+    <meta name="msapplication-TileImage" content="Alogo.svg">
+    <meta name="msapplication-TileColor" content="#1A193F">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>

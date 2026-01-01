@@ -15,12 +15,31 @@ require_once 'security_headers.php';
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0f">
     <title>Astra Den - Select Your Game</title>
-    <!-- Favicon - Professional implementation -->
+    <!-- Favicon - Comprehensive implementation for all browsers and devices -->
+    <!-- Standard favicon for modern browsers -->
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="shortcut icon" type="image/svg+xml" href="Alogo.svg">
-    <link rel="alternate icon" type="image/png" href="Alogo.svg">
+    <!-- Fallback for older browsers -->
+    <link rel="icon" type="image/png" sizes="32x32" href="Alogo.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="Alogo.svg">
+    <!-- Shortcut icon for legacy support -->
+    <link rel="shortcut icon" href="Alogo.svg">
+    <!-- Apple Touch Icons for iOS devices -->
     <link rel="apple-touch-icon" sizes="180x180" href="Alogo.svg">
-    <link rel="icon" type="image/svg+xml" sizes="any" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="144x144" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="120x120" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="114x114" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="76x76" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="72x72" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="60x60" href="Alogo.svg">
+    <link rel="apple-touch-icon" sizes="57x57" href="Alogo.svg">
+    <!-- Android Chrome icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="Alogo.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="Alogo.svg">
+    <!-- Windows tiles -->
+    <meta name="msapplication-TileImage" content="Alogo.svg">
+    <meta name="msapplication-TileColor" content="#1A193F">
+    <!-- Manifest for PWA support -->
     <link rel="manifest" href="data:application/json,{}">
     
     <!-- Google Fonts - Optimized with font-display swap -->
