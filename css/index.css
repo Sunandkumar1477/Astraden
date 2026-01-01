@@ -1856,6 +1856,25 @@ body.mobile-device .play-btn:active {
     flex-wrap: wrap;
 }
 
+/* Desktop Info Buttons - ensure proper display */
+@media (min-width: 1024px) {
+    .desktop-info-btn {
+        display: flex !important;
+    }
+    
+    /* Hide floating kids zone button on mobile, show on desktop */
+    .kids-zone-btn {
+        display: flex !important;
+    }
+}
+
+/* Hide desktop info buttons on mobile */
+@media (max-width: 1023px) {
+    .desktop-info-btn {
+        display: none !important;
+    }
+}
+
 .user-info-container {
     position: relative;
     min-width: 200px;
@@ -3390,6 +3409,41 @@ body.mobile-device .play-btn:active {
     transform: scale(1.05);
     box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
     background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(157, 78, 221, 0.3));
+}
+
+/* Desktop Info Buttons */
+.desktop-info-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.desktop-info-btn:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.prize-btn-desktop:hover {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+.shop-btn-desktop:hover {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+}
+
+.kids-zone-btn-desktop:hover {
+    box-shadow: 0 8px 30px rgba(255, 107, 157, 0.6);
+    transform: scale(1.05);
+}
+
+.profile-btn-desktop:hover {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+}
+
+.kids-zone-btn-desktop .kids-icon {
+    font-size: 1.2rem;
+    animation: bounce 2s infinite;
 }
 
 /* Shop Button Desktop */
@@ -6119,12 +6173,15 @@ body.mobile-device .play-btn:active {
 
 /* Extra Large Devices (desktops, 1024px and up) */
 @media (min-width: 1024px) and (max-width: 1439px) {
+    /* Kids Zone button positioned above Profile button on desktop */
     .kids-zone-btn {
-        top: 20px;
-        right: 20px;
+        top: auto !important;
+        bottom: 100px !important;
+        right: 30px !important;
         padding: 12px 24px;
         font-size: 1.1rem;
         gap: 10px;
+        position: fixed !important;
     }
     
     .kids-zone-btn .kids-icon {
@@ -6134,13 +6191,16 @@ body.mobile-device .play-btn:active {
 
 /* XXL Devices (large desktops, 1440px and up) */
 @media (min-width: 1440px) {
+    /* Kids Zone button positioned above Profile button on desktop */
     .kids-zone-btn {
-        top: 25px;
-        right: 25px;
+        top: auto !important;
+        bottom: 100px !important;
+        right: 30px !important;
         padding: 14px 28px;
         font-size: 1.2rem;
         gap: 12px;
         border-radius: 28px;
+        position: fixed !important;
     }
     
     .kids-zone-btn .kids-icon {
@@ -6150,14 +6210,17 @@ body.mobile-device .play-btn:active {
 
 /* Ultra-wide screens (1920px and up) */
 @media (min-width: 1920px) {
+    /* Kids Zone button positioned above Profile button on desktop */
     .kids-zone-btn {
-        top: 30px;
-        right: 30px;
+        top: auto !important;
+        bottom: 100px !important;
+        right: 30px !important;
         padding: 16px 32px;
         font-size: 1.3rem;
         gap: 14px;
         border-radius: 30px;
         border-width: 4px;
+        position: fixed !important;
     }
     
     .kids-zone-btn .kids-icon {

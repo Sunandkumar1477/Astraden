@@ -247,11 +247,21 @@ require_once 'security_headers.php';
         <!-- Desktop User Info (hidden on mobile) -->
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
-            <a href="prize_claim.php" class="shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #FFD700, #ff8c00); border: 2px solid #FFD700; border-radius: 8px; color: #000; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);" id="claimPrizeBtnDesktop" title="Claim Prize">
-                <i class="fas fa-trophy"></i> Claim Prize
+            <!-- Prize Button (Desktop) -->
+            <a href="prize_claim.php" class="desktop-info-btn prize-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #FFD700, #ff8c00); border: 2px solid #FFD700; border-radius: 8px; color: #000; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);" id="prizeBtnDesktop" title="Prize">
+                <i class="fas fa-trophy"></i> Prize
             </a>
-            <a href="shop.php" class="shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Shop">
+            <!-- Shop Button (Desktop) -->
+            <a href="shop.php" class="desktop-info-btn shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Shop">
                 <i class="fas fa-store"></i> Shop (<span id="shopBtnScoreIndex">0</span>)
+            </a>
+            <!-- Kids Zone Button (Desktop) -->
+            <button class="desktop-info-btn kids-zone-btn-desktop" id="kidsZoneBtnDesktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 50%, #ffa8c5 100%); border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 8px; color: #fff; font-weight: 700; font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);" title="Enter Kids Zone" onclick="enterKidsZone()">
+                <span class="kids-icon">🌈</span> Kids Zone
+            </button>
+            <!-- Profile Button (Desktop) -->
+            <a href="view_profile.php" class="desktop-info-btn profile-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2)); border: 2px solid var(--primary-cyan); border-radius: 8px; color: var(--primary-cyan); text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="profileBtnDesktop" title="View Profile">
+                <i class="fas fa-user"></i> Profile
             </a>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
             <span class="referral-icon">🎁</span>
@@ -1432,22 +1442,21 @@ require_once 'security_headers.php';
                         if (mobileUsername) mobileUsername.textContent = data.user.username;
                         if (dropdownUsername) dropdownUsername.textContent = data.user.username;
                         
-                        // Show profile button
+                        // Show profile button (floating)
                         document.getElementById('profilePlanetBtn').classList.remove('hidden');
                         
-                        // Show claim prize button (floating)
+                        // Show prize button (floating)
                         const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
                         if (claimPrizeBtn) claimPrizeBtn.classList.remove('hidden');
-                        
-                        // Show claim prize button (desktop)
-                        const claimPrizeBtnDesktop = document.getElementById('claimPrizeBtnDesktop');
-                        if (claimPrizeBtnDesktop) claimPrizeBtnDesktop.style.display = 'flex';
                         
                         // Show shop button (floating)
                         const shopBtn = document.getElementById('shopPlanetBtn');
                         if (shopBtn) shopBtn.classList.remove('hidden');
                         
-                        // Show shop button (desktop) with score
+                        // Show desktop info buttons
+                        const prizeBtnDesktop = document.getElementById('prizeBtnDesktop');
+                        if (prizeBtnDesktop) prizeBtnDesktop.style.display = 'flex';
+                        
                         const shopBtnDesktop = document.getElementById('shopBtnDesktop');
                         const shopBtnScoreIndex = document.getElementById('shopBtnScoreIndex');
                         if (shopBtnDesktop) shopBtnDesktop.style.display = 'flex';
@@ -1455,6 +1464,12 @@ require_once 'security_headers.php';
                             shopBtnScoreIndex.textContent = data.total_score.toLocaleString();
                             shopBtnDesktop.title = 'Shop - Total Score: ' + data.total_score.toLocaleString();
                         }
+                        
+                        const kidsZoneBtnDesktop = document.getElementById('kidsZoneBtnDesktop');
+                        if (kidsZoneBtnDesktop) kidsZoneBtnDesktop.style.display = 'flex';
+                        
+                        const profileBtnDesktop = document.getElementById('profileBtnDesktop');
+                        if (profileBtnDesktop) profileBtnDesktop.style.display = 'flex';
                         
                         // Update shop score in mobile menu
                         const mobileShopScoreIndex = document.getElementById('mobileShopScoreIndex');
@@ -1569,8 +1584,19 @@ require_once 'security_headers.php';
                         document.getElementById('profilePlanetBtn').classList.add('hidden');
                         const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
                         if (claimPrizeBtn) claimPrizeBtn.classList.add('hidden');
-                        const claimPrizeBtnDesktop = document.getElementById('claimPrizeBtnDesktop');
-                        if (claimPrizeBtnDesktop) claimPrizeBtnDesktop.style.display = 'none';
+                        const shopBtn = document.getElementById('shopPlanetBtn');
+                        if (shopBtn) shopBtn.classList.add('hidden');
+                        
+                        // Hide desktop info buttons
+                        const prizeBtnDesktop = document.getElementById('prizeBtnDesktop');
+                        if (prizeBtnDesktop) prizeBtnDesktop.style.display = 'none';
+                        const shopBtnDesktop = document.getElementById('shopBtnDesktop');
+                        if (shopBtnDesktop) shopBtnDesktop.style.display = 'none';
+                        const kidsZoneBtnDesktop = document.getElementById('kidsZoneBtnDesktop');
+                        if (kidsZoneBtnDesktop) kidsZoneBtnDesktop.style.display = 'none';
+                        const profileBtnDesktop = document.getElementById('profileBtnDesktop');
+                        if (profileBtnDesktop) profileBtnDesktop.style.display = 'none';
+                        
                         document.getElementById('userCredits').style.display = 'none';
                         document.getElementById('userReferralCode').style.display = 'none';
                     }
