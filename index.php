@@ -1452,7 +1452,11 @@ require_once 'security_headers.php';
                         const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
                         if (kidsZonePlanetBtn) {
                             kidsZonePlanetBtn.classList.remove('hidden');
-                            kidsZonePlanetBtn.onclick = enterKidsZone;
+                            kidsZonePlanetBtn.onclick = function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                enterKidsZone();
+                            };
                         }
                         
                         // Show desktop info buttons (only Shop and Profile)
@@ -2748,7 +2752,12 @@ require_once 'security_headers.php';
                 if (kidsIcon) kidsIcon.textContent = '🎮';
                 if (kidsText) kidsText.textContent = 'Games';
                 kidsZonePlanetBtn.title = 'Back to Games';
-                kidsZonePlanetBtn.onclick = exitKidsZone;
+                // Set onclick handler to exit Kids Zone
+                kidsZonePlanetBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    exitKidsZone();
+                };
                 kidsZonePlanetBtn.classList.add('games-btn-active');
             }
             
@@ -2760,6 +2769,12 @@ require_once 'security_headers.php';
                 if (kidsText) kidsText.textContent = 'Games';
                 kidsZoneBtn.title = 'Back to Games';
                 kidsZoneBtn.classList.add('games-btn-active');
+                // Update click handler for top-right button
+                kidsZoneBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    exitKidsZone();
+                };
             }
             
             // Show kids zone container immediately - no delay
@@ -2803,6 +2818,19 @@ require_once 'security_headers.php';
             
             if (!mainContainer || !kidsZoneContainer) return;
             
+            // Hide kids zone with slide out to the right
+            kidsZoneContainer.classList.remove('show');
+            kidsZoneContainer.style.transform = 'translateX(100%)';
+            kidsZoneContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Show main container with slide in from the left (reverse slide)
+            mainContainer.style.transform = 'translateX(-100%)';
+            mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            setTimeout(() => {
+                mainContainer.style.transform = 'translateX(0)';
+            }, 50);
+            
             // Transform floating corner button back to "Kids Zone" button
             if (kidsZonePlanetBtn) {
                 const kidsIcon = kidsZonePlanetBtn.querySelector('.kids-zone-icon');
@@ -2810,7 +2838,11 @@ require_once 'security_headers.php';
                 if (kidsIcon) kidsIcon.textContent = '🌈';
                 if (kidsText) kidsText.textContent = 'Kids Zone';
                 kidsZonePlanetBtn.title = 'Enter Kids Zone';
-                kidsZonePlanetBtn.onclick = enterKidsZone;
+                kidsZonePlanetBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    enterKidsZone();
+                };
                 kidsZonePlanetBtn.classList.remove('games-btn-active');
             }
             
@@ -2822,20 +2854,23 @@ require_once 'security_headers.php';
                 if (kidsText) kidsText.textContent = 'Kids Zone';
                 kidsZoneBtn.title = 'Enter Kids Zone';
                 kidsZoneBtn.classList.remove('games-btn-active');
+                // Restore original click handler for top-right button
+                kidsZoneBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const container = document.getElementById('kidsZoneContainer');
+                    if (container && container.classList.contains('show')) {
+                        exitKidsZone();
+                    } else {
+                        enterKidsZone();
+                    }
+                };
             }
             
-            // Hide kids zone with slide out to the right
-            kidsZoneContainer.classList.remove('show');
-            kidsZoneContainer.style.transform = 'translateX(100%)';
-            
-            // Show main container with slide in from the left
+            // Hide kids zone container after animation
             setTimeout(() => {
-                mainContainer.style.transform = 'translateX(0)';
-                mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-                setTimeout(() => {
-                    kidsZoneContainer.style.display = 'none';
-                }, 500);
-            }, 50);
+                kidsZoneContainer.style.display = 'none';
+            }, 500);
         }
         
         // Load Learn ABC credits
@@ -3029,7 +3064,9 @@ require_once 'security_headers.php';
             // Main Kids Zone Button (top-right) click handler
             const kidsZoneBtn = document.getElementById('kidsZoneBtn');
             if (kidsZoneBtn) {
-                kidsZoneBtn.addEventListener('click', function() {
+                kidsZoneBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     const kidsZoneContainer = document.getElementById('kidsZoneContainer');
                     // Check if Kids Zone is currently active
                     if (kidsZoneContainer && kidsZoneContainer.classList.contains('show')) {
@@ -3040,7 +3077,18 @@ require_once 'security_headers.php';
                 });
             }
             
-            // Kids Zone Planet Button (corner) click handler is set in checkSession()
+            // Kids Zone Planet Button (corner) click handler - set as fallback
+            const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
+            if (kidsZonePlanetBtn) {
+                // Only set if not already set by checkSession
+                if (!kidsZonePlanetBtn.onclick) {
+                    kidsZonePlanetBtn.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        enterKidsZone();
+                    };
+                }
+            }
         });
         
         // Check session on page load
