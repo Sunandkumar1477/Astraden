@@ -471,9 +471,57 @@
 
         function showLevelComplete() {
             successOverlay.classList.remove('hidden');
-            const celeb = new SpeechSynthesisUtterance("Mission Objective Reached! Great job!");
-            if (femaleVoice) celeb.voice = femaleVoice;
-            window.speechSynthesis.speak(celeb);
+            // Play clapping sound only (no voice)
+            playClappingSound();
+        }
+
+        function playClappingSound() {
+            try {
+                // Create clapping sound using Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create multiple claps with slight variations for realistic sound
+                const clapCount = 6;
+                const baseTime = audioContext.currentTime;
+                
+                for (let i = 0; i < clapCount; i++) {
+                    const delay = i * 0.15; // Space between claps
+                    const clapTime = baseTime + delay;
+                    
+                    // Create noise-like sound for clapping (white noise burst)
+                    const bufferSize = audioContext.sampleRate * 0.1; // 0.1 seconds
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    
+                    // Fill with random noise
+                    for (let j = 0; j < bufferSize; j++) {
+                        data[j] = Math.random() * 2 - 1;
+                    }
+                    
+                    const noise = audioContext.createBufferSource();
+                    noise.buffer = buffer;
+                    
+                    const gainNode = audioContext.createGain();
+                    gainNode.gain.setValueAtTime(0, clapTime);
+                    gainNode.gain.linearRampToValueAtTime(0.4, clapTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, clapTime + 0.1);
+                    
+                    // Add low-pass filter to make it sound more like clapping
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1000 + Math.random() * 500;
+                    
+                    noise.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    noise.start(clapTime);
+                    noise.stop(clapTime + 0.1);
+                }
+            } catch (e) {
+                // Fallback: if Web Audio API fails, just show the overlay silently
+                console.log('Audio not available');
+            }
         }
 
         nextLevelBtn.onpointerdown = (e) => {
