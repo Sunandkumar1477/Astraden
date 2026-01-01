@@ -2818,18 +2818,33 @@ require_once 'security_headers.php';
             
             if (!mainContainer || !kidsZoneContainer) return;
             
+            // Ensure main container is visible and positioned correctly for reverse slide
+            mainContainer.style.display = 'block';
+            mainContainer.style.visibility = 'visible';
+            mainContainer.style.opacity = '1';
+            mainContainer.style.position = 'relative';
+            mainContainer.style.zIndex = '1';
+            
+            // Force reflow to ensure styles are applied
+            mainContainer.offsetHeight;
+            
+            // Set main container to start position (off-screen left) - must be set before transition
+            mainContainer.style.transition = 'none';
+            mainContainer.style.transform = 'translateX(-100%)';
+            
             // Hide kids zone with slide out to the right
             kidsZoneContainer.classList.remove('show');
             kidsZoneContainer.style.transform = 'translateX(100%)';
             kidsZoneContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
             
-            // Show main container with slide in from the left (reverse slide)
-            mainContainer.style.transform = 'translateX(-100%)';
-            mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-            
+            // Now set transition and slide main container in from the left (reverse slide)
             setTimeout(() => {
+                mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                // Force reflow
+                mainContainer.offsetHeight;
+                // Now animate to visible position
                 mainContainer.style.transform = 'translateX(0)';
-            }, 50);
+            }, 10);
             
             // Transform floating corner button back to "Kids Zone" button
             if (kidsZonePlanetBtn) {
@@ -2867,10 +2882,12 @@ require_once 'security_headers.php';
                 };
             }
             
-            // Hide kids zone container after animation
+            // Hide kids zone container after animation completes
             setTimeout(() => {
                 kidsZoneContainer.style.display = 'none';
-            }, 500);
+                kidsZoneContainer.style.visibility = 'hidden';
+                kidsZoneContainer.style.opacity = '0';
+            }, 550);
         }
         
         // Load Learn ABC credits
