@@ -2783,6 +2783,13 @@ require_once 'security_headers.php';
         
         // Kids Zone Functions
         function enterKidsZone() {
+            // Check if user is on desktop/tablet (screen width >= 1024px)
+            // Show message only on desktop, mobile works normally
+            if (window.innerWidth >= 1024) {
+                alert('Kids Zone is available only on Mobile version');
+                return;
+            }
+            
             const mainContainer = document.getElementById('mainContainer');
             const kidsZoneContainer = document.getElementById('kidsZoneContainer');
             const kidsZoneBtn = document.getElementById('kidsZoneBtn');
