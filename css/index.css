@@ -6519,12 +6519,22 @@ body.mobile-device .play-btn:active {
     visibility: visible !important;
     opacity: 1 !important;
     z-index: 2 !important;
+    pointer-events: auto !important;
 }
 
 .kids-game-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3) !important;
     border-color: var(--primary-purple) !important;
+}
+
+/* Ensure buttons and interactive elements are always clickable */
+.kids-game-card button,
+.kids-game-card .play-btn,
+.kids-game-card .credits-badge {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 15;
 }
 
 .kids-game-card .game-icon {
@@ -6568,6 +6578,10 @@ body.mobile-device .play-btn:active {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative;
+    z-index: 10;
 }
 
 .kids-game-card .credits-badge {
@@ -6591,14 +6605,224 @@ body.mobile-device .play-btn:active {
 
 /* Desktop (1024px+) */
 @media (min-width: 1024px) {
+    .kids-zone-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+    
+    .kids-zone-header {
+        padding: 50px 20px 40px;
+        margin-bottom: 30px;
+    }
+    
+    .kids-zone-header h1 {
+        font-size: clamp(3rem, 6vw, 5rem);
+        letter-spacing: 10px;
+    }
+    
+    .kids-zone-header p {
+        font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+        letter-spacing: 4px;
+    }
+    
+    .kids-zone-games {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 30px;
+    }
+    
     .kids-zone-games .games-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 30px;
+        gap: 35px;
+        padding: 30px 0;
     }
     
     .kids-game-card {
-        min-height: 200px;
-        padding: 25px;
+        min-height: 320px;
+        padding: 30px;
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .kids-game-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 15px 40px rgba(0, 255, 255, 0.4) !important;
+        border-color: var(--primary-purple) !important;
+    }
+    
+    .kids-game-card .game-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        text-align: center;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+    
+    .kids-game-card:hover .game-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    .kids-game-card .game-title {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+        text-align: center;
+        font-weight: 700;
+        color: var(--primary-cyan);
+    }
+    
+    .kids-game-card .game-description {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.9);
+        min-height: 60px;
+    }
+    
+    .kids-game-card .game-type {
+        font-size: 0.95rem;
+        padding: 6px 14px;
+        font-weight: 600;
+    }
+    
+    .kids-game-card .credits-badge {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .kids-game-card .play-btn {
+        width: 100%;
+        padding: 16px 24px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin-top: 20px;
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+        color: #fff;
+        border: 2px solid var(--primary-cyan);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        position: relative;
+        z-index: 15;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    .kids-game-card .play-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 255, 255, 0.6);
+        background: linear-gradient(135deg, var(--primary-purple), var(--primary-pink));
+        border-color: var(--primary-purple);
+    }
+    
+    .kids-game-card .play-btn:active {
+        transform: translateY(-1px) scale(1.02);
+        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+    }
+    
+    .kids-game-card .play-btn::after {
+        content: '▶';
+        margin-left: 10px;
+        transition: transform 0.3s ease;
+        display: inline-block;
+    }
+    
+    .kids-game-card .play-btn:hover::after {
+        transform: translateX(5px);
+    }
+}
+
+/* Large Desktop and High Resolution (1440px+) */
+@media (min-width: 1440px) {
+    .kids-zone-games {
+        max-width: 1600px;
+        padding: 50px 40px;
+    }
+    
+    .kids-zone-games .games-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+        padding: 40px 0;
+    }
+    
+    .kids-game-card {
+        min-height: 360px;
+        padding: 35px;
+    }
+    
+    .kids-game-card .game-icon {
+        font-size: 4.5rem;
+        margin-bottom: 25px;
+    }
+    
+    .kids-game-card .game-title {
+        font-size: 2rem;
+        margin-bottom: 18px;
+    }
+    
+    .kids-game-card .game-description {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        margin-bottom: 25px;
+        min-height: 70px;
+    }
+    
+    .kids-game-card .play-btn {
+        padding: 18px 28px;
+        font-size: 1.2rem;
+        margin-top: 25px;
+    }
+}
+
+/* Ultra-wide displays (1920px+) */
+@media (min-width: 1920px) {
+    .kids-zone-games {
+        max-width: 1800px;
+    }
+    
+    .kids-zone-games .games-grid {
+        gap: 50px;
+    }
+    
+    .kids-game-card {
+        min-height: 400px;
+        padding: 40px;
+    }
+    
+    .kids-game-card .game-icon {
+        font-size: 5rem;
+    }
+    
+    .kids-game-card .game-title {
+        font-size: 2.2rem;
+    }
+    
+    .kids-game-card .game-description {
+        font-size: 1.15rem;
+        min-height: 80px;
+    }
+    
+    .kids-game-card .play-btn {
+        padding: 20px 32px;
+        font-size: 1.3rem;
     }
 }
 
