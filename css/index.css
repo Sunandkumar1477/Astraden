@@ -5983,12 +5983,19 @@ body.mobile-device .play-btn:active {
     font-weight: 700;
     font-size: 1.1rem;
     cursor: pointer;
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 10px;
     box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
     transition: all 0.3s ease;
     font-family: 'Rajdhani', sans-serif;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: auto;
+    max-width: none;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 /* Ensure button is visible on all devices */
@@ -6003,10 +6010,20 @@ body.mobile-device .play-btn:active {
     box-shadow: 0 8px 30px rgba(255, 107, 157, 0.6);
 }
 
+.kids-zone-btn:active {
+    transform: scale(0.98);
+}
+
 .kids-zone-btn .kids-icon {
     font-size: 1.5rem;
     animation: bounce 2s infinite;
     transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.kids-zone-btn .kids-text {
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .kids-zone-btn.games-btn-active {
@@ -6027,6 +6044,165 @@ body.mobile-device .play-btn:active {
 @keyframes bounce {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-5px); }
+}
+
+/* Extra Small Devices (phones, 320px and up) */
+@media (min-width: 320px) and (max-width: 479px) {
+    .kids-zone-btn {
+        top: 10px;
+        right: 10px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        border-radius: 20px;
+        border-width: 2px;
+        gap: 6px;
+        min-height: 44px; /* Touch-friendly minimum size */
+    }
+    
+    .kids-zone-btn .kids-icon {
+        font-size: 1.2rem;
+        animation: none; /* Disable animation on small devices for performance */
+    }
+    
+    .kids-zone-btn .kids-text {
+        font-size: 0.9rem;
+    }
+}
+
+/* Small Devices (phones, 480px and up) */
+@media (min-width: 480px) and (max-width: 599px) {
+    .kids-zone-btn {
+        top: 12px;
+        right: 12px;
+        padding: 11px 18px;
+        font-size: 0.95rem;
+        border-radius: 22px;
+        gap: 7px;
+        min-height: 44px;
+    }
+    
+    .kids-zone-btn .kids-icon {
+        font-size: 1.3rem;
+    }
+}
+
+/* Medium Devices (tablets portrait, 600px and up) */
+@media (min-width: 600px) and (max-width: 767px) {
+    .kids-zone-btn {
+        top: 15px;
+        right: 15px;
+        padding: 12px 20px;
+        font-size: 1rem;
+        border-radius: 23px;
+        gap: 8px;
+    }
+    
+    .kids-zone-btn .kids-icon {
+        font-size: 1.4rem;
+    }
+}
+
+/* Large Devices (tablets landscape, 768px and up) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .kids-zone-btn {
+        top: 18px;
+        right: 18px;
+        padding: 12px 22px;
+        font-size: 1.05rem;
+        gap: 9px;
+    }
+    
+    .kids-zone-btn .kids-icon {
+        font-size: 1.45rem;
+    }
+}
+
+/* Extra Large Devices (desktops, 1024px and up) */
+@media (min-width: 1024px) and (max-width: 1439px) {
+    .kids-zone-btn {
+        top: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        font-size: 1.1rem;
+        gap: 10px;
+    }
+    
+    .kids-zone-btn .kids-icon {
+        font-size: 1.5rem;
+    }
+}
+
+/* XXL Devices (large desktops, 1440px and up) */
+@media (min-width: 1440px) {
+    .kids-zone-btn {
+        top: 25px;
+        right: 25px;
+        padding: 14px 28px;
+        font-size: 1.2rem;
+        gap: 12px;
+        border-radius: 28px;
+    }
+    
+    .kids-zone-btn .kids-icon {
+        font-size: 1.6rem;
+    }
+}
+
+/* Ultra-wide screens (1920px and up) */
+@media (min-width: 1920px) {
+    .kids-zone-btn {
+        top: 30px;
+        right: 30px;
+        padding: 16px 32px;
+        font-size: 1.3rem;
+        gap: 14px;
+        border-radius: 30px;
+        border-width: 4px;
+    }
+    
+    .kids-zone-btn .kids-icon {
+        font-size: 1.8rem;
+    }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .kids-zone-btn {
+        box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
+    }
+    
+    .kids-zone-btn:hover {
+        box-shadow: 0 8px 30px rgba(255, 107, 157, 0.6);
+    }
+}
+
+/* Landscape orientation adjustments for mobile */
+@media (max-width: 767px) and (orientation: landscape) {
+    .kids-zone-btn {
+        top: 8px;
+        right: 8px;
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .kids-zone-btn .kids-icon {
+        font-size: 1.1rem;
+    }
+}
+
+/* Reduce effects on mobile for better performance */
+@media (max-width: 768px) {
+    .kids-zone-btn .kids-icon {
+        animation: none;
+    }
+    
+    .kids-zone-btn:hover {
+        transform: none; /* Disable hover transform on touch devices */
+    }
+    
+    .kids-zone-btn.games-btn-active:hover {
+        transform: none;
+    }
 }
 
 /* Kids Zone Container */
