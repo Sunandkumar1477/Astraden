@@ -2736,6 +2736,10 @@ require_once 'security_headers.php';
                 });
         }
         
+        // Store event handler references for cleanup
+        let kidsZonePlanetBtnExitHandler = null;
+        let kidsZonePlanetBtnEnterHandler = null;
+        
         // Kids Zone Functions
         function enterKidsZone() {
             const mainContainer = document.getElementById('mainContainer');
@@ -2745,6 +2749,11 @@ require_once 'security_headers.php';
             
             if (!mainContainer || !kidsZoneContainer) return;
             
+            // Reset kids zone container state for reuse
+            kidsZoneContainer.style.display = 'block';
+            kidsZoneContainer.style.visibility = 'visible';
+            kidsZoneContainer.style.opacity = '1';
+            
             // Transform floating corner button to "Games" button
             if (kidsZonePlanetBtn) {
                 const kidsIcon = kidsZonePlanetBtn.querySelector('.kids-zone-icon');
@@ -2753,14 +2762,14 @@ require_once 'security_headers.php';
                 if (kidsText) kidsText.textContent = 'Games';
                 kidsZonePlanetBtn.title = 'Back to Games';
                 
-                // Remove any existing event listeners by replacing onclick
-                kidsZonePlanetBtn.onclick = null;
-                // Remove all event listeners by cloning (but keep the element reference)
-                const oldOnclick = kidsZonePlanetBtn.onclick;
-                kidsZonePlanetBtn.onclick = null;
+                // Remove existing enter handler if it exists
+                if (kidsZonePlanetBtnEnterHandler) {
+                    kidsZonePlanetBtn.removeEventListener('click', kidsZonePlanetBtnEnterHandler, true);
+                    kidsZonePlanetBtnEnterHandler = null;
+                }
                 
-                // Set onclick handler to exit Kids Zone - ensure it works on desktop
-                kidsZonePlanetBtn.onclick = function(e) {
+                // Create and store exit handler
+                kidsZonePlanetBtnExitHandler = function(e) {
                     if (e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -2769,20 +2778,16 @@ require_once 'security_headers.php';
                     return false;
                 };
                 
-                // Also add event listener for better compatibility (mobile uses this)
-                kidsZonePlanetBtn.addEventListener('click', function(e) {
-                    if (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                    exitKidsZone();
-                    return false;
-                }, true); // Use capture phase
+                // Set onclick handler to exit Kids Zone
+                kidsZonePlanetBtn.onclick = kidsZonePlanetBtnExitHandler;
+                
+                // Also add event listener for better compatibility
+                kidsZonePlanetBtn.addEventListener('click', kidsZonePlanetBtnExitHandler, true);
                 
                 kidsZonePlanetBtn.classList.add('games-btn-active');
                 kidsZonePlanetBtn.style.pointerEvents = 'auto';
                 kidsZonePlanetBtn.style.cursor = 'pointer';
-                kidsZonePlanetBtn.style.zIndex = '1001'; // Ensure it's clickable
+                kidsZonePlanetBtn.style.zIndex = '1001';
             }
             
             // Transform top-right button to "Games" button (if exists)
@@ -2814,9 +2819,15 @@ require_once 'security_headers.php';
             kidsZoneContainer.style.transform = 'translateX(100%)';
             kidsZoneContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
             
-            // Reset main container position first
+            // Reset main container position first - ensure it's visible initially
+            mainContainer.style.display = 'block';
+            mainContainer.style.visibility = 'visible';
+            mainContainer.style.opacity = '1';
             mainContainer.style.transform = 'translateX(0)';
             mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Force reflow
+            mainContainer.offsetHeight;
             
             // Hide main container with slide out to the left
             setTimeout(() => {
@@ -2887,11 +2898,14 @@ require_once 'security_headers.php';
                 if (kidsText) kidsText.textContent = 'Kids Zone';
                 kidsZonePlanetBtn.title = 'Enter Kids Zone';
                 
-                // Remove existing handlers
-                kidsZonePlanetBtn.onclick = null;
+                // Remove existing exit handler if it exists
+                if (kidsZonePlanetBtnExitHandler) {
+                    kidsZonePlanetBtn.removeEventListener('click', kidsZonePlanetBtnExitHandler, true);
+                    kidsZonePlanetBtnExitHandler = null;
+                }
                 
-                // Set onclick handler to enter Kids Zone
-                kidsZonePlanetBtn.onclick = function(e) {
+                // Create and store enter handler
+                kidsZonePlanetBtnEnterHandler = function(e) {
                     if (e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -2900,15 +2914,11 @@ require_once 'security_headers.php';
                     return false;
                 };
                 
-                // Also add event listener for better compatibility (like mobile)
-                kidsZonePlanetBtn.addEventListener('click', function(e) {
-                    if (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                    enterKidsZone();
-                    return false;
-                }, true);
+                // Set onclick handler to enter Kids Zone
+                kidsZonePlanetBtn.onclick = kidsZonePlanetBtnEnterHandler;
+                
+                // Also add event listener for better compatibility
+                kidsZonePlanetBtn.addEventListener('click', kidsZonePlanetBtnEnterHandler, true);
                 
                 kidsZonePlanetBtn.classList.remove('games-btn-active');
                 kidsZonePlanetBtn.style.pointerEvents = 'auto';
@@ -2939,16 +2949,21 @@ require_once 'security_headers.php';
             
             // Hide kids zone container after animation completes and ensure home page is visible
             setTimeout(() => {
+                // Reset kids zone container for next use (but keep it ready)
                 kidsZoneContainer.style.display = 'none';
                 kidsZoneContainer.style.visibility = 'hidden';
                 kidsZoneContainer.style.opacity = '0';
-                kidsZoneContainer.style.zIndex = '1000'; // Reset for next time
+                kidsZoneContainer.style.zIndex = '1000';
+                kidsZoneContainer.style.transform = 'translateX(100%)'; // Reset position for next slide in
+                kidsZoneContainer.classList.remove('show');
+                
                 // Ensure main container (home/index page) is fully visible and on top
                 mainContainer.style.zIndex = '1';
                 mainContainer.style.display = 'block';
                 mainContainer.style.visibility = 'visible';
                 mainContainer.style.opacity = '1';
                 mainContainer.style.transform = 'translateX(0)'; // Ensure it's in final position
+                mainContainer.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'; // Reset transition for next use
             }, 550);
         }
         
