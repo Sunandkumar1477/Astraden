@@ -827,8 +827,20 @@ require_once 'security_headers.php';
     <!-- Kids Zone Container (Hidden by default) -->
     <div class="kids-zone-container" id="kidsZoneContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; overflow-y: auto;">
         <div class="kids-zone-header" style="display: block; visibility: visible; opacity: 1;">
-            <h1>🌈 Kids Zone 🌈</h1>
-            <p>Fun Learning Games for Kids!</p>
+            <h1>KIDS ZONE</h1>
+            <p>Select Your Adventure</p>
+        </div>
+        
+        <!-- Game Badges Section (Desktop Only) -->
+        <div class="kids-zone-game-badges">
+            <span class="credits-badge" id="kids-zone-badge-learn-abc">
+                <span class="power-icon">⚡</span>
+                <span id="kids-zone-credits-amount-learn-abc">20</span> Credits - Learn ABC
+            </span>
+            <span class="credits-badge" id="kids-zone-badge-learn-numbers">
+                <span class="power-icon">⚡</span>
+                <span id="kids-zone-credits-amount-learn-numbers">20</span> Credits - Learn Numbers
+            </span>
         </div>
         
         <!-- Credits Confirmation Modal for Kids Zone -->
@@ -3088,9 +3100,15 @@ require_once 'security_headers.php';
                 const data = await response.json();
                 
                 if (data.success) {
+                    const creditsAmount = data.credits_per_chance || 20;
                     const badgeElement = document.getElementById('credits-amount-learn-abc');
                     if (badgeElement) {
-                        badgeElement.textContent = data.credits_per_chance || 20;
+                        badgeElement.textContent = creditsAmount;
+                    }
+                    // Update header badge (desktop)
+                    const headerBadgeElement = document.getElementById('kids-zone-credits-amount-learn-abc');
+                    if (headerBadgeElement) {
+                        headerBadgeElement.textContent = creditsAmount;
                     }
                 }
             } catch (error) {
@@ -3105,9 +3123,15 @@ require_once 'security_headers.php';
                 const data = await response.json();
                 
                 if (data.success) {
+                    const creditsAmount = data.credits_per_chance || 20;
                     const badgeElement = document.getElementById('credits-amount-learn-numbers');
                     if (badgeElement) {
-                        badgeElement.textContent = data.credits_per_chance || 20;
+                        badgeElement.textContent = creditsAmount;
+                    }
+                    // Update header badge (desktop)
+                    const headerBadgeElement = document.getElementById('kids-zone-credits-amount-learn-numbers');
+                    if (headerBadgeElement) {
+                        headerBadgeElement.textContent = creditsAmount;
                     }
                 }
             } catch (error) {
