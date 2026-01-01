@@ -128,19 +128,25 @@
         }
 
         .level-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 2px solid rgba(96, 165, 250, 0.3);
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(96, 165, 250, 0.2);
             position: relative;
             overflow: hidden;
             touch-action: manipulation;
+            backdrop-filter: blur(10px);
         }
 
         .level-card:hover {
-            transform: scale(1.05) translateY(-5px);
+            transform: scale(1.08) translateY(-8px);
             border-color: #60a5fa;
-            box-shadow: 0 0 30px rgba(96, 165, 250, 0.4);
+            box-shadow: 0 8px 30px rgba(96, 165, 250, 0.5), 0 0 25px rgba(96, 165, 250, 0.4);
+            background: linear-gradient(145deg, rgba(30, 41, 59, 1), rgba(15, 23, 42, 1));
+        }
+
+        .level-card:active {
+            transform: scale(1.02) translateY(-3px);
         }
 
         .level-icon {
@@ -180,14 +186,20 @@
     </main>
 
     <div id="selection-overlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/98 backdrop-blur-2xl">
-        <div class="text-center p-6 w-full max-w-4xl h-full flex flex-col justify-center overflow-y-auto">
+        <div class="text-center p-6 w-full max-w-4xl h-full flex flex-col justify-center overflow-y-auto relative">
+            <!-- Back Button -->
+            <button id="back-to-kids-zone-btn" class="absolute top-4 left-4 md:top-6 md:left-6 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 rounded-full text-white font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2 z-50">
+                <span>←</span>
+                <span>Back</span>
+            </button>
+            
             <div class="mb-10 floating-anim">
                 <span class="text-7xl">🛰️</span>
                 <h2 class="text-5xl md:text-7xl font-black text-white mt-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-blue-500">MISSION LOG</h2>
                 <p class="text-blue-300 text-lg md:text-xl mt-2">Choose a planet mission!</p>
             </div>
             
-            <div id="level-grid" class="grid grid-cols-2 md:grid-cols-5 gap-6 p-4">
+            <div id="level-grid" class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 p-4">
                 <!-- Level cards generated here -->
             </div>
         </div>
@@ -220,6 +232,7 @@
         const successOverlay = document.getElementById('success-overlay');
         const nextLevelBtn = document.getElementById('next-level-btn');
         const backHomeBtn = document.getElementById('back-home-btn');
+        const backToKidsZoneBtn = document.getElementById('back-to-kids-zone-btn');
 
         let currentNumbers = [];
         let currentIndex = 0;
@@ -273,11 +286,11 @@
             levelGrid.innerHTML = '';
             ranges.forEach((range, idx) => {
                 const card = document.createElement('div');
-                card.className = 'level-card p-6 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer';
+                card.className = 'level-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col items-center justify-center cursor-pointer min-h-[120px] md:min-h-[140px]';
                 card.innerHTML = `
-                    <div class="level-icon">${range.icon}</div>
-                    <span class="text-blue-400 text-[10px] tracking-widest font-bold mb-1">PLANET ${idx + 1}</span>
-                    <span class="text-2xl font-black text-white">${range.start}-${range.end}</span>
+                    <div class="level-icon text-2xl md:text-3xl">${range.icon}</div>
+                    <span class="text-blue-400 text-[9px] md:text-[10px] tracking-widest font-bold mb-1 mt-1">PLANET ${idx + 1}</span>
+                    <span class="text-xl md:text-2xl font-black text-white">${range.start}-${range.end}</span>
                 `;
                 card.onpointerdown = (e) => {
                     e.preventDefault();
@@ -432,6 +445,15 @@
             successOverlay.classList.add('hidden');
             selectionOverlay.classList.remove('hidden');
         };
+
+        // Back button to return to Kids Zone
+        if (backToKidsZoneBtn) {
+            backToKidsZoneBtn.onpointerdown = (e) => {
+                e.preventDefault();
+                // Go back to index page (Kids Zone)
+                window.location.href = 'index.php';
+            };
+        }
 
         window.onload = () => {
             createStars();

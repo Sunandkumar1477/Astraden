@@ -502,7 +502,7 @@ $conn->close();
                 <i class="fas fa-home"></i> Home
             </a>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
-                <span class="referral-icon">🎁</span>
+                <span class="referral-icon">🔗</span>
                 <span class="referral-code-value" id="referralCodeValue">----</span>
             </div>
             <div class="user-credits" id="userCredits" style="display: none;" onclick="toggleCreditsDropdown(event)" title="Credits">

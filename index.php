@@ -200,7 +200,7 @@ require_once 'security_headers.php';
                     </div>
                     <!-- Referral Code Info -->
                     <div class="menu-item" id="mobileReferralItem" style="display: none;" onclick="toggleReferralDropdown(event)">
-                        <div class="item-icon">🎁</div>
+                        <div class="item-icon">🔗</div>
                         <div class="item-info">
                             <div class="item-label">Referral Code</div>
                             <div class="item-value" id="mobileReferralValue">----</div>
@@ -216,7 +216,7 @@ require_once 'security_headers.php';
                     </a>
                     <!-- Rewards Link -->
                     <a href="rewards.php" class="menu-item">
-                        <div class="item-icon">🎁</div>
+                        <div class="item-icon">🎫</div>
                         <div class="item-info">
                             <div class="item-label">Rewards & Coupons</div>
                             <div class="item-value">Buy with Credits</div>
@@ -256,12 +256,12 @@ require_once 'security_headers.php';
                 <i class="fas fa-user"></i> Profile
             </a>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
-            <span class="referral-icon">🎁</span>
+            <span class="referral-icon">🔗</span>
             <span class="referral-code-value" id="referralCodeValue">----</span>
             <!-- Referral Code Dropdown -->
             <div class="referral-dropdown" id="referralDropdown">
                 <div class="referral-section">
-                    <div class="referral-section-title">🎁 Your Referral Code</div>
+                    <div class="referral-section-title">🔗 Your Referral Code</div>
                     <div class="referral-code-display">
                         <div class="referral-code-box" id="referralCodeBox">
                             <span id="referralCodeText">----</span>
