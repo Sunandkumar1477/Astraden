@@ -6,6 +6,11 @@ require_once 'connection.php';
 $message = '';
 $error = '';
 
+// Check for success message from redirect
+if (isset($_GET['msg']) && $_GET['msg'] === 'created') {
+    $message = "Bidding item created successfully!";
+}
+
 // Create bidding tables if they don't exist
 try {
     // Create bidding_settings table
@@ -153,8 +158,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $end_date = trim($_POST['end_date'] ?? '');
         $end_time = trim($_POST['end_time'] ?? '');
         
-        if ($prize_amount <= 0 || $bid_amount_per_bid <= 0 || empty($start_date) || empty($start_time) || empty($end_date) || empty($end_time)) {
-            $error = "Please fill all required fields with valid values.";
+        // Validate all required fields with specific error messages
+        $validation_errors = [];
+        if (empty($start_date)) {
+            $validation_errors[] = "Start date is required";
+        }
+        if (empty($start_time)) {
+            $validation_errors[] = "Start time is required";
+        }
+        if (empty($end_date)) {
+            $validation_errors[] = "End date is required";
+        }
+        if (empty($end_time)) {
+            $validation_errors[] = "End time is required";
+        }
+        if ($prize_amount <= 0) {
+            $validation_errors[] = "Prize amount must be greater than 0";
+        }
+        if ($bid_amount_per_bid <= 0) {
+            $validation_errors[] = "Bid amount per bid must be greater than 0";
+        }
+        
+        if (!empty($validation_errors)) {
+            $error = "Please fix the following errors: " . implode(", ", $validation_errors);
         } else {
             // Auto-generate title
             $title = "Bidding Item - ₹" . number_format($prize_amount, 2);
@@ -173,14 +199,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "End date/time must be after start date/time.";
             } else {
                 $stmt = $conn->prepare("INSERT INTO bidding_items (title, description, prize_amount, starting_price, current_bid, bid_increment, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("ssddddsss", $title, $description, $prize_amount, $starting_price, $starting_price, $bid_increment, $start_datetime, $end_datetime);
-                if ($stmt->execute()) {
-                    $message = "Bidding item created successfully!";
-                    $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'create_bidding_item', 'Created bidding item: $title', '{$_SERVER['REMOTE_ADDR']}')");
+                if (!$stmt) {
+                    $error = "Database prepare error: " . $conn->error;
                 } else {
-                    $error = "Failed to create bidding item.";
+                    $stmt->bind_param("ssddddss", $title, $description, $prize_amount, $starting_price, $starting_price, $bid_increment, $start_datetime, $end_datetime);
+                    if ($stmt->execute()) {
+                        $message = "Bidding item created successfully!";
+                        $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'create_bidding_item', 'Created bidding item: $title', '{$_SERVER['REMOTE_ADDR']}')");
+                        $stmt->close();
+                        // Redirect to prevent form resubmission
+                        header("Location: admin_bidding_management.php?msg=created");
+                        exit;
+                    } else {
+                        $error = "Failed to create bidding item: " . $stmt->error;
+                        $stmt->close();
+                    }
                 }
-                $stmt->close();
             }
         }
     }
@@ -367,7 +401,7 @@ $conn->close();
         <!-- Create Bidding Item -->
         <div class="config-card">
             <h3 style="color: var(--primary-cyan); margin-bottom: 20px;">Create New Bidding Item</h3>
-            <form method="POST">
+            <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
                 <div class="form-row">
                     <div class="form-group">
                         <label>PRIZE AMOUNT (₹) *</label>
