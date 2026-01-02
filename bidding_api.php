@@ -7,16 +7,50 @@ $action = $_GET['action'] ?? '';
 
 if ($action === 'get_active_biddings') {
     // Get active bidding items (between start_time and end_time)
-    $items = $conn->query("SELECT bi.*, 
+    // First check if table exists
+    $table_check = $conn->query("SHOW TABLES LIKE 'bidding_items'");
+    if ($table_check->num_rows == 0) {
+        echo json_encode(['success' => false, 'message' => 'Bidding items table does not exist', 'items' => []]);
+        exit;
+    }
+    
+    // Debug: Check total items first
+    $total_check = $conn->query("SELECT COUNT(*) as total FROM bidding_items");
+    $total_count = $total_check ? $total_check->fetch_assoc()['total'] : 0;
+    
+    $query = "SELECT bi.*, 
         COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
         COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
         WHERE bi.is_active = 1 AND bi.is_completed = 0 
         AND (bi.start_time IS NULL OR bi.start_time <= NOW()) 
         AND bi.end_time > NOW()
-        ORDER BY bi.end_time ASC")->fetch_all(MYSQLI_ASSOC);
+        ORDER BY bi.end_time ASC";
     
-    echo json_encode(['success' => true, 'items' => $items]);
+    $result = $conn->query($query);
+    
+    if (!$result) {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error, 'items' => [], 'debug' => ['query' => $query, 'error' => $conn->error]]);
+        exit;
+    }
+    
+    $items = [];
+    if ($result->num_rows > 0) {
+        $items = $result->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // Debug info (can be removed in production)
+    $debug_info = [];
+    if (isset($_GET['debug'])) {
+        $all_items = $conn->query("SELECT id, title, is_active, is_completed, start_time, end_time, NOW() as current_time FROM bidding_items")->fetch_all(MYSQLI_ASSOC);
+        $debug_info = [
+            'total_items' => $total_count,
+            'active_items' => count($items),
+            'all_items' => $all_items
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'items' => $items, 'debug' => $debug_info]);
     exit;
 }
 

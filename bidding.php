@@ -90,15 +90,36 @@ $conn->close();
         const astronsPerCredit = <?php echo $astrons_per_credit; ?>;
         
         function updateBiddings() {
-            fetch('bidding_api.php?action=get_active_biddings')
-                .then(r => r.json())
+            fetch('bidding_api.php?action=get_active_biddings' + (window.location.search.includes('debug') ? '&debug=1' : ''))
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error('Network response was not ok: ' + r.status);
+                    }
+                    return r.json();
+                })
                 .then(data => {
-                    if (data.success) {
-                        const grid = document.getElementById('biddingGrid');
-                        if (data.items.length === 0) {
-                            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">No active biddings at the moment.</div>';
-                            return;
+                    console.log('Bidding API Response:', data);
+                    const grid = document.getElementById('biddingGrid');
+                    if (!data.success) {
+                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">Error loading biddings: ' + (data.message || 'Unknown error') + '</div>';
+                        console.error('Bidding API Error:', data);
+                        if (data.debug) {
+                            console.log('Debug Info:', data.debug);
                         }
+                        return;
+                    }
+                    
+                    if (!data.items || data.items.length === 0) {
+                        let message = 'No active biddings at the moment. Check back later!';
+                        if (data.debug && data.debug.total_items > 0) {
+                            message += '<br><small style="color: rgba(255,255,255,0.4);">Total items in database: ' + data.debug.total_items + '</small>';
+                        }
+                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">' + message + '</div>';
+                        if (data.debug) {
+                            console.log('Debug Info:', data.debug);
+                        }
+                        return;
+                    }
                         
                         grid.innerHTML = data.items.map(item => {
                             const endTime = new Date(item.end_time).getTime();
@@ -124,7 +145,13 @@ $conn->close();
                         updateCountdowns();
                     }
                 })
-                .catch(err => console.error('Error:', err));
+                .catch(err => {
+                    console.error('Error loading biddings:', err);
+                    const grid = document.getElementById('biddingGrid');
+                    if (grid) {
+                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">Error loading biddings. Please refresh the page or check your connection.</div>';
+                    }
+                });
         }
         
         function updateCountdowns() {

@@ -206,7 +206,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (strtotime($end_datetime) <= strtotime($start_datetime)) {
                 $error = "End date/time must be after start date/time.";
             } else {
-                $stmt = $conn->prepare("INSERT INTO bidding_items (title, description, prize_amount, starting_price, current_bid, bid_increment, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                // Ensure is_active is set to 1 by default
+                $stmt = $conn->prepare("INSERT INTO bidding_items (title, description, prize_amount, starting_price, current_bid, bid_increment, start_time, end_time, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
                 if (!$stmt) {
                     $error = "Database prepare error: " . $conn->error;
                 } else {
