@@ -365,6 +365,7 @@ foreach ($all_sessions as $s) {
             <a href="admin_game_timing.php" class="menu-item active"><i class="fas fa-calendar-check ic-sessions"></i> <span>Game Sessions</span></a>
             <a href="admin_game_credits.php" class="menu-item"><i class="fas fa-gamepad ic-costs"></i> <span>Play Costs</span></a>
             <a href="admin_game_leaderboard.php" class="menu-item"><i class="fas fa-ranking-star ic-leaderboard"></i> <span>Leaderboards</span></a>
+            <a href="admin_bidding_management.php" class="menu-item"><i class="fas fa-gavel" style="color: #ff6b35; text-shadow: 0 0 10px #ff6b35;"></i> <span>Bidding Management</span></a>
             <a href="admin_score_shop.php" class="menu-item"><i class="fas fa-store" style="color:var(--color-shop);text-shadow:0 0 10px var(--color-shop);"></i> <span>Score Shop</span></a>
         </div>
         <div class="sidebar-footer"><a href="admin_logout.php" class="logout-btn"><i class="fas fa-power-off"></i> <span>Authorization Exit</span></a></div>

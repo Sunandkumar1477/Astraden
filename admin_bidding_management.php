@@ -6,7 +6,87 @@ require_once 'connection.php';
 $message = '';
 $error = '';
 
-// Get bidding settings
+// Create bidding tables if they don't exist
+try {
+    // Create bidding_settings table
+    $conn->query("CREATE TABLE IF NOT EXISTS `bidding_settings` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `is_active` TINYINT(1) NOT NULL DEFAULT 0,
+        `astrons_per_credit` DECIMAL(10, 2) NOT NULL DEFAULT 1.00,
+        `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    
+    // Create bidding_items table
+    $conn->query("CREATE TABLE IF NOT EXISTS `bidding_items` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `title` VARCHAR(255) NOT NULL,
+        `description` TEXT,
+        `prize_amount` DECIMAL(10, 2) NOT NULL,
+        `starting_price` DECIMAL(10, 2) NOT NULL,
+        `current_bid` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        `current_bidder_id` INT(11) DEFAULT NULL,
+        `bid_increment` DECIMAL(10, 2) NOT NULL DEFAULT 1.00,
+        `end_time` DATETIME NOT NULL,
+        `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+        `is_completed` TINYINT(1) NOT NULL DEFAULT 0,
+        `winner_id` INT(11) DEFAULT NULL,
+        `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    
+    // Create bidding_history table
+    $conn->query("CREATE TABLE IF NOT EXISTS `bidding_history` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `bidding_item_id` INT(11) NOT NULL,
+        `user_id` INT(11) NOT NULL,
+        `bid_amount` DECIMAL(10, 2) NOT NULL,
+        `bid_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        KEY `idx_bidding_item_id` (`bidding_item_id`),
+        KEY `idx_user_id` (`user_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    
+    // Create user_astrons table
+    $conn->query("CREATE TABLE IF NOT EXISTS `user_astrons` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `user_id` INT(11) NOT NULL,
+        `astrons_balance` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `unique_user_id` (`user_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    
+    // Create astrons_purchases table
+    $conn->query("CREATE TABLE IF NOT EXISTS `astrons_purchases` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `user_id` INT(11) NOT NULL,
+        `credits_used` INT(11) NOT NULL,
+        `astrons_received` DECIMAL(10, 2) NOT NULL,
+        `purchase_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        KEY `idx_user_id` (`user_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    
+    // Create user_wins table
+    $conn->query("CREATE TABLE IF NOT EXISTS `user_wins` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `user_id` INT(11) NOT NULL,
+        `bidding_item_id` INT(11) NOT NULL,
+        `win_amount` DECIMAL(10, 2) NOT NULL,
+        `bid_amount` DECIMAL(10, 2) NOT NULL,
+        `win_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `is_claimed` TINYINT(1) NOT NULL DEFAULT 0,
+        `claimed_at` TIMESTAMP NULL DEFAULT NULL,
+        PRIMARY KEY (`id`),
+        KEY `idx_user_id` (`user_id`),
+        KEY `idx_bidding_item_id` (`bidding_item_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+} catch (Exception $e) {
+    // Tables might already exist
+}
+
 $bidding_settings = $conn->query("SELECT * FROM bidding_settings LIMIT 1")->fetch_assoc();
 if (!$bidding_settings) {
     // Initialize default settings
@@ -114,12 +194,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all bidding items
-$bidding_items = $conn->query("SELECT bi.*, 
-    (SELECT username FROM user_profile WHERE user_id = bi.current_bidder_id) as current_bidder_name,
-    (SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id) as total_bids
-    FROM bidding_items bi 
-    ORDER BY bi.created_at DESC")->fetch_all(MYSQLI_ASSOC);
+// Get all bidding items - handle if table doesn't exist
+$bidding_items = [];
+try {
+    $bidding_items = $conn->query("SELECT bi.*, 
+        (SELECT username FROM user_profile WHERE user_id = bi.current_bidder_id) as current_bidder_name,
+        (SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id) as total_bids
+        FROM bidding_items bi 
+        ORDER BY bi.created_at DESC")->fetch_all(MYSQLI_ASSOC);
+} catch (Exception $e) {
+    // Table might not exist yet - that's okay, will be empty array
+    $bidding_items = [];
+}
 
 $conn->close();
 ?>
@@ -188,11 +274,23 @@ $conn->close();
         <div class="sidebar-header"><h1>Astraden</h1></div>
         <div class="sidebar-menu">
             <div class="menu-category">General</div>
-            <a href="admin_dashboard.php" class="menu-item"><i class="fas fa-chart-line"></i> <span>Overview</span></a>
+            <a href="admin_dashboard.php" class="menu-item"><i class="fas fa-chart-line ic-overview"></i> <span>Overview</span></a>
+            <div class="menu-category">User Control</div>
+            <a href="admin_view_all_users.php" class="menu-item"><i class="fas fa-users ic-users"></i> <span>User Directory</span></a>
+            <a href="admin_password_reset_requests.php" class="menu-item"><i class="fas fa-key ic-reset"></i> <span>Reset Requests</span></a>
+            <div class="menu-category">Financials</div>
+            <a href="admin_transaction_codes.php" class="menu-item"><i class="fas fa-qrcode ic-verify"></i> <span>Verify Payments</span></a>
+            <a href="admin_user_credits.php" class="menu-item"><i class="fas fa-coins ic-credits"></i> <span>Manual Credits</span></a>
+            <a href="admin_credit_pricing.php" class="menu-item"><i class="fas fa-tags ic-pricing"></i> <span>Pricing Plans</span></a>
+            <a href="admin_credit_timing.php" class="menu-item"><i class="fas fa-clock ic-timing"></i> <span>Purchase Timing</span></a>
+            <a href="admin_credit_sale_limit.php" class="menu-item"><i class="fas fa-gauge-high ic-limits"></i> <span>Sale Limits</span></a>
             <div class="menu-category">Game Operations</div>
-            <a href="admin_bidding_management.php" class="menu-item active"><i class="fas fa-gavel"></i> <span>Bidding Management</span></a>
+            <a href="admin_game_timing.php" class="menu-item"><i class="fas fa-calendar-check ic-sessions"></i> <span>Game Sessions</span></a>
+            <a href="admin_game_credits.php" class="menu-item"><i class="fas fa-gamepad ic-costs"></i> <span>Play Costs</span></a>
+            <a href="admin_game_leaderboard.php" class="menu-item"><i class="fas fa-ranking-star ic-leaderboard"></i> <span>Leaderboards</span></a>
+            <a href="admin_bidding_management.php" class="menu-item active"><i class="fas fa-gavel" style="color: #ff6b35; text-shadow: 0 0 10px #ff6b35;"></i> <span>Bidding Management</span></a>
         </div>
-        <div class="sidebar-footer"><a href="admin_logout.php" class="logout-btn"><i class="fas fa-power-off"></i> <span>Exit</span></a></div>
+        <div class="sidebar-footer"><a href="admin_logout.php" class="logout-btn"><i class="fas fa-power-off"></i> <span>Authorization Exit</span></a></div>
     </nav>
     <main class="main-content">
         <h2 class="section-title"><i class="fas fa-gavel" style="margin-right:15px;"></i> BIDDING MANAGEMENT</h2>
