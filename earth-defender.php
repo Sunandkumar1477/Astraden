@@ -1318,7 +1318,7 @@ $conn->close();
 
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
-            <button id="start-game-btn" class="start-game-btn" style="<?php 
+            <button id="start-game-btn" class="start-game-btn" onclick="if(typeof window.handleStartGameClick === 'function') { window.handleStartGameClick(event); } return false;" style="<?php 
                 if ($is_logged_in) {
                     $default_credits = 30; // Will be updated by JavaScript with actual session credits
                     echo 'display: flex !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;';
@@ -1545,6 +1545,30 @@ $conn->close();
                 console.log('Waiting for module to load...');
                 setTimeout(window.handleDemoClick, 100);
             }
+        };
+        
+        // Global start game button handler - works immediately as fallback
+        window.handleStartGameClick = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            console.log('Start game button clicked from global handler');
+            // Trigger the button click programmatically - the event listener will handle it
+            const startBtn = document.getElementById('start-game-btn');
+            if (startBtn) {
+                // Create a synthetic click event
+                const clickEvent = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
+                startBtn.dispatchEvent(clickEvent);
+            } else {
+                console.log('Start button not found, waiting for module to load...');
+                setTimeout(window.handleStartGameClick, 100);
+            }
+            return false;
         };
         
         // Global instructions toggle handler - works immediately
@@ -2114,196 +2138,259 @@ $conn->close();
             }
         }
         
-        // Start game button handler (with credits)
-        document.getElementById('start-game-btn').addEventListener('click', async function() {
-            if (state.gameStarted) return;
-            
-            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-            
-            if (!isLoggedIn) {
-                alert('Please login to play for real. Demo mode is always available!');
-                window.location.href = 'index.php';
+        // Start game button handler (with credits) - Attach with multiple methods to ensure it works
+        function attachStartGameButton() {
+            const startBtn = document.getElementById('start-game-btn');
+            if (!startBtn) {
+                console.log('Start button not found, retrying...');
+                setTimeout(attachStartGameButton, 50);
                 return;
             }
             
-            if (!gameSession) {
-                alert('No active game session. Please try demo mode.');
-                return;
-            }
+            // Remove any existing handlers first to prevent duplicates
+            const newBtn = startBtn.cloneNode(true);
+            startBtn.parentNode.replaceChild(newBtn, startBtn);
             
-            // Double-check session is active before allowing credit deduction
-            // Skip time check if session is always available
-            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
-            
-            if (!isAlwaysAvailable) {
-                const now = Math.floor(Date.now() / 1000);
-                const sessionStart = gameSession.start_timestamp;
-                const sessionEnd = gameSession.end_timestamp;
+            // Attach click handler
+            newBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
-                    alert('Game session is not currently active. Credits will not be deducted. Please wait for the scheduled time or try demo mode.');
+                console.log('=== START MISSION button clicked ===');
+                
+                if (state.gameStarted) {
+                    console.log('Game already started, ignoring click');
                     return;
                 }
-            }
-            
-            const creditsRequired = gameSession.credits_required || 30;
-            const userCredits = <?php echo $user_credits; ?>;
-            
-            // Get current user credits from display (in case it was updated)
-            const creditsDisplayEl = document.getElementById('user-credits-display');
-            let currentUserCredits = userCredits;
-            if (creditsDisplayEl) {
-                const displayedCredits = parseInt(creditsDisplayEl.textContent.replace(/,/g, '')) || userCredits;
-                currentUserCredits = displayedCredits;
-            }
-            
-            if (currentUserCredits < creditsRequired) {
-                alert(`Insufficient credits! You need ${creditsRequired} credits to play. You have ${currentUserCredits} credits. Try demo mode instead.`);
-                return;
-            }
-            
-            // Confirm before deducting credits
-            const confirmMsg = state.isContestMode 
-                ? `Join the contest? This will deduct ${creditsRequired} credits. Your high score will be recorded for prizes!`
-                : `This will deduct ${creditsRequired} credits from your account. Continue?`;
-
-            if (!confirm(confirmMsg)) {
-                return;
-            }
-            
-            // Disable button during processing to prevent double-clicks
-            const startBtn = document.getElementById('start-game-btn');
-            if (startBtn) {
-                startBtn.disabled = true;
-                startBtn.style.opacity = '0.6';
-                startBtn.textContent = 'Processing...';
-            }
-            
-            try {
-                // Deduct credits
-                const formData = new FormData();
-                formData.append('session_id', gameSession.id);
-                formData.append('game_name', 'earth-defender');
                 
-                const response = await fetch('game_api.php?action=deduct_credits', {
-                    method: 'POST',
-                    body: formData
-                });
+                const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
                 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                if (!isLoggedIn) {
+                    alert('Please login to play for real. Demo mode is always available!');
+                    window.location.href = 'index.php';
+                    return;
                 }
                 
-                const data = await response.json();
+                if (!gameSession) {
+                    alert('No active game session. Please try demo mode.');
+                    return;
+                }
                 
-                if (data.success) {
-                    // Reset game state
-                    gameEndedByTime = false; // Reset time's up flag
-                    state.gameStarted = true;
-                    state.isDemoMode = false;
-                    state.creditsUsed = creditsRequired;
-                    state.gameSessionId = data.session_id || gameSession.id;
-                    state.isPlaying = true;
+                // Double-check session is active before allowing credit deduction
+                // Skip time check if session is always available
+                const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
+                
+                if (!isAlwaysAvailable) {
+                    const now = Math.floor(Date.now() / 1000);
+                    const sessionStart = gameSession.start_timestamp;
+                    const sessionEnd = gameSession.end_timestamp;
                     
-                    // Reset game stats for new game
-                    state.score = 0;
-                    state.health = 100;
-                    state.bombs = 3;
+                    if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
+                        alert('Game session is not currently active. Credits will not be deducted. Please wait for the scheduled time or try demo mode.');
+                        return;
+                    }
+                }
+                
+                const creditsRequired = gameSession.credits_required || 30;
+                const userCredits = <?php echo $user_credits; ?>;
+                
+                // Get current user credits from display (in case it was updated)
+                const creditsDisplayEl = document.getElementById('user-credits-display');
+                let currentUserCredits = userCredits;
+                if (creditsDisplayEl) {
+                    const displayedCredits = parseInt(creditsDisplayEl.textContent.replace(/,/g, '')) || userCredits;
+                    currentUserCredits = displayedCredits;
+                }
+                
+                if (currentUserCredits < creditsRequired) {
+                    alert(`Insufficient credits! You need ${creditsRequired} credits to play. You have ${currentUserCredits} credits. Try demo mode instead.`);
+                    return;
+                }
+                
+                // Confirm before deducting credits
+                const confirmMsg = state.isContestMode 
+                    ? `Join the contest? This will deduct ${creditsRequired} credits. Your high score will be recorded for prizes!`
+                    : `This will deduct ${creditsRequired} credits from your account. Continue?`;
+
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+                
+                // Disable button during processing to prevent double-clicks
+                const btn = document.getElementById('start-game-btn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.6';
+                    btn.textContent = 'Processing...';
+                }
+                
+                try {
+                    console.log('Deducting credits...', { session_id: gameSession.id, credits: creditsRequired });
                     
-                    // Show EXIT button
-                    const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                    if (exitBtnHud) exitBtnHud.style.display = 'block';
+                    // Deduct credits
+                    const formData = new FormData();
+                    formData.append('session_id', gameSession.id);
+                    formData.append('game_name', 'earth-defender');
                     
-                    // Hide demo indicator (this is a real game, not demo)
-                    const demoIndicator = document.getElementById('demo-indicator');
-                    if (demoIndicator) {
-                        demoIndicator.style.display = 'none';
+                    const response = await fetch('game_api.php?action=deduct_credits', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
                     }
                     
-                    preventExitDuringGame();
+                    const data = await response.json();
+                    console.log('Credit deduction response:', data);
                     
-                    // Hide overlay with multiple methods - CRITICAL
-                    const overlay = document.getElementById('game-status-overlay');
-                    if (overlay) {
-                        overlay.classList.add('hidden');
-                        overlay.style.display = 'none';
-                        overlay.style.visibility = 'hidden';
-                        overlay.style.pointerEvents = 'none';
-                        overlay.style.opacity = '0';
-                        overlay.style.zIndex = '-1';
-                    }
-                    
-                    // Hide contest timer
-                    const contestTimer = document.getElementById('contest-timer');
-                    if (contestTimer) {
-                        contestTimer.style.display = 'none';
-                    }
-                    
-                    // Stop contest timer interval
-                    if (typeof contestTimerInterval !== 'undefined' && contestTimerInterval) {
-                        clearInterval(contestTimerInterval);
-                        contestTimerInterval = null;
-                    }
-                    
-                    // Update credits display
-                    const creditsDisplay = document.getElementById('user-credits-display');
-                    if (creditsDisplay) {
-                        creditsDisplay.textContent = data.credits_remaining.toLocaleString();
-                    }
-                    
-                    // Show start message
-                    setTimeout(function() {
-                        if (typeof showMessage === 'function') {
-                            if (state.isContestMode) {
-                                showMessage("🏆 CONTEST MODE - Play to win prizes!");
-                            } else {
-                                showMessage("Mission started! Defend Earth!");
-                            }
+                    if (data.success) {
+                        console.log('Credits deducted successfully! Starting game...');
+                        
+                        // Reset game state
+                        gameEndedByTime = false; // Reset time's up flag
+                        state.gameStarted = true;
+                        state.isDemoMode = false;
+                        state.creditsUsed = creditsRequired;
+                        state.gameSessionId = data.session_id || gameSession.id;
+                        state.isPlaying = true;
+                        
+                        // Reset game stats for new game
+                        state.score = 0;
+                        state.health = 100;
+                        state.bombs = 3;
+                        
+                        // Show EXIT button
+                        const exitBtnHud = document.getElementById('exit-game-btn-hud');
+                        if (exitBtnHud) exitBtnHud.style.display = 'block';
+                        
+                        // Hide demo indicator (this is a real game, not demo)
+                        const demoIndicator = document.getElementById('demo-indicator');
+                        if (demoIndicator) {
+                            demoIndicator.style.display = 'none';
                         }
-                    }, 100);
-                    
-                    // Update HUD
-                    setTimeout(function() {
+                        
+                        preventExitDuringGame();
+                        
+                        // Hide overlay with multiple methods - CRITICAL
+                        const overlay = document.getElementById('game-status-overlay');
+                        if (overlay) {
+                            overlay.classList.add('hidden');
+                            overlay.style.display = 'none';
+                            overlay.style.visibility = 'hidden';
+                            overlay.style.pointerEvents = 'none';
+                            overlay.style.opacity = '0';
+                            overlay.style.zIndex = '-1';
+                            overlay.style.position = 'absolute';
+                        }
+                        
+                        // Hide contest timer
+                        const contestTimer = document.getElementById('contest-timer');
+                        if (contestTimer) {
+                            contestTimer.style.display = 'none';
+                        }
+                        
+                        // Stop contest timer interval
+                        if (typeof contestTimerInterval !== 'undefined' && contestTimerInterval) {
+                            clearInterval(contestTimerInterval);
+                            contestTimerInterval = null;
+                        }
+                        
+                        // Update credits display
+                        const creditsDisplay = document.getElementById('user-credits-display');
+                        if (creditsDisplay) {
+                            creditsDisplay.textContent = data.credits_remaining.toLocaleString();
+                        }
+                        
+                        // Update HUD immediately
                         if (typeof updateHUD === 'function') {
                             updateHUD();
                         }
-                    }, 100);
-                    
-                    // Start session validity checking (only if logged in)
-                    if (IS_LOGGED_IN && !state.isDemoMode && !sessionCheckInterval) {
-                        sessionCheckInterval = setInterval(checkSessionValidity, 5000); // Check every 5 seconds
-                    }
-                    
-                    console.log('=== Game started with credits! Credits used:', creditsRequired, 'Session ID:', state.gameSessionId, '===');
-                } else {
-                    // Show specific error message from server
-                    if (data.message) {
-                        alert(data.message);
+                        
+                        // Show start message
+                        setTimeout(function() {
+                            if (typeof showMessage === 'function') {
+                                if (state.isContestMode) {
+                                    showMessage("🏆 CONTEST MODE - Play to win prizes!");
+                                } else {
+                                    showMessage("Mission started! Defend Earth!");
+                                }
+                            }
+                        }, 100);
+                        
+                        // Ensure game loop is running (animate() is already called at end of script)
+                        // The game loop should already be running, but verify state.isPlaying is true
+                        console.log('Game state after credit deduction:', {
+                            isPlaying: state.isPlaying,
+                            gameStarted: state.gameStarted,
+                            score: state.score,
+                            health: state.health
+                        });
+                        
+                        // Start session validity checking (only if logged in)
+                        if (IS_LOGGED_IN && !state.isDemoMode && !sessionCheckInterval) {
+                            sessionCheckInterval = setInterval(checkSessionValidity, 5000); // Check every 5 seconds
+                        }
+                        
+                        console.log('=== Game started successfully! ===', {
+                            isPlaying: state.isPlaying,
+                            gameStarted: state.gameStarted,
+                            creditsUsed: creditsRequired,
+                            sessionId: state.gameSessionId
+                        });
                     } else {
-                        alert('Failed to start game. Please try again.');
+                        // Show specific error message from server
+                        console.error('Failed to deduct credits:', data);
+                        if (data.message) {
+                            alert(data.message);
+                        } else {
+                            alert('Failed to start game. Please try again.');
+                        }
+                        
+                        // Re-enable button on error
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                            const creditsRequired = gameSession.credits_required || 30;
+                            btn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                        }
                     }
+                } catch (error) {
+                    console.error('Error starting game:', error);
+                    alert('An error occurred. Please try again. Error: ' + error.message);
                     
                     // Re-enable button on error
-                    if (startBtn) {
-                        startBtn.disabled = false;
-                        startBtn.style.opacity = '1';
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
                         const creditsRequired = gameSession.credits_required || 30;
-                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                        btn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
                     }
                 }
-            } catch (error) {
-                console.error('Error starting game:', error);
-                alert('An error occurred. Please try again. Error: ' + error.message);
-                
-                // Re-enable button on error
-                if (startBtn) {
-                    startBtn.disabled = false;
-                    startBtn.style.opacity = '1';
-                    const creditsRequired = gameSession.credits_required || 30;
-                    startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                }
-            }
-        });
+            }, false);
+            
+            // Also add touch handler for mobile
+            newBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                newBtn.click();
+            }, { passive: false });
+            
+            console.log('Start game button handler attached successfully');
+        }
+        
+        // Attach button handler immediately and on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                attachStartGameButton();
+            });
+        } else {
+            attachStartGameButton();
+        }
+        
+        // Also try after delays to catch any late loading
+        setTimeout(attachStartGameButton, 100);
+        setTimeout(attachStartGameButton, 500);
         
         // Demo game button handler - Simple and direct approach
         function startDemoGame() {
