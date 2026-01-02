@@ -1,7 +1,5 @@
 <?php
 session_start();
-// Security headers and performance optimizations
-require_once 'security_headers.php';
 // Allow demo game without login - don't require check_user_session.php
 require_once 'connection.php';
 
@@ -188,6 +186,7 @@ $conn->close();
             }
 
             /* Hide non-essential items on mobile during gameplay to maximize space */
+            #hud-total-score-item,
             .hud-item:nth-last-child(1) { /* This is the control info item */
                 display: none !important;
             }
@@ -207,14 +206,13 @@ $conn->close();
 
             #bomb-container {
                 bottom: 20px;
-                gap: 6px;
-                max-width: 200px;
+                gap: 8px;
             }
 
             #bomb-btn {
-                padding: 8px 16px;
-                font-size: 0.75rem;
-                max-width: 150px;
+                padding: 10px 20px;
+                font-size: 1rem;
+                max-width: 200px;
             }
 
             #bomb-count-display {
@@ -288,10 +286,10 @@ $conn->close();
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             pointer-events: auto;
-            width: auto;
-            max-width: 250px;
+            width: 90%;
+            max-width: 350px;
             z-index: 100;
         }
 
@@ -299,22 +297,22 @@ $conn->close();
             background: linear-gradient(135deg, #ff3333, #880000);
             border: 2px solid #ff0000;
             color: white;
-            padding: 8px 16px;
+            padding: 15px 30px;
             width: 100%;
-            font-size: 0.75rem;
+            font-size: 1.2rem;
             font-weight: 800;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+            letter-spacing: 2px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: 'Orbitron', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2px;
+            gap: 4px;
         }
 
         #bomb-btn:hover {
@@ -343,17 +341,17 @@ $conn->close();
         @media (min-width: 769px) {
             #bomb-container {
                 bottom: 50px;
-                max-width: 300px;
+                max-width: 400px;
             }
             
             #bomb-btn {
-                padding: 10px 20px;
-                font-size: 0.85rem;
+                padding: 20px 40px;
+                font-size: 1.4rem;
             }
         }
 
         #game-over {
-            position: fixed;
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -373,8 +371,6 @@ $conn->close();
             box-shadow: 0 0 80px rgba(255, 51, 51, 0.5);
             font-family: 'Orbitron', sans-serif;
             z-index: 2000;
-            visibility: visible;
-            opacity: 1;
         }
 
         @media (min-width: 769px) {
@@ -1314,6 +1310,7 @@ $conn->close();
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
             <button id="start-game-btn" class="start-game-btn" style="display: none;"></button>
+            <button id="demo-game-btn" class="demo-game-btn" onclick="window.handleDemoClick(); return false;" style="display: flex !important;">PLAY DEMO</button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
         </div>
 
@@ -1366,36 +1363,12 @@ $conn->close();
                 <p>Final Score: <span id="final-score" style="color: #ff3333; font-weight: bold;">0</span></p>
                 <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 5px;">Total Score: <span id="total-score">0</span></p>
             </div>
-            <a id="prize-claim-link" href="#" style="display: none; background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; text-decoration: none; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; margin: 10px 0; text-align: center; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
-                🏆 VIEW PRIZE CLAIM
-            </a>
             <div class="game-btn-container">
-                <button class="game-btn btn-primary" onclick="location.reload(); return false;">🎮 PLAY AGAIN</button>
-                <a href="index.php" class="game-btn btn-home" onclick="window.location.href='index.php'; return false;">🏠 BACK TO HOME</a>
+                <button class="game-btn btn-primary" onclick="location.reload()">🎮 REBOOT SYSTEM</button>
+                <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
             </div>
         </div>
 
-        <!-- Logged Out From Another Device Modal -->
-        <div id="another-device-logout-modal" class="custom-modal" style="z-index: 10005;">
-            <div class="modal-content" style="border-color: #FFD700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);">
-                <div class="modal-header">
-                    <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
-                    <h2 style="color: #FFD700; text-shadow: 0 0 10px #FFD700;">Session Terminated</h2>
-                </div>
-                <div class="modal-body">
-                    <p style="color: #fff; margin-bottom: 15px; line-height: 1.6;">
-                        Your account has been accessed from another device. For security reasons, your session on this device has been automatically terminated.
-                    </p>
-                    <p class="modal-warning" style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; line-height: 1.5;">
-                        If this was not you, please secure your account immediately.
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button id="another-device-ok-btn" class="modal-btn primary" style="background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; width: 100%;">Return to Home</button>
-                </div>
-            </div>
-        </div>
-        
         <!-- Custom Exit Confirmation Modal -->
         <div id="exit-confirm-modal" class="custom-modal">
             <div class="modal-content">
@@ -1534,6 +1507,7 @@ $conn->close();
                 e.preventDefault();
                 e.stopPropagation();
             }
+            console.log('Toggle instructions called');
             const panel = document.getElementById('instructions-panel');
             if (panel) {
                 // Ensure panel is above everything
@@ -1550,6 +1524,8 @@ $conn->close();
                     panel.classList.add('show');
                     document.body.style.overflow = 'hidden';
                 }
+            } else {
+                console.error('Instructions panel not found');
             }
             return false;
         };
@@ -1558,9 +1534,6 @@ $conn->close();
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        // --- Game Configuration ---
-        const IS_LOGGED_IN = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
 
         // --- Game State ---
         const state = {
@@ -1587,39 +1560,6 @@ $conn->close();
         // Track if game ended due to time
         let gameEndedByTime = false;
         
-        // Session validity check interval
-        let sessionCheckInterval = null;
-        
-        // Apply different styling for time-duration sessions
-        function applyTimeDurationStyling(isTimeDuration) {
-            const scoreElement = document.getElementById('score');
-            const scoreLabel = scoreElement ? scoreElement.parentElement : null;
-            
-            if (isTimeDuration) {
-                // Time-duration session: Gold/Yellow styling
-                if (scoreElement) {
-                    scoreElement.style.color = '#FFD700';
-                    scoreElement.style.textShadow = '0 0 15px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.5)';
-                    scoreElement.style.fontWeight = '900';
-                }
-                if (scoreLabel) {
-                    scoreLabel.style.color = '#FFD700';
-                    scoreLabel.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.6)';
-                }
-            } else {
-                // Normal session: Default styling
-                if (scoreElement) {
-                    scoreElement.style.color = '';
-                    scoreElement.style.textShadow = '';
-                    scoreElement.style.fontWeight = '';
-                }
-                if (scoreLabel) {
-                    scoreLabel.style.color = '';
-                    scoreLabel.style.textShadow = '';
-                }
-            }
-        }
-        
         function hideContestTimers() {
             document.getElementById('contest-timer').style.display = 'none';
             const mobileTimer = document.getElementById('contest-timer-mobile');
@@ -1633,19 +1573,7 @@ $conn->close();
                 return;
             }
             
-            if (!gameSession) {
-                hideContestTimers();
-                return;
-            }
-            
-            // Skip timer for always available sessions
-            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
-            if (isAlwaysAvailable) {
-                hideContestTimers();
-                return;
-            }
-            
-            if (!gameSession.end_timestamp) {
+            if (!gameSession || !gameSession.end_timestamp) {
                 hideContestTimers();
                 return;
             }
@@ -1731,13 +1659,6 @@ $conn->close();
         
         // Check game status
         async function checkGameStatus() {
-            // Ensure overlay is visible
-            const overlay = document.getElementById('game-status-overlay');
-            if (overlay) {
-                overlay.classList.remove('hidden');
-                overlay.style.display = 'flex';
-            }
-            
             // Always ensure demo button is visible - demo has no restrictions, play anytime
             const demoBtn = document.getElementById('demo-game-btn');
             if (demoBtn) {
@@ -1747,8 +1668,6 @@ $conn->close();
                 demoBtn.style.pointerEvents = 'auto';
                 demoBtn.style.cursor = 'pointer';
             }
-            
-            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             
             try {
                 // First, get credits from games table (admin-set value)
@@ -1787,54 +1706,35 @@ $conn->close();
                     state.isContestMode = data.is_contest_active || false;
                     state.gameMode = data.game_mode || 'money';
                     
-                    // Track if this is a time-duration session (not always_available)
-                    state.isTimeDurationSession = gameSession && !gameSession.always_available;
-                    
-                    // Apply different styling for time-duration sessions
-                    applyTimeDurationStyling(state.isTimeDurationSession);
-                    
                     // Start contest timer
                     if (contestTimerInterval) {
                         clearInterval(contestTimerInterval);
                     }
                     updateContestTimer();
                     contestTimerInterval = setInterval(updateContestTimer, 1000);
-                }
-                
-                // Always show button if user is logged in, regardless of session status (like Cosmos Captain)
-                if (isLoggedIn) {
-                    showGameReady();
-                    if (data.message && statusMessage) {
-                        const statusMessage = document.getElementById('status-message');
-                        if (statusMessage) {
-                            statusMessage.textContent = data.message;
-                        }
+                    
+                    if (data.is_active) {
+                        // Game is active - show start button
+                        showGameReady();
+                    } else if (data.session && data.session.time_until_start > 0) {
+                        // Game not active but scheduled - show countdown
+                        showCountdown(data.session.time_until_start);
+                    } else {
+                        // No active session - show message with next session date if available
+                        showNoSession(data.next_session_date, data.is_contest_active);
+                        hideContestTimers();
                     }
                 } else {
-                    // User not logged in - show appropriate message
-                    const statusMessage = document.getElementById('status-message');
-                    if (statusMessage) {
-                        if (data.message) {
-                            statusMessage.textContent = data.message;
-                        } else {
-                            statusMessage.textContent = 'Login or Register to start mission.';
-                        }
-                    }
+                    // No session - but check if contest is active
+                    state.isContestMode = data.is_contest_active || false;
+                    state.gameMode = data.game_mode || 'money';
+                    showNoSession(data.next_session_date, data.is_contest_active);
+                    hideContestTimers();
                 }
             } catch (error) {
-                // Even on error, show button if user is logged in (like Cosmos Captain)
-                if (isLoggedIn) {
-                    showGameReady();
-                    const statusMessage = document.getElementById('status-message');
-                    if (statusMessage) {
-                        statusMessage.textContent = 'Mission ready! Use credits to start.';
-                    }
-                } else {
-                    const statusMessage = document.getElementById('status-message');
-                    if (statusMessage) {
-                        statusMessage.textContent = 'Error loading game status.';
-                    }
-                }
+                console.error('Error checking game status:', error);
+                showNoSession(null);
+                hideContestTimers();
                 // Ensure demo button is always visible even on error
                 if (demoBtn) {
                     demoBtn.style.display = 'block';
@@ -1846,67 +1746,52 @@ $conn->close();
         }
         
         function showGameReady() {
-            // Always clear loading text
+            const overlay = document.getElementById('game-status-overlay');
             const timerDisplay = document.getElementById('timer-display');
-            if (timerDisplay) {
-                timerDisplay.textContent = '';
-                timerDisplay.style.display = 'none';
-            }
-            
             const statusMessage = document.getElementById('status-message');
             const startBtn = document.getElementById('start-game-btn');
             const demoBtn = document.getElementById('demo-game-btn');
             
-            const creditsRequired = (gameSession && gameSession.credits_required) ? gameSession.credits_required : 30;
-            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-            const userCredits = <?php echo $user_credits; ?>;
+            timerDisplay.textContent = 'GAME READY!';
+            const creditsRequired = gameSession.credits_required || 30;
             
-            // Update status message
-            if (statusMessage) {
-                if (isLoggedIn) {
-                    if (state.isContestMode) {
-                        statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
-                    } else {
-                        statusMessage.textContent = `Mission ready! Use ${creditsRequired} credits to start.`;
-                    }
-                } else {
-                    statusMessage.textContent = `Login or Register to start mission (${creditsRequired} credits required).`;
-                }
-            }
-            
-            // Always show button if user is logged in (like Cosmos Captain)
-            if (startBtn && isLoggedIn) {
+            if (state.isContestMode) {
+                statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
                 startBtn.style.display = 'flex';
-                startBtn.style.visibility = 'visible';
-                
-                if (userCredits >= creditsRequired) {
-                    if (state.isContestMode) {
-                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
-                        startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
-                        startBtn.style.color = '#000';
-                    } else {
-                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                        startBtn.style.background = '';
-                        startBtn.style.color = '';
-                    }
-                    startBtn.disabled = false;
-                    startBtn.style.opacity = '1';
-                    startBtn.style.cursor = 'pointer';
-                } else {
-                    // Insufficient credits - show locked button
-                    startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                    startBtn.disabled = true;
-                    startBtn.style.opacity = '0.6';
-                    startBtn.style.cursor = 'not-allowed';
-                }
-            } else if (startBtn && !isLoggedIn) {
-                startBtn.style.display = 'none';
+                startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
+                startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
+                startBtn.style.color = '#000';
+            } else {
+                statusMessage.textContent = `Choose your mode: Demo (always free) or Real Game (${creditsRequired} credits)`;
+                startBtn.style.display = 'flex';
+                startBtn.innerHTML = `PLAY NOW &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                startBtn.style.background = ''; // Reset to CSS default
+                startBtn.style.color = '';
             }
+            startBtn.disabled = false;
             
             // Always show demo button - demo can be played ANYTIME, no restrictions
             if (demoBtn) {
                 demoBtn.style.display = 'flex';
                 demoBtn.disabled = false;
+            }
+            
+            // Check if user is logged in
+            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+            const userCredits = <?php echo $user_credits; ?>;
+            
+            if (!isLoggedIn) {
+                // User not logged in - hide start button, show demo only
+                startBtn.style.display = 'none';
+                if (state.isContestMode) {
+                    statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} credits required).`;
+                } else {
+                    statusMessage.textContent = `Demo mode is free and always available! Login to play for real (${creditsRequired} credits required).`;
+                }
+            } else if (userCredits < creditsRequired) {
+                startBtn.disabled = true;
+                startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                statusMessage.textContent = `Demo mode is always available (free, no restrictions)! Or add ${creditsRequired} credits to play for real.`;
             }
         }
         
@@ -1917,11 +1802,7 @@ $conn->close();
             const startBtn = document.getElementById('start-game-btn');
             const demoBtn = document.getElementById('demo-game-btn');
             
-            // Only hide start button if user is not logged in (like Cosmos Captain)
-            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-            if (!isLoggedIn && startBtn) {
-                startBtn.style.display = 'none';
-            }
+            startBtn.style.display = 'none';
             // Always show demo button - demo can be played ANYTIME, no restrictions
             if (demoBtn) {
                 demoBtn.style.display = 'block';
@@ -1947,9 +1828,9 @@ $conn->close();
                 
                 // Show contest message if contest is active
                 if (state.isContestMode) {
-                    statusMessage.textContent = `🏆 Contest is active! Mission will start soon.`;
+                    statusMessage.textContent = `🏆 Contest is active! Game will start soon. Demo mode is always available (free, no restrictions)!`;
                 } else {
-                    statusMessage.textContent = 'Mission will start soon.';
+                    statusMessage.textContent = 'Game will start soon. Demo mode is always available (free, no restrictions)!';
                 }
             }
             
@@ -1966,26 +1847,39 @@ $conn->close();
             
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             
-            if (timerDisplay) {
-                timerDisplay.textContent = '';
-                timerDisplay.style.display = 'none';
-            }
+            timerDisplay.textContent = 'NO SESSION';
             
-            // Only hide play button if user is not logged in (like Cosmos Captain)
-            // If logged in, still show button so they can see it
-            if (!isLoggedIn && startBtn) {
-                startBtn.style.display = 'none';
-            }
+            // Hide play button when no session is active
+            startBtn.style.display = 'none';
             
-            // Clear or set status message
-            if (statusMessage) {
-                if (isLoggedIn) {
-                    statusMessage.textContent = 'Mission ready! Use credits to start.';
+            // Build message based on whether next session date is available and contest status
+            let message = '';
+            if (isContestActive) {
+                if (nextSessionDate) {
+                    const dateObj = new Date(nextSessionDate + 'T00:00:00');
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    const formattedDate = dateObj.toLocaleDateString('en-IN', options);
+                    message = `🏆 Contest is active! Game session will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
                 } else {
-                    statusMessage.textContent = nextSessionDate ? `Next session: ${nextSessionDate}` : 'Game is not currently available.';
+                    message = '🏆 Contest is active! Wait for the game session to start. Demo mode is always available (free, no restrictions)!';
+                }
+            } else {
+                if (nextSessionDate) {
+                    const dateObj = new Date(nextSessionDate + 'T00:00:00');
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    const formattedDate = dateObj.toLocaleDateString('en-IN', options);
+                    message = `This game will start on ${formattedDate}. Demo mode is always available (free, no restrictions)!`;
+                } else {
+                    message = 'This game does not start every day. For updates, follow our YouTube and Instagram. Demo mode is always available (free, no restrictions)!';
                 }
             }
             
+            if (!isLoggedIn) {
+                message = message.replace('Demo mode', 'Demo mode is free and always available! Login to play for real when sessions are active.');
+            }
+            
+            statusMessage.textContent = message;
+            startBtn.style.display = 'none';
             // Demo can be played ANYTIME - always visible and enabled
             if (demoBtn) {
                 demoBtn.style.display = 'block';
@@ -2011,31 +1905,20 @@ $conn->close();
             }
             
             // Double-check session is active before allowing credit deduction
-            // Skip time check if session is always available
-            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
+            const now = Math.floor(Date.now() / 1000);
+            const sessionStart = gameSession.start_timestamp;
+            const sessionEnd = gameSession.end_timestamp;
             
-            if (!isAlwaysAvailable) {
-                const now = Math.floor(Date.now() / 1000);
-                const sessionStart = gameSession.start_timestamp;
-                const sessionEnd = gameSession.end_timestamp;
-                
-                if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
-                    alert('Game session is not currently active. Credits will not be deducted. Please wait for the scheduled time or try demo mode.');
-                    return;
-                }
+            if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
+                alert('Game session is not currently active. Credits will not be deducted. Please wait for the scheduled time or try demo mode.');
+                return;
             }
             
             const creditsRequired = gameSession.credits_required || 30;
             const userCredits = <?php echo $user_credits; ?>;
-            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
             
             if (userCredits < creditsRequired) {
-                // In always play mode, don't show purchase-related messages
-                if (isAlwaysAvailable) {
-                    alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
-                } else {
-                    alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
-                }
+                alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
                 return;
             }
             
@@ -2076,11 +1959,6 @@ $conn->close();
                     document.getElementById('game-status-overlay').classList.add('hidden');
                     // Update credits display
                     document.getElementById('user-credits-display').textContent = data.credits_remaining.toLocaleString();
-                    
-                    // Start session validity checking (only if logged in)
-                    if (IS_LOGGED_IN && !state.isDemoMode && !sessionCheckInterval) {
-                        sessionCheckInterval = setInterval(checkSessionValidity, 5000); // Check every 5 seconds
-                    }
                 } else {
                     // Show specific error message from server
                     if (data.message) {
@@ -2090,6 +1968,7 @@ $conn->close();
                     }
                 }
             } catch (error) {
+                console.error('Error starting game:', error);
                 alert('An error occurred. Please try again.');
             }
         });
@@ -2099,6 +1978,7 @@ $conn->close();
             console.log('=== startDemoGame called ===');
             
             if (state.gameStarted) {
+                console.log('Game already started');
                 return;
             }
             
@@ -2118,6 +1998,11 @@ $conn->close();
             state.health = 100;
             state.bombs = 3;
             
+            console.log('Game state set:', {
+                gameStarted: state.gameStarted,
+                isPlaying: state.isPlaying,
+                isDemoMode: state.isDemoMode
+            });
             
             // Hide overlay with multiple methods - CRITICAL
             const overlay = document.getElementById('game-status-overlay');
@@ -2129,6 +2014,9 @@ $conn->close();
                 overlay.style.opacity = '0';
                 overlay.style.zIndex = '-1';
                 overlay.style.position = 'absolute';
+                console.log('Overlay hidden');
+            } else {
+                console.error('Overlay element not found!');
             }
             
             // Hide contest timer
@@ -2187,6 +2075,7 @@ $conn->close();
             newBtn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Demo button clicked via onclick');
                 startDemoGame();
                 return false;
             };
@@ -2195,6 +2084,7 @@ $conn->close();
             newBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Demo button clicked via addEventListener');
                 startDemoGame();
                 return false;
             }, false);
@@ -2203,10 +2093,12 @@ $conn->close();
             newBtn.addEventListener('touchend', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Demo button touched');
                 startDemoGame();
                 return false;
             }, { passive: false });
             
+            console.log('Demo button handler attached successfully');
         }
         
         // Attach immediately and on DOM ready
@@ -2222,35 +2114,6 @@ $conn->close();
         setTimeout(attachDemoButton, 100);
         setTimeout(attachDemoButton, 500);
         setTimeout(attachDemoButton, 1000);
-        
-        // Show button immediately if user is logged in (before async calls complete) - like Cosmos Captain
-        const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-        const userCredits = <?php echo $user_credits; ?>;
-        const startBtn = document.getElementById('start-game-btn');
-        const timerDisplay = document.getElementById('timer-display');
-        
-        if (isLoggedIn && startBtn) {
-            // Clear loading text immediately
-            if (timerDisplay) {
-                timerDisplay.textContent = '';
-                timerDisplay.style.display = 'none';
-            }
-            // Force show button immediately with default credits
-            startBtn.style.display = 'flex';
-            startBtn.style.visibility = 'visible';
-            startBtn.style.opacity = '1';
-            const defaultCredits = 30;
-            if (userCredits >= defaultCredits) {
-                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
-                startBtn.disabled = false;
-                startBtn.style.cursor = 'pointer';
-            } else {
-                startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
-                startBtn.disabled = true;
-                startBtn.style.opacity = '0.6';
-                startBtn.style.cursor = 'not-allowed';
-            }
-        }
         
         // Initialize
         checkGameStatus();
@@ -2295,8 +2158,7 @@ $conn->close();
         const SoundManager = {
             audioContext: null,
             masterVolume: 0.5, // Master volume control (0.0 to 1.0)
-            // Check localStorage for mute state (default: false = unmuted)
-            enabled: localStorage.getItem('gameSoundMuted') !== 'true',
+            enabled: true,
             
             init() {
                 try {
@@ -2328,6 +2190,7 @@ $conn->close();
                     oscillator.start(this.audioContext.currentTime);
                     oscillator.stop(this.audioContext.currentTime + duration);
                 } catch (e) {
+                    console.warn('Sound playback error:', e);
                 }
             },
             
@@ -2850,6 +2713,7 @@ $conn->close();
                 }
             } else {
                 // Tab is now visible - stop background loop, resume normal animation
+                console.log('Tab visible - resuming normal mode');
                 if (backgroundGameLoop) {
                     clearInterval(backgroundGameLoop);
                     backgroundGameLoop = null;
@@ -2895,9 +2759,8 @@ $conn->close();
         function updateGameLogic(delta) {
             if (!state.isPlaying) return;
             
-            // Check if session has ended (only for real games, NOT demo mode, NOT always available)
-            const isAlwaysAvailable = gameSession && (gameSession.always_available === true || gameSession.always_available === 1);
-            if (!state.isDemoMode && gameSession && gameSession.end_timestamp && !isAlwaysAvailable) {
+            // Check if session has ended (only for real games, NOT demo mode)
+            if (!state.isDemoMode && gameSession && gameSession.end_timestamp) {
                 const now = Math.floor(Date.now() / 1000);
                 if (now > gameSession.end_timestamp && !gameEndedByTime) {
                     gameEndedByTime = true;
@@ -3119,45 +2982,9 @@ $conn->close();
                 contestTimerInterval = null;
             }
             
-            // Ensure game-status-overlay is hidden
-            const statusOverlay = document.getElementById('game-status-overlay');
-            if (statusOverlay) {
-                statusOverlay.style.display = 'none';
-                statusOverlay.classList.add('hidden');
-                statusOverlay.style.visibility = 'hidden';
-                statusOverlay.style.pointerEvents = 'none';
-            }
-            
             const gameOverDiv = document.getElementById('game-over');
-            // Make sure game-over div is visible and stays visible - NO AUTO REDIRECT
-            // The modal will remain visible until user explicitly clicks "Back to Home" or "Play Again"
-            gameOverDiv.style.display = 'flex';
-            gameOverDiv.style.visibility = 'visible';
-            gameOverDiv.style.opacity = '1';
-            gameOverDiv.style.pointerEvents = 'auto';
-            gameOverDiv.style.zIndex = '2000';
-            gameOverDiv.style.position = 'fixed';
-            
-            // Ensure no other elements can hide this modal
-            // Prevent any automatic redirects - wait for user to click button
-            console.log('Game Over - Modal displayed. Waiting for user to click button.');
-            
-            const finalScoreEl = document.getElementById('final-score');
-            finalScoreEl.innerText = state.score;
-            
-            // Apply time-duration styling to final score if in time-duration session
-            if (state.isTimeDurationSession) {
-                finalScoreEl.style.color = '#FFD700';
-                finalScoreEl.style.textShadow = '0 0 15px rgba(255, 215, 0, 0.8)';
-                finalScoreEl.style.fontWeight = '900';
-                
-                // Show prize claim link if in time-duration session
-                const prizeClaimLink = document.getElementById('prize-claim-link');
-                if (prizeClaimLink && state.gameSessionId) {
-                    prizeClaimLink.href = `prize_claim.php?game=earth-defender&session_id=${state.gameSessionId}`;
-                    prizeClaimLink.style.display = 'block';
-                }
-            }
+            gameOverDiv.style.display = 'block';
+            document.getElementById('final-score').innerText = state.score;
             
             // Get game over title
             const gameOverTitle = gameOverDiv.querySelector('h1');
@@ -3249,12 +3076,8 @@ $conn->close();
                             }
                             // Also update HUD total score
                             const hudTotalScore = document.getElementById('hud-total-score');
-                            const hudTotalScoreItem = document.getElementById('hud-total-score-item');
                             if (hudTotalScore) {
                                 hudTotalScore.textContent = data.total_score.toLocaleString();
-                            }
-                            if (hudTotalScoreItem) {
-                                hudTotalScoreItem.style.display = 'flex';
                             }
                         }
 
@@ -3274,7 +3097,7 @@ $conn->close();
                         }
                     }
                 } catch (error) {
-                    // Error saving score - silent fail
+                    console.error('Error saving score:', error);
                 }
             }
         }
@@ -3308,6 +3131,7 @@ $conn->close();
                 
                 // Handle No (Continue Playing)
                 noBtn.onclick = function(e) {
+                    console.log("No clicked");
                     e.preventDefault();
                     e.stopPropagation();
                     modal.style.display = 'none';
@@ -3320,6 +3144,7 @@ $conn->close();
                 
                 // Handle Yes (Save & Exit)
                 yesBtn.onclick = async function(e) {
+                    console.log("Yes clicked");
                     e.preventDefault();
                     e.stopPropagation();
                     modal.style.display = 'none';
@@ -3335,68 +3160,12 @@ $conn->close();
             }
         }
 
-        // Check session validity periodically
-        function checkSessionValidity() {
-            if (!IS_LOGGED_IN || !state.gameStarted || state.isDemoMode) return;
-            
-            fetch('game_api.php?action=check_session_validity')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && !data.valid) {
-                        // Session invalid - user logged in elsewhere
-                        handleAnotherDeviceLogout();
-                    }
-                })
-                .catch(error => {
-                    // Error checking session - silent fail
-                });
-        }
-        
-        // Handle logout from another device
-        function handleAnotherDeviceLogout() {
-            // Stop game
-            state.isPlaying = false;
-            state.gameStarted = false;
-            
-            // Stop session checking
-            if (sessionCheckInterval) {
-                clearInterval(sessionCheckInterval);
-                sessionCheckInterval = null;
-            }
-            
-            // Stop other intervals
-            if (contestTimerInterval) clearInterval(contestTimerInterval);
-            if (backgroundGameLoop) clearInterval(backgroundGameLoop);
-            
-            // Save current score if game was active
-            if (state.score > 0 && state.creditsUsed > 0 && state.gameSessionId) {
-                gameOver().catch(() => {});
-            }
-            
-            // Show logout modal
-            const modal = document.getElementById('another-device-logout-modal');
-            if (modal) {
-                modal.style.display = 'flex';
-            }
-        }
-        
         // Attach to HUD exit button
         document.getElementById('exit-game-btn-hud').addEventListener('click', function(e) {
             if (state.isPlaying) {
                 showExitConfirmation();
             }
         });
-        
-        // Another device logout modal OK button
-        const anotherDeviceOkBtn = document.getElementById('another-device-ok-btn');
-        if (anotherDeviceOkBtn) {
-            anotherDeviceOkBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Redirect to index page
-                window.location.href = 'index.php?logout=another_device';
-            });
-        }
 
         // Prevention of accidental exit during gameplay
         function preventExitDuringGame() {
@@ -3405,8 +3174,6 @@ $conn->close();
         }
 
         window.addEventListener('popstate', async function(event) {
-            // Only show exit confirmation if game is actively playing
-            // After game over, allow normal navigation (user can use browser back button)
             if (state.isPlaying) {
                 showExitConfirmation();
             }
