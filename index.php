@@ -427,7 +427,7 @@ $conn->close();
 
     <!-- Bid & Win Planet Button (Above Profile) -->
     <?php if ($show_bidding): ?>
-    <a href="bidding.php" class="profile-planet-btn hidden" id="biddingPlanetBtn" title="Bid & Win" style="right: 20px; bottom: 60px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2)); border: 2px solid var(--primary-cyan); box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);">
+    <a href="bidding.php" class="profile-planet-btn hidden" id="biddingPlanetBtn" title="Bid & Win" style="right: 20px; bottom: 70px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2)); border: 2px solid var(--primary-cyan); box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);">
         <span class="profile-icon" style="color: var(--primary-cyan); text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);">🔨</span>
         <span class="profile-text" style="color: var(--primary-cyan); text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);">Bid & Win</span>
     </a>
