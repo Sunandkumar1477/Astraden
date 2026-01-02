@@ -1313,7 +1313,7 @@ $conn->close();
 
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
-            <button id="start-game-btn" class="start-game-btn" style="display: none;"></button>
+            <button id="start-game-btn" class="start-game-btn" style="display: none; visibility: visible;"></button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
         </div>
 
@@ -1736,6 +1736,16 @@ $conn->close();
             if (overlay) {
                 overlay.classList.remove('hidden');
                 overlay.style.display = 'flex';
+                overlay.style.visibility = 'visible';
+            }
+            
+            // CRITICAL: Clear loading text immediately
+            const timerDisplay = document.getElementById('timer-display');
+            if (timerDisplay) {
+                timerDisplay.textContent = '';
+                timerDisplay.style.display = 'none';
+                timerDisplay.style.visibility = 'hidden';
+                timerDisplay.innerHTML = '';
             }
             
             // Always ensure demo button is visible - demo has no restrictions, play anytime
@@ -1749,6 +1759,15 @@ $conn->close();
             }
             
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+            
+            // If user is logged in, ensure button is visible immediately
+            if (isLoggedIn) {
+                const startBtn = document.getElementById('start-game-btn');
+                if (startBtn) {
+                    startBtn.style.display = 'flex';
+                    startBtn.style.visibility = 'visible';
+                }
+            }
             
             try {
                 // First, get credits from games table (admin-set value)
@@ -1891,11 +1910,13 @@ $conn->close();
         }
         
         function showGameReady() {
-            // Always clear loading text
+            // Always clear loading text - CRITICAL to remove "Loading..."
             const timerDisplay = document.getElementById('timer-display');
             if (timerDisplay) {
                 timerDisplay.textContent = '';
                 timerDisplay.style.display = 'none';
+                timerDisplay.style.visibility = 'hidden';
+                timerDisplay.innerHTML = '';
             }
             
             // Ensure overlay is visible
@@ -1903,6 +1924,7 @@ $conn->close();
             if (overlay) {
                 overlay.classList.remove('hidden');
                 overlay.style.display = 'flex';
+                overlay.style.visibility = 'visible';
             }
             
             const statusMessage = document.getElementById('status-message');
@@ -1933,14 +1955,17 @@ $conn->close();
             
             // Always show button if user is logged in (like Cosmos Captain)
             if (startBtn && isLoggedIn) {
-                // Force show button - make sure it's visible
+                // Force show button - make sure it's visible with all necessary styles
                 startBtn.style.display = 'flex';
                 startBtn.style.visibility = 'visible';
                 startBtn.style.pointerEvents = 'auto';
                 startBtn.style.opacity = '1';
+                startBtn.style.position = 'relative';
+                startBtn.style.zIndex = '1000';
+                startBtn.removeAttribute('hidden');
                 
                 // Debug log
-                console.log('Showing start button with credits:', creditsRequired, 'User credits:', userCredits);
+                console.log('Showing start button with credits:', creditsRequired, 'User credits:', userCredits, 'Button display:', startBtn.style.display);
                 
                 if (userCredits >= creditsRequired) {
                     if (state.isContestMode) {
@@ -2292,18 +2317,27 @@ $conn->close();
             const startBtn = document.getElementById('start-game-btn');
             const timerDisplay = document.getElementById('timer-display');
             const overlay = document.getElementById('game-status-overlay');
+            const statusMessage = document.getElementById('status-message');
             
             if (isLoggedIn && startBtn) {
                 // Ensure overlay is visible
                 if (overlay) {
                     overlay.classList.remove('hidden');
                     overlay.style.display = 'flex';
+                    overlay.style.visibility = 'visible';
                 }
                 
-                // Clear loading text immediately
+                // Clear loading text immediately - CRITICAL
                 if (timerDisplay) {
                     timerDisplay.textContent = '';
                     timerDisplay.style.display = 'none';
+                    timerDisplay.style.visibility = 'hidden';
+                }
+                
+                // Set status message
+                if (statusMessage) {
+                    statusMessage.textContent = 'Mission ready! Use credits to start.';
+                    statusMessage.style.display = 'block';
                 }
                 
                 // Force show button immediately with default credits
@@ -2311,6 +2345,8 @@ $conn->close();
                 startBtn.style.visibility = 'visible';
                 startBtn.style.opacity = '1';
                 startBtn.style.pointerEvents = 'auto';
+                startBtn.style.position = 'relative';
+                startBtn.style.zIndex = '1000';
                 const defaultCredits = 30;
                 if (userCredits >= defaultCredits) {
                     startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
@@ -2322,18 +2358,76 @@ $conn->close();
                     startBtn.style.opacity = '0.6';
                     startBtn.style.cursor = 'not-allowed';
                 }
+                
+                console.log('Button shown immediately - display:', startBtn.style.display, 'visibility:', startBtn.style.visibility);
             }
         }
         
-        // Show button immediately on page load
-        showButtonImmediately();
-        
-        // Also show after DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', showButtonImmediately);
-        } else {
+        // Show button immediately on page load - BEFORE any other code
+        (function() {
+            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+            
+            // Function to force show button
+            function forceShowButton() {
+                if (!isLoggedIn) return;
+                
+                const startBtn = document.getElementById('start-game-btn');
+                const timerDisplay = document.getElementById('timer-display');
+                const overlay = document.getElementById('game-status-overlay');
+                
+                if (startBtn) {
+                    // Force remove any hiding styles - use direct style assignment
+                    startBtn.style.display = 'flex';
+                    startBtn.style.visibility = 'visible';
+                    startBtn.style.opacity = '1';
+                    startBtn.style.pointerEvents = 'auto';
+                    startBtn.removeAttribute('hidden');
+                    startBtn.classList.remove('hidden');
+                    
+                    // Also add inline style to override any CSS
+                    startBtn.setAttribute('style', startBtn.getAttribute('style') + '; display: flex !important; visibility: visible !important;');
+                    
+                    // Clear loading
+                    if (timerDisplay) {
+                        timerDisplay.style.display = 'none';
+                        timerDisplay.style.visibility = 'hidden';
+                        timerDisplay.textContent = '';
+                        timerDisplay.innerHTML = '';
+                    }
+                    
+                    // Show overlay
+                    if (overlay) {
+                        overlay.style.display = 'flex';
+                        overlay.style.visibility = 'visible';
+                        overlay.classList.remove('hidden');
+                    }
+                    
+                    console.log('Force show button executed - Button visible:', startBtn.offsetParent !== null);
+                }
+            }
+            
+            // Run immediately
+            forceShowButton();
             showButtonImmediately();
-        }
+            
+            // Also run after DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(forceShowButton, 10);
+                    setTimeout(showButtonImmediately, 10);
+                });
+            } else {
+                setTimeout(forceShowButton, 10);
+                setTimeout(showButtonImmediately, 10);
+            }
+            
+            // Also run after delays to ensure everything is loaded
+            setTimeout(forceShowButton, 100);
+            setTimeout(showButtonImmediately, 100);
+            setTimeout(forceShowButton, 500);
+            setTimeout(showButtonImmediately, 500);
+            setTimeout(forceShowButton, 1000);
+        })();
         
         // Initialize
         checkGameStatus();
