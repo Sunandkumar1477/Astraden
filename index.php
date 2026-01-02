@@ -394,6 +394,14 @@ $conn->close();
         <span class="profile-text kids-zone-text">Kids Zone</span>
     </button>
 
+    <!-- Bid & Win Planet Button (Above Profile) -->
+    <?php if ($show_bidding): ?>
+    <a href="bidding.php" class="profile-planet-btn hidden" id="biddingPlanetBtn" title="Bid & Win" style="right: 20px; bottom: 60px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2)); border: 2px solid var(--primary-cyan); box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);">
+        <span class="profile-icon" style="color: var(--primary-cyan); text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);">🔨</span>
+        <span class="profile-text" style="color: var(--primary-cyan); text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);">Bid & Win</span>
+    </a>
+    <?php endif; ?>
+
     <!-- Profile Planet Button (Corner - Bottom) -->
     <a href="view_profile.php" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile" style="right: 20px; bottom: 20px;">
         <span class="profile-icon" id="profileIcon">🌍</span>
@@ -1489,6 +1497,10 @@ $conn->close();
                         
                         // Show floating corner buttons
                         document.getElementById('profilePlanetBtn').classList.remove('hidden');
+                        <?php if ($show_bidding): ?>
+                        const biddingBtn = document.getElementById('biddingPlanetBtn');
+                        if (biddingBtn) biddingBtn.classList.remove('hidden');
+                        <?php endif; ?>
                         
                         const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
                         if (claimPrizeBtn) claimPrizeBtn.classList.remove('hidden');
@@ -1654,6 +1666,10 @@ $conn->close();
                         document.getElementById('userInfoBar').classList.add('hidden');
                         document.getElementById('authButtons').classList.remove('hidden');
                         document.getElementById('profilePlanetBtn').classList.add('hidden');
+                        <?php if ($show_bidding): ?>
+                        const biddingBtn = document.getElementById('biddingPlanetBtn');
+                        if (biddingBtn) biddingBtn.classList.add('hidden');
+                        <?php endif; ?>
                         const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
                         if (claimPrizeBtn) claimPrizeBtn.classList.add('hidden');
                         const shopBtn = document.getElementById('shopPlanetBtn');
