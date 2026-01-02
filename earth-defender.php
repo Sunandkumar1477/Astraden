@@ -1731,6 +1731,13 @@ $conn->close();
         
         // Check game status
         async function checkGameStatus() {
+            // Ensure overlay is visible
+            const overlay = document.getElementById('game-status-overlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.style.display = 'flex';
+            }
+            
             // Always ensure demo button is visible - demo has no restrictions, play anytime
             const demoBtn = document.getElementById('demo-game-btn');
             if (demoBtn) {
@@ -1832,30 +1839,15 @@ $conn->close();
             const startBtn = document.getElementById('start-game-btn');
             const demoBtn = document.getElementById('demo-game-btn');
             
+            // Ensure overlay is visible
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.style.display = 'block';
+            }
+            
             timerDisplay.textContent = '';
             const creditsRequired = gameSession.credits_required || 30;
             const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
-            
-            if (state.isContestMode) {
-                statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
-                startBtn.style.display = 'flex';
-                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
-                startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
-                startBtn.style.color = '#000';
-            } else {
-                statusMessage.textContent = `Mission ready! Use ${creditsRequired} credits to start.`;
-                startBtn.style.display = 'flex';
-                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                startBtn.style.background = ''; // Reset to CSS default
-                startBtn.style.color = '';
-            }
-            startBtn.disabled = false;
-            
-            // Always show demo button - demo can be played ANYTIME, no restrictions
-            if (demoBtn) {
-                demoBtn.style.display = 'flex';
-                demoBtn.disabled = false;
-            }
             
             // Check if user is logged in
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
@@ -1863,25 +1855,49 @@ $conn->close();
             
             if (!isLoggedIn) {
                 // User not logged in - hide start button, show demo only
-                startBtn.style.display = 'none';
+                if (startBtn) startBtn.style.display = 'none';
                 if (state.isContestMode) {
                     statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} credits required).`;
                 } else {
                     statusMessage.textContent = `Login or Register to start mission (${creditsRequired} credits required).`;
                 }
-            } else if (userCredits < creditsRequired) {
-                // If game is in always available mode, don't show credit purchase messages
-                if (isAlwaysAvailable) {
-                    // In always play mode, just show that credits are needed but don't show purchase button
-                    startBtn.disabled = true;
-                    startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                    statusMessage.textContent = `You need ${creditsRequired} credits to start mission.`;
-                } else {
-                    // In time-restricted mode, show the "Add credits" message
-                    startBtn.disabled = true;
-                    startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                    statusMessage.textContent = `Add ${creditsRequired} credits to start mission.`;
+            } else {
+                // User is logged in - always show the start button
+                if (startBtn) {
+                    startBtn.style.display = 'flex';
+                    startBtn.style.visibility = 'visible';
+                    
+                    if (state.isContestMode) {
+                        statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
+                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
+                        startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
+                        startBtn.style.color = '#000';
+                    } else {
+                        statusMessage.textContent = `Mission ready! Use ${creditsRequired} credits to start.`;
+                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                        startBtn.style.background = ''; // Reset to CSS default
+                        startBtn.style.color = '';
+                    }
+                    
+                    // If user has insufficient credits, disable button but still show it
+                    if (userCredits < creditsRequired) {
+                        startBtn.disabled = true;
+                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                        if (isAlwaysAvailable) {
+                            statusMessage.textContent = `You need ${creditsRequired} credits to start mission.`;
+                        } else {
+                            statusMessage.textContent = `Add ${creditsRequired} credits to start mission.`;
+                        }
+                    } else {
+                        startBtn.disabled = false;
+                    }
                 }
+            }
+            
+            // Always show demo button - demo can be played ANYTIME, no restrictions
+            if (demoBtn) {
+                demoBtn.style.display = 'flex';
+                demoBtn.disabled = false;
             }
         }
         
