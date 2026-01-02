@@ -1834,6 +1834,7 @@ $conn->close();
             
             timerDisplay.textContent = '';
             const creditsRequired = gameSession.credits_required || 30;
+            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
             
             if (state.isContestMode) {
                 statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
@@ -1869,9 +1870,18 @@ $conn->close();
                     statusMessage.textContent = `Login or Register to start mission (${creditsRequired} credits required).`;
                 }
             } else if (userCredits < creditsRequired) {
-                startBtn.disabled = true;
-                startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                statusMessage.textContent = `Add ${creditsRequired} credits to start mission.`;
+                // If game is in always available mode, don't show credit purchase messages
+                if (isAlwaysAvailable) {
+                    // In always play mode, just show that credits are needed but don't show purchase button
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                    statusMessage.textContent = `You need ${creditsRequired} credits to start mission.`;
+                } else {
+                    // In time-restricted mode, show the "Add credits" message
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                    statusMessage.textContent = `Add ${creditsRequired} credits to start mission.`;
+                }
             }
         }
         
@@ -1976,9 +1986,15 @@ $conn->close();
             
             const creditsRequired = gameSession.credits_required || 30;
             const userCredits = <?php echo $user_credits; ?>;
+            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
             
             if (userCredits < creditsRequired) {
-                alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
+                // In always play mode, don't show purchase-related messages
+                if (isAlwaysAvailable) {
+                    alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
+                } else {
+                    alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
+                }
                 return;
             }
             
