@@ -89,9 +89,15 @@ try {
 
 $bidding_settings = $conn->query("SELECT * FROM bidding_settings LIMIT 1")->fetch_assoc();
 if (!$bidding_settings) {
-    // Initialize default settings
+    // Initialize default settings (1 credit per astron = 1 astrons per credit)
     $conn->query("INSERT INTO bidding_settings (is_active, astrons_per_credit) VALUES (0, 1.00)");
     $bidding_settings = ['is_active' => 0, 'astrons_per_credit' => 1.00];
+}
+// Calculate credits_per_astron for display (inverse of astrons_per_credit)
+if (isset($bidding_settings['astrons_per_credit']) && $bidding_settings['astrons_per_credit'] > 0) {
+    $bidding_settings['credits_per_astron'] = 1.0 / floatval($bidding_settings['astrons_per_credit']);
+} else {
+    $bidding_settings['credits_per_astron'] = 1.00;
 }
 
 // Handle form submissions
@@ -99,11 +105,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Update bidding settings
     if (isset($_POST['update_settings'])) {
         $is_active = isset($_POST['is_active']) ? 1 : 0;
-        $astrons_per_credit = floatval($_POST['astrons_per_credit'] ?? 1.00);
+        // Admin enters "credits per astron" (e.g., 2 means 2 credits for 1 astron)
+        // We convert to astrons_per_credit (e.g., 2 credits per astron = 0.5 astrons per credit)
+        $credits_per_astron = floatval($_POST['credits_per_astron'] ?? 1.00);
         
-        if ($astrons_per_credit <= 0) {
-            $error = "Astrons per credit must be greater than 0.";
+        if ($credits_per_astron <= 0) {
+            $error = "Credits per Astron must be greater than 0.";
         } else {
+            // Convert: if 2 credits per astron, then 1 credit = 0.5 astrons
+            $astrons_per_credit = 1.0 / $credits_per_astron;
             $stmt = $conn->prepare("UPDATE bidding_settings SET is_active = ?, astrons_per_credit = ? WHERE id = 1");
             $stmt->bind_param("id", $is_active, $astrons_per_credit);
             if ($stmt->execute()) {
@@ -116,6 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = "Bidding settings updated successfully!";
                 $bidding_settings['is_active'] = $is_active;
                 $bidding_settings['astrons_per_credit'] = $astrons_per_credit;
+                // Store credits_per_astron for display
+                $bidding_settings['credits_per_astron'] = $credits_per_astron;
                 $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'update_bidding_settings', 'Updated bidding settings', '{$_SERVER['REMOTE_ADDR']}')");
             } else {
                 $error = "Failed to update settings.";
@@ -318,9 +330,9 @@ $conn->close();
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>ASTRONS PER CREDIT</label>
-                    <input type="number" name="astrons_per_credit" value="<?php echo $bidding_settings['astrons_per_credit']; ?>" step="0.01" min="0.01" required>
-                    <small style="color:rgba(255,255,255,0.4);">How many Astrons users get for 1 Credit</small>
+                    <label>CREDITS PER ASTRON</label>
+                    <input type="number" name="credits_per_astron" value="<?php echo number_format($bidding_settings['credits_per_astron'], 2); ?>" step="0.01" min="0.01" required>
+                    <small style="color:rgba(255,255,255,0.4);">How many Credits users need to pay for 1 Astron. Users can only bid with Astrons, which they must buy using their Credits.</small>
                 </div>
                 <button type="submit" name="update_settings" class="btn-save">SAVE SETTINGS</button>
             </form>

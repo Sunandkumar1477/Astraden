@@ -22,6 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
     $show_credit_purchase = isset($_POST['show_credit_purchase']) ? 1 : 0;
     $show_rewards = isset($_POST['show_rewards']) ? 1 : 0;
     $show_bidding = isset($_POST['show_bidding']) ? 1 : 0;
+    $show_kids_zone = isset($_POST['show_kids_zone']) ? 1 : 0;
+    $show_profile = isset($_POST['show_profile']) ? 1 : 0;
+    $show_shop = isset($_POST['show_shop']) ? 1 : 0;
     $auto_credits_enabled = isset($_POST['auto_credits_enabled']) ? 1 : 0;
     $new_user_credits = isset($_POST['new_user_credits']) ? (int)$_POST['new_user_credits'] : 0;
     $referral_credits = isset($_POST['referral_credits']) ? (int)$_POST['referral_credits'] : 0;
@@ -37,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
             'show_credit_purchase' => $show_credit_purchase,
             'show_rewards' => $show_rewards,
             'show_bidding' => $show_bidding,
+            'show_kids_zone' => $show_kids_zone,
+            'show_profile' => $show_profile,
+            'show_shop' => $show_shop,
             'auto_credits_enabled' => $auto_credits_enabled,
             'new_user_credits' => $new_user_credits,
             'referral_credits' => $referral_credits
@@ -80,6 +86,9 @@ function getSetting($conn, $key, $default = 0) {
 $show_credit_purchase = getSetting($conn, 'show_credit_purchase', 1);
 $show_rewards = getSetting($conn, 'show_rewards', 1);
 $show_bidding = getSetting($conn, 'show_bidding', 0);
+$show_kids_zone = getSetting($conn, 'show_kids_zone', 1);
+$show_profile = getSetting($conn, 'show_profile', 1);
+$show_shop = getSetting($conn, 'show_shop', 1);
 $auto_credits_enabled = getSetting($conn, 'auto_credits_enabled', 0);
 $new_user_credits = getSetting($conn, 'new_user_credits', 0);
 $referral_credits = getSetting($conn, 'referral_credits', 0);
@@ -251,6 +260,39 @@ $conn->close();
                     <div>
                         <strong style="display:block;color:var(--primary-cyan);">SHOW BIDDING OPTIONS</strong>
                         <small style="color:rgba(255,255,255,0.4);">When enabled, users can see and access bidding features (Bidding, My Wins) in the index page. When disabled, all bidding-related links and buttons will be hidden from users.</small>
+                    </div>
+                </div>
+
+                <div class="toggle-group" style="margin-top: 25px;">
+                    <label class="switch">
+                        <input type="checkbox" name="show_kids_zone" <?php echo $show_kids_zone ? 'checked' : ''; ?>>
+                        <span class="slider"></span>
+                    </label>
+                    <div>
+                        <strong style="display:block;color:var(--primary-cyan);">SHOW KIDS ZONE BUTTON</strong>
+                        <small style="color:rgba(255,255,255,0.4);">When enabled, users can see and access the Kids Zone button on the index page. When disabled, the Kids Zone button will be hidden from users.</small>
+                    </div>
+                </div>
+
+                <div class="toggle-group" style="margin-top: 25px;">
+                    <label class="switch">
+                        <input type="checkbox" name="show_profile" <?php echo $show_profile ? 'checked' : ''; ?>>
+                        <span class="slider"></span>
+                    </label>
+                    <div>
+                        <strong style="display:block;color:var(--primary-cyan);">SHOW PROFILE BUTTON</strong>
+                        <small style="color:rgba(255,255,255,0.4);">When enabled, users can see and access the Profile button on the index page. When disabled, the Profile button will be hidden from users.</small>
+                    </div>
+                </div>
+
+                <div class="toggle-group" style="margin-top: 25px;">
+                    <label class="switch">
+                        <input type="checkbox" name="show_shop" <?php echo $show_shop ? 'checked' : ''; ?>>
+                        <span class="slider"></span>
+                    </label>
+                    <div>
+                        <strong style="display:block;color:var(--primary-cyan);">SHOW SHOP BUTTON</strong>
+                        <small style="color:rgba(255,255,255,0.4);">When enabled, users can see and access the Shop button on the index page. When disabled, the Shop button will be hidden from users.</small>
                     </div>
                 </div>
 

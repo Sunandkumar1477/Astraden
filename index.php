@@ -46,6 +46,27 @@ try {
 } catch (Exception $e) {
     // Table might not exist yet, that's okay
 }
+
+// Get Kids Zone, Profile, and Shop button visibility settings
+$show_kids_zone = 1; // Default to showing
+$show_profile = 1; // Default to showing
+$show_shop = 1; // Default to showing
+
+$stmt = $conn->prepare("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('show_kids_zone', 'show_profile', 'show_shop')");
+if ($stmt) {
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        if ($row['setting_key'] === 'show_kids_zone') {
+            $show_kids_zone = (int)$row['setting_value'];
+        } elseif ($row['setting_key'] === 'show_profile') {
+            $show_profile = (int)$row['setting_value'];
+        } elseif ($row['setting_key'] === 'show_shop') {
+            $show_shop = (int)$row['setting_value'];
+        }
+    }
+    $stmt->close();
+}
 $conn->close();
 ?>
 <!DOCTYPE html>
@@ -252,6 +273,7 @@ $conn->close();
                         </div>
                     </div>
                     <!-- Shop Link -->
+                    <?php if ($show_shop): ?>
                     <a href="shop.php" class="menu-item">
                         <div class="item-icon">🛒</div>
                         <div class="item-info">
@@ -259,6 +281,7 @@ $conn->close();
                             <div class="item-value">Score: <span id="mobileShopScoreIndex">0</span></div>
                         </div>
                     </a>
+                    <?php endif; ?>
                     <!-- Rewards Link -->
                     <?php if ($show_rewards): ?>
                     <a href="rewards.php" class="menu-item">
@@ -295,6 +318,7 @@ $conn->close();
                     </a>
                     <?php endif; ?>
                     <!-- Profile Link -->
+                    <?php if ($show_profile): ?>
                     <a href="view_profile.php" class="menu-item">
                         <div class="item-icon">🌍</div>
                         <div class="item-info">
@@ -302,6 +326,7 @@ $conn->close();
                             <div class="item-value">View Profile</div>
                         </div>
                     </a>
+                    <?php endif; ?>
                     <!-- Logout Link -->
                     <a href="logout.php" class="logout-link">Logout</a>
                 </div>
@@ -312,13 +337,17 @@ $conn->close();
         <div class="desktop-user-info">
             <div class="user-welcome">Welcome, <span id="displayUsername"></span></div>
             <!-- Shop Button (Desktop) -->
+            <?php if ($show_shop): ?>
             <a href="shop.php" class="desktop-info-btn shop-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 2px solid #fbbf24; border-radius: 8px; color: white; text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="shopBtnDesktop" title="Shop">
                 <i class="fas fa-store"></i> Shop (<span id="shopBtnScoreIndex">0</span>)
             </a>
+            <?php endif; ?>
             <!-- Profile Button (Desktop) -->
+            <?php if ($show_profile): ?>
             <a href="view_profile.php" class="desktop-info-btn profile-btn-desktop" style="display: none; padding: 8px 15px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2)); border: 2px solid var(--primary-cyan); border-radius: 8px; color: var(--primary-cyan); text-decoration: none; font-weight: 700; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease;" id="profileBtnDesktop" title="View Profile">
                 <i class="fas fa-user"></i> Profile
             </a>
+            <?php endif; ?>
             <div class="user-referral-code" id="userReferralCode" style="display: none;" onclick="toggleReferralDropdown(event)" title="Your Referral Code">
             <span class="referral-icon">🔗</span>
             <span class="referral-code-value" id="referralCodeValue">----</span>
@@ -414,16 +443,20 @@ $conn->close();
     <?php endif; ?>
 
     <!-- Shop Button (Corner - Second) -->
+    <?php if ($show_shop): ?>
     <a href="shop.php" class="profile-planet-btn hidden" id="shopPlanetBtn" title="Shop" style="right: 20px; bottom: 180px;">
         <span class="profile-icon">🛒</span>
         <span class="profile-text">Shop</span>
     </a>
+    <?php endif; ?>
 
     <!-- Kids Zone Button (Corner - Third) - Will transform to Games button -->
+    <?php if ($show_kids_zone): ?>
     <button class="profile-planet-btn hidden" id="kidsZonePlanetBtn" title="Enter Kids Zone" style="right: 20px; bottom: 100px; background: linear-gradient(135deg, rgba(255, 107, 157, 0.2), rgba(255, 143, 171, 0.2)); border: 3px solid rgba(255, 107, 157, 0.5); box-shadow: 0 0 20px rgba(255, 107, 157, 0.4); cursor: pointer;">
         <span class="profile-icon kids-zone-icon">🌈</span>
         <span class="profile-text kids-zone-text">Kids Zone</span>
     </button>
+    <?php endif; ?>
 
     <!-- Bid & Win Planet Button (Above Profile) -->
     <?php if ($show_bidding): ?>
@@ -434,10 +467,12 @@ $conn->close();
     <?php endif; ?>
 
     <!-- Profile Planet Button (Corner - Bottom) -->
+    <?php if ($show_profile): ?>
     <a href="view_profile.php" class="profile-planet-btn hidden" id="profilePlanetBtn" title="View Profile" style="right: 20px; bottom: 20px;">
         <span class="profile-icon" id="profileIcon">🌍</span>
         <span class="profile-text">Profile</span>
     </a>
+    <?php endif; ?>
 
     <!-- Assistive Touch Floating Action Button -->
     <div class="assistive-touch-fab" id="assistiveTouchFab">
@@ -1527,18 +1562,27 @@ $conn->close();
                         if (dropdownUsername) dropdownUsername.textContent = data.user.username;
                         
                         // Show floating corner buttons
-                        document.getElementById('profilePlanetBtn').classList.remove('hidden');
+                        <?php if ($show_profile): ?>
+                        const profileBtn = document.getElementById('profilePlanetBtn');
+                        if (profileBtn) profileBtn.classList.remove('hidden');
+                        <?php endif; ?>
+                        
                         <?php if ($show_bidding): ?>
                         const biddingBtn = document.getElementById('biddingPlanetBtn');
                         if (biddingBtn) biddingBtn.classList.remove('hidden');
                         <?php endif; ?>
                         
+                        <?php if ($show_rewards): ?>
                         const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
                         if (claimPrizeBtn) claimPrizeBtn.classList.remove('hidden');
+                        <?php endif; ?>
                         
+                        <?php if ($show_shop): ?>
                         const shopBtn = document.getElementById('shopPlanetBtn');
                         if (shopBtn) shopBtn.classList.remove('hidden');
+                        <?php endif; ?>
                         
+                        <?php if ($show_kids_zone): ?>
                         const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
                         if (kidsZonePlanetBtn) {
                             kidsZonePlanetBtn.classList.remove('hidden');
@@ -1573,8 +1617,10 @@ $conn->close();
                             // Add touchstart for mobile devices - ensure it works repeatedly
                             kidsZonePlanetBtn.addEventListener('touchstart', kidsZonePlanetBtnEnterTouchHandler, {passive: false, once: false});
                         }
+                        <?php endif; ?>
                         
                         // Show desktop info buttons (only Shop and Profile)
+                        <?php if ($show_shop): ?>
                         const shopBtnDesktop = document.getElementById('shopBtnDesktop');
                         const shopBtnScoreIndex = document.getElementById('shopBtnScoreIndex');
                         if (shopBtnDesktop) shopBtnDesktop.style.display = 'flex';
@@ -1582,9 +1628,12 @@ $conn->close();
                             shopBtnScoreIndex.textContent = data.total_score.toLocaleString();
                             shopBtnDesktop.title = 'Shop - Total Score: ' + data.total_score.toLocaleString();
                         }
+                        <?php endif; ?>
                         
+                        <?php if ($show_profile): ?>
                         const profileBtnDesktop = document.getElementById('profileBtnDesktop');
                         if (profileBtnDesktop) profileBtnDesktop.style.display = 'flex';
+                        <?php endif; ?>
                         
                         // Update shop score in mobile menu
                         const mobileShopScoreIndex = document.getElementById('mobileShopScoreIndex');
@@ -1696,23 +1745,36 @@ $conn->close();
                         isUserLoggedIn = false; // Update login status
                         document.getElementById('userInfoBar').classList.add('hidden');
                         document.getElementById('authButtons').classList.remove('hidden');
-                        document.getElementById('profilePlanetBtn').classList.add('hidden');
+                        <?php if ($show_profile): ?>
+                        const profileBtn = document.getElementById('profilePlanetBtn');
+                        if (profileBtn) profileBtn.classList.add('hidden');
+                        <?php endif; ?>
                         <?php if ($show_bidding): ?>
                         const biddingBtn = document.getElementById('biddingPlanetBtn');
                         if (biddingBtn) biddingBtn.classList.add('hidden');
                         <?php endif; ?>
+                        <?php if ($show_rewards): ?>
                         const claimPrizeBtn = document.getElementById('claimPrizePlanetBtn');
                         if (claimPrizeBtn) claimPrizeBtn.classList.add('hidden');
+                        <?php endif; ?>
+                        <?php if ($show_shop): ?>
                         const shopBtn = document.getElementById('shopPlanetBtn');
                         if (shopBtn) shopBtn.classList.add('hidden');
+                        <?php endif; ?>
+                        <?php if ($show_kids_zone): ?>
                         const kidsZonePlanetBtn = document.getElementById('kidsZonePlanetBtn');
                         if (kidsZonePlanetBtn) kidsZonePlanetBtn.classList.add('hidden');
+                        <?php endif; ?>
                         
                         // Hide desktop info buttons
+                        <?php if ($show_shop): ?>
                         const shopBtnDesktop = document.getElementById('shopBtnDesktop');
                         if (shopBtnDesktop) shopBtnDesktop.style.display = 'none';
+                        <?php endif; ?>
+                        <?php if ($show_profile): ?>
                         const profileBtnDesktop = document.getElementById('profileBtnDesktop');
                         if (profileBtnDesktop) profileBtnDesktop.style.display = 'none';
+                        <?php endif; ?>
                         
                         document.getElementById('userCredits').style.display = 'none';
                         document.getElementById('userReferralCode').style.display = 'none';

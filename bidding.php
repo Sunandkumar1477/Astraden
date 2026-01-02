@@ -14,9 +14,11 @@ if ($user_id <= 0) {
 $user_astrons = $conn->query("SELECT astrons_balance FROM user_astrons WHERE user_id = $user_id")->fetch_assoc();
 $astrons_balance = $user_astrons ? floatval($user_astrons['astrons_balance']) : 0;
 
-// Get Astrons per credit
+// Get Astrons per credit and calculate credits per astron for display
 $settings = $conn->query("SELECT astrons_per_credit FROM bidding_settings LIMIT 1")->fetch_assoc();
 $astrons_per_credit = $settings ? floatval($settings['astrons_per_credit']) : 1.00;
+// Calculate credits per astron (inverse) for display
+$credits_per_astron = $astrons_per_credit > 0 ? (1.0 / $astrons_per_credit) : 1.00;
 
 $conn->close();
 ?>
@@ -70,7 +72,10 @@ $conn->close();
     <div class="balance-card">
         <h2>Your Astrons Balance</h2>
         <div class="amount" id="astronsBalance"><?php echo number_format($astrons_balance, 2); ?></div>
-        <a href="buy_astrons.php" style="color: var(--primary-cyan); text-decoration: none; margin-top: 10px; display: inline-block;">Buy More Astrons</a>
+        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-top: 10px;">
+            Rate: 1 Astron = <?php echo number_format($credits_per_astron, 2); ?> Credits
+        </div>
+        <a href="buy_astrons.php" style="color: var(--primary-cyan); text-decoration: none; margin-top: 10px; display: inline-block; font-weight: 700;">Buy More Astrons with Credits</a>
     </div>
     
     <div class="bidding-grid" id="biddingGrid">

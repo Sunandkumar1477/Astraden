@@ -13,9 +13,11 @@ if ($user_id <= 0) {
 // Get user credits
 $user_credits = $conn->query("SELECT credits FROM user_profile WHERE user_id = $user_id")->fetch_assoc()['credits'] ?? 0;
 
-// Get Astrons per credit
+// Get Astrons per credit and calculate credits per astron for display
 $settings = $conn->query("SELECT astrons_per_credit FROM bidding_settings LIMIT 1")->fetch_assoc();
 $astrons_per_credit = $settings ? floatval($settings['astrons_per_credit']) : 1.00;
+// Calculate credits per astron (inverse) for display
+$credits_per_astron = $astrons_per_credit > 0 ? (1.0 / $astrons_per_credit) : 1.00;
 
 // Get user Astrons balance
 $user_astrons = $conn->query("SELECT astrons_balance FROM user_astrons WHERE user_id = $user_id")->fetch_assoc();
@@ -80,7 +82,7 @@ $conn->close();
         <div class="form-group">
             <label>Credits to Spend</label>
             <input type="number" id="creditsInput" min="1" step="1" value="10" oninput="updateAstrons()">
-            <div class="info-text">Rate: <?php echo $astrons_per_credit; ?> Astrons = 1 Credit</div>
+            <div class="info-text">Rate: 1 Astron = <?php echo number_format($credits_per_astron, 2); ?> Credits (<?php echo number_format($astrons_per_credit, 2); ?> Astrons per Credit)</div>
         </div>
         <div class="form-group">
             <label>You Will Receive</label>
