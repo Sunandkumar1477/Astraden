@@ -23,6 +23,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_credits'])) {
     }
 }
 
+// Handle Reset All Settings
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_all_settings'])) {
+    $game_name = trim($_POST['game_name'] ?? '');
+    
+    if (!empty($game_name)) {
+        $display_name = $game_name === 'earth-defender' ? 'Earth Defender' : ucfirst(str_replace('-', ' ', $game_name));
+        
+        // Reset all game settings to defaults
+        $reset_stmt = $conn->prepare("UPDATE games SET 
+            credits_per_chance = 30,
+            is_active = 1,
+            is_contest_active = 0,
+            is_claim_active = 0,
+            game_mode = 'money',
+            contest_first_prize = 0,
+            contest_second_prize = 0,
+            contest_third_prize = 0,
+            contest_credits_required = 30,
+            first_prize = 0,
+            second_prize = 0,
+            third_prize = 0,
+            updated_at = NOW()
+            WHERE game_name = ?");
+        $reset_stmt->bind_param("s", $game_name);
+        
+        if ($reset_stmt->execute()) {
+            // Also deactivate all active game sessions for this game
+            $deactivate_sessions = $conn->prepare("UPDATE game_sessions SET is_active = 0 WHERE game_name = ?");
+            $deactivate_sessions->bind_param("s", $game_name);
+            $deactivate_sessions->execute();
+            $deactivate_sessions->close();
+            
+            // Log the action
+            $desc = "Reset all settings for {$display_name} to defaults";
+            $log_stmt = $conn->prepare("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES (?, ?, 'reset_game_settings', ?, ?)");
+            $admin_id = $_SESSION['admin_id'];
+            $admin_user = $_SESSION['admin_username'];
+            $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+            $log_stmt->bind_param("isss", $admin_id, $admin_user, $desc, $ip_address);
+            $log_stmt->execute();
+            $log_stmt->close();
+            
+            $message = "All settings reset for {$display_name}! All game sessions have been deactivated.";
+        } else {
+            $error = "Failed to reset settings: " . $reset_stmt->error;
+        }
+        $reset_stmt->close();
+    } else {
+        $error = "Please select a game to reset.";
+    }
+}
+
 $games = $conn->query("SELECT * FROM games ORDER BY display_name ASC")->fetch_all(MYSQLI_ASSOC);
 $available_games = [
     'earth-defender' => '🛡️ Earth Defender',
@@ -105,6 +157,9 @@ $available_games = [
         .form-group input, .form-group select { width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,255,255,0.3); border-radius: 8px; color: white; outline: none; }
 
         .btn-update { background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); border: none; color: white; padding: 15px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 900; width: 100%; cursor: pointer; }
+        .btn-reset { background: linear-gradient(135deg, #ff3333, #cc0000); border: none; color: white; padding: 15px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 900; width: 100%; cursor: pointer; margin-top: 15px; }
+        .btn-reset:hover { background: linear-gradient(135deg, #ff5555, #ff0000); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 51, 51, 0.4); }
+        .error-msg { padding: 15px; border-radius: 10px; margin-bottom: 25px; background: rgba(255, 51, 51, 0.1); border: 1px solid #ff3333; color: #ff3333; font-weight: bold; }
 
         .table-card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
@@ -145,12 +200,13 @@ $available_games = [
         <h2 class="section-title"><i class="fas fa-gamepad ic-costs" style="margin-right:15px;"></i> PLAY COSTS</h2>
 
         <?php if($message): ?><div class="msg"><?php echo $message; ?></div><?php endif; ?>
+        <?php if($error): ?><div class="error-msg"><?php echo $error; ?></div><?php endif; ?>
 
         <div class="config-card">
-            <form method="POST">
+            <form method="POST" id="updateForm">
                 <div class="form-group">
                     <label>SELECT OPERATION TARGET</label>
-                    <select name="game_name">
+                    <select name="game_name" id="game_name_select">
                         <?php foreach($available_games as $k=>$v): ?><option value="<?php echo $k; ?>"><?php echo $v; ?></option><?php endforeach; ?>
                     </select>
                 </div>
@@ -159,6 +215,25 @@ $available_games = [
                     <input type="number" name="credits_per_chance" value="30" min="1" max="1000" required>
                 </div>
                 <button type="submit" name="update_credits" class="btn-update">SYNC MISSION COSTS</button>
+            </form>
+        </div>
+
+        <div class="config-card" style="border-color: rgba(255, 51, 51, 0.5); background: rgba(255, 51, 51, 0.05);">
+            <h3 style="color: #ff3333; margin-bottom: 15px; font-family: 'Orbitron', sans-serif; text-transform: uppercase; font-size: 0.9rem;">⚠️ RESET ALL SETTINGS</h3>
+            <p style="color: rgba(255, 255, 255, 0.6); margin-bottom: 20px; font-size: 0.85rem; line-height: 1.5;">
+                This will reset ALL settings for the selected game to default values:<br>
+                • Credits per chance: 30<br>
+                • Contest mode: OFF<br>
+                • Claim mode: OFF<br>
+                • Game mode: Money<br>
+                • All prizes: 0<br>
+                • All active game sessions: Deactivated
+            </p>
+            <form method="POST" onsubmit="return confirm('⚠️ WARNING: This will reset ALL settings for the selected game to defaults and deactivate all game sessions. Are you absolutely sure?');">
+                <input type="hidden" name="game_name" id="reset_game_name" value="<?php echo !empty($available_games) ? key($available_games) : ''; ?>">
+                <button type="submit" name="reset_all_settings" class="btn-reset">
+                    <i class="fas fa-exclamation-triangle"></i> RESET ALL SETTINGS
+                </button>
             </form>
         </div>
 
@@ -178,5 +253,17 @@ $available_games = [
             </table>
         </div>
     </main>
+
+    <script>
+        // Sync game selection between forms
+        const gameSelect = document.getElementById('game_name_select');
+        const resetGameName = document.getElementById('reset_game_name');
+        
+        if (gameSelect && resetGameName) {
+            gameSelect.addEventListener('change', function() {
+                resetGameName.value = this.value;
+            });
+        }
+    </script>
 </body>
 </html>
