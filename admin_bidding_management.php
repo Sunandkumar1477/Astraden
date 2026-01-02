@@ -284,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $bidding_items = [];
 try {
     $result = $conn->query("SELECT bi.*, 
-        COALESCE((SELECT username FROM user_profile WHERE user_id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
+        COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
         COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
         ORDER BY bi.created_at DESC");

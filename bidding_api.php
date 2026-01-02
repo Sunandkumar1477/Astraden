@@ -8,8 +8,8 @@ $action = $_GET['action'] ?? '';
 if ($action === 'get_active_biddings') {
     // Get active bidding items (between start_time and end_time)
     $items = $conn->query("SELECT bi.*, 
-        (SELECT username FROM user_profile WHERE user_id = bi.current_bidder_id) as current_bidder_name,
-        (SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id) as total_bids
+        COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
+        COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
         WHERE bi.is_active = 1 AND bi.is_completed = 0 
         AND (bi.start_time IS NULL OR bi.start_time <= NOW()) 
@@ -28,8 +28,8 @@ if ($action === 'get_bidding_details') {
     }
     
     $item = $conn->query("SELECT bi.*, 
-        (SELECT username FROM user_profile WHERE user_id = bi.current_bidder_id) as current_bidder_name,
-        (SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id) as total_bids
+        COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
+        COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
         WHERE bi.id = $id")->fetch_assoc();
     
