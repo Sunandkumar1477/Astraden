@@ -6,12 +6,14 @@ header('Content-Type: application/json');
 $action = $_GET['action'] ?? '';
 
 if ($action === 'get_active_biddings') {
-    // Get active bidding items
+    // Get active bidding items (between start_time and end_time)
     $items = $conn->query("SELECT bi.*, 
         (SELECT username FROM user_profile WHERE user_id = bi.current_bidder_id) as current_bidder_name,
         (SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id) as total_bids
         FROM bidding_items bi 
-        WHERE bi.is_active = 1 AND bi.is_completed = 0 AND bi.end_time > NOW()
+        WHERE bi.is_active = 1 AND bi.is_completed = 0 
+        AND (bi.start_time IS NULL OR bi.start_time <= NOW()) 
+        AND bi.end_time > NOW()
         ORDER BY bi.end_time ASC")->fetch_all(MYSQLI_ASSOC);
     
     echo json_encode(['success' => true, 'items' => $items]);
@@ -65,7 +67,11 @@ if ($action === 'place_bid') {
     
     // Get bidding item
     $item = $conn->query("SELECT * FROM bidding_items WHERE id = $bidding_id")->fetch_assoc();
-    if (!$item || !$item['is_active'] || $item['is_completed'] || strtotime($item['end_time']) < time()) {
+    $now = time();
+    $start_time = $item['start_time'] ? strtotime($item['start_time']) : 0;
+    $end_time = strtotime($item['end_time']);
+    
+    if (!$item || !$item['is_active'] || $item['is_completed'] || ($start_time > 0 && $now < $start_time) || $now >= $end_time) {
         echo json_encode(['success' => false, 'message' => 'Bidding is not active']);
         exit;
     }

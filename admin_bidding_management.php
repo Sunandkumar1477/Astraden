@@ -27,7 +27,8 @@ try {
         `current_bid` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
         `current_bidder_id` INT(11) DEFAULT NULL,
         `bid_increment` DECIMAL(10, 2) NOT NULL DEFAULT 1.00,
-        `end_time` DATETIME NOT NULL,
+        `start_time` DATETIME NOT NULL COMMENT 'Bidding start date and time',
+        `end_time` DATETIME NOT NULL COMMENT 'Bidding end date and time',
         `is_active` TINYINT(1) NOT NULL DEFAULT 1,
         `is_completed` TINYINT(1) NOT NULL DEFAULT 0,
         `winner_id` INT(11) DEFAULT NULL,
@@ -35,6 +36,13 @@ try {
         `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    
+    // Add start_time column if it doesn't exist (for existing tables)
+    try {
+        $conn->query("ALTER TABLE `bidding_items` ADD COLUMN `start_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Bidding start date and time' AFTER `bid_increment`");
+    } catch (Exception $e) {
+        // Column might already exist, that's okay
+    }
     
     // Create bidding_history table
     $conn->query("CREATE TABLE IF NOT EXISTS `bidding_history` (
@@ -138,25 +146,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Create new bidding item
     if (isset($_POST['create_bidding'])) {
-        $title = trim($_POST['title'] ?? '');
-        $description = trim($_POST['description'] ?? '');
         $prize_amount = floatval($_POST['prize_amount'] ?? 0);
-        $starting_price = floatval($_POST['starting_price'] ?? 0);
-        $bid_increment = floatval($_POST['bid_increment'] ?? 1.00);
-        $end_time = trim($_POST['end_date'] ?? '') . ' ' . trim($_POST['end_time'] ?? '');
+        $bid_amount_per_bid = floatval($_POST['bid_amount_per_bid'] ?? 0.20);
+        $start_date = trim($_POST['start_date'] ?? '');
+        $start_time = trim($_POST['start_time'] ?? '');
+        $end_date = trim($_POST['end_date'] ?? '');
+        $end_time = trim($_POST['end_time'] ?? '');
         
-        if (empty($title) || $prize_amount <= 0 || $starting_price <= 0 || empty($end_time)) {
+        if ($prize_amount <= 0 || $bid_amount_per_bid <= 0 || empty($start_date) || empty($start_time) || empty($end_date) || empty($end_time)) {
             $error = "Please fill all required fields with valid values.";
         } else {
-            $stmt = $conn->prepare("INSERT INTO bidding_items (title, description, prize_amount, starting_price, current_bid, bid_increment, end_time) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssddddss", $title, $description, $prize_amount, $starting_price, $starting_price, $bid_increment, $end_time);
-            if ($stmt->execute()) {
-                $message = "Bidding item created successfully!";
-                $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'create_bidding_item', 'Created bidding item: $title', '{$_SERVER['REMOTE_ADDR']}')");
+            // Auto-generate title
+            $title = "Bidding Item - ₹" . number_format($prize_amount, 2);
+            $description = "Prize: ₹" . number_format($prize_amount, 2) . " | Bid Amount: " . $bid_amount_per_bid . " Astrons per bid";
+            
+            // Starting price is 0, bid increment is the bid amount per bid
+            $starting_price = 0;
+            $bid_increment = $bid_amount_per_bid;
+            
+            // Combine date and time
+            $start_datetime = $start_date . ' ' . $start_time;
+            $end_datetime = $end_date . ' ' . $end_time;
+            
+            // Validate that end time is after start time
+            if (strtotime($end_datetime) <= strtotime($start_datetime)) {
+                $error = "End date/time must be after start date/time.";
             } else {
-                $error = "Failed to create bidding item.";
+                $stmt = $conn->prepare("INSERT INTO bidding_items (title, description, prize_amount, starting_price, current_bid, bid_increment, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("ssddddsss", $title, $description, $prize_amount, $starting_price, $starting_price, $bid_increment, $start_datetime, $end_datetime);
+                if ($stmt->execute()) {
+                    $message = "Bidding item created successfully!";
+                    $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'create_bidding_item', 'Created bidding item: $title', '{$_SERVER['REMOTE_ADDR']}')");
+                } else {
+                    $error = "Failed to create bidding item.";
+                }
+                $stmt->close();
             }
-            $stmt->close();
         }
     }
     
@@ -168,14 +193,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prize_amount = floatval($_POST['prize_amount'] ?? 0);
         $starting_price = floatval($_POST['starting_price'] ?? 0);
         $bid_increment = floatval($_POST['bid_increment'] ?? 1.00);
+        $start_time = trim($_POST['start_date'] ?? '') . ' ' . trim($_POST['start_time'] ?? '');
         $end_time = trim($_POST['end_date'] ?? '') . ' ' . trim($_POST['end_time'] ?? '');
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         
-        if ($id <= 0 || empty($title) || $prize_amount <= 0 || $starting_price <= 0 || empty($end_time)) {
+        if ($id <= 0 || empty($title) || $prize_amount <= 0 || $starting_price <= 0 || empty($start_time) || empty($end_time)) {
             $error = "Please fill all required fields with valid values.";
         } else {
-            $stmt = $conn->prepare("UPDATE bidding_items SET title = ?, description = ?, prize_amount = ?, starting_price = ?, bid_increment = ?, end_time = ?, is_active = ? WHERE id = ?");
-            $stmt->bind_param("ssddddssi", $title, $description, $prize_amount, $starting_price, $bid_increment, $end_time, $is_active, $id);
+            $stmt = $conn->prepare("UPDATE bidding_items SET title = ?, description = ?, prize_amount = ?, starting_price = ?, bid_increment = ?, start_time = ?, end_time = ?, is_active = ? WHERE id = ?");
+            $stmt->bind_param("ssddddsssi", $title, $description, $prize_amount, $starting_price, $bid_increment, $start_time, $end_time, $is_active, $id);
             if ($stmt->execute()) {
                 $message = "Bidding item updated successfully!";
                 $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'update_bidding_item', 'Updated bidding item ID: $id', '{$_SERVER['REMOTE_ADDR']}')");
@@ -342,37 +368,37 @@ $conn->close();
         <div class="config-card">
             <h3 style="color: var(--primary-cyan); margin-bottom: 20px;">Create New Bidding Item</h3>
             <form method="POST">
-                <div class="form-group">
-                    <label>TITLE *</label>
-                    <input type="text" name="title" required>
-                </div>
-                <div class="form-group">
-                    <label>DESCRIPTION</label>
-                    <textarea name="description"></textarea>
-                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>PRIZE AMOUNT (₹) *</label>
-                        <input type="number" name="prize_amount" step="0.01" min="0.01" required>
+                        <input type="number" name="prize_amount" step="0.01" min="0.01" required placeholder="e.g., 1000.00">
+                        <small style="color:rgba(255,255,255,0.4);">Prize money value in Indian Rupees</small>
                     </div>
                     <div class="form-group">
-                        <label>STARTING PRICE (Astrons) *</label>
-                        <input type="number" name="starting_price" step="0.01" min="0.01" required>
+                        <label>BID AMOUNT PER BID (Astrons) *</label>
+                        <input type="number" name="bid_amount_per_bid" value="0.20" step="0.01" min="0.01" required placeholder="e.g., 0.20">
+                        <small style="color:rgba(255,255,255,0.4);">How many Astrons per bid (e.g., 0.20 means user with 1 Astron can bid 5 times)</small>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>BID INCREMENT (Astrons)</label>
-                        <input type="number" name="bid_increment" value="1.00" step="0.01" min="0.01" required>
+                        <label>START DATE *</label>
+                        <input type="date" name="start_date" required>
                     </div>
+                    <div class="form-group">
+                        <label>START TIME *</label>
+                        <input type="time" name="start_time" required>
+                    </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
                         <label>END DATE *</label>
                         <input type="date" name="end_date" required>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>END TIME *</label>
-                    <input type="time" name="end_time" required>
+                    <div class="form-group">
+                        <label>END TIME *</label>
+                        <input type="time" name="end_time" required>
+                    </div>
                 </div>
                 <button type="submit" name="create_bidding" class="btn-create">CREATE BIDDING ITEM</button>
             </form>
@@ -385,9 +411,11 @@ $conn->close();
                     <tr>
                         <th>Title</th>
                         <th>Prize (₹)</th>
+                        <th>Bid Amount</th>
                         <th>Current Bid</th>
                         <th>Bidder</th>
                         <th>Total Bids</th>
+                        <th>Start Time</th>
                         <th>End Time</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -395,15 +423,17 @@ $conn->close();
                 </thead>
                 <tbody>
                     <?php if(empty($bidding_items)): ?>
-                        <tr><td colspan="8" style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">No bidding items yet.</td></tr>
+                        <tr><td colspan="10" style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">No bidding items yet.</td></tr>
                     <?php else: ?>
                         <?php foreach($bidding_items as $item): ?>
                         <tr>
                             <td><strong><?php echo htmlspecialchars($item['title']); ?></strong></td>
                             <td>₹<?php echo number_format($item['prize_amount'], 2); ?></td>
+                            <td><?php echo number_format($item['bid_increment'], 2); ?> Astrons</td>
                             <td><?php echo number_format($item['current_bid'], 2); ?> Astrons</td>
                             <td><?php echo $item['current_bidder_name'] ? htmlspecialchars($item['current_bidder_name']) : 'None'; ?></td>
                             <td><?php echo $item['total_bids']; ?></td>
+                            <td><?php echo isset($item['start_time']) && $item['start_time'] ? date('M d, Y H:i', strtotime($item['start_time'])) : 'N/A'; ?></td>
                             <td><?php echo date('M d, Y H:i', strtotime($item['end_time'])); ?></td>
                             <td>
                                 <?php if($item['is_completed']): ?>
