@@ -11,6 +11,10 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'created') {
     $message = "Bidding item created successfully!";
 }
 
+// Debug: Show any PHP errors (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display, but log
+
 // Create bidding tables if they don't exist
 try {
     // Create bidding_settings table
@@ -44,9 +48,13 @@ try {
     
     // Add start_time column if it doesn't exist (for existing tables)
     try {
-        $conn->query("ALTER TABLE `bidding_items` ADD COLUMN `start_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Bidding start date and time' AFTER `bid_increment`");
+        // Check if column exists first
+        $column_check = $conn->query("SHOW COLUMNS FROM `bidding_items` LIKE 'start_time'");
+        if ($column_check->num_rows == 0) {
+            $conn->query("ALTER TABLE `bidding_items` ADD COLUMN `start_time` DATETIME NULL DEFAULT NULL COMMENT 'Bidding start date and time' AFTER `bid_increment`");
+        }
     } catch (Exception $e) {
-        // Column might already exist, that's okay
+        // Column might already exist or table doesn't exist yet, that's okay
     }
     
     // Create bidding_history table
@@ -204,14 +212,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $stmt->bind_param("ssddddss", $title, $description, $prize_amount, $starting_price, $starting_price, $bid_increment, $start_datetime, $end_datetime);
                     if ($stmt->execute()) {
-                        $message = "Bidding item created successfully!";
+                        $inserted_id = $conn->insert_id;
                         $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'create_bidding_item', 'Created bidding item: $title', '{$_SERVER['REMOTE_ADDR']}')");
                         $stmt->close();
-                        // Redirect to prevent form resubmission
+                        // Redirect to prevent form resubmission and refresh the page
                         header("Location: admin_bidding_management.php?msg=created");
                         exit;
                     } else {
-                        $error = "Failed to create bidding item: " . $stmt->error;
+                        $error = "Failed to create bidding item. Error: " . $stmt->error . " | SQL State: " . $conn->sqlstate;
                         $stmt->close();
                     }
                 }
@@ -275,17 +283,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get all bidding items - handle if table doesn't exist
 $bidding_items = [];
 try {
-    $bidding_items = $conn->query("SELECT bi.*, 
-        (SELECT username FROM user_profile WHERE user_id = bi.current_bidder_id) as current_bidder_name,
-        (SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id) as total_bids
+    $result = $conn->query("SELECT bi.*, 
+        COALESCE((SELECT username FROM user_profile WHERE user_id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
+        COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
-        ORDER BY bi.created_at DESC")->fetch_all(MYSQLI_ASSOC);
+        ORDER BY bi.created_at DESC");
+    
+    if ($result && $result->num_rows > 0) {
+        $bidding_items = $result->fetch_all(MYSQLI_ASSOC);
+    } elseif ($result) {
+        // Query succeeded but no rows
+        $bidding_items = [];
+    } else {
+        // Query failed
+        if (empty($error)) {
+            $error = "Error fetching bidding items: " . $conn->error;
+        }
+        $bidding_items = [];
+    }
 } catch (Exception $e) {
     // Table might not exist yet - that's okay, will be empty array
+    if (empty($error)) {
+        $error = "Error loading bidding items: " . $e->getMessage();
+    }
     $bidding_items = [];
 }
 
-$conn->close();
+// Don't close connection here - it will be closed automatically at end of script
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -374,6 +398,16 @@ $conn->close();
         <h2 class="section-title"><i class="fas fa-gavel" style="margin-right:15px;"></i> BIDDING MANAGEMENT</h2>
         <?php if($message): ?><div class="msg"><?php echo $message; ?></div><?php endif; ?>
         <?php if($error): ?><div class="error-msg"><?php echo $error; ?></div><?php endif; ?>
+        
+        <!-- Debug info (remove in production) -->
+        <?php if(isset($_GET['debug'])): ?>
+        <div style="background: rgba(255,255,0,0.1); padding: 10px; margin-bottom: 20px; border: 1px solid yellow;">
+            <strong>Debug Info:</strong><br>
+            Total Bidding Items: <?php echo count($bidding_items); ?><br>
+            Connection Error: <?php echo $conn->error ?? 'None'; ?><br>
+            Last Query: <?php echo $conn->info ?? 'N/A'; ?>
+        </div>
+        <?php endif; ?>
         
         <!-- Settings -->
         <div class="config-card">
