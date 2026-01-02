@@ -593,6 +593,11 @@ $conn->close();
             border: none;
             color: white;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            /* Ensure button is visible when logged in */
+            <?php if ($is_logged_in): ?>
+            display: flex !important;
+            visibility: visible !important;
+            <?php endif; ?>
         }
 
         .start-game-btn:disabled {
@@ -1305,15 +1310,29 @@ $conn->close();
             </div>
         <?php endif; ?>
 
-        <div id="timer-display" class="timer-display">Loading...</div>
-        <div id="status-message" class="status-message"></div>
+        <div id="timer-display" class="timer-display" style="<?php echo $is_logged_in ? 'display: none !important; visibility: hidden !important;' : ''; ?>"><?php echo $is_logged_in ? '' : 'Loading...'; ?></div>
+        <div id="status-message" class="status-message"><?php echo $is_logged_in ? 'Mission ready! Use credits to start.' : ''; ?></div>
         <div class="credits-info">
             Your Credits: <span id="user-credits-display" style="color: <?php echo htmlspecialchars($credits_color); ?>; font-weight: bold;"><?php echo number_format($user_credits); ?></span>
         </div>
 
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
-            <button id="start-game-btn" class="start-game-btn" style="display: none; visibility: visible;"></button>
+            <button id="start-game-btn" class="start-game-btn" style="<?php 
+                if ($is_logged_in) {
+                    $default_credits = 30; // Will be updated by JavaScript with actual session credits
+                    echo 'display: flex !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;';
+                } else {
+                    echo 'display: none;';
+                }
+            ?>"><?php 
+                if ($is_logged_in) {
+                    $btn_text = $user_credits >= $default_credits 
+                        ? 'START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ' . $default_credits
+                        : 'LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ' . $default_credits;
+                    echo $btn_text;
+                }
+            ?></button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
         </div>
 
@@ -1830,8 +1849,23 @@ $conn->close();
                     updateContestTimer();
                     contestTimerInterval = setInterval(updateContestTimer, 1000);
                     
-                    // If session exists and user is logged in, show button immediately
+                    // If session exists and user is logged in, show button immediately with correct credits
                     if (isLoggedIn) {
+                        // Update button with session credits immediately
+                        const startBtn = document.getElementById('start-game-btn');
+                        if (startBtn && gameSession && gameSession.credits_required) {
+                            const sessionCredits = gameSession.credits_required;
+                            const userCredits = <?php echo $user_credits; ?>;
+                            if (userCredits >= sessionCredits) {
+                                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${sessionCredits}`;
+                                startBtn.disabled = false;
+                                startBtn.style.opacity = '1';
+                            } else {
+                                startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${sessionCredits}`;
+                                startBtn.disabled = true;
+                                startBtn.style.opacity = '0.6';
+                            }
+                        }
                         showGameReady();
                     }
                 } else {
@@ -2340,26 +2374,34 @@ $conn->close();
                     statusMessage.style.display = 'block';
                 }
                 
-                // Force show button immediately with default credits
+                // Force show button immediately - use session credits if available, otherwise default
+                let creditsToShow = 30; // Default
+                if (typeof gameSession !== 'undefined' && gameSession && gameSession.credits_required) {
+                    creditsToShow = gameSession.credits_required;
+                }
+                
                 startBtn.style.display = 'flex';
                 startBtn.style.visibility = 'visible';
                 startBtn.style.opacity = '1';
                 startBtn.style.pointerEvents = 'auto';
                 startBtn.style.position = 'relative';
                 startBtn.style.zIndex = '1000';
-                const defaultCredits = 30;
-                if (userCredits >= defaultCredits) {
-                    startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
+                startBtn.removeAttribute('hidden');
+                startBtn.classList.remove('hidden');
+                
+                if (userCredits >= creditsToShow) {
+                    startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsToShow}`;
                     startBtn.disabled = false;
                     startBtn.style.cursor = 'pointer';
+                    startBtn.style.opacity = '1';
                 } else {
-                    startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
+                    startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsToShow}`;
                     startBtn.disabled = true;
                     startBtn.style.opacity = '0.6';
                     startBtn.style.cursor = 'not-allowed';
                 }
                 
-                console.log('Button shown immediately - display:', startBtn.style.display, 'visibility:', startBtn.style.visibility);
+                console.log('Button shown immediately - Credits:', creditsToShow, 'Display:', startBtn.style.display, 'Visible:', startBtn.offsetParent !== null);
             }
         }
         
@@ -2384,8 +2426,19 @@ $conn->close();
                     startBtn.removeAttribute('hidden');
                     startBtn.classList.remove('hidden');
                     
-                    // Also add inline style to override any CSS
-                    startBtn.setAttribute('style', startBtn.getAttribute('style') + '; display: flex !important; visibility: visible !important;');
+                    // Also add inline style to override any CSS - use direct assignment
+                    const currentStyle = startBtn.getAttribute('style') || '';
+                    startBtn.setAttribute('style', currentStyle.replace(/display\s*:\s*[^;]+/gi, '') + ' display: flex !important; visibility: visible !important; opacity: 1 !important;');
+                    
+                    // Set button text with default credits
+                    const defaultCredits = 30;
+                    if (typeof userCredits !== 'undefined' && userCredits >= defaultCredits) {
+                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
+                        startBtn.disabled = false;
+                    } else {
+                        startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
+                        startBtn.disabled = true;
+                    }
                     
                     // Clear loading
                     if (timerDisplay) {
