@@ -1748,6 +1748,8 @@ $conn->close();
                 demoBtn.style.cursor = 'pointer';
             }
             
+            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+            
             try {
                 // First, get credits from games table (admin-set value)
                 let creditsFromGames = 30; // Default fallback
@@ -1797,31 +1799,42 @@ $conn->close();
                     }
                     updateContestTimer();
                     contestTimerInterval = setInterval(updateContestTimer, 1000);
-                    
-                    // Check if session is always available
-                    const isAlwaysAvailable = data.session && (data.session.always_available === true || data.session.always_available === 1);
-                    
-                    if (data.is_active || isAlwaysAvailable) {
-                        // Game is active - show start button (always available sessions are always active)
-                        showGameReady();
-                    } else if (data.session && data.session.time_until_start > 0) {
-                        // Game not active but scheduled - show countdown
-                        showCountdown(data.session.time_until_start);
-                    } else {
-                        // No active session - show message with next session date if available
-                        showNoSession(data.next_session_date, data.is_contest_active);
-                        hideContestTimers();
+                }
+                
+                // Always show button if user is logged in, regardless of session status (like Cosmos Captain)
+                if (isLoggedIn) {
+                    showGameReady();
+                    if (data.message && statusMessage) {
+                        const statusMessage = document.getElementById('status-message');
+                        if (statusMessage) {
+                            statusMessage.textContent = data.message;
+                        }
                     }
                 } else {
-                    // No session - but check if contest is active
-                    state.isContestMode = data.is_contest_active || false;
-                    state.gameMode = data.game_mode || 'money';
-                    showNoSession(data.next_session_date, data.is_contest_active);
-                    hideContestTimers();
+                    // User not logged in - show appropriate message
+                    const statusMessage = document.getElementById('status-message');
+                    if (statusMessage) {
+                        if (data.message) {
+                            statusMessage.textContent = data.message;
+                        } else {
+                            statusMessage.textContent = 'Login or Register to start mission.';
+                        }
+                    }
                 }
             } catch (error) {
-                showNoSession(null);
-                hideContestTimers();
+                // Even on error, show button if user is logged in (like Cosmos Captain)
+                if (isLoggedIn) {
+                    showGameReady();
+                    const statusMessage = document.getElementById('status-message');
+                    if (statusMessage) {
+                        statusMessage.textContent = 'Mission ready! Use credits to start.';
+                    }
+                } else {
+                    const statusMessage = document.getElementById('status-message');
+                    if (statusMessage) {
+                        statusMessage.textContent = 'Error loading game status.';
+                    }
+                }
                 // Ensure demo button is always visible even on error
                 if (demoBtn) {
                     demoBtn.style.display = 'block';
@@ -1833,65 +1846,61 @@ $conn->close();
         }
         
         function showGameReady() {
-            const overlay = document.getElementById('game-status-overlay');
+            // Always clear loading text
             const timerDisplay = document.getElementById('timer-display');
+            if (timerDisplay) {
+                timerDisplay.textContent = '';
+                timerDisplay.style.display = 'none';
+            }
+            
             const statusMessage = document.getElementById('status-message');
             const startBtn = document.getElementById('start-game-btn');
             const demoBtn = document.getElementById('demo-game-btn');
             
-            // Ensure overlay is visible
-            if (overlay) {
-                overlay.classList.remove('hidden');
-                overlay.style.display = 'block';
-            }
-            
-            timerDisplay.textContent = '';
-            const creditsRequired = gameSession.credits_required || 30;
-            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
-            
-            // Check if user is logged in
+            const creditsRequired = (gameSession && gameSession.credits_required) ? gameSession.credits_required : 30;
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             const userCredits = <?php echo $user_credits; ?>;
             
-            if (!isLoggedIn) {
-                // User not logged in - hide start button, show demo only
-                if (startBtn) startBtn.style.display = 'none';
-                if (state.isContestMode) {
-                    statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} credits required).`;
+            // Update status message
+            if (statusMessage) {
+                if (isLoggedIn) {
+                    if (state.isContestMode) {
+                        statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
+                    } else {
+                        statusMessage.textContent = `Mission ready! Use ${creditsRequired} credits to start.`;
+                    }
                 } else {
                     statusMessage.textContent = `Login or Register to start mission (${creditsRequired} credits required).`;
                 }
-            } else {
-                // User is logged in - always show the start button
-                if (startBtn) {
-                    startBtn.style.display = 'flex';
-                    startBtn.style.visibility = 'visible';
-                    
+            }
+            
+            // Always show button if user is logged in (like Cosmos Captain)
+            if (startBtn && isLoggedIn) {
+                startBtn.style.display = 'flex';
+                startBtn.style.visibility = 'visible';
+                
+                if (userCredits >= creditsRequired) {
                     if (state.isContestMode) {
-                        statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
                         startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
                         startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
                         startBtn.style.color = '#000';
                     } else {
-                        statusMessage.textContent = `Mission ready! Use ${creditsRequired} credits to start.`;
                         startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                        startBtn.style.background = ''; // Reset to CSS default
+                        startBtn.style.background = '';
                         startBtn.style.color = '';
                     }
-                    
-                    // If user has insufficient credits, disable button but still show it
-                    if (userCredits < creditsRequired) {
-                        startBtn.disabled = true;
-                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
-                        if (isAlwaysAvailable) {
-                            statusMessage.textContent = `You need ${creditsRequired} credits to start mission.`;
-                        } else {
-                            statusMessage.textContent = `Add ${creditsRequired} credits to start mission.`;
-                        }
-                    } else {
-                        startBtn.disabled = false;
-                    }
+                    startBtn.disabled = false;
+                    startBtn.style.opacity = '1';
+                    startBtn.style.cursor = 'pointer';
+                } else {
+                    // Insufficient credits - show locked button
+                    startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                    startBtn.disabled = true;
+                    startBtn.style.opacity = '0.6';
+                    startBtn.style.cursor = 'not-allowed';
                 }
+            } else if (startBtn && !isLoggedIn) {
+                startBtn.style.display = 'none';
             }
             
             // Always show demo button - demo can be played ANYTIME, no restrictions
@@ -1908,7 +1917,11 @@ $conn->close();
             const startBtn = document.getElementById('start-game-btn');
             const demoBtn = document.getElementById('demo-game-btn');
             
-            startBtn.style.display = 'none';
+            // Only hide start button if user is not logged in (like Cosmos Captain)
+            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+            if (!isLoggedIn && startBtn) {
+                startBtn.style.display = 'none';
+            }
             // Always show demo button - demo can be played ANYTIME, no restrictions
             if (demoBtn) {
                 demoBtn.style.display = 'block';
@@ -1953,14 +1966,26 @@ $conn->close();
             
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             
-            timerDisplay.textContent = '';
+            if (timerDisplay) {
+                timerDisplay.textContent = '';
+                timerDisplay.style.display = 'none';
+            }
             
-            // Hide play button when no session is active
-            startBtn.style.display = 'none';
+            // Only hide play button if user is not logged in (like Cosmos Captain)
+            // If logged in, still show button so they can see it
+            if (!isLoggedIn && startBtn) {
+                startBtn.style.display = 'none';
+            }
             
-            // Clear status message
-            statusMessage.textContent = '';
-            startBtn.style.display = 'none';
+            // Clear or set status message
+            if (statusMessage) {
+                if (isLoggedIn) {
+                    statusMessage.textContent = 'Mission ready! Use credits to start.';
+                } else {
+                    statusMessage.textContent = nextSessionDate ? `Next session: ${nextSessionDate}` : 'Game is not currently available.';
+                }
+            }
+            
             // Demo can be played ANYTIME - always visible and enabled
             if (demoBtn) {
                 demoBtn.style.display = 'block';
@@ -2197,6 +2222,35 @@ $conn->close();
         setTimeout(attachDemoButton, 100);
         setTimeout(attachDemoButton, 500);
         setTimeout(attachDemoButton, 1000);
+        
+        // Show button immediately if user is logged in (before async calls complete) - like Cosmos Captain
+        const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+        const userCredits = <?php echo $user_credits; ?>;
+        const startBtn = document.getElementById('start-game-btn');
+        const timerDisplay = document.getElementById('timer-display');
+        
+        if (isLoggedIn && startBtn) {
+            // Clear loading text immediately
+            if (timerDisplay) {
+                timerDisplay.textContent = '';
+                timerDisplay.style.display = 'none';
+            }
+            // Force show button immediately with default credits
+            startBtn.style.display = 'flex';
+            startBtn.style.visibility = 'visible';
+            startBtn.style.opacity = '1';
+            const defaultCredits = 30;
+            if (userCredits >= defaultCredits) {
+                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
+                startBtn.disabled = false;
+                startBtn.style.cursor = 'pointer';
+            } else {
+                startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${defaultCredits}`;
+                startBtn.disabled = true;
+                startBtn.style.opacity = '0.6';
+                startBtn.style.cursor = 'not-allowed';
+            }
+        }
         
         // Initialize
         checkGameStatus();
