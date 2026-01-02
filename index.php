@@ -2,6 +2,20 @@
 session_start();
 // Security headers and performance optimizations
 require_once 'security_headers.php';
+// Get reward visibility setting
+require_once 'connection.php';
+$show_rewards = 1; // Default to showing rewards
+$stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'show_rewards'");
+if ($stmt) {
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $setting = $result->fetch_assoc();
+        $show_rewards = (int)$setting['setting_value'];
+    }
+    $stmt->close();
+}
+$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -215,6 +229,7 @@ require_once 'security_headers.php';
                         </div>
                     </a>
                     <!-- Rewards Link -->
+                    <?php if ($show_rewards): ?>
                     <a href="rewards.php" class="menu-item">
                         <div class="item-icon">🎫</div>
                         <div class="item-info">
@@ -230,6 +245,24 @@ require_once 'security_headers.php';
                             <div class="item-value">View Reward Claim</div>
                         </div>
                     </a>
+                    <?php endif; ?>
+                    <!-- Bidding Links -->
+                    <?php if ($show_bidding): ?>
+                    <a href="bidding.php" class="menu-item">
+                        <div class="item-icon">🔨</div>
+                        <div class="item-info">
+                            <div class="item-label">Live Bidding</div>
+                            <div class="item-value">Bid & Win Prizes</div>
+                        </div>
+                    </a>
+                    <a href="my_wins.php" class="menu-item">
+                        <div class="item-icon">🏆</div>
+                        <div class="item-info">
+                            <div class="item-label">My Wins</div>
+                            <div class="item-value">View Your Wins</div>
+                        </div>
+                    </a>
+                    <?php endif; ?>
                     <!-- Profile Link -->
                     <a href="view_profile.php" class="menu-item">
                         <div class="item-icon">🌍</div>
@@ -342,10 +375,12 @@ require_once 'security_headers.php';
     </div>
 
     <!-- Prize Planet Button (Corner - Top) -->
+    <?php if ($show_rewards): ?>
     <a href="prize_claim.php" class="profile-planet-btn hidden" id="claimPrizePlanetBtn" title="Reward" style="right: 20px; bottom: 260px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2)); border: 2px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
         <span class="profile-icon" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);">🏆</span>
         <span class="profile-text" style="color: #FFD700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);">Reward</span>
     </a>
+    <?php endif; ?>
 
     <!-- Shop Button (Corner - Second) -->
     <a href="shop.php" class="profile-planet-btn hidden" id="shopPlanetBtn" title="Shop" style="right: 20px; bottom: 180px;">

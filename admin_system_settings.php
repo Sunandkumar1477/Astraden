@@ -20,6 +20,8 @@ $create_table = $conn->query("
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
     $show_credit_purchase = isset($_POST['show_credit_purchase']) ? 1 : 0;
+    $show_rewards = isset($_POST['show_rewards']) ? 1 : 0;
+    $show_bidding = isset($_POST['show_bidding']) ? 1 : 0;
     $auto_credits_enabled = isset($_POST['auto_credits_enabled']) ? 1 : 0;
     $new_user_credits = isset($_POST['new_user_credits']) ? (int)$_POST['new_user_credits'] : 0;
     $referral_credits = isset($_POST['referral_credits']) ? (int)$_POST['referral_credits'] : 0;
@@ -33,6 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
         // Insert or update all settings
         $settings = [
             'show_credit_purchase' => $show_credit_purchase,
+            'show_rewards' => $show_rewards,
+            'show_bidding' => $show_bidding,
             'auto_credits_enabled' => $auto_credits_enabled,
             'new_user_credits' => $new_user_credits,
             'referral_credits' => $referral_credits
@@ -74,6 +78,8 @@ function getSetting($conn, $key, $default = 0) {
 }
 
 $show_credit_purchase = getSetting($conn, 'show_credit_purchase', 1);
+$show_rewards = getSetting($conn, 'show_rewards', 1);
+$show_bidding = getSetting($conn, 'show_bidding', 0);
 $auto_credits_enabled = getSetting($conn, 'auto_credits_enabled', 0);
 $new_user_credits = getSetting($conn, 'new_user_credits', 0);
 $referral_credits = getSetting($conn, 'referral_credits', 0);
@@ -222,6 +228,28 @@ $conn->close();
                     <div>
                         <strong style="display:block;color:var(--primary-cyan);">SHOW CREDIT PURCHASE OPTIONS</strong>
                         <small style="color:rgba(255,255,255,0.4);">When enabled, users can see and access credit purchase options with price charts in their user info tab. When disabled, all credit purchase options will be hidden from users.</small>
+                    </div>
+                </div>
+
+                <div class="toggle-group" style="margin-top: 25px;">
+                    <label class="switch">
+                        <input type="checkbox" name="show_rewards" <?php echo $show_rewards ? 'checked' : ''; ?>>
+                        <span class="slider"></span>
+                    </label>
+                    <div>
+                        <strong style="display:block;color:var(--primary-cyan);">SHOW REWARD OPTIONS</strong>
+                        <small style="color:rgba(255,255,255,0.4);">When enabled, users can see and access reward options (Rewards & Coupons, Claim Reward) in the index page. When disabled, all reward-related links and buttons will be hidden from users.</small>
+                    </div>
+                </div>
+
+                <div class="toggle-group" style="margin-top: 25px;">
+                    <label class="switch">
+                        <input type="checkbox" name="show_bidding" <?php echo $show_bidding ? 'checked' : ''; ?>>
+                        <span class="slider"></span>
+                    </label>
+                    <div>
+                        <strong style="display:block;color:var(--primary-cyan);">SHOW BIDDING OPTIONS</strong>
+                        <small style="color:rgba(255,255,255,0.4);">When enabled, users can see and access bidding features (Bidding, My Wins) in the index page. When disabled, all bidding-related links and buttons will be hidden from users.</small>
                     </div>
                 </div>
 
