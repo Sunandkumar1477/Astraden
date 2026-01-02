@@ -107,6 +107,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("UPDATE bidding_settings SET is_active = ?, astrons_per_credit = ? WHERE id = 1");
             $stmt->bind_param("id", $is_active, $astrons_per_credit);
             if ($stmt->execute()) {
+                // Also update system_settings to show bidding in index page
+                $show_bidding_stmt = $conn->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES ('show_bidding', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+                $show_bidding_stmt->bind_param("ss", $is_active, $is_active);
+                $show_bidding_stmt->execute();
+                $show_bidding_stmt->close();
+                
                 $message = "Bidding settings updated successfully!";
                 $bidding_settings['is_active'] = $is_active;
                 $bidding_settings['astrons_per_credit'] = $astrons_per_credit;

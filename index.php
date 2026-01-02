@@ -16,8 +16,10 @@ if ($stmt) {
     $stmt->close();
 }
 
-// Get bidding visibility setting
+// Get bidding visibility setting - check both system_settings and bidding_settings
 $show_bidding = 0; // Default to hiding bidding
+
+// First check system_settings
 $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'show_bidding'");
 if ($stmt) {
     $stmt->execute();
@@ -29,20 +31,21 @@ if ($stmt) {
     $stmt->close();
 }
 
-// Also check if bidding system is active in bidding_settings
+// Also check if bidding system is active in bidding_settings (this is the main control)
 $bidding_active = false;
 try {
     $bidding_check = $conn->query("SELECT is_active FROM bidding_settings LIMIT 1");
     if ($bidding_check && $bidding_check->num_rows > 0) {
         $bidding_data = $bidding_check->fetch_assoc();
         $bidding_active = (bool)$bidding_data['is_active'];
+        // If bidding is active in bidding_settings, override system_settings
+        if ($bidding_active) {
+            $show_bidding = 1;
+        }
     }
 } catch (Exception $e) {
     // Table might not exist yet, that's okay
 }
-
-// Only show bidding if both settings are enabled
-$show_bidding = $show_bidding && $bidding_active;
 $conn->close();
 ?>
 <!DOCTYPE html>
