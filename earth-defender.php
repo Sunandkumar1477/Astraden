@@ -15,48 +15,35 @@ $credits_color = '#FFD700'; // Gold color
 
 // Fetch game settings
 $game_stmt = $conn->prepare("SELECT is_contest_active, is_claim_active, game_mode, contest_first_prize, contest_second_prize, contest_third_prize FROM games WHERE game_name = 'earth-defender'");
-if ($game_stmt) {
-    $game_stmt->execute();
-    $game_res = $game_stmt->get_result();
-    $game_mode = 'credits';
-    if ($game_res && $game_res->num_rows > 0) {
-        $g_data = $game_res->fetch_assoc();
-        $is_contest_active = (int)($g_data['is_contest_active'] ?? 0);
-        $is_claim_active = (int)($g_data['is_claim_active'] ?? 0);
-        $game_mode = $g_data['game_mode'] ?? 'credits';
-        $prizes = [
-            '1st' => (int)($g_data['contest_first_prize'] ?? 0),
-            '2nd' => (int)($g_data['contest_second_prize'] ?? 0),
-            '3rd' => (int)($g_data['contest_third_prize'] ?? 0)
-        ];
-    }
-    $game_stmt->close();
+$game_stmt->execute();
+$game_res = $game_stmt->get_result();
+$game_mode = 'money';
+if ($game_res->num_rows > 0) {
+    $g_data = $game_res->fetch_assoc();
+    $is_contest_active = (int)$g_data['is_contest_active'];
+    $is_claim_active = (int)$g_data['is_claim_active'];
+    $game_mode = $g_data['game_mode'] ?: 'money';
+    $prizes = [
+        '1st' => (int)$g_data['contest_first_prize'],
+        '2nd' => (int)$g_data['contest_second_prize'],
+        '3rd' => (int)$g_data['contest_third_prize']
+    ];
 }
+$game_stmt->close();
 
 if (isset($_SESSION['user_id'])) {
     $is_logged_in = true;
     $credits_stmt = $conn->prepare("SELECT credits FROM user_profile WHERE user_id = ?");
-    if ($credits_stmt) {
-        $credits_stmt->bind_param("i", $_SESSION['user_id']);
-        $credits_stmt->execute();
-        $credits_result = $credits_stmt->get_result();
-        if ($credits_result && $credits_result->num_rows > 0) {
-            $credits_data = $credits_result->fetch_assoc();
-            $user_credits = $credits_data['credits'] ?? 0;
-        } else {
-            // Create user_profile if it doesn't exist
-            $create_profile = $conn->prepare("INSERT INTO user_profile (user_id, credits) VALUES (?, 0) ON DUPLICATE KEY UPDATE credits = credits");
-            if ($create_profile) {
-                $create_profile->bind_param("i", $_SESSION['user_id']);
-                $create_profile->execute();
-                $create_profile->close();
-            }
-            $user_credits = 0;
-        }
-        $credits_stmt->close();
+    $credits_stmt->bind_param("i", $_SESSION['user_id']);
+    $credits_stmt->execute();
+    $credits_result = $credits_stmt->get_result();
+    if ($credits_result->num_rows > 0) {
+        $credits_data = $credits_result->fetch_assoc();
+        $user_credits = $credits_data['credits'] ?? 0;
     }
+    $credits_stmt->close();
 }
-// Don't close connection here - it might be needed by included files
+$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -199,7 +186,6 @@ if (isset($_SESSION['user_id'])) {
             }
 
             /* Hide non-essential items on mobile during gameplay to maximize space */
-            #hud-total-score-item,
             .hud-item:nth-last-child(1) { /* This is the control info item */
                 display: none !important;
             }
@@ -219,19 +205,19 @@ if (isset($_SESSION['user_id'])) {
 
             #bomb-container {
                 bottom: 20px;
-                gap: 8px;
+                gap: 6px;
+                max-width: 200px;
             }
 
             #bomb-btn {
                 padding: 8px 16px;
                 font-size: 0.75rem;
                 max-width: 150px;
-                letter-spacing: 1px;
             }
 
             #bomb-count-display {
-                font-size: 0.8rem;
-                padding: 3px 10px;
+                font-size: 0.9rem;
+                padding: 4px 12px;
             }
         }
 
@@ -300,10 +286,10 @@ if (isset($_SESSION['user_id'])) {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             pointer-events: auto;
-            width: 90%;
-            max-width: 350px;
+            width: auto;
+            max-width: 250px;
             z-index: 100;
         }
 
@@ -311,22 +297,22 @@ if (isset($_SESSION['user_id'])) {
             background: linear-gradient(135deg, #ff3333, #880000);
             border: 2px solid #ff0000;
             color: white;
-            padding: 15px 30px;
+            padding: 8px 16px;
             width: 100%;
-            font-size: 1.2rem;
+            font-size: 0.75rem;
             font-weight: 800;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+            letter-spacing: 1px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: 'Orbitron', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 2px;
         }
 
         #bomb-btn:hover {
@@ -355,17 +341,17 @@ if (isset($_SESSION['user_id'])) {
         @media (min-width: 769px) {
             #bomb-container {
                 bottom: 50px;
-                max-width: 400px;
+                max-width: 300px;
             }
             
             #bomb-btn {
-                padding: 20px 40px;
-                font-size: 1.4rem;
+                padding: 10px 20px;
+                font-size: 0.85rem;
             }
         }
 
         #game-over {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -385,6 +371,8 @@ if (isset($_SESSION['user_id'])) {
             box-shadow: 0 0 80px rgba(255, 51, 51, 0.5);
             font-family: 'Orbitron', sans-serif;
             z-index: 2000;
+            visibility: visible;
+            opacity: 1;
         }
 
         @media (min-width: 769px) {
@@ -537,7 +525,7 @@ if (isset($_SESSION['user_id'])) {
             border: 1px solid rgba(255, 215, 0, 0.3);
         }
 
-        .game-btn, .normal-play-btn, .contest-play-btn, .instructions-toggle-btn {
+        .game-btn, .start-game-btn, .demo-game-btn, .instructions-toggle-btn {
             padding: 16px 32px;
             font-size: 1.1rem;
             font-weight: 700;
@@ -562,13 +550,13 @@ if (isset($_SESSION['user_id'])) {
             margin: 0;
         }
 
-        .game-btn:hover, .normal-play-btn:hover, .contest-play-btn:hover, .instructions-toggle-btn:hover, .start-mission-btn:hover {
+        .game-btn:hover, .start-game-btn:hover, .demo-game-btn:hover, .instructions-toggle-btn:hover {
             transform: translateY(-5px) scale(1.03);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
             filter: brightness(1.2);
         }
 
-        .game-btn:active, .normal-play-btn:active, .contest-play-btn:active, .instructions-toggle-btn:active, .start-mission-btn:active {
+        .game-btn:active, .start-game-btn:active, .demo-game-btn:active, .instructions-toggle-btn:active {
             transform: translateY(2px) scale(0.98);
         }
 
@@ -582,7 +570,7 @@ if (isset($_SESSION['user_id'])) {
                 margin: 40px auto;
             }
             
-            .game-btn, .normal-play-btn, .contest-play-btn, .instructions-toggle-btn {
+            .game-btn, .start-game-btn, .demo-game-btn, .instructions-toggle-btn {
                 flex: 0 1 340px; /* Force uniform sizing on desktop */
             }
             
@@ -598,48 +586,54 @@ if (isset($_SESSION['user_id'])) {
             }
         }
 
-        .normal-play-btn, .contest-play-btn, .start-mission-btn {
+        .start-game-btn {
             background: linear-gradient(135deg, #00ffff, #9d4edd);
             border: none;
             color: white;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-            width: 100%;
-            max-width: 380px;
-        }
-        
-        .start-mission-btn {
-            background: linear-gradient(135deg, #00ffff, #0099cc) !important;
-            border: 2px solid #00ffff !important;
-            color: white !important;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5) !important;
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-        
-        .start-mission-btn:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
-        }
-        
-        .start-mission-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
 
-        .contest-play-btn {
-            background: linear-gradient(135deg, #FFD700, #ff8c00);
-            color: #000;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
-        }
-
-        .normal-play-btn:disabled, .contest-play-btn:disabled {
+        .start-game-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none !important;
         }
 
+        .demo-game-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer !important;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto !important;
+            z-index: 1002 !important;
+            position: relative !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            visibility: visible !important;
+            width: 100%;
+            max-width: 380px;
+            font-family: 'Orbitron', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .demo-game-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+        }
+        .demo-game-btn:active {
+            transform: scale(0.98);
+        }
 
         /* Custom Modal Styles */
         .custom-modal {
@@ -929,8 +923,8 @@ if (isset($_SESSION['user_id'])) {
             
             /* All Buttons - Consistent Box Styling */
             .game-btn, 
-            .normal-play-btn, 
-            .contest-play-btn, 
+            .start-game-btn, 
+            .demo-game-btn, 
             .instructions-toggle-btn {
                 width: 100%;
                 max-width: none;
@@ -953,16 +947,16 @@ if (isset($_SESSION['user_id'])) {
             }
             
             .game-btn:hover, 
-            .normal-play-btn:hover, 
-            .contest-play-btn:hover, 
+            .start-game-btn:hover, 
+            .demo-game-btn:hover, 
             .instructions-toggle-btn:hover {
                 transform: translateX(3px) scale(1.01);
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             }
             
             .game-btn:active, 
-            .normal-play-btn:active, 
-            .contest-play-btn:active, 
+            .start-game-btn:active, 
+            .demo-game-btn:active, 
             .instructions-toggle-btn:active {
                 transform: translateX(0) scale(0.99);
             }
@@ -981,6 +975,20 @@ if (isset($_SESSION['user_id'])) {
                 box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
             }
             
+            /* Play Demo Button - Consistent Box */
+            .demo-game-btn {
+                background: rgba(255, 255, 255, 0.1);
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                color: white;
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+            
+            .demo-game-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.8);
+                box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+            }
             
             /* Back to Home Button - Consistent Box */
             .btn-home {
@@ -1248,20 +1256,6 @@ if (isset($_SESSION['user_id'])) {
             margin-top: 2px;
         }
         
-        .guide-start-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
-        }
-        
-        .guide-start-btn:active {
-            transform: scale(0.98);
-        }
-        
-        .guide-start-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
         @media (max-width: 768px) {
             .instructions-content {
                 padding: 15px;
@@ -1284,11 +1278,6 @@ if (isset($_SESSION['user_id'])) {
             .status-message {
                 display: none !important;
             }
-            
-            .guide-start-btn {
-                padding: 15px 20px !important;
-                font-size: 1rem !important;
-            }
         }
     </style>
 </head>
@@ -1301,34 +1290,36 @@ if (isset($_SESSION['user_id'])) {
         <div class="status-title">🛡️ Earth Defender</div>
         
         <?php if ($is_contest_active): ?>
-            <div class="contest-badge">🏆 CREDIT CONTEST 🏆</div>
+            <div class="contest-badge">🏆 <?php echo $game_mode === 'money' ? 'CASH CONTEST' : 'CREDIT CONTEST'; ?> 🏆</div>
             <div class="prize-pool">
                 <div style="color: #FFD700; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Mission Rewards</div>
-                <div class="prize-item"><span>🥇 1st Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['1st']); ?> Astrons</span></div>
-                <div class="prize-item"><span>🥈 2nd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['2nd']); ?> Astrons</span></div>
-                <div class="prize-item"><span>🥉 3rd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo number_format($prizes['3rd']); ?> Astrons</span></div>
+                <?php 
+                $unit = $game_mode === 'money' ? '₹' : '';
+                $suffix = $game_mode === 'money' ? '' : ' Credits';
+                ?>
+                <div class="prize-item"><span>🥇 1st Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['1st']) . $suffix; ?></span></div>
+                <div class="prize-item"><span>🥈 2nd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['2nd']) . $suffix; ?></span></div>
+                <div class="prize-item"><span>🥉 3rd Rank:</span> <span style="color: #FFD700; font-weight: bold;"><?php echo $unit . number_format($prizes['3rd']) . $suffix; ?></span></div>
             </div>
         <?php endif; ?>
 
         <div id="timer-display" class="timer-display">Loading...</div>
         <div id="status-message" class="status-message"></div>
         <div class="credits-info">
-            Your Astrons: <span id="user-credits-display" style="color: <?php echo htmlspecialchars($credits_color); ?>; font-weight: bold;"><?php echo number_format($user_credits); ?></span>
+            Your Credits: <span id="user-credits-display" style="color: <?php echo htmlspecialchars($credits_color); ?>; font-weight: bold;"><?php echo number_format($user_credits); ?></span>
         </div>
 
         <div class="game-btn-container">
             <button id="instructions-btn" class="instructions-toggle-btn" onclick="window.toggleInstructions(event); return false;">📖 GAME GUIDE</button>
-            <button id="start-mission-btn" class="start-mission-btn" style="display: none; visibility: hidden;" onclick="if(typeof window.startMissionClick === 'function') { window.startMissionClick(event); } return false;">🚀 START MISSION</button>
-            <button id="normal-play-btn" class="normal-play-btn" style="display: none;"></button>
-            <button id="contest-play-btn" class="contest-play-btn" style="display: none;"></button>
+            <button id="start-game-btn" class="start-game-btn" style="display: none;"></button>
             <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
         </div>
 
         <?php if ($is_claim_active && $is_logged_in): ?>
             <div class="claim-section">
-                <div style="color: #00ff00; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">🎁 Claim Your Astrons</div>
-                <p style="font-size: 0.85rem; margin-bottom: 15px; color: #ccc;">If you ranked in the top 3, claim your Astrons now!</p>
-                <button id="claim-prize-btn" class="claim-btn">Claim Astrons</button>
+                <div style="color: #00ff00; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">🎁 Claim Your Prize</div>
+                <p style="font-size: 0.85rem; margin-bottom: 15px; color: #ccc;">If you ranked in the top 3, claim your credits now!</p>
+                <button id="claim-prize-btn" class="claim-btn">Claim Prize</button>
                 <div id="claim-message" style="font-size: 0.85rem; margin-top: 10px; display: none;"></div>
             </div>
         <?php endif; ?>
@@ -1345,10 +1336,11 @@ if (isset($_SESSION['user_id'])) {
                 </div>
             </div>
             <div class="hud-item">
-                <span>FLUXON: <span id="score">0</span></span>
+                <span>SCORE: <span id="score">0</span></span>
+                <span id="demo-indicator" style="display: none; color: #ffaa00; font-size: 0.8rem; margin-left: 10px;">[DEMO]</span>
             </div>
             <div class="hud-item" id="hud-total-score-item" style="display: none; color: #00ff00;">
-                <span>TOTAL FLUXON: <span id="hud-total-score">0</span></span>
+                <span>TOTAL: <span id="hud-total-score">0</span></span>
             </div>
             <div class="hud-item" style="font-size: 12px; opacity: 0.8; flex-direction: column; align-items: flex-start;">
                 <div>• Drag to Rotate</div>
@@ -1369,15 +1361,39 @@ if (isset($_SESSION['user_id'])) {
             <h1>CRITICAL FAILURE</h1>
             <p>Earth has been compromised.</p>
             <div class="final-stats" style="margin-bottom: 20px;">
-                <p>Final Fluxon: <span id="final-score" style="color: #ff3333; font-weight: bold;">0</span></p>
-                <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 5px;">Total Fluxon: <span id="total-score">0</span></p>
+                <p>Final Score: <span id="final-score" style="color: #ff3333; font-weight: bold;">0</span></p>
+                <p id="total-score-container" style="display: none; color: #00ff00; font-weight: bold; margin-top: 5px;">Total Score: <span id="total-score">0</span></p>
             </div>
+            <a id="prize-claim-link" href="#" style="display: none; background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; text-decoration: none; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; margin: 10px 0; text-align: center; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);">
+                🏆 VIEW PRIZE CLAIM
+            </a>
             <div class="game-btn-container">
-                <button class="game-btn btn-primary" onclick="location.reload()">🎮 REBOOT SYSTEM</button>
-                <a href="index.php" class="game-btn btn-home">🏠 BACK TO HOME</a>
+                <button class="game-btn btn-primary" onclick="location.reload(); return false;">🎮 PLAY AGAIN</button>
+                <a href="index.php" class="game-btn btn-home" onclick="window.location.href='index.php'; return false;">🏠 BACK TO HOME</a>
             </div>
         </div>
 
+        <!-- Logged Out From Another Device Modal -->
+        <div id="another-device-logout-modal" class="custom-modal" style="z-index: 10005;">
+            <div class="modal-content" style="border-color: #FFD700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);">
+                <div class="modal-header">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
+                    <h2 style="color: #FFD700; text-shadow: 0 0 10px #FFD700;">Session Terminated</h2>
+                </div>
+                <div class="modal-body">
+                    <p style="color: #fff; margin-bottom: 15px; line-height: 1.6;">
+                        Your account has been accessed from another device. For security reasons, your session on this device has been automatically terminated.
+                    </p>
+                    <p class="modal-warning" style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; line-height: 1.5;">
+                        If this was not you, please secure your account immediately.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button id="another-device-ok-btn" class="modal-btn primary" style="background: linear-gradient(135deg, #FFD700, #ff8c00); color: #000; width: 100%;">Return to Home</button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Custom Exit Confirmation Modal -->
         <div id="exit-confirm-modal" class="custom-modal">
             <div class="modal-content">
@@ -1386,7 +1402,7 @@ if (isset($_SESSION['user_id'])) {
                 </div>
                 <div class="modal-body">
                     <p>ARE YOU SURE YOU WANT TO CLOSE THIS GAME?</p>
-                    <p class="modal-warning">Your game will end and your Fluxon will be saved automatically.</p>
+                    <p class="modal-warning">Your game will end and your score will be saved automatically.</p>
                 </div>
                 <div class="modal-footer">
                     <button id="exit-no-btn" class="modal-btn secondary">NO, CONTINUE PLAYING</button>
@@ -1469,8 +1485,8 @@ if (isset($_SESSION['user_id'])) {
                     <h3>💀 GAME OVER</h3>
                     <ul class="points-list">
                         <li>Health reaches <strong>0 HP</strong> = Game Over</li>
-                        <li>Contest time ends = Game Over (Fluxon saved)</li>
-                        <li>Final Fluxon = Total points earned</li>
+                        <li>Contest time ends = Game Over (score saved)</li>
+                        <li>Final Score = Total points earned</li>
                     </ul>
                 </div>
                 
@@ -1481,13 +1497,6 @@ if (isset($_SESSION['user_id'])) {
                         <li><strong>Tap/Click:</strong> Shoot at asteroids</li>
                         <li><strong>Bomb Button:</strong> Detonate all asteroids</li>
                     </ul>
-                </div>
-                
-                <!-- Start Game Button (shown only when payment was made) -->
-                <div class="instruction-section" id="guide-start-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(0, 255, 255, 0.3);">
-                    <button id="guide-start-btn" class="guide-start-btn" onclick="if(typeof window.startGameFromGuide === 'function') { window.startGameFromGuide(); } else { alert('Game not ready yet. Please wait.'); } return false;" style="width: 100%; padding: 18px 30px; font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, #00ffff, #0099cc); border: 2px solid #00ffff; border-radius: 12px; color: white; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 20px rgba(0, 255, 255, 0.5); transition: all 0.3s;">
-                        🎮 START GAME
-                    </button>
                 </div>
             </div>
         </div>
@@ -1503,35 +1512,19 @@ if (isset($_SESSION['user_id'])) {
         }
     </script>
 
-    <!-- Non-module script for instructions - must be outside module scope -->
+    <!-- Non-module script for demo button and instructions - must be outside module scope -->
     <script>
-        // IMMEDIATE: Show Start Mission button if payment was made (runs before module loads)
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('paid') === '1') {
-                // Wait for DOM to be ready
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', showBtn);
-                } else {
-                    showBtn();
-                }
-                
-                function showBtn() {
-                    setTimeout(() => {
-                        const btn = document.getElementById('start-mission-btn');
-                        if (btn) {
-                            btn.style.display = 'flex';
-                            btn.style.visibility = 'visible';
-                            btn.style.opacity = '1';
-                            const mode = urlParams.get('mode');
-                            btn.textContent = mode === 'contest' ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
-                            btn.disabled = false;
-                            console.log('Start Mission button shown immediately on page load');
-                        }
-                    }, 50);
-                }
+        // Global demo button handler - works immediately
+        window.handleDemoClick = function() {
+            console.log('Demo button clicked from global handler');
+            // This will be called from the module script
+            if (window.startDemoGameFromModule) {
+                window.startDemoGameFromModule();
+            } else {
+                console.log('Waiting for module to load...');
+                setTimeout(window.handleDemoClick, 100);
             }
-        })();
+        };
         
         // Global instructions toggle handler - works immediately
         window.toggleInstructions = function(e) {
@@ -1561,17 +1554,14 @@ if (isset($_SESSION['user_id'])) {
             }
             return false;
         };
-        
-        // Guide start button handler - will be set from module scope
-        window.startGameFromGuide = function() {
-            // This will be overridden by the module script
-            console.log('startGameFromGuide called but not yet initialized');
-        };
     </script>
 
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Game Configuration ---
+        const IS_LOGGED_IN = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
 
         // --- Game State ---
         const state = {
@@ -1583,9 +1573,9 @@ if (isset($_SESSION['user_id'])) {
             gameSessionId: null,
             creditsUsed: 0,
             gameStarted: false,
-            isDemoMode: false,
+            isDemoMode: false, // Track if playing in demo mode
             isContestMode: false, // Track if contest mode is active
-            gameMode: 'credits' // Track game mode (credits only)
+            gameMode: 'money' // Track game mode (money or credits)
         };
 
         // --- Game Session Management ---
@@ -1598,6 +1588,39 @@ if (isset($_SESSION['user_id'])) {
         // Track if game ended due to time
         let gameEndedByTime = false;
         
+        // Session validity check interval
+        let sessionCheckInterval = null;
+        
+        // Apply different styling for time-duration sessions
+        function applyTimeDurationStyling(isTimeDuration) {
+            const scoreElement = document.getElementById('score');
+            const scoreLabel = scoreElement ? scoreElement.parentElement : null;
+            
+            if (isTimeDuration) {
+                // Time-duration session: Gold/Yellow styling
+                if (scoreElement) {
+                    scoreElement.style.color = '#FFD700';
+                    scoreElement.style.textShadow = '0 0 15px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.5)';
+                    scoreElement.style.fontWeight = '900';
+                }
+                if (scoreLabel) {
+                    scoreLabel.style.color = '#FFD700';
+                    scoreLabel.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.6)';
+                }
+            } else {
+                // Normal session: Default styling
+                if (scoreElement) {
+                    scoreElement.style.color = '';
+                    scoreElement.style.textShadow = '';
+                    scoreElement.style.fontWeight = '';
+                }
+                if (scoreLabel) {
+                    scoreLabel.style.color = '';
+                    scoreLabel.style.textShadow = '';
+                }
+            }
+        }
+        
         function hideContestTimers() {
             document.getElementById('contest-timer').style.display = 'none';
             const mobileTimer = document.getElementById('contest-timer-mobile');
@@ -1605,13 +1628,25 @@ if (isset($_SESSION['user_id'])) {
         }
 
         function updateContestTimer() {
-                // Hide contest timer
-                if (false) {
+            // Hide contest timer in demo mode - demo has no time limits
+            if (state.isDemoMode) {
                 hideContestTimers();
                 return;
             }
             
-            if (!gameSession || !gameSession.end_timestamp) {
+            if (!gameSession) {
+                hideContestTimers();
+                return;
+            }
+            
+            // Skip timer for always available sessions
+            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
+            if (isAlwaysAvailable) {
+                hideContestTimers();
+                return;
+            }
+            
+            if (!gameSession.end_timestamp) {
                 hideContestTimers();
                 return;
             }
@@ -1633,8 +1668,9 @@ if (isset($_SESSION['user_id'])) {
                 }
                 clearInterval(contestTimerInterval);
                 
-                // If game is currently playing, end it automatically
-                if (state.isPlaying && !gameEndedByTime) {
+                // If game is currently playing (and NOT in demo mode), end it automatically
+                // Demo mode has no time limits, so never auto-end demo games
+                if (state.isPlaying && !gameEndedByTime && !state.isDemoMode) {
                     gameEndedByTime = true;
                     gameOver(true); // Pass true to indicate time's up
                 }
@@ -1675,10 +1711,29 @@ if (isset($_SESSION['user_id'])) {
             }
         }
         
+        // Ensure demo button is always visible and enabled on page load
+        function ensureDemoButtonReady() {
+            const demoBtn = document.getElementById('demo-game-btn');
+            if (demoBtn) {
+                demoBtn.style.display = 'block';
+                demoBtn.disabled = false;
+                demoBtn.style.pointerEvents = 'auto';
+                demoBtn.style.cursor = 'pointer';
+            }
+        }
+        
+        // Run immediately and on DOM ready
+        ensureDemoButtonReady();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ensureDemoButtonReady);
+        } else {
+            ensureDemoButtonReady();
+        }
         
         // Check game status
         async function checkGameStatus() {
             // Always ensure demo button is visible - demo has no restrictions, play anytime
+            const demoBtn = document.getElementById('demo-game-btn');
             if (demoBtn) {
                 demoBtn.style.display = 'block';
                 demoBtn.style.visibility = 'visible';
@@ -1713,43 +1768,22 @@ if (isset($_SESSION['user_id'])) {
                     }
                 }
                 
-                // Get both normal and contest costs from games table
-                let normalCost = creditsFromGames;
-                let contestCost = creditsFromGames;
-                
+                // Override credits_required with admin-set value from games table
                 if (data.success && data.session) {
-                    // Fetch game costs to get both normal and contest costs
-                    try {
-                        const creditsResponse = await fetch('get_game_credits.php?game=earth-defender');
-                        const creditsData = await creditsResponse.json();
-                        if (creditsData.success) {
-                            normalCost = creditsData.normal_credits_required || creditsFromGames;
-                            contestCost = creditsData.contest_credits_required || creditsFromGames;
-                        }
-                    } catch (e) {
-                        console.error('Error fetching game costs:', e);
-                    }
-                    
-                    // Store both costs in session
-                    data.session.normal_credits_required = normalCost;
-                    data.session.contest_credits_required = contestCost;
-                    data.session.credits_required = data.is_contest_active ? contestCost : normalCost;
+                    data.session.credits_required = creditsFromGames;
                 }
-                
-                // Store costs globally for use in showGameReady
-                window.gameCosts = {
-                    normal: normalCost,
-                    contest: contestCost
-                };
                 
                 if (data.success && data.session) {
                     gameSession = data.session;
-                    // Ensure costs are stored in gameSession
-                    gameSession.normal_credits_required = normalCost;
-                    gameSession.contest_credits_required = contestCost;
                     state.gameSessionId = gameSession.id || null;
                     state.isContestMode = data.is_contest_active || false;
-                    state.gameMode = data.game_mode || 'credits';
+                    state.gameMode = data.game_mode || 'money';
+                    
+                    // Track if this is a time-duration session (not always_available)
+                    state.isTimeDurationSession = gameSession && !gameSession.always_available;
+                    
+                    // Apply different styling for time-duration sessions
+                    applyTimeDurationStyling(state.isTimeDurationSession);
                     
                     // Start contest timer
                     if (contestTimerInterval) {
@@ -1758,33 +1792,38 @@ if (isset($_SESSION['user_id'])) {
                     updateContestTimer();
                     contestTimerInterval = setInterval(updateContestTimer, 1000);
                     
-                    // Remove all restrictions - always show play buttons
-                    // Games can be played anytime, no session timing required
-                    showGameReady();
-                } else {
-                    // No session - but remove all restrictions, always show buttons
-                    state.isContestMode = data.is_contest_active || false;
-                    state.gameMode = data.game_mode || 'credits';
+                    // Check if session is always available
+                    const isAlwaysAvailable = data.session && (data.session.always_available === true || data.session.always_available === 1);
                     
-                    // Create a minimal gameSession object with costs
-                    if (!gameSession) {
-                        gameSession = { 
-                            normal_credits_required: normalCost, 
-                            contest_credits_required: contestCost,
-                            id: 0,
-                            start_timestamp: Math.floor(Date.now() / 1000) - 86400,
-                            end_timestamp: Math.floor(Date.now() / 1000) + 86400
-                        };
+                    if (data.is_active || isAlwaysAvailable) {
+                        // Game is active - show start button (always available sessions are always active)
+                        showGameReady();
+                    } else if (data.session && data.session.time_until_start > 0) {
+                        // Game not active but scheduled - show countdown
+                        showCountdown(data.session.time_until_start);
+                    } else {
+                        // No active session - show message with next session date if available
+                        showNoSession(data.next_session_date, data.is_contest_active);
+                        hideContestTimers();
                     }
-                    
-                    // Always show buttons - no restrictions
-                    showGameReady();
+                } else {
+                    // No session - but check if contest is active
+                    state.isContestMode = data.is_contest_active || false;
+                    state.gameMode = data.game_mode || 'money';
+                    showNoSession(data.next_session_date, data.is_contest_active);
                     hideContestTimers();
                 }
             } catch (error) {
                 console.error('Error checking game status:', error);
                 showNoSession(null);
                 hideContestTimers();
+                // Ensure demo button is always visible even on error
+                if (demoBtn) {
+                    demoBtn.style.display = 'block';
+                    demoBtn.style.visibility = 'visible';
+                    demoBtn.disabled = false;
+                    demoBtn.style.pointerEvents = 'auto';
+                }
             }
         }
         
@@ -1792,142 +1831,65 @@ if (isset($_SESSION['user_id'])) {
             const overlay = document.getElementById('game-status-overlay');
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
-            const normalBtn = document.getElementById('normal-play-btn');
-            const contestBtn = document.getElementById('contest-play-btn');
+            const startBtn = document.getElementById('start-game-btn');
+            const demoBtn = document.getElementById('demo-game-btn');
             
-            if (!normalBtn || !contestBtn) {
-                console.error('Play buttons not found in DOM');
-                return;
+            timerDisplay.textContent = '';
+            const creditsRequired = gameSession.credits_required || 30;
+            
+            if (state.isContestMode) {
+                statusMessage.textContent = `🏆 Contest is LIVE! Play with ${creditsRequired} credits and reach the top 3 to win prizes!`;
+                startBtn.style.display = 'flex';
+                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${creditsRequired}`;
+                startBtn.style.background = 'linear-gradient(135deg, #FFD700, #ff8c00)';
+                startBtn.style.color = '#000';
+            } else {
+                statusMessage.textContent = `Mission ready! Use ${creditsRequired} credits to start.`;
+                startBtn.style.display = 'flex';
+                startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                startBtn.style.background = ''; // Reset to CSS default
+                startBtn.style.color = '';
+            }
+            startBtn.disabled = false;
+            
+            // Always show demo button - demo can be played ANYTIME, no restrictions
+            if (demoBtn) {
+                demoBtn.style.display = 'flex';
+                demoBtn.disabled = false;
             }
             
-            // Check if payment was already made - if so, don't override the button states
-            const urlParams = new URLSearchParams(window.location.search);
-            const alreadyPaid = urlParams.get('paid') === '1';
+            // Check if user is logged in
+            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+            const userCredits = <?php echo $user_credits; ?>;
             
-            if (alreadyPaid && state.creditsUsed > 0) {
-                // Payment already made - buttons are already set by startGame function
-                // Just ensure overlay is visible and Start Mission button is shown
-                if (overlay) overlay.classList.remove('hidden');
-                
-                // Ensure Start Mission button is visible
-                const startMissionBtn = document.getElementById('start-mission-btn');
-                if (startMissionBtn) {
-                    startMissionBtn.style.display = 'flex';
-                    startMissionBtn.style.visibility = 'visible';
-                    startMissionBtn.textContent = state.isContestMode ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
-                    startMissionBtn.disabled = false;
-                    console.log('Start Mission button shown in showGameReady');
+            if (!isLoggedIn) {
+                // User not logged in - hide start button, show demo only
+                startBtn.style.display = 'none';
+                if (state.isContestMode) {
+                    statusMessage.textContent = `🏆 A contest is active! Login or Register to participate (${creditsRequired} credits required).`;
                 } else {
-                    console.error('Start Mission button not found in showGameReady');
+                    statusMessage.textContent = `Login or Register to start mission (${creditsRequired} credits required).`;
                 }
-                
-                // Hide normal/contest buttons
-                const normalBtn = document.getElementById('normal-play-btn');
-                const contestBtn = document.getElementById('contest-play-btn');
-                if (normalBtn) {
-                    normalBtn.style.display = 'none';
-                    normalBtn.style.visibility = 'hidden';
-                }
-                if (contestBtn) {
-                    contestBtn.style.display = 'none';
-                    contestBtn.style.visibility = 'hidden';
-                }
-                
-                return;
+            } else if (userCredits < creditsRequired) {
+                startBtn.disabled = true;
+                startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                statusMessage.textContent = `Add ${creditsRequired} credits to start mission.`;
             }
-            
-            timerDisplay.textContent = 'GAME READY!';
-            
-            // Fetch costs from get_game_credits.php to ensure we have the latest values
-            fetch('get_game_credits.php?game=earth-defender')
-                .then(response => response.json())
-                .then(creditsData => {
-                    // Get costs from API response or fallback to gameSession or default
-                    let normalCost = 30;
-                    let contestCost = 30;
-                    
-                    if (creditsData.success) {
-                        normalCost = creditsData.normal_credits_required || creditsData.credits_per_chance || 30;
-                        contestCost = creditsData.contest_credits_required || creditsData.credits_per_chance || 30;
-                    } else if (gameSession) {
-                        normalCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
-                        contestCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
-                    }
-                    
-                    // Check if user is logged in
-                    const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-                    const userCredits = <?php echo $user_credits; ?>;
-                    
-                    if (!isLoggedIn) {
-                        // User not logged in - hide both buttons
-                        normalBtn.style.display = 'none';
-                        contestBtn.style.display = 'none';
-                        statusMessage.textContent = `Login to play. Normal: ${normalCost} Astrons | Contest: ${contestCost} Astrons`;
-                    } else {
-                        // Check contest status and disable_normal_play from game_api
-                        fetch('game_api.php?action=check_status&game=earth-defender')
-                            .then(response => response.json())
-                            .then(data => {
-                                const isContestActive = data.is_contest_active || false;
-                                const disableNormalPlay = data.disable_normal_play || false;
-                                
-                                // Show both buttons by default
-                                statusMessage.textContent = 'Choose your play mode:';
-                                
-                                // Normal Play Button - hide if contest is active and normal play is disabled
-                                if (isContestActive && disableNormalPlay) {
-                                    normalBtn.style.display = 'none';
-                                    statusMessage.textContent = 'Contest mode is active. Only contest play is available.';
-                                } else {
-                                    normalBtn.style.display = 'flex';
-                                    normalBtn.innerHTML = `NORMAL PLAY &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${normalCost}`;
-                                    normalBtn.disabled = userCredits < normalCost;
-                                }
-                                
-                                // Contest Play Button
-                                contestBtn.style.display = 'flex';
-                                contestBtn.innerHTML = `🏆 PARTICIPATE IN CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${contestCost}`;
-                                contestBtn.disabled = userCredits < contestCost;
-                        
-                        // Show lock message if insufficient credits
-                        if (userCredits < normalCost && userCredits < contestCost) {
-                            statusMessage.textContent = `Insufficient Astrons! You need at least ${Math.min(normalCost, contestCost)} Astrons to play.`;
-                        } else if (userCredits < normalCost) {
-                            statusMessage.textContent = `Insufficient Astrons for normal play. Contest requires ${contestCost} Astrons.`;
-                        } else if (userCredits < contestCost) {
-                            statusMessage.textContent = `Insufficient Astrons for contest. Normal play requires ${normalCost} Astrons.`;
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching game costs:', error);
-                    // Fallback to default costs
-                    const normalCost = gameSession?.normal_credits_required || gameSession?.credits_required || 30;
-                    const contestCost = gameSession?.contest_credits_required || gameSession?.credits_required || 30;
-                    const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-                    const userCredits = <?php echo $user_credits; ?>;
-                    
-                    if (isLoggedIn) {
-                        normalBtn.style.display = 'flex';
-                        normalBtn.innerHTML = `NORMAL PLAY &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${normalCost}`;
-                        normalBtn.disabled = userCredits < normalCost;
-                        
-                        contestBtn.style.display = 'flex';
-                        contestBtn.innerHTML = `🏆 PARTICIPATE IN CONTEST &nbsp; <i class="fas fa-coins" style="color: #000;"></i> ${contestCost}`;
-                        contestBtn.disabled = userCredits < contestCost;
-                    }
-                });
         }
         
         function showCountdown(secondsUntilStart) {
             const overlay = document.getElementById('game-status-overlay');
             const timerDisplay = document.getElementById('timer-display');
             const statusMessage = document.getElementById('status-message');
-            const normalBtn = document.getElementById('normal-play-btn');
-            const contestBtn = document.getElementById('contest-play-btn');
+            const startBtn = document.getElementById('start-game-btn');
+            const demoBtn = document.getElementById('demo-game-btn');
             
-            normalBtn.style.display = 'none';
-            contestBtn.style.display = 'none';
+            startBtn.style.display = 'none';
+            // Always show demo button - demo can be played ANYTIME, no restrictions
+            if (demoBtn) {
+                demoBtn.style.display = 'block';
+                demoBtn.disabled = false;
+            }
             
             function updateCountdown() {
                 const now = Math.floor(Date.now() / 1000);
@@ -1948,9 +1910,9 @@ if (isset($_SESSION['user_id'])) {
                 
                 // Show contest message if contest is active
                 if (state.isContestMode) {
-                    statusMessage.textContent = `🏆 Contest is active! Game will start soon.`;
+                    statusMessage.textContent = `🏆 Contest is active! Mission will start soon.`;
                 } else {
-                    statusMessage.textContent = 'Game will start soon.';
+                    statusMessage.textContent = 'Mission will start soon.';
                 }
             }
             
@@ -1959,541 +1921,269 @@ if (isset($_SESSION['user_id'])) {
         }
         
         function showNoSession(nextSessionDate = null, isContestActive = false) {
-            // NO RESTRICTIONS FOR NORMAL PLAY - Always show game ready
-            // Normal play is available anytime, any date - no session timing required
-            // Just call showGameReady() to show the play buttons
-            showGameReady();
-            return;
+            const overlay = document.getElementById('game-status-overlay');
+            const timerDisplay = document.getElementById('timer-display');
+            const statusMessage = document.getElementById('status-message');
+            const startBtn = document.getElementById('start-game-btn');
+            const demoBtn = document.getElementById('demo-game-btn');
+            
+            const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+            
+            timerDisplay.textContent = '';
+            
+            // Hide play button when no session is active
+            startBtn.style.display = 'none';
+            
+            // Clear status message
+            statusMessage.textContent = '';
+            startBtn.style.display = 'none';
+            // Demo can be played ANYTIME - always visible and enabled
+            if (demoBtn) {
+                demoBtn.style.display = 'block';
+                demoBtn.disabled = false;
+            }
         }
         
-        // Common function to start game with specified cost and mode
-        async function startGame(creditsRequired, isContestMode) {
+        // Start game button handler (with credits)
+        document.getElementById('start-game-btn').addEventListener('click', async function() {
             if (state.gameStarted) return;
             
             const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
             
             if (!isLoggedIn) {
-                alert('Please login to play. Login required to play this game.');
+                alert('Please login to play for real. Demo mode is always available!');
                 window.location.href = 'index.php';
                 return;
             }
             
-            // Remove all session timing restrictions - games can be played anytime
-            // Create a virtual session if none exists
             if (!gameSession) {
-                gameSession = {
-                    id: 0,
-                    start_timestamp: Math.floor(Date.now() / 1000) - 86400,
-                    end_timestamp: Math.floor(Date.now() / 1000) + 86400
-                };
+                alert('No active game session. Please try demo mode.');
+                return;
             }
             
-            // No timing checks - always allow play
+            // Double-check session is active before allowing credit deduction
+            // Skip time check if session is always available
+            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
             
-            // Check if payment was already made from game selection page
-            const urlParams = new URLSearchParams(window.location.search);
-            const alreadyPaid = urlParams.get('paid') === '1';
-            const urlMode = urlParams.get('mode'); // Get mode from URL (normal or contest)
-            
-            // Override isContestMode if mode is specified in URL
-            if (alreadyPaid && urlMode) {
-                isContestMode = (urlMode === 'contest');
-            }
-            
-            if (!alreadyPaid) {
-                // Payment not made yet - check balance and deduct
-                const userCredits = <?php echo $user_credits; ?>;
+            if (!isAlwaysAvailable) {
+                const now = Math.floor(Date.now() / 1000);
+                const sessionStart = gameSession.start_timestamp;
+                const sessionEnd = gameSession.end_timestamp;
                 
-                if (userCredits < creditsRequired) {
-                    alert(`Insufficient Astrons! You need ${creditsRequired} Astrons to play.`);
+                if (!sessionStart || !sessionEnd || now < sessionStart || now > sessionEnd) {
+                    alert('Game session is not currently active. Credits will not be deducted. Please wait for the scheduled time or try demo mode.');
                     return;
                 }
-                
-                // Confirm before deducting credits
-                const confirmMsg = isContestMode 
-                    ? `Join the contest? This will deduct ${creditsRequired} Astrons. Your high Fluxon will be recorded for prizes!`
-                    : `This will deduct ${creditsRequired} Astrons from your account. Continue?`;
+            }
+            
+            const creditsRequired = gameSession.credits_required || 30;
+            const userCredits = <?php echo $user_credits; ?>;
+            
+            if (userCredits < creditsRequired) {
+                alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
+                return;
+            }
+            
+            // Confirm before deducting credits
+            const confirmMsg = state.isContestMode 
+                ? `Join the contest? This will deduct ${creditsRequired} credits. Your high score will be recorded for prizes!`
+                : `This will deduct ${creditsRequired} credits from your account. Continue?`;
 
-                if (!confirm(confirmMsg)) {
-                    return;
-                }
-                
-                try {
-                    // Deduct credits - need to pass the correct cost
-                    const formData = new FormData();
-                    formData.append('session_id', gameSession.id);
-                    formData.append('game_name', 'earth-defender');
-                    formData.append('play_mode', isContestMode ? 'contest' : 'normal');
-                    formData.append('credits_amount', creditsRequired);
-                    
-                    const response = await fetch('game_api.php?action=deduct_credits', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        gameEndedByTime = false; // Reset time's up flag
-                        state.gameStarted = true;
-                        state.isDemoMode = false;
-                        state.creditsUsed = creditsRequired;
-                        state.isContestMode = isContestMode;
-                        state.gameSessionId = data.session_id || gameSession.id;
-                        state.isPlaying = true;
-                        // Show EXIT button
-                        const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                        if (exitBtnHud) exitBtnHud.style.display = 'block';
-                        
-                        preventExitDuringGame();
-                        document.getElementById('game-status-overlay').classList.add('hidden');
-                        // Update credits display
-                        document.getElementById('user-credits-display').textContent = data.credits_remaining.toLocaleString();
-                    } else {
-                        // Show specific error message from server
-                        if (data.message) {
-                            alert(data.message);
-                        } else {
-                            alert('Failed to start game. Please try again.');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error starting game:', error);
-                    alert('An error occurred. Please try again.');
-                }
-            } else {
-                // Payment already made from game selection page - show game guide screen
-                // Get the correct cost based on mode
-                let actualCost = creditsRequired;
-                if (isContestMode) {
-                    actualCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
-                } else {
-                    actualCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
-                }
-                
-                // Store payment info but don't start game yet
-                state.creditsUsed = actualCost;
-                state.isContestMode = isContestMode;
-                state.gameSessionId = gameSession.id || 0;
-                
-                // Immediately show Start Mission button
-                const startMissionBtnImmediate = document.getElementById('start-mission-btn');
-                if (startMissionBtnImmediate) {
-                    startMissionBtnImmediate.style.display = 'flex';
-                    startMissionBtnImmediate.style.visibility = 'visible';
-                    startMissionBtnImmediate.textContent = isContestMode ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
-                    startMissionBtnImmediate.disabled = false;
-                    console.log('Start Mission button shown immediately after payment');
-                } else {
-                    console.error('Start Mission button not found immediately after payment');
-                }
-                
-                // Show game status overlay with game name and buttons
-                const overlay = document.getElementById('game-status-overlay');
-                if (overlay) {
-                    overlay.classList.remove('hidden');
-                    
-                    // Update timer display to show loading
-                    const timerDisplay = document.getElementById('timer-display');
-                    if (timerDisplay) {
-                        timerDisplay.textContent = 'Loading...';
-                        timerDisplay.style.color = '#00ffff';
-                    }
-                    
-                    // Update status message
-                    const statusMsg = document.getElementById('status-message');
-                    if (statusMsg) {
-                        statusMsg.textContent = isContestMode 
-                            ? `You paid ${actualCost} Astrons. Your high score will be recorded for contest prizes!`
-                            : `You paid ${actualCost} Astrons. Ready to play and earn Fluxon!`;
-                        statusMsg.style.display = 'block';
-                        statusMsg.style.color = '#00ff00';
-                    }
-                    
-                    // Hide normal/contest play buttons - they're not needed
-                    const normalPlayBtn = document.getElementById('normal-play-btn');
-                    const contestPlayBtn = document.getElementById('contest-play-btn');
-                    if (normalPlayBtn) normalPlayBtn.style.display = 'none';
-                    if (contestPlayBtn) contestPlayBtn.style.display = 'none';
-                    
-                    // Show Start Mission button
-                    const startMissionBtn = document.getElementById('start-mission-btn');
-                    if (startMissionBtn) {
-                        startMissionBtn.style.display = 'flex';
-                        startMissionBtn.style.visibility = 'visible';
-                        startMissionBtn.textContent = isContestMode ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
-                        startMissionBtn.disabled = false;
-                        console.log('Start Mission button shown in startGame function');
-                    } else {
-                        console.error('Start Mission button not found when trying to show');
-                    }
-                    
-                    // Show start button in guide panel
-                    const guideStartSection = document.getElementById('guide-start-section');
-                    const guideStartBtn = document.getElementById('guide-start-btn');
-                    
-                    // Update guide start button for mode
-                    if (guideStartBtn) {
-                        if (isContestMode) {
-                            guideStartBtn.innerHTML = `🏆 START CONTEST (${actualCost} Astrons Paid)`;
-                            guideStartBtn.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
-                        } else {
-                            guideStartBtn.innerHTML = `🎮 START MISSION (${actualCost} Astrons Paid)`;
-                            guideStartBtn.style.background = 'linear-gradient(135deg, #00ffff, #0099cc)';
-                        }
-                    }
-                    
-                    // Show guide start button section
-                    if (guideStartSection) {
-                        guideStartSection.style.display = 'block';
-                    }
-                }
-                
-                // Remove paid and mode parameters from URL
-                if (window.history.replaceState) {
-                    const url = new URL(window.location);
-                    url.searchParams.delete('paid');
-                    url.searchParams.delete('mode');
-                    window.history.replaceState({}, '', url);
-                }
+            if (!confirm(confirmMsg)) {
+                return;
             }
-        }
-        
-        // Normal play button handler (kept for backward compatibility, but hidden)
-        const normalPlayBtnEl = document.getElementById('normal-play-btn');
-        if (normalPlayBtnEl) {
-            normalPlayBtnEl.addEventListener('click', async function() {
-                // Check if payment was already made (creditsUsed > 0 means payment was made)
-                if (state.creditsUsed > 0 && !state.isContestMode && !state.gameStarted) {
-                    // Payment already made for normal mode, start game directly
-                    gameEndedByTime = false;
+            
+            try {
+                // Deduct credits
+                const formData = new FormData();
+                formData.append('session_id', gameSession.id);
+                formData.append('game_name', 'earth-defender');
+                
+                const response = await fetch('game_api.php?action=deduct_credits', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    gameEndedByTime = false; // Reset time's up flag
                     state.gameStarted = true;
                     state.isDemoMode = false;
+                    state.creditsUsed = creditsRequired;
+                    state.gameSessionId = data.session_id || gameSession.id;
                     state.isPlaying = true;
-                    
                     // Show EXIT button
                     const exitBtnHud = document.getElementById('exit-game-btn-hud');
                     if (exitBtnHud) exitBtnHud.style.display = 'block';
                     
                     preventExitDuringGame();
-                    const overlay = document.getElementById('game-status-overlay');
-                    if (overlay) overlay.classList.add('hidden');
-                } else if (!state.gameStarted) {
-                    // Normal flow - deduct and start
-                    const normalCost = gameSession.normal_credits_required || gameSession.credits_required || 30;
-                    await startGame(normalCost, false);
-                }
-            });
-        }
-        
-        // Contest play button handler (kept for backward compatibility, but hidden)
-        const contestPlayBtnEl = document.getElementById('contest-play-btn');
-        if (contestPlayBtnEl) {
-            contestPlayBtnEl.addEventListener('click', async function() {
-                // Check if payment was already made (creditsUsed > 0 means payment was made)
-                if (state.creditsUsed > 0 && state.isContestMode && !state.gameStarted) {
-                    // Payment already made for contest mode, start game directly
-                    gameEndedByTime = false;
-                    state.gameStarted = true;
-                    state.isDemoMode = false;
-                    state.isPlaying = true;
+                    document.getElementById('game-status-overlay').classList.add('hidden');
+                    // Update credits display
+                    document.getElementById('user-credits-display').textContent = data.credits_remaining.toLocaleString();
                     
-                    // Show EXIT button
-                    const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                    if (exitBtnHud) exitBtnHud.style.display = 'block';
-                    
-                    preventExitDuringGame();
-                    const overlay = document.getElementById('game-status-overlay');
-                    if (overlay) overlay.classList.add('hidden');
-                } else if (!state.gameStarted) {
-                    // Normal flow - deduct and start
-                    const contestCost = gameSession.contest_credits_required || gameSession.credits_required || 30;
-                    await startGame(contestCost, true);
-                }
-            });
-        }
-        
-        
-        // Check if payment was already made on page load
-        const urlParamsOnLoad = new URLSearchParams(window.location.search);
-        const paidOnLoad = urlParamsOnLoad.get('paid') === '1';
-        const modeOnLoad = urlParamsOnLoad.get('mode');
-        
-        // Function to show Start Mission button
-        function showStartMissionButton() {
-            const startMissionBtn = document.getElementById('start-mission-btn');
-            if (startMissionBtn) {
-                const isContest = modeOnLoad === 'contest' || state.isContestMode;
-                startMissionBtn.style.display = 'flex';
-                startMissionBtn.style.visibility = 'visible';
-                startMissionBtn.textContent = isContest ? '🚀 START CONTEST MISSION' : '🚀 START MISSION';
-                startMissionBtn.disabled = false;
-                console.log('Start Mission button shown');
-            } else {
-                console.error('Start Mission button not found in DOM');
-            }
-            
-            // Hide normal/contest buttons
-            const normalBtn = document.getElementById('normal-play-btn');
-            const contestBtn = document.getElementById('contest-play-btn');
-            if (normalBtn) {
-                normalBtn.style.display = 'none';
-                normalBtn.style.visibility = 'hidden';
-            }
-            if (contestBtn) {
-                contestBtn.style.display = 'none';
-                contestBtn.style.visibility = 'hidden';
-            }
-        }
-        
-        // Initialize
-        if (paidOnLoad) {
-            // Payment already made - ensure overlay is visible
-            const overlay = document.getElementById('game-status-overlay');
-            if (overlay) {
-                overlay.classList.remove('hidden');
-            }
-            
-            // Set contest mode if specified
-            if (modeOnLoad === 'contest') {
-                state.isContestMode = true;
-            }
-            
-            // Show Start Mission button immediately
-            showStartMissionButton();
-            
-            // Also show it after a short delay to ensure DOM is ready
-            setTimeout(showStartMissionButton, 100);
-            setTimeout(showStartMissionButton, 500);
-            setTimeout(showStartMissionButton, 1000);
-            
-            // Keep checking to ensure button stays visible (in case other code tries to hide it)
-            const keepButtonVisible = setInterval(() => {
-                if (paidOnLoad) {
-                    const btn = document.getElementById('start-mission-btn');
-                    if (btn && (btn.style.display === 'none' || btn.style.visibility === 'hidden')) {
-                        showStartMissionButton();
+                    // Start session validity checking (only if logged in)
+                    if (IS_LOGGED_IN && !state.isDemoMode && !sessionCheckInterval) {
+                        sessionCheckInterval = setInterval(checkSessionValidity, 5000); // Check every 5 seconds
                     }
                 } else {
-                    clearInterval(keepButtonVisible);
+                    // Show specific error message from server
+                    if (data.message) {
+                        alert(data.message);
+                    } else {
+                        alert('Failed to start game. Please try again.');
+                    }
                 }
-            }, 500);
-        }
-        
-        // Always check game status to get session info
-        checkGameStatus();
-        
-        // After checkGameStatus, ensure Start Mission button is visible if payment was made
-        setTimeout(() => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('paid') === '1') {
-                showStartMissionButton();
+            } catch (error) {
+                console.error('Error starting game:', error);
+                alert('An error occurred. Please try again.');
             }
-        }, 1500);
+        });
         
-        // Start Mission button handler - simplified and more reliable
-        function setupStartMissionButtonHandler() {
-            const startMissionBtnEl = document.getElementById('start-mission-btn');
-            if (!startMissionBtnEl) {
-                console.error('Start Mission button not found');
-                return false;
-            }
-            
-            // Remove all existing event listeners by replacing the button
-            const newBtn = startMissionBtnEl.cloneNode(true);
-            startMissionBtnEl.parentNode.replaceChild(newBtn, startMissionBtnEl);
-            
-            // Add click handler directly
-            newBtn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                console.log('Start Mission button clicked');
-                
-                // Check if payment was already made
-                const urlParams = new URLSearchParams(window.location.search);
-                const paid = urlParams.get('paid') === '1' || state.creditsUsed > 0;
-                
-                if (!paid) {
-                    alert('Payment not found. Please return to the game selection page.');
-                    return false;
-                }
-                
-                if (state.gameStarted) {
-                    console.log('Game already started');
-                    return false;
-                }
-                
-                console.log('Starting game...');
-                
-                // Disable button to prevent double-clicking
-                newBtn.disabled = true;
-                newBtn.style.opacity = '0.5';
-                
-                // Payment already made, start game directly
-                gameEndedByTime = false;
-                state.gameStarted = true;
-                state.isDemoMode = false;
-                state.isPlaying = true;
-                
-                // Reset game state for new game
-                state.score = 0;
-                state.health = 100;
-                state.bombs = 3;
-                
-                // Show EXIT button
-                const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                if (exitBtnHud) exitBtnHud.style.display = 'block';
-                
-                preventExitDuringGame();
-                
-                // Hide overlay
-                const overlay = document.getElementById('game-status-overlay');
-                if (overlay) {
-                    overlay.classList.add('hidden');
-                    console.log('Overlay hidden');
-                }
-                
-                // Update HUD displays
-                if (typeof updateHUD === 'function') {
-                    updateHUD();
-                    console.log('HUD updated');
-                }
-                
-                // Force update HUD elements directly
-                const scoreEl = document.getElementById('score');
-                const healthFill = document.getElementById('health-fill');
-                const bombCount = document.getElementById('bomb-count');
-                if (scoreEl) scoreEl.textContent = '0';
-                if (healthFill) healthFill.style.width = '100%';
-                if (bombCount) bombCount.textContent = '3';
-                
-                console.log('Game started - isPlaying:', state.isPlaying, 'gameStarted:', state.gameStarted);
-                
-                // The animate() function is already running and will detect state.isPlaying = true
-                // This should start the game immediately
-                
-                return false;
-            };
-            
-            console.log('Start Mission button handler set up successfully');
-            return true;
-        }
-        
-        // Global function for inline onclick handler (backup)
-        window.startMissionClick = function(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            console.log('Start Mission clicked (inline handler)');
-            
-            // Check if payment was already made
-            const urlParams = new URLSearchParams(window.location.search);
-            const paid = urlParams.get('paid') === '1' || state.creditsUsed > 0;
-            
-            if (!paid) {
-                alert('Payment not found. Please return to the game selection page.');
-                return false;
-            }
+        // Demo game button handler - Simple and direct approach
+        function startDemoGame() {
+            console.log('=== startDemoGame called ===');
             
             if (state.gameStarted) {
                 console.log('Game already started');
-                return false;
+                return;
             }
             
-            console.log('Starting game from inline handler...');
-            
-            // Disable button
-            const btn = document.getElementById('start-mission-btn');
-            if (btn) {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-            }
-            
-            // Start game
+            // Set game state
             gameEndedByTime = false;
             state.gameStarted = true;
-            state.isDemoMode = false;
+            state.isDemoMode = true;
+            state.creditsUsed = 0;
+            state.gameSessionId = null;
             state.isPlaying = true;
-            
-            // Reset game state
-            state.score = 0;
-            state.health = 100;
-            state.bombs = 3;
-            
             // Show EXIT button
             const exitBtnHud = document.getElementById('exit-game-btn-hud');
             if (exitBtnHud) exitBtnHud.style.display = 'block';
             
             preventExitDuringGame();
+            state.score = 0;
+            state.health = 100;
+            state.bombs = 3;
             
-            // Hide overlay
+            console.log('Game state set:', {
+                gameStarted: state.gameStarted,
+                isPlaying: state.isPlaying,
+                isDemoMode: state.isDemoMode
+            });
+            
+            // Hide overlay with multiple methods - CRITICAL
             const overlay = document.getElementById('game-status-overlay');
-            if (overlay) overlay.classList.add('hidden');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.style.display = 'none';
+                overlay.style.visibility = 'hidden';
+                overlay.style.pointerEvents = 'none';
+                overlay.style.opacity = '0';
+                overlay.style.zIndex = '-1';
+                overlay.style.position = 'absolute';
+                console.log('Overlay hidden');
+            } else {
+                console.error('Overlay element not found!');
+            }
+            
+            // Hide contest timer
+            const contestTimer = document.getElementById('contest-timer');
+            if (contestTimer) {
+                contestTimer.style.display = 'none';
+            }
+            
+            // Stop contest timer interval
+            if (typeof contestTimerInterval !== 'undefined' && contestTimerInterval) {
+                clearInterval(contestTimerInterval);
+                contestTimerInterval = null;
+            }
+            
+            // Show demo indicator
+            const demoIndicator = document.getElementById('demo-indicator');
+            if (demoIndicator) {
+                demoIndicator.style.display = 'inline';
+            }
+            
+            // Show message
+            setTimeout(function() {
+                if (typeof showMessage === 'function') {
+                    showMessage("DEMO MODE - Score won't be saved - No time limits!");
+                }
+            }, 100);
             
             // Update HUD
-            if (typeof updateHUD === 'function') {
-                updateHUD();
-            }
+            setTimeout(function() {
+                if (typeof updateHUD === 'function') {
+                    updateHUD();
+                }
+            }, 100);
             
-            // Force update HUD elements directly
-            const scoreEl = document.getElementById('score');
-            const healthFill = document.getElementById('health-fill');
-            const bombCount = document.getElementById('bomb-count');
-            if (scoreEl) scoreEl.textContent = '0';
-            if (healthFill) healthFill.style.width = '100%';
-            if (bombCount) bombCount.textContent = '3';
-            
-            console.log('Game started - isPlaying:', state.isPlaying);
-            
-            return false;
-        };
-        
-        // Set up handler immediately and with delays to ensure it works
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setupStartMissionButtonHandler();
-                setTimeout(setupStartMissionButtonHandler, 100);
-                setTimeout(setupStartMissionButtonHandler, 500);
-            });
-        } else {
-            setupStartMissionButtonHandler();
-            setTimeout(setupStartMissionButtonHandler, 100);
-            setTimeout(setupStartMissionButtonHandler, 500);
+            console.log('=== Demo game started! isPlaying:', state.isPlaying, '===');
         }
         
-        // Set up guide start button handler (accessible from module scope)
-        window.startGameFromGuide = function() {
-            // Check if payment was already made
-            if (state.creditsUsed > 0 && !state.gameStarted) {
-                // Payment already made, start game directly
-                gameEndedByTime = false;
-                state.gameStarted = true;
-                state.isDemoMode = false;
-                state.isPlaying = true;
-                
-                // Show EXIT button
-                const exitBtnHud = document.getElementById('exit-game-btn-hud');
-                if (exitBtnHud) exitBtnHud.style.display = 'block';
-                
-                preventExitDuringGame();
-                
-                // Hide overlay and instructions
-                const overlay = document.getElementById('game-status-overlay');
-                if (overlay) overlay.classList.add('hidden');
-                
-                const instructionsPanel = document.getElementById('instructions-panel');
-                if (instructionsPanel) {
-                    instructionsPanel.classList.remove('show');
-                    document.body.style.overflow = '';
-                }
-            } else if (!state.gameStarted) {
-                // No payment made yet - show message
-                alert('Please select a play mode first from the main screen.');
+        // Make startDemoGame globally available
+        window.startDemoGame = startDemoGame;
+        window.startDemoGameFromModule = startDemoGame;
+        
+        // Attach demo button handler - multiple methods to ensure it works
+        function attachDemoButton() {
+            const demoBtn = document.getElementById('demo-game-btn');
+            if (!demoBtn) {
+                console.log('Demo button not found, retrying...');
+                setTimeout(attachDemoButton, 50);
+                return;
             }
-        };
+            
+            // Remove any existing handlers first
+            const newBtn = demoBtn.cloneNode(true);
+            demoBtn.parentNode.replaceChild(newBtn, demoBtn);
+            
+            // Use onclick for maximum compatibility
+            newBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Demo button clicked via onclick');
+                startDemoGame();
+                return false;
+            };
+            
+            // Also add event listener for click
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Demo button clicked via addEventListener');
+                startDemoGame();
+                return false;
+            }, false);
+            
+            // Also add event listener for touch
+            newBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Demo button touched');
+                startDemoGame();
+                return false;
+            }, { passive: false });
+            
+            console.log('Demo button handler attached successfully');
+        }
+        
+        // Attach immediately and on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                attachDemoButton();
+            });
+        } else {
+            attachDemoButton();
+        }
+        
+        // Also try after delays to catch any late loading
+        setTimeout(attachDemoButton, 100);
+        setTimeout(attachDemoButton, 500);
+        setTimeout(attachDemoButton, 1000);
+        
+        // Initialize
+        checkGameStatus();
 
         // Claim Prize Button Handler
         const claimBtn = document.getElementById('claim-prize-btn');
@@ -2535,7 +2225,8 @@ if (isset($_SESSION['user_id'])) {
         const SoundManager = {
             audioContext: null,
             masterVolume: 0.5, // Master volume control (0.0 to 1.0)
-            enabled: true,
+            // Check localStorage for mute state (default: false = unmuted)
+            enabled: localStorage.getItem('gameSoundMuted') !== 'true',
             
             init() {
                 try {
@@ -2839,26 +2530,6 @@ if (isset($_SESSION['user_id'])) {
         const projectileGeometry = new THREE.SphereGeometry(0.1, 8, 8);
         const projectileMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
 
-        // BULLET TRAIL EFFECT
-        const bulletTrails = [];
-        function createBulletTrail(startPos, endPos) {
-            const trailGeometry = new THREE.BufferGeometry();
-            const points = [startPos.clone(), endPos.clone()];
-            trailGeometry.setFromPoints(points);
-            
-            const trailMaterial = new THREE.LineBasicMaterial({
-                color: 0x00ffff,
-                transparent: true,
-                opacity: 0.8,
-                linewidth: 2
-            });
-            
-            const trail = new THREE.Line(trailGeometry, trailMaterial);
-            trail.userData = { life: 0.2, startPos: startPos.clone(), endPos: endPos.clone() };
-            scene.add(trail);
-            bulletTrails.push(trail);
-        }
-
         function shoot(targetPoint) {
             if(!state.isPlaying) return;
             
@@ -2871,10 +2542,6 @@ if (isset($_SESSION['user_id'])) {
             mesh.userData = { velocity: velocity, life: 100 };
             scene.add(mesh);
             projectiles.push(mesh);
-            
-            // Create bullet trail effect
-            const trailEnd = startPos.clone().add(velocity.clone().multiplyScalar(2));
-            createBulletTrail(startPos, trailEnd);
             
             // Play shooting sound
             SoundManager.playShoot();
@@ -2994,9 +2661,9 @@ if (isset($_SESSION['user_id'])) {
             const moveX = Math.abs(x - pointerDownX);
             const moveY = Math.abs(y - pointerDownY);
 
-            // If moved less than 15 pixels, consider it a TAP/CLICK (Shoot)
+            // If moved less than 10 pixels, consider it a TAP/CLICK (Shoot)
             // If moved more, it was a camera rotation (ignore shoot)
-            if (moveX < 15 && moveY < 15) {
+            if (moveX < 10 && moveY < 10) {
                 
                 // Convert to Normalized Device Coordinates
                 mouse.x = (x / window.innerWidth) * 2 - 1;
@@ -3004,28 +2671,13 @@ if (isset($_SESSION['user_id'])) {
 
                 raycaster.setFromCamera(mouse, camera);
 
-                // Check for Asteroid hit - use Mesh intersection (asteroids are Meshes, not Points)
-                // Increase threshold for better detection
-                raycaster.params.Mesh = { threshold: 2.0 }; // Larger threshold for easier hits
-                const intersects = raycaster.intersectObjects(asteroids, true);
+                // Check for Asteroid hit (generous hitbox)
+                raycaster.params.Points.threshold = 1; // Increase threshold if needed
+                const intersects = raycaster.intersectObjects(asteroids);
 
                 if (intersects.length > 0) {
-                    // Find closest asteroid
-                    const closestAsteroid = intersects[0].object;
-                    // Shoot directly at clicked asteroid with visual feedback
-                    const asteroidPos = closestAsteroid.position.clone();
-                    shoot(asteroidPos);
-                    
-                    // Add visual feedback - flash the asteroid briefly
-                    const originalEmissive = closestAsteroid.material.emissive.clone();
-                    closestAsteroid.material.emissive.setHex(0xffffff);
-                    closestAsteroid.material.emissiveIntensity = 1.0;
-                    setTimeout(() => {
-                        if (closestAsteroid.material) {
-                            closestAsteroid.material.emissive.copy(originalEmissive);
-                            closestAsteroid.material.emissiveIntensity = 0.8;
-                        }
-                    }, 100);
+                    // Shoot directly at clicked asteroid
+                    shoot(intersects[0].object.position);
                 } else {
                     // Shoot into space at cursor direction
                     const target = new THREE.Vector3();
@@ -3175,17 +2827,16 @@ if (isset($_SESSION['user_id'])) {
         function updateGameLogic(delta) {
             if (!state.isPlaying) return;
             
-            // NO TIME RESTRICTIONS FOR NORMAL PLAY - Users can play anytime
-            // Only check time restrictions for contest mode if needed
-            // For normal play, remove all time-based game ending
-            // if (!state.isDemoMode && !state.isContestMode && gameSession && gameSession.end_timestamp) {
-            //     const now = Math.floor(Date.now() / 1000);
-            //     if (now > gameSession.end_timestamp && !gameEndedByTime) {
-            //         gameEndedByTime = true;
-            //         gameOver(true);
-            //         return;
-            //     }
-            // }
+            // Check if session has ended (only for real games, NOT demo mode, NOT always available)
+            const isAlwaysAvailable = gameSession && (gameSession.always_available === true || gameSession.always_available === 1);
+            if (!state.isDemoMode && gameSession && gameSession.end_timestamp && !isAlwaysAvailable) {
+                const now = Math.floor(Date.now() / 1000);
+                if (now > gameSession.end_timestamp && !gameEndedByTime) {
+                    gameEndedByTime = true;
+                    gameOver(true);
+                    return;
+                }
+            }
             
             // Convert delta to frame-equivalent (assuming 60fps baseline)
             // At 60fps, delta ≈ 0.0167 seconds per frame
@@ -3252,18 +2903,6 @@ if (isset($_SESSION['user_id'])) {
                         gameOver();
                         return;
                     }
-                }
-            }
-            
-            // Update Bullet Trails
-            for (let i = bulletTrails.length - 1; i >= 0; i--) {
-                const trail = bulletTrails[i];
-                trail.userData.life -= frameDelta;
-                trail.material.opacity = Math.max(0, trail.userData.life / 0.2);
-                
-                if (trail.userData.life <= 0) {
-                    scene.remove(trail);
-                    bulletTrails.splice(i, 1);
                 }
             }
             
@@ -3412,9 +3051,45 @@ if (isset($_SESSION['user_id'])) {
                 contestTimerInterval = null;
             }
             
+            // Ensure game-status-overlay is hidden
+            const statusOverlay = document.getElementById('game-status-overlay');
+            if (statusOverlay) {
+                statusOverlay.style.display = 'none';
+                statusOverlay.classList.add('hidden');
+                statusOverlay.style.visibility = 'hidden';
+                statusOverlay.style.pointerEvents = 'none';
+            }
+            
             const gameOverDiv = document.getElementById('game-over');
-            gameOverDiv.style.display = 'block';
-            document.getElementById('final-score').innerText = state.score;
+            // Make sure game-over div is visible and stays visible - NO AUTO REDIRECT
+            // The modal will remain visible until user explicitly clicks "Back to Home" or "Play Again"
+            gameOverDiv.style.display = 'flex';
+            gameOverDiv.style.visibility = 'visible';
+            gameOverDiv.style.opacity = '1';
+            gameOverDiv.style.pointerEvents = 'auto';
+            gameOverDiv.style.zIndex = '2000';
+            gameOverDiv.style.position = 'fixed';
+            
+            // Ensure no other elements can hide this modal
+            // Prevent any automatic redirects - wait for user to click button
+            console.log('Game Over - Modal displayed. Waiting for user to click button.');
+            
+            const finalScoreEl = document.getElementById('final-score');
+            finalScoreEl.innerText = state.score;
+            
+            // Apply time-duration styling to final score if in time-duration session
+            if (state.isTimeDurationSession) {
+                finalScoreEl.style.color = '#FFD700';
+                finalScoreEl.style.textShadow = '0 0 15px rgba(255, 215, 0, 0.8)';
+                finalScoreEl.style.fontWeight = '900';
+                
+                // Show prize claim link if in time-duration session
+                const prizeClaimLink = document.getElementById('prize-claim-link');
+                if (prizeClaimLink && state.gameSessionId) {
+                    prizeClaimLink.href = `prize_claim.php?game=earth-defender&session_id=${state.gameSessionId}`;
+                    prizeClaimLink.style.display = 'block';
+                }
+            }
             
             // Get game over title
             const gameOverTitle = gameOverDiv.querySelector('h1');
@@ -3442,7 +3117,7 @@ if (isset($_SESSION['user_id'])) {
                     gameOverTitle.style.color = '#ff3333';
                 }
                 if (gameOverSubtitle) {
-                    gameOverSubtitle.textContent = 'The contest time has expired. Your Fluxon has been recorded.';
+                    gameOverSubtitle.textContent = 'The contest time has expired. Your score has been recorded.';
                     gameOverSubtitle.style.color = '#ffaa00';
                 }
             } else {
@@ -3458,9 +3133,24 @@ if (isset($_SESSION['user_id'])) {
             }
             
             // Show demo mode message if applicable
-            // Save Fluxon to database (only if credits were used)
-            // Also save if time's up (even if Fluxon is 0, as long as game was started with credits)
-            if (state.gameStarted && state.creditsUsed > 0 && state.gameSessionId) {
+            if (state.isDemoMode) {
+                const demoMsg = document.createElement('p');
+                demoMsg.className = 'demo-msg';
+                demoMsg.style.color = '#ffaa00';
+                demoMsg.style.fontWeight = 'bold';
+                demoMsg.style.marginTop = '10px';
+                demoMsg.textContent = 'DEMO MODE - Score not saved to leaderboard';
+                const btnContainer = gameOverDiv.querySelector('.game-btn-container');
+                if (btnContainer) {
+                    gameOverDiv.insertBefore(demoMsg, btnContainer);
+                } else {
+                    gameOverDiv.appendChild(demoMsg);
+                }
+            }
+            
+            // Save score to database (only if credits were used, NOT in demo mode)
+            // Also save if time's up (even if score is 0, as long as game was started with credits)
+            if (state.gameStarted && !state.isDemoMode && state.creditsUsed > 0 && state.gameSessionId) {
                 const finalScore = Math.floor(state.score || 0);
                 console.log("Submitting final score:", finalScore, "for session:", state.gameSessionId);
                 
@@ -3470,7 +3160,7 @@ if (isset($_SESSION['user_id'])) {
                     formData.append('session_id', state.gameSessionId);
                     formData.append('credits_used', state.creditsUsed);
                     formData.append('game_name', 'earth-defender');
-                    formData.append('is_demo', 'false');
+                    formData.append('is_demo', 'false'); // Explicitly mark as not demo
                     
                     const response = await fetch('game_api.php?action=save_score', {
                         method: 'POST',
@@ -3491,8 +3181,12 @@ if (isset($_SESSION['user_id'])) {
                             }
                             // Also update HUD total score
                             const hudTotalScore = document.getElementById('hud-total-score');
+                            const hudTotalScoreItem = document.getElementById('hud-total-score-item');
                             if (hudTotalScore) {
                                 hudTotalScore.textContent = data.total_score.toLocaleString();
+                            }
+                            if (hudTotalScoreItem) {
+                                hudTotalScoreItem.style.display = 'flex';
                             }
                         }
 
@@ -3502,7 +3196,7 @@ if (isset($_SESSION['user_id'])) {
                             savedMsg.style.color = '#00ff00';
                             savedMsg.style.fontWeight = 'bold';
                             savedMsg.style.marginTop = '10px';
-                            savedMsg.textContent = '✓ Fluxon saved successfully!';
+                            savedMsg.textContent = '✓ Score saved successfully!';
                             const btnContainer = gameOverDiv.querySelector('.game-btn-container');
                             if (btnContainer) {
                                 gameOverDiv.insertBefore(savedMsg, btnContainer);
@@ -3575,12 +3269,68 @@ if (isset($_SESSION['user_id'])) {
             }
         }
 
+        // Check session validity periodically
+        function checkSessionValidity() {
+            if (!IS_LOGGED_IN || !state.gameStarted || state.isDemoMode) return;
+            
+            fetch('game_api.php?action=check_session_validity')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && !data.valid) {
+                        // Session invalid - user logged in elsewhere
+                        handleAnotherDeviceLogout();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking session:', error);
+                });
+        }
+        
+        // Handle logout from another device
+        function handleAnotherDeviceLogout() {
+            // Stop game
+            state.isPlaying = false;
+            state.gameStarted = false;
+            
+            // Stop session checking
+            if (sessionCheckInterval) {
+                clearInterval(sessionCheckInterval);
+                sessionCheckInterval = null;
+            }
+            
+            // Stop other intervals
+            if (contestTimerInterval) clearInterval(contestTimerInterval);
+            if (backgroundGameLoop) clearInterval(backgroundGameLoop);
+            
+            // Save current score if game was active
+            if (state.score > 0 && state.creditsUsed > 0 && state.gameSessionId) {
+                gameOver().catch(err => console.error('Error saving score on logout:', err));
+            }
+            
+            // Show logout modal
+            const modal = document.getElementById('another-device-logout-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+        
         // Attach to HUD exit button
         document.getElementById('exit-game-btn-hud').addEventListener('click', function(e) {
             if (state.isPlaying) {
                 showExitConfirmation();
             }
         });
+        
+        // Another device logout modal OK button
+        const anotherDeviceOkBtn = document.getElementById('another-device-ok-btn');
+        if (anotherDeviceOkBtn) {
+            anotherDeviceOkBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Redirect to index page
+                window.location.href = 'index.php?logout=another_device';
+            });
+        }
 
         // Prevention of accidental exit during gameplay
         function preventExitDuringGame() {
@@ -3589,6 +3339,8 @@ if (isset($_SESSION['user_id'])) {
         }
 
         window.addEventListener('popstate', async function(event) {
+            // Only show exit confirmation if game is actively playing
+            // After game over, allow normal navigation (user can use browser back button)
             if (state.isPlaying) {
                 showExitConfirmation();
             }
