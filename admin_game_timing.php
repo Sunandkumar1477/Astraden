@@ -190,7 +190,18 @@ if (isset($_GET['edit'])) {
     }
 }
 
-$current_session = $conn->query("SELECT * FROM game_sessions WHERE game_name = '$selected_game' AND is_active = 1 LIMIT 1")->fetch_assoc();
+// Get current session - prioritize always_available sessions, then time-restricted
+$current_session_stmt = $conn->prepare("
+    SELECT * FROM game_sessions 
+    WHERE game_name = ? AND is_active = 1 
+    ORDER BY always_available DESC, created_at DESC 
+    LIMIT 1
+");
+$current_session_stmt->bind_param("s", $selected_game);
+$current_session_stmt->execute();
+$current_session_result = $current_session_stmt->get_result();
+$current_session = $current_session_result->fetch_assoc();
+$current_session_stmt->close();
 
 // Get all active sessions for both games to show live status
 $all_active_sessions_result = $conn->query("SELECT * FROM game_sessions WHERE is_active = 1 ORDER BY game_name, created_at DESC");

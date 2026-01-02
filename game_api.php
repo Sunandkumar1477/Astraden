@@ -166,7 +166,11 @@ switch ($action) {
                 $session = $time_restricted_session;
                 $is_active = true;
                 $time_until_start = 0;
-                $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
+                // Use session's credits_required directly (set by admin in session settings)
+                // Only use games table value as fallback if session doesn't have it
+                if (!isset($session['credits_required']) || $session['credits_required'] == 0) {
+                    $session['credits_required'] = $credits_per_chance;
+                }
             }
         }
         $time_restricted_stmt->close();
@@ -192,7 +196,11 @@ switch ($action) {
                 $session_start = 0;
                 $session_end = PHP_INT_MAX;
                 $time_until_start = 0;
-                $credits_per_chance = isset($session['credits_required']) ? intval($session['credits_required']) : 30;
+                // Use session's credits_required directly (set by admin in session settings)
+                // Only use games table value as fallback if session doesn't have it
+                if (!isset($session['credits_required']) || $session['credits_required'] == 0) {
+                    $session['credits_required'] = $credits_per_chance;
+                }
             }
             $always_available_stmt->close();
         } else {
@@ -201,6 +209,11 @@ switch ($action) {
         }
         
         if ($session) {
+            // Use session's credits_required value (from admin session settings) - CRITICAL FIX
+            // This ensures the credits set in admin session (e.g., 20) are used, not games table value
+            $session_credits_required = isset($session['credits_required']) && $session['credits_required'] > 0 
+                ? intval($session['credits_required']) 
+                : $credits_per_chance;
             
             echo json_encode([
                 'success' => true,
@@ -216,7 +229,7 @@ switch ($action) {
                     'date' => $session['session_date'],
                     'time' => $session['session_time'],
                     'duration' => $session['duration_minutes'],
-                    'credits_required' => $credits_per_chance,
+                    'credits_required' => $session_credits_required, // Use session's credits, not games table
                     'start_timestamp' => $session_start,
                     'end_timestamp' => $session_end,
                     'time_until_start' => max(0, $time_until_start),
