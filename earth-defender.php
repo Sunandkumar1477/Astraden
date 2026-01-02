@@ -1776,16 +1776,27 @@ $conn->close();
                     }
                 }
                 
-                // Override credits_required with admin-set value from games table
+                // Use session's credits_required if available, otherwise use games table value
+                // DO NOT override session credits - use what admin set in the session
                 if (data.success && data.session) {
-                    data.session.credits_required = creditsFromGames;
-                }
-                
-                if (data.success && data.session) {
+                    // Use the session's credits_required value (from admin session settings)
+                    // Only use games table value as fallback if session doesn't have credits_required
+                    if (!data.session.credits_required || data.session.credits_required === 0) {
+                        data.session.credits_required = creditsFromGames;
+                    }
+                    
                     gameSession = data.session;
                     state.gameSessionId = gameSession.id || null;
                     state.isContestMode = data.is_contest_active || false;
                     state.gameMode = data.game_mode || 'money';
+                    
+                    // Debug log to verify session data
+                    console.log('Game session loaded:', {
+                        id: gameSession.id,
+                        credits_required: gameSession.credits_required,
+                        always_available: gameSession.always_available,
+                        is_active: data.is_active
+                    });
                     
                     // Track if this is a time-duration session (not always_available)
                     state.isTimeDurationSession = gameSession && !gameSession.always_available;
@@ -1799,19 +1810,38 @@ $conn->close();
                     }
                     updateContestTimer();
                     contestTimerInterval = setInterval(updateContestTimer, 1000);
-                }
-                
-                // Always show button if user is logged in, regardless of session status (like Cosmos Captain)
-                if (isLoggedIn) {
-                    // If no session was returned, create a default one so showGameReady works
-                    if (!gameSession) {
+                    
+                    // If session exists and user is logged in, show button immediately
+                    if (isLoggedIn) {
+                        showGameReady();
+                    }
+                } else {
+                    // No session returned - create default for logged in users
+                    if (isLoggedIn) {
                         gameSession = {
                             id: null,
                             credits_required: creditsFromGames || 30,
                             always_available: false
                         };
+                        showGameReady();
                     }
-                    showGameReady();
+                }
+                
+                // Ensure button is shown for logged in users (if not already shown above)
+                if (isLoggedIn) {
+                    // Only call showGameReady again if we didn't already call it when session was found
+                    if (!data.success || !data.session) {
+                        // No session - create default and show button
+                        if (!gameSession) {
+                            gameSession = {
+                                id: null,
+                                credits_required: creditsFromGames || 30,
+                                always_available: false
+                            };
+                        }
+                        showGameReady();
+                    }
+                    // Update status message if provided
                     const statusMessage = document.getElementById('status-message');
                     if (statusMessage && data.message) {
                         statusMessage.textContent = data.message;
@@ -1903,9 +1933,14 @@ $conn->close();
             
             // Always show button if user is logged in (like Cosmos Captain)
             if (startBtn && isLoggedIn) {
+                // Force show button - make sure it's visible
                 startBtn.style.display = 'flex';
                 startBtn.style.visibility = 'visible';
                 startBtn.style.pointerEvents = 'auto';
+                startBtn.style.opacity = '1';
+                
+                // Debug log
+                console.log('Showing start button with credits:', creditsRequired, 'User credits:', userCredits);
                 
                 if (userCredits >= creditsRequired) {
                     if (state.isContestMode) {
@@ -1918,10 +1953,9 @@ $conn->close();
                         startBtn.style.color = '';
                     }
                     startBtn.disabled = false;
-                    startBtn.style.opacity = '1';
                     startBtn.style.cursor = 'pointer';
                 } else {
-                    // Insufficient credits - show locked button
+                    // Insufficient credits - show locked button but still visible
                     startBtn.innerHTML = `LOCKED &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
                     startBtn.disabled = true;
                     startBtn.style.opacity = '0.6';
