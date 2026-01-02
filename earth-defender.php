@@ -2148,15 +2148,17 @@ $conn->close();
             
             const creditsRequired = gameSession.credits_required || 30;
             const userCredits = <?php echo $user_credits; ?>;
-            const isAlwaysAvailable = gameSession.always_available === true || gameSession.always_available === 1;
             
-            if (userCredits < creditsRequired) {
-                // In always play mode, don't show purchase-related messages
-                if (isAlwaysAvailable) {
-                    alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
-                } else {
-                    alert(`Insufficient credits! You need ${creditsRequired} credits to play. Try demo mode instead.`);
-                }
+            // Get current user credits from display (in case it was updated)
+            const creditsDisplayEl = document.getElementById('user-credits-display');
+            let currentUserCredits = userCredits;
+            if (creditsDisplayEl) {
+                const displayedCredits = parseInt(creditsDisplayEl.textContent.replace(/,/g, '')) || userCredits;
+                currentUserCredits = displayedCredits;
+            }
+            
+            if (currentUserCredits < creditsRequired) {
+                alert(`Insufficient credits! You need ${creditsRequired} credits to play. You have ${currentUserCredits} credits. Try demo mode instead.`);
                 return;
             }
             
@@ -2167,6 +2169,14 @@ $conn->close();
 
             if (!confirm(confirmMsg)) {
                 return;
+            }
+            
+            // Disable button during processing to prevent double-clicks
+            const startBtn = document.getElementById('start-game-btn');
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.style.opacity = '0.6';
+                startBtn.textContent = 'Processing...';
             }
             
             try {
@@ -2180,28 +2190,91 @@ $conn->close();
                     body: formData
                 });
                 
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {
+                    // Reset game state
                     gameEndedByTime = false; // Reset time's up flag
                     state.gameStarted = true;
                     state.isDemoMode = false;
                     state.creditsUsed = creditsRequired;
                     state.gameSessionId = data.session_id || gameSession.id;
                     state.isPlaying = true;
+                    
+                    // Reset game stats for new game
+                    state.score = 0;
+                    state.health = 100;
+                    state.bombs = 3;
+                    
                     // Show EXIT button
                     const exitBtnHud = document.getElementById('exit-game-btn-hud');
                     if (exitBtnHud) exitBtnHud.style.display = 'block';
                     
+                    // Hide demo indicator (this is a real game, not demo)
+                    const demoIndicator = document.getElementById('demo-indicator');
+                    if (demoIndicator) {
+                        demoIndicator.style.display = 'none';
+                    }
+                    
                     preventExitDuringGame();
-                    document.getElementById('game-status-overlay').classList.add('hidden');
+                    
+                    // Hide overlay with multiple methods - CRITICAL
+                    const overlay = document.getElementById('game-status-overlay');
+                    if (overlay) {
+                        overlay.classList.add('hidden');
+                        overlay.style.display = 'none';
+                        overlay.style.visibility = 'hidden';
+                        overlay.style.pointerEvents = 'none';
+                        overlay.style.opacity = '0';
+                        overlay.style.zIndex = '-1';
+                    }
+                    
+                    // Hide contest timer
+                    const contestTimer = document.getElementById('contest-timer');
+                    if (contestTimer) {
+                        contestTimer.style.display = 'none';
+                    }
+                    
+                    // Stop contest timer interval
+                    if (typeof contestTimerInterval !== 'undefined' && contestTimerInterval) {
+                        clearInterval(contestTimerInterval);
+                        contestTimerInterval = null;
+                    }
+                    
                     // Update credits display
-                    document.getElementById('user-credits-display').textContent = data.credits_remaining.toLocaleString();
+                    const creditsDisplay = document.getElementById('user-credits-display');
+                    if (creditsDisplay) {
+                        creditsDisplay.textContent = data.credits_remaining.toLocaleString();
+                    }
+                    
+                    // Show start message
+                    setTimeout(function() {
+                        if (typeof showMessage === 'function') {
+                            if (state.isContestMode) {
+                                showMessage("🏆 CONTEST MODE - Play to win prizes!");
+                            } else {
+                                showMessage("Mission started! Defend Earth!");
+                            }
+                        }
+                    }, 100);
+                    
+                    // Update HUD
+                    setTimeout(function() {
+                        if (typeof updateHUD === 'function') {
+                            updateHUD();
+                        }
+                    }, 100);
                     
                     // Start session validity checking (only if logged in)
                     if (IS_LOGGED_IN && !state.isDemoMode && !sessionCheckInterval) {
                         sessionCheckInterval = setInterval(checkSessionValidity, 5000); // Check every 5 seconds
                     }
+                    
+                    console.log('=== Game started with credits! Credits used:', creditsRequired, 'Session ID:', state.gameSessionId, '===');
                 } else {
                     // Show specific error message from server
                     if (data.message) {
@@ -2209,9 +2282,26 @@ $conn->close();
                     } else {
                         alert('Failed to start game. Please try again.');
                     }
+                    
+                    // Re-enable button on error
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                        startBtn.style.opacity = '1';
+                        const creditsRequired = gameSession.credits_required || 30;
+                        startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                    }
                 }
             } catch (error) {
-                alert('An error occurred. Please try again.');
+                console.error('Error starting game:', error);
+                alert('An error occurred. Please try again. Error: ' + error.message);
+                
+                // Re-enable button on error
+                if (startBtn) {
+                    startBtn.disabled = false;
+                    startBtn.style.opacity = '1';
+                    const creditsRequired = gameSession.credits_required || 30;
+                    startBtn.innerHTML = `START MISSION &nbsp; <i class="fas fa-coins" style="color: #FFD700;"></i> ${creditsRequired}`;
+                }
             }
         });
         
