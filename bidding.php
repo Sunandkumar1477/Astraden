@@ -49,7 +49,106 @@ $conn->close();
         .bidding-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .bidding-card { background: var(--card-bg); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 15px; padding: 20px; position: relative; }
         .bidding-card.active { border-color: var(--primary-cyan); box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
-        .bidding-card.expired { opacity: 0.6; }
+        .bidding-card.expired { opacity: 0.7; border-color: rgba(255,255,255,0.2); }
+        
+        /* Professional status badges and messages */
+        .status-badge { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            padding: 12px 20px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            font-family: 'Orbitron', sans-serif; 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        .status-badge.completed { 
+            background: linear-gradient(135deg, rgba(0, 200, 0, 0.2), rgba(0, 150, 0, 0.2)); 
+            border: 2px solid #00cc00; 
+            color: #00ff88; 
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+        .status-badge.completed i { 
+            font-size: 1.2rem; 
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .winner-info { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            padding: 10px; 
+            margin: 10px 0; 
+            background: rgba(255, 215, 0, 0.1); 
+            border: 1px solid #FFD700; 
+            border-radius: 8px; 
+            color: #FFD700; 
+            font-weight: 700;
+        }
+        .winner-info i { 
+            font-size: 1.1rem; 
+            color: #FFD700;
+        }
+        .completed-message, .expired-message, .not-started-message { 
+            text-align: center; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            font-size: 0.95rem;
+        }
+        .completed-message { 
+            background: rgba(0, 200, 0, 0.1); 
+            border: 1px solid #00cc00; 
+            color: #00ff88;
+        }
+        .completed-message i { 
+            display: block; 
+            font-size: 2rem; 
+            margin-bottom: 8px; 
+            color: #00ff88;
+        }
+        .completed-message p { 
+            margin: 0; 
+            font-weight: 500;
+        }
+        .expired-message { 
+            background: rgba(255, 170, 0, 0.1); 
+            border: 1px solid #ffaa00; 
+            color: #ffcc66;
+        }
+        .expired-message i { 
+            display: block; 
+            font-size: 2rem; 
+            margin-bottom: 8px; 
+            color: #ffaa00;
+        }
+        .expired-message p { 
+            margin: 0; 
+            font-weight: 500;
+        }
+        .not-started-message { 
+            background: rgba(255, 170, 0, 0.1); 
+            border: 1px solid #ffaa00; 
+            color: #ffcc66;
+        }
+        .not-started-message i { 
+            display: block; 
+            font-size: 2rem; 
+            margin-bottom: 8px; 
+            color: #ffaa00;
+        }
+        .not-started-message p { 
+            margin: 0; 
+            font-weight: 500;
+        }
         .bidding-title { font-family: 'Orbitron', sans-serif; color: var(--primary-cyan); font-size: 1.2rem; margin-bottom: 10px; }
         .prize-amount { color: #FFD700; font-size: 1.5rem; font-weight: 900; margin: 10px 0; }
         .current-bid { color: var(--primary-purple); font-size: 1.2rem; margin: 10px 0; }
@@ -143,22 +242,43 @@ $conn->close();
                             const now = Date.now();
                             const expired = endTime < now;
                             const notStarted = startTime > 0 && startTime > now;
+                            const isCompleted = item.is_completed == 1 || item.is_completed === true;
                             
                             return `
-                                <div class="bidding-card ${expired ? 'expired' : 'active'}" data-id="${item.id}">
+                                <div class="bidding-card ${expired || isCompleted ? 'expired' : 'active'}" data-id="${item.id}">
                                     <div class="bidding-title">${item.title}</div>
                                     <div class="prize-amount">Prize: ₹${parseFloat(item.prize_amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
-                                    <div class="current-bid">Current Bid: <span class="current-bid-amount">${parseFloat(item.current_bid).toFixed(2)}</span> Astrons</div>
-                                    ${notStarted ? `
+                                    <div class="current-bid">Final Bid: <span class="current-bid-amount">${parseFloat(item.current_bid).toFixed(2)}</span> Astrons</div>
+                                    ${isCompleted ? `
+                                        <div class="status-badge completed">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>BIDDING CLOSED</span>
+                                        </div>
+                                        ${item.current_bidder_name ? `
+                                            <div class="winner-info">
+                                                <i class="fas fa-trophy"></i>
+                                                <span>Winner: <strong>${item.current_bidder_name}</strong></span>
+                                            </div>
+                                        ` : ''}
+                                    ` : notStarted ? `
                                         <div class="timer" data-start="${item.start_time}">Starts in: <span class="countdown-start"></span></div>
                                     ` : `
                                         <div class="timer" data-end="${item.end_time}">Time Left: <span class="countdown"></span></div>
                                     `}
-                                    ${expired ? `
-                                        <div style="color: #ff3333; text-align: center; margin-top: 10px;">Bidding Ended</div>
+                                    ${isCompleted ? `
+                                        <div class="completed-message">
+                                            <i class="fas fa-lock"></i>
+                                            <p>This auction has been completed and closed.</p>
+                                        </div>
+                                    ` : expired && !isCompleted ? `
+                                        <div class="expired-message">
+                                            <i class="fas fa-hourglass-end"></i>
+                                            <p>Bidding has ended. Awaiting completion.</p>
+                                        </div>
                                     ` : notStarted ? `
-                                        <div style="color: #ffaa00; text-align: center; margin-top: 10px; padding: 10px; background: rgba(255,170,0,0.1); border-radius: 8px;">
-                                            <i class="fas fa-clock"></i> Bidding will start soon
+                                        <div class="not-started-message">
+                                            <i class="fas fa-clock"></i>
+                                            <p>Bidding will start soon</p>
                                         </div>
                                         <input type="number" class="bid-input" placeholder="Bidding not started yet" disabled style="opacity: 0.5;">
                                         <button class="btn-bid" disabled style="opacity: 0.5; cursor: not-allowed;">Bidding Not Started</button>

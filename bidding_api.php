@@ -33,15 +33,21 @@ if ($action === 'get_active_biddings') {
     
     // Query for active bidding items
     // Show items that are active, not completed, and haven't ended yet
+    // Also show recently completed items (within last 7 days) so users can see closed auctions
     // Items can show even before start_time (users can see upcoming auctions)
     $query = "SELECT bi.*, 
         COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
         COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
         WHERE bi.is_active = 1 
-        AND bi.is_completed = 0 
-        AND bi.end_time > NOW()
-        ORDER BY bi.end_time ASC";
+        AND (
+            (bi.is_completed = 0 AND bi.end_time > NOW())
+            OR 
+            (bi.is_completed = 1 AND bi.end_time >= DATE_SUB(NOW(), INTERVAL 7 DAY))
+        )
+        ORDER BY 
+            CASE WHEN bi.is_completed = 1 THEN 1 ELSE 0 END,
+            bi.end_time ASC";
     
     $result = $conn->query($query);
     
