@@ -116,21 +116,41 @@ if ($action === 'get_active_biddings') {
             
             // Convert UTC times from database to IST for display
             foreach ($raw_items as $item) {
-                // Convert start_time from UTC to IST
-                if ($item['start_time']) {
-                    $start_utc = new DateTime($item['start_time'], new DateTimeZone('UTC'));
-                    $start_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
-                    $item['start_time'] = $start_utc->format('Y-m-d H:i:s');
+                try {
+                    // Convert start_time from UTC to IST
+                    if (!empty($item['start_time']) && $item['start_time'] !== '0000-00-00 00:00:00') {
+                        try {
+                            $start_utc = new DateTime($item['start_time'], new DateTimeZone('UTC'));
+                            $start_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
+                            $item['start_time'] = $start_utc->format('Y-m-d H:i:s');
+                        } catch (Exception $e) {
+                            // If conversion fails, keep original or set to null
+                            $item['start_time'] = $item['start_time'];
+                        }
+                    } else {
+                        $item['start_time'] = null;
+                    }
+                    
+                    // Convert end_time from UTC to IST
+                    if (!empty($item['end_time']) && $item['end_time'] !== '0000-00-00 00:00:00') {
+                        try {
+                            $end_utc = new DateTime($item['end_time'], new DateTimeZone('UTC'));
+                            $end_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
+                            $item['end_time'] = $end_utc->format('Y-m-d H:i:s');
+                        } catch (Exception $e) {
+                            // If conversion fails, keep original
+                            $item['end_time'] = $item['end_time'];
+                        }
+                    } else {
+                        // If end_time is invalid, skip this item
+                        continue;
+                    }
+                    
+                    $items[] = $item;
+                } catch (Exception $e) {
+                    // Skip items with invalid date/time data
+                    continue;
                 }
-                
-                // Convert end_time from UTC to IST
-                if ($item['end_time']) {
-                    $end_utc = new DateTime($item['end_time'], new DateTimeZone('UTC'));
-                    $end_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
-                    $item['end_time'] = $end_utc->format('Y-m-d H:i:s');
-                }
-                
-                $items[] = $item;
             }
         }
         
@@ -155,12 +175,17 @@ if ($action === 'get_active_biddings') {
         }
         
         // Always return success with items (even if empty) so frontend can display properly
+        // Ensure items is always an array
+        if (!is_array($items)) {
+            $items = [];
+        }
+        
         echo json_encode([
             'success' => true, 
             'items' => $items, 
             'debug' => $debug_info,
             'message' => count($items) > 0 ? 'Items loaded successfully' : 'No active bidding items found'
-        ]);
+        ], JSON_UNESCAPED_UNICODE);
         exit;
         
     } catch (Exception $e) {
@@ -245,30 +270,51 @@ if ($action === 'place_bid') {
         exit;
     }
     
-    // Get current time in IST
-    $now_ist = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
-    
-    // Convert database times (UTC) to IST for comparison
-    $start_time_utc = $item['start_time'] ? new DateTime($item['start_time'], new DateTimeZone('UTC')) : null;
-    $end_time_utc = new DateTime($item['end_time'], new DateTimeZone('UTC'));
-    
-    // Convert to IST
-    if ($start_time_utc) {
-        $start_time_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
-    }
-    $end_time_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
-    
-    if (!$item['is_active'] || $item['is_completed'] || $now_ist >= $end_time_utc) {
-        echo json_encode(['success' => false, 'message' => 'Bidding is not active']);
-        exit;
-    }
-    
-    // Check if bidding has started (compare in IST)
-    if ($start_time_utc && $now_ist < $start_time_utc) {
-        $diff = $now_ist->diff($start_time_utc);
-        $hours = $diff->h + ($diff->days * 24);
-        $minutes = $diff->i;
-        echo json_encode(['success' => false, 'message' => "Bidding has not started yet. It will start in {$hours}h {$minutes}m"]);
+    try {
+        // Get current time in IST
+        $now_ist = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
+        
+        // Convert database times (UTC) to IST for comparison
+        $start_time_utc = null;
+        $end_time_utc = null;
+        
+        try {
+            if (!empty($item['start_time']) && $item['start_time'] !== '0000-00-00 00:00:00') {
+                $start_time_utc = new DateTime($item['start_time'], new DateTimeZone('UTC'));
+                $start_time_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
+            }
+        } catch (Exception $e) {
+            // Invalid start_time, continue without it
+        }
+        
+        try {
+            if (!empty($item['end_time']) && $item['end_time'] !== '0000-00-00 00:00:00') {
+                $end_time_utc = new DateTime($item['end_time'], new DateTimeZone('UTC'));
+                $end_time_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Invalid bidding end time']);
+                exit;
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Invalid bidding time data']);
+            exit;
+        }
+        
+        if (!$item['is_active'] || $item['is_completed'] || $now_ist >= $end_time_utc) {
+            echo json_encode(['success' => false, 'message' => 'Bidding is not active']);
+            exit;
+        }
+        
+        // Check if bidding has started (compare in IST)
+        if ($start_time_utc && $now_ist < $start_time_utc) {
+            $diff = $now_ist->diff($start_time_utc);
+            $hours = $diff->h + ($diff->days * 24);
+            $minutes = $diff->i;
+            echo json_encode(['success' => false, 'message' => "Bidding has not started yet. It will start in {$hours}h {$minutes}m"]);
+            exit;
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Error processing bidding time: ' . $e->getMessage()]);
         exit;
     }
     

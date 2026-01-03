@@ -138,21 +138,31 @@ $conn->close();
                     // Note: API returns times in IST, JavaScript Date will parse them as local time
                     // We need to treat them as IST
                     grid.innerHTML = data.items.map(item => {
-                        // Parse IST times (API sends in IST format: Y-m-d H:i:s)
-                        // Create date assuming IST timezone
-                        const parseISTTime = (timeStr) => {
-                            if (!timeStr) return 0;
-                            // Replace space with T for ISO format, add IST offset (+05:30)
-                            const istTime = timeStr.replace(' ', 'T') + '+05:30';
-                            return new Date(istTime).getTime();
-                        };
-                        
-                        const endTime = parseISTTime(item.end_time);
-                        const startTime = parseISTTime(item.start_time);
-                        const now = Date.now();
-                        const expired = endTime < now;
-                        const notStarted = startTime > 0 && startTime > now;
-                        const isCompleted = item.is_completed == 1 || item.is_completed === true;
+                        try {
+                            // Parse IST times (API sends in IST format: Y-m-d H:i:s)
+                            // Create date assuming IST timezone
+                            const parseISTTime = (timeStr) => {
+                                if (!timeStr) return 0;
+                                try {
+                                    // Replace space with T for ISO format, add IST offset (+05:30)
+                                    const istTime = timeStr.replace(' ', 'T') + '+05:30';
+                                    const parsed = new Date(istTime).getTime();
+                                    // Check if valid date
+                                    if (isNaN(parsed)) {
+                                        return 0;
+                                    }
+                                    return parsed;
+                                } catch (e) {
+                                    return 0;
+                                }
+                            };
+                            
+                            const endTime = parseISTTime(item.end_time);
+                            const startTime = parseISTTime(item.start_time);
+                            const now = Date.now();
+                            const expired = endTime > 0 && endTime < now;
+                            const notStarted = startTime > 0 && startTime > now;
+                            const isCompleted = item.is_completed == 1 || item.is_completed === true;
                         
                         return `
                             <div class="bidding-card ${expired || isCompleted ? 'expired' : 'active'}" data-id="${item.id}">
@@ -192,12 +202,20 @@ $conn->close();
                                     </div>
                                     <input type="number" class="bid-input" placeholder="Bidding not started yet" disabled>
                                     <button class="btn-bid" disabled>Bidding Not Started</button>
+                                ` : expired ? `
+                                    <div class="expired-message">
+                                        <i class="fas fa-hourglass-end"></i>
+                                        <p>Bidding has ended</p>
+                                    </div>
+                                    <button class="btn-bid" disabled>
+                                        <i class="fas fa-lock"></i> Bidding Ended
+                                    </button>
                                 ` : `
                                     <div class="bid-amount-display">
                                         <div class="label">Bid Amount Per Click:</div>
                                         <div class="amount">${parseFloat(item.bid_increment).toFixed(2)} Astrons</div>
                                     </div>
-                                    <button class="btn-bid" onclick="placeBid(${item.id}, this, ${item.bid_increment})">
+                                    <button class="btn-bid" onclick="placeBid(${item.id}, this, ${item.bid_increment})" data-item-id="${item.id}" data-end-time="${item.end_time}">
                                         <i class="fas fa-gavel"></i> Place Bid (${parseFloat(item.bid_increment).toFixed(2)} Astrons)
                                     </button>
                                 `}
@@ -206,7 +224,11 @@ $conn->close();
                                 </div>
                             </div>
                         `;
-                    }).join('');
+                        } catch (e) {
+                            // If there's an error rendering an item, return empty string
+                            return '';
+                        }
+                    }).filter(html => html !== '').join('');
                     
                     // Update countdowns
                     updateCountdowns();
@@ -229,53 +251,100 @@ $conn->close();
         }
         
         function updateCountdowns() {
-            // Update end countdowns
-            document.querySelectorAll('.timer[data-end]').forEach(timer => {
-                const endTime = new Date(timer.dataset.end).getTime();
-                const now = Date.now();
-                const diff = endTime - now;
-                
-                if (diff <= 0) {
-                    const countdownEl = timer.querySelector('.countdown');
-                    if (countdownEl) {
-                        countdownEl.textContent = 'Ended';
-                    }
-                    timer.closest('.bidding-card').classList.add('expired');
-                } else {
-                    const hours = Math.floor(diff / 3600000);
-                    const minutes = Math.floor((diff % 3600000) / 60000);
-                    const seconds = Math.floor((diff % 60000) / 1000);
-                    const countdownEl = timer.querySelector('.countdown');
-                    if (countdownEl) {
-                        countdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
-                    }
-                }
-            });
-            
-            // Update start countdowns
-            document.querySelectorAll('.timer[data-start]').forEach(timer => {
-                const startTime = parseISTTime(timer.dataset.start);
-                const now = Date.now();
-                const diff = startTime - now;
-                
-                if (diff <= 0) {
-                    // Bidding has started, reload to show active bidding
-                    updateBiddings();
-                } else {
-                    const days = Math.floor(diff / 86400000);
-                    const hours = Math.floor((diff % 86400000) / 3600000);
-                    const minutes = Math.floor((diff % 3600000) / 60000);
-                    const seconds = Math.floor((diff % 60000) / 1000);
-                    const countdownEl = timer.querySelector('.countdown-start');
-                    if (countdownEl) {
-                        if (days > 0) {
-                            countdownEl.textContent = `${days}d ${hours}h ${minutes}m`;
-                        } else {
-                            countdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+            try {
+                // Helper function to parse IST time string
+                const parseISTTime = (timeStr) => {
+                    if (!timeStr) return 0;
+                    try {
+                        // Replace space with T for ISO format, add IST offset (+05:30)
+                        const istTime = timeStr.replace(' ', 'T') + '+05:30';
+                        const parsed = new Date(istTime).getTime();
+                        // Check if valid date
+                        if (isNaN(parsed)) {
+                            return 0;
                         }
+                        return parsed;
+                    } catch (e) {
+                        return 0;
                     }
-                }
-            });
+                };
+                
+                // Update end countdowns
+                document.querySelectorAll('.timer[data-end]').forEach(timer => {
+                    try {
+                        const endTime = parseISTTime(timer.dataset.end);
+                        if (endTime === 0) return; // Skip invalid times
+                        
+                        const now = Date.now();
+                        const diff = endTime - now;
+                        
+                        if (diff <= 0) {
+                            const countdownEl = timer.querySelector('.countdown');
+                            if (countdownEl) {
+                                countdownEl.textContent = 'Ended';
+                            }
+                            const card = timer.closest('.bidding-card');
+                            if (card) {
+                                card.classList.add('expired');
+                                // Disable bid button immediately when time expires
+                                const bidBtn = card.querySelector('.btn-bid:not([disabled])');
+                                if (bidBtn) {
+                                    bidBtn.disabled = true;
+                                    bidBtn.innerHTML = '<i class="fas fa-lock"></i> Bidding Ended';
+                                    // Update card content to show expired message
+                                    const bidDisplay = card.querySelector('.bid-amount-display');
+                                    if (bidDisplay) {
+                                        bidDisplay.outerHTML = '<div class="expired-message"><i class="fas fa-hourglass-end"></i><p>Bidding has ended</p></div>';
+                                    }
+                                }
+                            }
+                        } else {
+                            const hours = Math.floor(diff / 3600000);
+                            const minutes = Math.floor((diff % 3600000) / 60000);
+                            const seconds = Math.floor((diff % 60000) / 1000);
+                            const countdownEl = timer.querySelector('.countdown');
+                            if (countdownEl) {
+                                countdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                            }
+                        }
+                    } catch (e) {
+                        // Skip this timer if there's an error
+                    }
+                });
+                
+                // Update start countdowns
+                document.querySelectorAll('.timer[data-start]').forEach(timer => {
+                    try {
+                        const startTime = parseISTTime(timer.dataset.start);
+                        if (startTime === 0) return; // Skip invalid times
+                        
+                        const now = Date.now();
+                        const diff = startTime - now;
+                        
+                        if (diff <= 0) {
+                            // Bidding has started, reload to show active bidding
+                            updateBiddings();
+                        } else {
+                            const days = Math.floor(diff / 86400000);
+                            const hours = Math.floor((diff % 86400000) / 3600000);
+                            const minutes = Math.floor((diff % 3600000) / 60000);
+                            const seconds = Math.floor((diff % 60000) / 1000);
+                            const countdownEl = timer.querySelector('.countdown-start');
+                            if (countdownEl) {
+                                if (days > 0) {
+                                    countdownEl.textContent = `${days}d ${hours}h ${minutes}m`;
+                                } else {
+                                    countdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Skip this timer if there's an error
+                    }
+                });
+            } catch (e) {
+                // Silently handle errors in countdown updates
+            }
         }
         
         function placeBid(itemId, btn, bidAmount) {
@@ -283,23 +352,18 @@ $conn->close();
             
             // Use the fixed bid amount per click (bid_increment)
             if (!bidAmount || bidAmount <= 0) {
-                alert('Invalid bid amount');
                 return;
             }
             
+            // Check balance silently
             if (bidAmount > astronsBalance) {
-                alert('Insufficient Astrons balance. You need ' + bidAmount.toFixed(2) + ' Astrons to place a bid.');
                 return;
             }
             
-            // Confirm before placing bid
-            if (!confirm(`Place a bid for ${bidAmount.toFixed(2)} Astrons?`)) {
-                return;
-            }
-            
+            // Disable button immediately to prevent double-clicking
             btn.disabled = true;
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing Bid...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing...';
             
             const formData = new FormData();
             formData.append('bidding_id', itemId);
@@ -312,17 +376,17 @@ $conn->close();
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    alert('Bid placed successfully! ' + bidAmount.toFixed(2) + ' Astrons deducted.');
+                    // Update immediately without alert
                     updateBiddings();
                     updateBalance();
                 } else {
-                    alert(data.message || 'Failed to place bid');
+                    // Re-enable button on error
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
                 }
-                btn.disabled = false;
-                btn.innerHTML = originalText;
             })
             .catch(err => {
-                alert('Error placing bid: ' + err.message);
+                // Re-enable button on error
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             });
@@ -347,17 +411,17 @@ $conn->close();
             updateBiddings();
         }
         
-        // Reduced update frequency to save mobile data
-        // Update every 10 seconds instead of 5
+        // Update bidding items every 5 seconds (internal updates, no visible loading)
         let updateInterval = null;
         setTimeout(() => {
-            updateInterval = setInterval(updateBiddings, 10000);
-        }, 10000);
+            updateInterval = setInterval(updateBiddings, 5000);
+        }, 5000);
         
-        // Update countdowns every 5 seconds (less frequent)
-        setInterval(updateCountdowns, 5000);
-        // Update balance every 30 seconds (less frequent)
-        setInterval(updateBalance, 30000);
+        // Update countdowns every second for live time updates
+        setInterval(updateCountdowns, 1000);
+        
+        // Update balance every 10 seconds
+        setInterval(updateBalance, 10000);
     </script>
 </body>
 </html>
