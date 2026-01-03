@@ -19,32 +19,63 @@ if ($stmt) {
 // Get bidding visibility setting - check both system_settings and bidding_settings
 $show_bidding = 0; // Default to hiding bidding
 
-// First check system_settings
-$stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'show_bidding'");
-if ($stmt) {
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        $setting = $result->fetch_assoc();
-        $show_bidding = (int)$setting['setting_value'];
+// First, ensure bidding_settings table exists (create if it doesn't)
+try {
+    $table_check = $conn->query("SHOW TABLES LIKE 'bidding_settings'");
+    if ($table_check->num_rows == 0) {
+        // Create bidding_settings table if it doesn't exist
+        $conn->query("CREATE TABLE IF NOT EXISTS `bidding_settings` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `is_active` TINYINT(1) NOT NULL DEFAULT 0,
+            `astrons_per_credit` DECIMAL(10, 2) NOT NULL DEFAULT 1.00,
+            `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        
+        // Initialize default settings (only if no row exists)
+        $existing = $conn->query("SELECT id FROM bidding_settings LIMIT 1");
+        if ($existing->num_rows == 0) {
+            $conn->query("INSERT INTO bidding_settings (is_active, astrons_per_credit) VALUES (0, 1.00)");
+        }
     }
-    $stmt->close();
+} catch (Exception $e) {
+    // Table creation failed, continue with defaults
 }
 
-// Also check if bidding system is active in bidding_settings (this is the main control)
+// Check if bidding system is active in bidding_settings (this is the main control)
 $bidding_active = false;
 try {
     $bidding_check = $conn->query("SELECT is_active FROM bidding_settings LIMIT 1");
     if ($bidding_check && $bidding_check->num_rows > 0) {
         $bidding_data = $bidding_check->fetch_assoc();
         $bidding_active = (bool)$bidding_data['is_active'];
-        // If bidding is active in bidding_settings, override system_settings
-        if ($bidding_active) {
-            $show_bidding = 1;
+        // Use bidding_settings.is_active as the primary control
+        $show_bidding = $bidding_active ? 1 : 0;
+    } else {
+        // No settings found, check system_settings as fallback
+        $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'show_bidding'");
+        if ($stmt) {
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows > 0) {
+                $setting = $result->fetch_assoc();
+                $show_bidding = (int)$setting['setting_value'];
+            }
+            $stmt->close();
         }
     }
 } catch (Exception $e) {
-    // Table might not exist yet, that's okay
+    // Table might not exist or query failed, check system_settings as fallback
+    $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'show_bidding'");
+    if ($stmt) {
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $setting = $result->fetch_assoc();
+            $show_bidding = (int)$setting['setting_value'];
+        }
+        $stmt->close();
+    }
 }
 
 // Get Kids Zone, Profile, and Shop button visibility settings
