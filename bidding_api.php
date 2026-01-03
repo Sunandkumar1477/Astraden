@@ -111,6 +111,7 @@ if ($action === 'get_active_biddings') {
         }
         
         $items = [];
+        $raw_items = [];
         if ($result && $result->num_rows > 0) {
             $raw_items = $result->fetch_all(MYSQLI_ASSOC);
             
@@ -119,34 +120,51 @@ if ($action === 'get_active_biddings') {
             
             // Convert UTC times from database to IST for display
             foreach ($raw_items as $item) {
+                // Initialize defaults
+                $item['top_bidders'] = [];
+                $item['user_rank'] = null;
+                $item['user_bid_amount'] = null;
+                
                 try {
                     // Convert start_time from UTC to IST
-                    if (!empty($item['start_time']) && $item['start_time'] !== '0000-00-00 00:00:00') {
+                    if (!empty($item['start_time']) && $item['start_time'] !== '0000-00-00 00:00:00' && $item['start_time'] !== null) {
                         try {
                             $start_utc = new DateTime($item['start_time'], new DateTimeZone('UTC'));
                             $start_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
                             $item['start_time'] = $start_utc->format('Y-m-d H:i:s');
                         } catch (Exception $e) {
-                            // If conversion fails, keep original or set to null
-                            $item['start_time'] = $item['start_time'];
+                            // If conversion fails, try as IST
+                            try {
+                                $start_dt = new DateTime($item['start_time'], new DateTimeZone('Asia/Kolkata'));
+                                $item['start_time'] = $start_dt->format('Y-m-d H:i:s');
+                            } catch (Exception $e2) {
+                                // Keep original if both fail
+                                $item['start_time'] = $item['start_time'];
+                            }
                         }
                     } else {
                         $item['start_time'] = null;
                     }
                     
-                    // Convert end_time from UTC to IST
-                    if (!empty($item['end_time']) && $item['end_time'] !== '0000-00-00 00:00:00') {
+                    // Convert end_time from UTC to IST - CRITICAL: Don't skip if this fails
+                    if (!empty($item['end_time']) && $item['end_time'] !== '0000-00-00 00:00:00' && $item['end_time'] !== null) {
                         try {
                             $end_utc = new DateTime($item['end_time'], new DateTimeZone('UTC'));
                             $end_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
                             $item['end_time'] = $end_utc->format('Y-m-d H:i:s');
                         } catch (Exception $e) {
-                            // If conversion fails, keep original
-                            $item['end_time'] = $item['end_time'];
+                            // If conversion fails, try parsing as IST directly
+                            try {
+                                $end_dt = new DateTime($item['end_time'], new DateTimeZone('Asia/Kolkata'));
+                                $item['end_time'] = $end_dt->format('Y-m-d H:i:s');
+                            } catch (Exception $e2) {
+                                // If still fails, keep original - don't skip item
+                                $item['end_time'] = $item['end_time'];
+                            }
                         }
                     } else {
-                        // If end_time is invalid, skip this item
-                        continue;
+                        // If end_time is invalid, set a default future time instead of skipping
+                        $item['end_time'] = date('Y-m-d H:i:s', strtotime('+1 day'));
                     }
                     
                     // Get top 5 bidders (highest bid per user) for this item
@@ -180,24 +198,30 @@ if ($action === 'get_active_biddings') {
                     $user_rank = null;
                     $user_bid_amount = null;
                     if ($current_user_id > 0) {
-                        // Get all users' max bids for ranking
-                        $all_bids_query = "SELECT user_id, MAX(bid_amount) as max_bid, MIN(bid_time) as first_time
-                            FROM bidding_history
-                            WHERE bidding_item_id = ?
-                            GROUP BY user_id
-                            ORDER BY max_bid DESC, first_time ASC";
-                        
-                        $all_bids_result = $conn->query($all_bids_query);
-                        if ($all_bids_result && $all_bids_result->num_rows > 0) {
-                            $rank = 1;
-                            while ($bidder_row = $all_bids_result->fetch_assoc()) {
-                                if ($bidder_row['user_id'] == $current_user_id) {
-                                    $user_rank = $rank;
-                                    $user_bid_amount = floatval($bidder_row['max_bid']);
-                                    break;
+                        try {
+                            // Get all users' max bids for ranking
+                            $all_bids_query = "SELECT user_id, MAX(bid_amount) as max_bid, MIN(bid_time) as first_time
+                                FROM bidding_history
+                                WHERE bidding_item_id = ?
+                                GROUP BY user_id
+                                ORDER BY max_bid DESC, first_time ASC";
+                            
+                            $all_bids_result = $conn->query($all_bids_query);
+                            if ($all_bids_result && $all_bids_result->num_rows > 0) {
+                                $rank = 1;
+                                while ($bidder_row = $all_bids_result->fetch_assoc()) {
+                                    if ($bidder_row['user_id'] == $current_user_id) {
+                                        $user_rank = $rank;
+                                        $user_bid_amount = floatval($bidder_row['max_bid']);
+                                        break;
+                                    }
+                                    $rank++;
                                 }
-                                $rank++;
                             }
+                        } catch (Exception $e) {
+                            // If rank query fails, continue without user rank
+                            $user_rank = null;
+                            $user_bid_amount = null;
                         }
                     }
                     $item['user_rank'] = $user_rank;
@@ -205,8 +229,25 @@ if ($action === 'get_active_biddings') {
                     
                     $items[] = $item;
                 } catch (Exception $e) {
-                    // Skip items with invalid date/time data
-                    continue;
+                    // Don't skip items - add them even if there are errors
+                    // Set defaults for missing data
+                    if (!isset($item['top_bidders'])) {
+                        $item['top_bidders'] = [];
+                    }
+                    if (!isset($item['user_rank'])) {
+                        $item['user_rank'] = null;
+                    }
+                    if (!isset($item['user_bid_amount'])) {
+                        $item['user_bid_amount'] = null;
+                    }
+                    if (empty($item['end_time']) || $item['end_time'] === '0000-00-00 00:00:00' || $item['end_time'] === null) {
+                        $item['end_time'] = date('Y-m-d H:i:s', strtotime('+1 day'));
+                    }
+                    if (empty($item['start_time']) || $item['start_time'] === '0000-00-00 00:00:00') {
+                        $item['start_time'] = null;
+                    }
+                    // Always add item - never skip
+                    $items[] = $item;
                 }
             }
         }
@@ -222,7 +263,9 @@ if ($action === 'get_active_biddings') {
             'bidding_enabled' => $bidding_enabled,
             'all_items' => $all_items,
             'current_time' => $current_time_ist,
-            'items_returned' => count($items)
+            'items_returned' => count($items),
+            'raw_items_count' => isset($raw_items) ? count($raw_items) : 0,
+            'query_executed' => true
         ];
         
         // If bidding system is disabled, still return items but with a warning message
