@@ -195,8 +195,12 @@ $conn->close();
                 return;
             }
             
+            // Show loading state
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p>Loading active biddings...</p></div>';
+            
             fetch('bidding_api.php?action=get_active_biddings' + (window.location.search.includes('debug') ? '&debug=1' : ''))
                 .then(r => {
+                    console.log('Response status:', r.status);
                     if (!r.ok) {
                         throw new Error('Network response was not ok: ' + r.status);
                     }
@@ -204,8 +208,14 @@ $conn->close();
                 })
                 .then(data => {
                     console.log('Bidding API Response:', data);
+                    console.log('Items count:', data.items ? data.items.length : 0);
+                    
                     if (!data.success) {
-                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">Error loading biddings: ' + (data.message || 'Unknown error') + '</div>';
+                        let errorMsg = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">';
+                        errorMsg += '<i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i><br>';
+                        errorMsg += 'Error loading biddings: ' + (data.message || 'Unknown error');
+                        errorMsg += '</div>';
+                        grid.innerHTML = errorMsg;
                         console.error('Bidding API Error:', data);
                         if (data.debug) {
                             console.log('Debug Info:', data.debug);
@@ -299,7 +309,13 @@ $conn->close();
                     console.error('Error loading biddings:', err);
                     const grid = document.getElementById('biddingGrid');
                     if (grid) {
-                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">Error loading biddings. Please refresh the page or check your connection.</div>';
+                        let errorHtml = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">';
+                        errorHtml += '<i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px;"></i><br>';
+                        errorHtml += '<strong>Error loading biddings</strong><br>';
+                        errorHtml += '<small style="color: rgba(255,255,255,0.6);">' + err.message + '</small><br><br>';
+                        errorHtml += '<button onclick="updateBiddings()" style="padding: 10px 20px; background: var(--primary-cyan); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 700;">Retry</button>';
+                        errorHtml += '</div>';
+                        grid.innerHTML = errorHtml;
                     }
                 });
         }

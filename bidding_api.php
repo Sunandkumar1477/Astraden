@@ -32,21 +32,17 @@ if ($action === 'get_active_biddings') {
     $all_items = $all_items_result ? $all_items_result->fetch_all(MYSQLI_ASSOC) : [];
     
     // Query for active bidding items
-    // Show items that are active, not completed, and haven't ended yet
-    // Also show recently completed items (within last 7 days) so users can see closed auctions
+    // Show ALL active items (regardless of end_time) so users can see them
+    // Completed items will be shown with "BIDDING CLOSED" status
     // Items can show even before start_time (users can see upcoming auctions)
     $query = "SELECT bi.*, 
         COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
         COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
-        WHERE bi.is_active = 1 
-        AND (
-            (bi.is_completed = 0 AND bi.end_time > NOW())
-            OR 
-            (bi.is_completed = 1 AND bi.end_time >= DATE_SUB(NOW(), INTERVAL 7 DAY))
-        )
+        WHERE bi.is_active = 1
         ORDER BY 
             CASE WHEN bi.is_completed = 1 THEN 1 ELSE 0 END,
+            CASE WHEN bi.end_time < NOW() AND bi.is_completed = 0 THEN 1 ELSE 0 END,
             bi.end_time ASC";
     
     $result = $conn->query($query);
@@ -67,7 +63,9 @@ if ($action === 'get_active_biddings') {
         'active_items' => count($items),
         'bidding_enabled' => $bidding_enabled,
         'all_items' => $all_items,
-        'current_time' => date('Y-m-d H:i:s')
+        'current_time' => date('Y-m-d H:i:s'),
+        'query' => $query,
+        'items_returned' => count($items)
     ];
     
     // If bidding system is disabled, still return items but with a warning message
@@ -76,7 +74,13 @@ if ($action === 'get_active_biddings') {
         $debug_info['warning'] = 'Bidding system is disabled in settings';
     }
     
-    echo json_encode(['success' => true, 'items' => $items, 'debug' => $debug_info]);
+    // Always return success with items (even if empty) so frontend can display properly
+    echo json_encode([
+        'success' => true, 
+        'items' => $items, 
+        'debug' => $debug_info,
+        'message' => count($items) > 0 ? 'Items loaded successfully' : 'No active bidding items found'
+    ]);
     exit;
 }
 
