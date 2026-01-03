@@ -114,6 +114,9 @@ if ($action === 'get_active_biddings') {
         if ($result && $result->num_rows > 0) {
             $raw_items = $result->fetch_all(MYSQLI_ASSOC);
             
+            // Get current user ID for ranking
+            $current_user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+            
             // Convert UTC times from database to IST for display
             foreach ($raw_items as $item) {
                 try {
@@ -145,6 +148,60 @@ if ($action === 'get_active_biddings') {
                         // If end_time is invalid, skip this item
                         continue;
                     }
+                    
+                    // Get top 5 bidders (highest bid per user) for this item
+                    $top_bidders_query = "SELECT bh.user_id, MAX(bh.bid_amount) as max_bid, 
+                        MIN(bh.bid_time) as first_bid_time,
+                        COALESCE((SELECT u.username FROM users u WHERE u.id = bh.user_id LIMIT 1), '') as username
+                        FROM bidding_history bh
+                        WHERE bh.bidding_item_id = ?
+                        GROUP BY bh.user_id
+                        ORDER BY max_bid DESC, first_bid_time ASC
+                        LIMIT 5";
+                    
+                    $top_stmt = $conn->prepare($top_bidders_query);
+                    $top_bidders = [];
+                    if ($top_stmt) {
+                        $top_stmt->bind_param("i", $item['id']);
+                        $top_stmt->execute();
+                        $top_result = $top_stmt->get_result();
+                        $rank = 1;
+                        while ($bidder = $top_result->fetch_assoc()) {
+                            $bidder['rank'] = $rank;
+                            $bidder['bid_amount'] = floatval($bidder['max_bid']); // Use max_bid as bid_amount
+                            $top_bidders[] = $bidder;
+                            $rank++;
+                        }
+                        $top_stmt->close();
+                    }
+                    $item['top_bidders'] = $top_bidders;
+                    
+                    // Get user's rank if they have bid
+                    $user_rank = null;
+                    $user_bid_amount = null;
+                    if ($current_user_id > 0) {
+                        // Get all users' max bids for ranking
+                        $all_bids_query = "SELECT user_id, MAX(bid_amount) as max_bid, MIN(bid_time) as first_time
+                            FROM bidding_history
+                            WHERE bidding_item_id = ?
+                            GROUP BY user_id
+                            ORDER BY max_bid DESC, first_time ASC";
+                        
+                        $all_bids_result = $conn->query($all_bids_query);
+                        if ($all_bids_result && $all_bids_result->num_rows > 0) {
+                            $rank = 1;
+                            while ($bidder_row = $all_bids_result->fetch_assoc()) {
+                                if ($bidder_row['user_id'] == $current_user_id) {
+                                    $user_rank = $rank;
+                                    $user_bid_amount = floatval($bidder_row['max_bid']);
+                                    break;
+                                }
+                                $rank++;
+                            }
+                        }
+                    }
+                    $item['user_rank'] = $user_rank;
+                    $item['user_bid_amount'] = $user_bid_amount;
                     
                     $items[] = $item;
                 } catch (Exception $e) {

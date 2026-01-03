@@ -82,6 +82,7 @@ $conn->close();
     <script>
         const astronsBalance = <?php echo $astrons_balance; ?>;
         const astronsPerCredit = <?php echo $astrons_per_credit; ?>;
+        const currentUserId = <?php echo $user_id; ?>;
         
         // Show container only when content is ready
         function showContent() {
@@ -222,6 +223,27 @@ $conn->close();
                                 <div class="recent-bids">
                                     <i class="fas fa-gavel"></i> Total Bids: ${item.total_bids}
                                 </div>
+                                ${item.top_bidders && item.top_bidders.length > 0 ? `
+                                    <div class="top-bidders-section">
+                                        <div class="top-bidders-title">
+                                            <i class="fas fa-trophy"></i> Top 5 Bidders
+                                        </div>
+                                        <div class="top-bidders-list">
+                                            ${item.top_bidders.map((bidder, idx) => `
+                                                <div class="bidder-rank ${bidder.user_id == currentUserId ? 'your-bid' : ''}">
+                                                    <span class="rank-number">${bidder.rank}</span>
+                                                    <span class="bidder-name">${bidder.username || 'Unknown'}</span>
+                                                    <span class="bidder-amount">${parseFloat(bidder.bid_amount).toFixed(2)} Astrons</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                        ${item.user_rank && item.user_rank > 5 ? `
+                                            <div class="your-rank">
+                                                <i class="fas fa-user"></i> Your Rank: #${item.user_rank} (${parseFloat(item.user_bid_amount || 0).toFixed(2)} Astrons)
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                ` : ''}
                             </div>
                         `;
                         } catch (e) {
