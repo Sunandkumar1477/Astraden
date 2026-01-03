@@ -279,6 +279,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    
+    // Delete completed bidding item
+    if (isset($_POST['delete_bidding'])) {
+        $id = intval($_POST['bidding_id'] ?? 0);
+        if ($id > 0) {
+            // Check if item is completed
+            $item = $conn->query("SELECT is_completed FROM bidding_items WHERE id = $id")->fetch_assoc();
+            if ($item && $item['is_completed'] == 1) {
+                // Delete related records first (bidding_history will be deleted by CASCADE, but user_wins won't)
+                // We'll keep user_wins for record keeping, just delete the bidding item
+                $stmt = $conn->prepare("DELETE FROM bidding_items WHERE id = ?");
+                $stmt->bind_param("i", $id);
+                if ($stmt->execute()) {
+                    $message = "Bidding item deleted successfully!";
+                    $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'delete_bidding', 'Deleted completed bidding item ID: $id', '{$_SERVER['REMOTE_ADDR']}')");
+                } else {
+                    $error = "Failed to delete bidding item.";
+                }
+                $stmt->close();
+            } else {
+                $error = "Only completed bidding items can be deleted.";
+            }
+        }
+    }
 }
 
 // Get all bidding items - handle if table doesn't exist
@@ -352,6 +376,8 @@ try {
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .btn-save, .btn-create { background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); border: none; color: white; padding: 15px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 900; width: 100%; cursor: pointer; }
         .btn-complete { background: linear-gradient(135deg, #00ff00, #00cc00); border: none; color: white; padding: 10px 20px; border-radius: 8px; font-family: 'Orbitron', sans-serif; font-weight: 700; cursor: pointer; }
+        .btn-delete { background: linear-gradient(135deg, #ff3333, #cc0000); border: none; color: white; padding: 10px 20px; border-radius: 8px; font-family: 'Orbitron', sans-serif; font-weight: 700; cursor: pointer; margin-left: 10px; }
+        .btn-delete:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 51, 51, 0.4); }
         .toggle-group { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
         .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -518,6 +544,12 @@ try {
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="bidding_id" value="<?php echo $item['id']; ?>">
                                         <button type="submit" name="complete_bidding" class="btn-complete">Complete</button>
+                                    </form>
+                                <?php endif; ?>
+                                <?php if($item['is_completed']): ?>
+                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this completed bidding item? This action cannot be undone.');">
+                                        <input type="hidden" name="bidding_id" value="<?php echo $item['id']; ?>">
+                                        <button type="submit" name="delete_bidding" class="btn-delete">Delete</button>
                                     </form>
                                 <?php endif; ?>
                             </td>

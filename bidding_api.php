@@ -14,17 +14,35 @@ if ($action === 'get_active_biddings') {
         exit;
     }
     
+    // Check if bidding system is enabled
+    $settings_check = $conn->query("SELECT is_active FROM bidding_settings LIMIT 1");
+    $bidding_enabled = false;
+    if ($settings_check && $settings_check->num_rows > 0) {
+        $settings = $settings_check->fetch_assoc();
+        $bidding_enabled = (bool)$settings['is_active'];
+    }
+    
     // Debug: Check total items first
     $total_check = $conn->query("SELECT COUNT(*) as total FROM bidding_items");
     $total_count = $total_check ? $total_check->fetch_assoc()['total'] : 0;
     
+    // Get all items for debugging
+    $all_items_query = "SELECT id, title, is_active, is_completed, start_time, end_time, NOW() as current_time FROM bidding_items";
+    $all_items_result = $conn->query($all_items_query);
+    $all_items = $all_items_result ? $all_items_result->fetch_all(MYSQLI_ASSOC) : [];
+    
+    // Query for active bidding items
     $query = "SELECT bi.*, 
         COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
         COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
-        WHERE bi.is_active = 1 AND bi.is_completed = 0 
-        AND (bi.start_time IS NULL OR bi.start_time <= NOW()) 
-        AND bi.end_time > NOW()
+        WHERE bi.is_active = 1 
+        AND bi.is_completed = 0 
+        AND (
+            (bi.start_time IS NULL AND bi.end_time > NOW())
+            OR 
+            (bi.start_time IS NOT NULL AND bi.start_time <= NOW() AND bi.end_time > NOW())
+        )
         ORDER BY bi.end_time ASC";
     
     $result = $conn->query($query);
@@ -39,15 +57,19 @@ if ($action === 'get_active_biddings') {
         $items = $result->fetch_all(MYSQLI_ASSOC);
     }
     
-    // Debug info (can be removed in production)
-    $debug_info = [];
-    if (isset($_GET['debug'])) {
-        $all_items = $conn->query("SELECT id, title, is_active, is_completed, start_time, end_time, NOW() as current_time FROM bidding_items")->fetch_all(MYSQLI_ASSOC);
-        $debug_info = [
-            'total_items' => $total_count,
-            'active_items' => count($items),
-            'all_items' => $all_items
-        ];
+    // Debug info (always include for troubleshooting)
+    $debug_info = [
+        'total_items' => $total_count,
+        'active_items' => count($items),
+        'bidding_enabled' => $bidding_enabled,
+        'all_items' => $all_items,
+        'current_time' => date('Y-m-d H:i:s')
+    ];
+    
+    // If bidding system is disabled, return empty but with info
+    if (!$bidding_enabled && !isset($_GET['debug'])) {
+        echo json_encode(['success' => true, 'items' => [], 'message' => 'Bidding system is disabled', 'debug' => $debug_info]);
+        exit;
     }
     
     echo json_encode(['success' => true, 'items' => $items, 'debug' => $debug_info]);
