@@ -1,87 +1,155 @@
 <?php
+// Error reporting for debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 session_start();
-require_once 'connection.php';
+
+// Set JSON header first
 header('Content-Type: application/json');
+
+// Handle connection errors gracefully
+try {
+    require_once 'connection.php';
+    
+    // Check if connection is valid
+    if (!isset($conn) || !$conn || $conn->connect_error) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Database connection failed',
+            'items' => []
+        ]);
+        exit;
+    }
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Failed to connect to database: ' . $e->getMessage(),
+        'items' => []
+    ]);
+    exit;
+}
 
 $action = $_GET['action'] ?? '';
 
 if ($action === 'get_active_biddings') {
-    // Get active bidding items (between start_time and end_time)
-    // First check if table exists
-    $table_check = $conn->query("SHOW TABLES LIKE 'bidding_items'");
-    if ($table_check->num_rows == 0) {
-        echo json_encode(['success' => false, 'message' => 'Bidding items table does not exist', 'items' => []]);
+    try {
+        // Get active bidding items (between start_time and end_time)
+        // First check if table exists
+        $table_check = $conn->query("SHOW TABLES LIKE 'bidding_items'");
+        if (!$table_check || $table_check->num_rows == 0) {
+            echo json_encode(['success' => false, 'message' => 'Bidding items table does not exist', 'items' => []]);
+            exit;
+        }
+        
+        // Check if bidding system is enabled
+        $bidding_enabled = false;
+        try {
+            $settings_check = $conn->query("SELECT is_active FROM bidding_settings LIMIT 1");
+            if ($settings_check && $settings_check->num_rows > 0) {
+                $settings = $settings_check->fetch_assoc();
+                $bidding_enabled = (bool)$settings['is_active'];
+            }
+        } catch (Exception $e) {
+            // Settings table might not exist, continue
+        }
+        
+        // Debug: Check total items first
+        $total_count = 0;
+        try {
+            $total_check = $conn->query("SELECT COUNT(*) as total FROM bidding_items");
+            if ($total_check) {
+                $total_data = $total_check->fetch_assoc();
+                $total_count = intval($total_data['total'] ?? 0);
+            }
+        } catch (Exception $e) {
+            // Continue even if count fails
+        }
+        
+        // Get all items for debugging
+        $all_items = [];
+        try {
+            $all_items_query = "SELECT id, title, is_active, is_completed, start_time, end_time, NOW() as current_time FROM bidding_items";
+            $all_items_result = $conn->query($all_items_query);
+            if ($all_items_result) {
+                $all_items = $all_items_result->fetch_all(MYSQLI_ASSOC);
+            }
+        } catch (Exception $e) {
+            // Continue even if debug query fails
+        }
+        
+        // Query for active bidding items
+        // Show ALL items where is_active = 1 (regardless of completion status, end_time, or start_time)
+        // Items will remain visible until admin deletes them (sets is_active = 0)
+        // Recent items (newest) show first - sorted by created_at DESC or id DESC as fallback
+        $query = "SELECT bi.*, 
+            COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
+            COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
+            FROM bidding_items bi 
+            WHERE bi.is_active = 1
+            ORDER BY bi.id DESC";
+        
+        $result = $conn->query($query);
+        
+        if (!$result) {
+            $error_msg = $conn->error ? $conn->error : 'Unknown database error';
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Database error: ' . $error_msg, 
+                'items' => [], 
+                'debug' => [
+                    'query' => $query, 
+                    'error' => $error_msg,
+                    'errno' => $conn->errno
+                ]
+            ]);
+            exit;
+        }
+        
+        $items = [];
+        if ($result && $result->num_rows > 0) {
+            $items = $result->fetch_all(MYSQLI_ASSOC);
+        }
+        
+        // Debug info (always include for troubleshooting)
+        $debug_info = [
+            'total_items' => $total_count,
+            'active_items' => count($items),
+            'bidding_enabled' => $bidding_enabled,
+            'all_items' => $all_items,
+            'current_time' => date('Y-m-d H:i:s'),
+            'items_returned' => count($items)
+        ];
+        
+        // If bidding system is disabled, still return items but with a warning message
+        // This allows debugging even when system is disabled
+        if (!$bidding_enabled) {
+            $debug_info['warning'] = 'Bidding system is disabled in settings';
+        }
+        
+        // Always return success with items (even if empty) so frontend can display properly
+        echo json_encode([
+            'success' => true, 
+            'items' => $items, 
+            'debug' => $debug_info,
+            'message' => count($items) > 0 ? 'Items loaded successfully' : 'No active bidding items found'
+        ]);
+        exit;
+        
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Server error: ' . $e->getMessage(), 
+            'items' => [],
+            'debug' => [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]
+        ]);
         exit;
     }
-    
-    // Check if bidding system is enabled
-    $settings_check = $conn->query("SELECT is_active FROM bidding_settings LIMIT 1");
-    $bidding_enabled = false;
-    if ($settings_check && $settings_check->num_rows > 0) {
-        $settings = $settings_check->fetch_assoc();
-        $bidding_enabled = (bool)$settings['is_active'];
-    }
-    
-    // Debug: Check total items first
-    $total_check = $conn->query("SELECT COUNT(*) as total FROM bidding_items");
-    $total_count = $total_check ? $total_check->fetch_assoc()['total'] : 0;
-    
-    // Get all items for debugging
-    $all_items_query = "SELECT id, title, is_active, is_completed, start_time, end_time, NOW() as current_time FROM bidding_items";
-    $all_items_result = $conn->query($all_items_query);
-    $all_items = $all_items_result ? $all_items_result->fetch_all(MYSQLI_ASSOC) : [];
-    
-    // Query for active bidding items
-    // Show ALL items where is_active = 1 (regardless of completion status, end_time, or start_time)
-    // Items will remain visible until admin deletes them (sets is_active = 0)
-    // Recent items (newest) show first, then by status
-    $query = "SELECT bi.*, 
-        COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
-        COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
-        FROM bidding_items bi 
-        WHERE bi.is_active = 1
-        ORDER BY 
-            bi.created_at DESC,
-            CASE WHEN bi.is_completed = 1 THEN 1 ELSE 0 END,
-            CASE WHEN bi.end_time < NOW() AND bi.is_completed = 0 THEN 1 ELSE 0 END";
-    
-    $result = $conn->query($query);
-    
-    if (!$result) {
-        echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error, 'items' => [], 'debug' => ['query' => $query, 'error' => $conn->error]]);
-        exit;
-    }
-    
-    $items = [];
-    if ($result->num_rows > 0) {
-        $items = $result->fetch_all(MYSQLI_ASSOC);
-    }
-    
-    // Debug info (always include for troubleshooting)
-    $debug_info = [
-        'total_items' => $total_count,
-        'active_items' => count($items),
-        'bidding_enabled' => $bidding_enabled,
-        'all_items' => $all_items,
-        'current_time' => date('Y-m-d H:i:s'),
-        'query' => $query,
-        'items_returned' => count($items)
-    ];
-    
-    // If bidding system is disabled, still return items but with a warning message
-    // This allows debugging even when system is disabled
-    if (!$bidding_enabled) {
-        $debug_info['warning'] = 'Bidding system is disabled in settings';
-    }
-    
-    // Always return success with items (even if empty) so frontend can display properly
-    echo json_encode([
-        'success' => true, 
-        'items' => $items, 
-        'debug' => $debug_info,
-        'message' => count($items) > 0 ? 'Items loaded successfully' : 'No active bidding items found'
-    ]);
-    exit;
 }
 
 if ($action === 'get_bidding_details') {
