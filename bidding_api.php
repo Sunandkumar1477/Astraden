@@ -190,20 +190,40 @@ if ($action === 'place_bid') {
     
     $user_id = intval($_SESSION['user_id']);
     $bidding_id = intval($_POST['bidding_id'] ?? 0);
-    $bid_amount = floatval($_POST['bid_amount'] ?? 0);
+    $posted_bid_amount = floatval($_POST['bid_amount'] ?? 0);
     
-    if ($bidding_id <= 0 || $bid_amount <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid bid amount']);
+    if ($bidding_id <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid bidding item']);
         exit;
     }
     
     // Get bidding item
     $item = $conn->query("SELECT * FROM bidding_items WHERE id = $bidding_id")->fetch_assoc();
+    
+    if (!$item) {
+        echo json_encode(['success' => false, 'message' => 'Bidding item not found']);
+        exit;
+    }
+    
+    // Use the fixed bid_increment amount (BID AMOUNT PER BID set by admin)
+    $bid_amount = floatval($item['bid_increment']);
+    
+    // Verify the posted amount matches the fixed amount (security check)
+    if ($posted_bid_amount > 0 && abs($posted_bid_amount - $bid_amount) > 0.01) {
+        // Allow if close enough (rounding differences), but use the fixed amount
+        $bid_amount = floatval($item['bid_increment']);
+    }
+    
+    if ($bid_amount <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid bid amount per bid']);
+        exit;
+    }
+    
     $now = time();
     $start_time = $item['start_time'] ? strtotime($item['start_time']) : 0;
     $end_time = strtotime($item['end_time']);
     
-    if (!$item || !$item['is_active'] || $item['is_completed'] || $now >= $end_time) {
+    if (!$item['is_active'] || $item['is_completed'] || $now >= $end_time) {
         echo json_encode(['success' => false, 'message' => 'Bidding is not active']);
         exit;
     }
@@ -217,19 +237,15 @@ if ($action === 'place_bid') {
         exit;
     }
     
-    // Check minimum bid
-    $min_bid = $item['current_bid'] + $item['bid_increment'];
-    if ($bid_amount < $min_bid) {
-        echo json_encode(['success' => false, 'message' => "Minimum bid is $min_bid Astrons"]);
-        exit;
-    }
+    // Calculate new bid amount (current bid + fixed increment)
+    $new_bid_amount = $item['current_bid'] + $bid_amount;
     
-    // Check user Astrons balance
+    // Check user Astrons balance (need the fixed bid amount)
     $user_astrons = $conn->query("SELECT astrons_balance FROM user_astrons WHERE user_id = $user_id")->fetch_assoc();
     $balance = $user_astrons ? floatval($user_astrons['astrons_balance']) : 0;
     
     if ($balance < $bid_amount) {
-        echo json_encode(['success' => false, 'message' => 'Insufficient Astrons balance']);
+        echo json_encode(['success' => false, 'message' => 'Insufficient Astrons balance. You need ' . number_format($bid_amount, 2) . ' Astrons to place a bid.']);
         exit;
     }
     
@@ -237,7 +253,7 @@ if ($action === 'place_bid') {
     $conn->begin_transaction();
     
     try {
-        // Deduct Astrons
+        // Deduct Astrons (the fixed bid amount per click)
         $conn->query("UPDATE user_astrons SET astrons_balance = astrons_balance - $bid_amount WHERE user_id = $user_id");
         
         // Return previous bidder's Astrons (if any)
@@ -245,21 +261,25 @@ if ($action === 'place_bid') {
             $conn->query("UPDATE user_astrons SET astrons_balance = astrons_balance + {$item['current_bid']} WHERE user_id = {$item['current_bidder_id']}");
         }
         
-        // Update bidding item
-        $conn->query("UPDATE bidding_items SET current_bid = $bid_amount, current_bidder_id = $user_id WHERE id = $bidding_id");
+        // Update bidding item with new bid amount (current + increment)
+        $conn->query("UPDATE bidding_items SET current_bid = $new_bid_amount, current_bidder_id = $user_id WHERE id = $bidding_id");
         
-        // Add to bidding history
+        // Add to bidding history (record the new total bid amount)
         $stmt = $conn->prepare("INSERT INTO bidding_history (bidding_item_id, user_id, bid_amount) VALUES (?, ?, ?)");
-        $stmt->bind_param("iid", $bidding_id, $user_id, $bid_amount);
+        $stmt->bind_param("iid", $bidding_id, $user_id, $new_bid_amount);
         $stmt->execute();
         $stmt->close();
         
         $conn->commit();
         
-        echo json_encode(['success' => true, 'message' => 'Bid placed successfully!']);
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Bid placed successfully! ' . number_format($bid_amount, 2) . ' Astrons deducted.',
+            'new_bid_amount' => $new_bid_amount
+        ]);
     } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['success' => false, 'message' => 'Failed to place bid']);
+        echo json_encode(['success' => false, 'message' => 'Failed to place bid: ' . $e->getMessage()]);
     }
     exit;
 }

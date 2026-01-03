@@ -91,24 +91,18 @@ $conn->close();
         function updateBiddings() {
             const grid = document.getElementById('biddingGrid');
             if (!grid) {
-                console.error('Bidding grid element not found');
                 return;
             }
             
-            // Don't show loading state - keep grid hidden until content is ready
-            // grid.innerHTML = ''; // Keep empty until data loads
-            
-            fetch('bidding_api.php?action=get_active_biddings' + (window.location.search.includes('debug') ? '&debug=1' : ''))
+            // Remove debug parameter to save data
+            fetch('bidding_api.php?action=get_active_biddings')
                 .then(r => {
-                    console.log('Response status:', r.status);
                     if (!r.ok) {
                         throw new Error('Network response was not ok: ' + r.status);
                     }
                     return r.json();
                 })
                 .then(data => {
-                    console.log('Bidding API Response:', data);
-                    console.log('Items count:', data.items ? data.items.length : 0);
                     
                     // Show container now that we have response (even if error)
                     showContent();
@@ -121,10 +115,6 @@ $conn->close();
                         errorHtml += '<button onclick="updateBiddings()" class="retry-btn">Retry</button>';
                         errorHtml += '</div>';
                         grid.innerHTML = errorHtml;
-                        console.error('Bidding API Error:', data);
-                        if (data.debug && window.location.search.includes('debug')) {
-                            grid.innerHTML += '<div style="grid-column: 1 / -1; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; margin-top: 20px; font-size: 0.9rem; text-align: left; border-radius: 10px;"><pre style="white-space: pre-wrap;">' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
-                        }
                         return;
                     }
                     
@@ -136,18 +126,6 @@ $conn->close();
                         message += '<i class="fas fa-inbox"></i><br>';
                         message += '<strong style="font-size: 1.3rem; margin: 15px 0; display: block;">No active biddings at the moment</strong>';
                         message += '<p style="color: var(--text-secondary); font-size: 1.1rem;">Check back later for new bidding opportunities!</p>';
-                        if (data.debug) {
-                            console.log('Debug Info:', data.debug);
-                            if (data.debug.total_items > 0) {
-                                message += '<br><small style="color: var(--text-muted);">Total items in database: ' + data.debug.total_items + '</small>';
-                            }
-                            if (data.debug.bidding_enabled === false) {
-                                message += '<br><small style="color: var(--warning-orange);">Bidding system is disabled in admin settings.</small>';
-                            }
-                            if (window.location.search.includes('debug')) {
-                                message += '<div style="margin-top: 30px; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; text-align: left; font-size: 0.9rem; border-radius: 10px;"><strong>Debug Info:</strong><pre style="margin-top: 10px; white-space: pre-wrap;">' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
-                            }
-                        }
                         message += '</div>';
                         grid.innerHTML = message;
                         return;
@@ -201,8 +179,13 @@ $conn->close();
                                     <input type="number" class="bid-input" placeholder="Bidding not started yet" disabled>
                                     <button class="btn-bid" disabled>Bidding Not Started</button>
                                 ` : `
-                                    <input type="number" class="bid-input" placeholder="Min: ${(parseFloat(item.current_bid) + parseFloat(item.bid_increment)).toFixed(2)} Astrons" step="${item.bid_increment}" min="${parseFloat(item.current_bid) + parseFloat(item.bid_increment)}">
-                                    <button class="btn-bid" onclick="placeBid(${item.id}, this)">Place Bid</button>
+                                    <div class="bid-amount-display">
+                                        <div class="label">Bid Amount Per Click:</div>
+                                        <div class="amount">${parseFloat(item.bid_increment).toFixed(2)} Astrons</div>
+                                    </div>
+                                    <button class="btn-bid" onclick="placeBid(${item.id}, this, ${item.bid_increment})">
+                                        <i class="fas fa-gavel"></i> Place Bid (${parseFloat(item.bid_increment).toFixed(2)} Astrons)
+                                    </button>
                                 `}
                                 <div class="recent-bids">
                                     <i class="fas fa-gavel"></i> Total Bids: ${item.total_bids}
@@ -215,7 +198,6 @@ $conn->close();
                     updateCountdowns();
                 })
                 .catch(err => {
-                    console.error('Error loading biddings:', err);
                     // Show container even on error so user can see the error
                     showContent();
                     
@@ -282,23 +264,28 @@ $conn->close();
             });
         }
         
-        function placeBid(itemId, btn) {
+        function placeBid(itemId, btn, bidAmount) {
             const card = btn.closest('.bidding-card');
-            const input = card.querySelector('.bid-input');
-            const bidAmount = parseFloat(input.value);
             
+            // Use the fixed bid amount per click (bid_increment)
             if (!bidAmount || bidAmount <= 0) {
-                alert('Please enter a valid bid amount');
+                alert('Invalid bid amount');
                 return;
             }
             
             if (bidAmount > astronsBalance) {
-                alert('Insufficient Astrons balance');
+                alert('Insufficient Astrons balance. You need ' + bidAmount.toFixed(2) + ' Astrons to place a bid.');
+                return;
+            }
+            
+            // Confirm before placing bid
+            if (!confirm(`Place a bid for ${bidAmount.toFixed(2)} Astrons?`)) {
                 return;
             }
             
             btn.disabled = true;
-            btn.textContent = 'Placing Bid...';
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing Bid...';
             
             const formData = new FormData();
             formData.append('bidding_id', itemId);
@@ -311,20 +298,19 @@ $conn->close();
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    alert('Bid placed successfully!');
-                    input.value = '';
+                    alert('Bid placed successfully! ' + bidAmount.toFixed(2) + ' Astrons deducted.');
                     updateBiddings();
                     updateBalance();
                 } else {
                     alert(data.message || 'Failed to place bid');
                 }
                 btn.disabled = false;
-                btn.textContent = 'Place Bid';
+                btn.innerHTML = originalText;
             })
             .catch(err => {
-                alert('Error placing bid');
+                alert('Error placing bid: ' + err.message);
                 btn.disabled = false;
-                btn.textContent = 'Place Bid';
+                btn.innerHTML = originalText;
             });
         }
         
@@ -341,22 +327,23 @@ $conn->close();
         // Initial load - wait for DOM to be ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
-                // Load data first, then show content
                 updateBiddings();
             });
         } else {
-            // DOM already ready, load data
             updateBiddings();
         }
         
-        // Update every 5 seconds (only after initial load)
+        // Reduced update frequency to save mobile data
+        // Update every 10 seconds instead of 5
         let updateInterval = null;
         setTimeout(() => {
-            updateInterval = setInterval(updateBiddings, 5000);
-        }, 6000); // Start auto-refresh 6 seconds after initial load
+            updateInterval = setInterval(updateBiddings, 10000);
+        }, 10000);
         
-        setInterval(updateCountdowns, 1000);
-        setInterval(updateBalance, 10000);
+        // Update countdowns every 5 seconds (less frequent)
+        setInterval(updateCountdowns, 5000);
+        // Update balance every 30 seconds (less frequent)
+        setInterval(updateBalance, 30000);
     </script>
 </body>
 </html>

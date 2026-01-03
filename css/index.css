@@ -1512,10 +1512,21 @@ body {
     margin-top: 15px;
 }
 
-/* Hide WhatsApp icon in footer on mobile */
+/* Mobile responsive styles - WhatsApp button visible */
 @media (max-width: 768px) {
     .footer-whatsapp {
-        display: none;
+        display: flex !important;
+        width: 100%;
+        margin-top: 15px;
+        padding: 10px 15px;
+    }
+    
+    .footer-whatsapp a {
+        font-size: 0.9rem;
+    }
+    
+    .footer-whatsapp i {
+        font-size: 20px;
     }
     
     .footer-content {
@@ -1563,7 +1574,7 @@ body {
     }
 }
 
-/* Show WhatsApp icon in footer on desktop only */
+/* Desktop styles for WhatsApp button */
 @media (min-width: 769px) {
     .footer-whatsapp {
         display: flex;

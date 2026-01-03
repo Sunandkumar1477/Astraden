@@ -1,6 +1,6 @@
 /**
- * Professional Bidding Page Styles
- * Modern, sleek design for Astraden Live Bidding
+ * Optimized Bidding Page Styles - No Effects, Performance Focused
+ * Lightweight design for fast loading and low data usage
  */
 
 :root {
@@ -28,9 +28,8 @@ body {
     background: var(--dark-bg); 
     color: var(--text-primary); 
     min-height: 100vh; 
-    padding: 20px; 
+    padding: 15px; 
     position: relative;
-    overflow-x: hidden;
 }
 
 .space-bg { 
@@ -39,356 +38,186 @@ body {
     left: 0; 
     width: 100%; 
     height: 100%; 
-    background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #05050a 100%);
+    background: var(--dark-bg);
     z-index: -1; 
-}
-
-/* Animated stars background */
-.space-bg::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        radial-gradient(2px 2px at 20% 30%, white, transparent),
-        radial-gradient(2px 2px at 60% 70%, white, transparent),
-        radial-gradient(1px 1px at 50% 50%, white, transparent),
-        radial-gradient(1px 1px at 80% 10%, white, transparent),
-        radial-gradient(2px 2px at 90% 40%, white, transparent),
-        radial-gradient(1px 1px at 33% 60%, white, transparent),
-        radial-gradient(1px 1px at 55% 80%, white, transparent);
-    background-repeat: repeat;
-    background-size: 200% 200%;
-    animation: twinkle 20s linear infinite;
-    opacity: 0.3;
-}
-
-@keyframes twinkle {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-50%, -50%); }
 }
 
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    opacity: 0;
-    animation: fadeIn 0.5s ease-in forwards;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .back-btn { 
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 25px; 
-    padding: 12px 24px; 
+    margin-bottom: 20px; 
+    padding: 10px 20px; 
     background: rgba(0,255,255,0.1); 
-    border: 2px solid var(--primary-cyan); 
-    border-radius: 10px; 
+    border: 1px solid var(--primary-cyan); 
+    border-radius: 8px; 
     color: var(--primary-cyan); 
     text-decoration: none; 
-    transition: all 0.3s ease;
     font-weight: 600;
-    font-size: 1rem;
-}
-
-.back-btn:hover {
-    background: rgba(0,255,255,0.2);
-    transform: translateX(-5px);
-    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+    font-size: 0.95rem;
 }
 
 .header { 
     text-align: center; 
-    margin-bottom: 40px; 
-    padding: 30px 0; 
+    margin-bottom: 25px; 
+    padding: 20px 0; 
 }
 
 .header h1 { 
     font-family: 'Orbitron', sans-serif; 
     color: var(--primary-cyan); 
-    font-size: 3rem; 
-    text-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
-    letter-spacing: 4px;
-    font-weight: 900;
-    margin-bottom: 10px;
-    animation: glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-    from { text-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 30px rgba(0, 255, 255, 0.3); }
-    to { text-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.5), 0 0 50px rgba(0, 255, 255, 0.3); }
-}
-
-.header h1 i {
-    margin-right: 15px;
-    animation: rotate 3s linear infinite;
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    font-size: 2rem; 
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: 5px;
 }
 
 .balance-card { 
-    background: linear-gradient(135deg, var(--card-bg), rgba(15, 15, 25, 0.8)); 
+    background: var(--card-bg); 
     border: 2px solid var(--primary-cyan); 
-    border-radius: 20px; 
-    padding: 30px; 
-    margin-bottom: 40px; 
+    border-radius: 12px; 
+    padding: 20px; 
+    margin-bottom: 25px; 
     text-align: center;
-    box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
-}
-
-.balance-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
-    animation: shimmer 3s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-    50% { transform: translate(-50%, -50%) rotate(180deg); }
 }
 
 .balance-card h2 { 
     color: var(--primary-purple); 
-    margin-bottom: 20px; 
-    font-size: 1.5rem;
+    margin-bottom: 15px; 
+    font-size: 1.2rem;
     font-weight: 700;
-    position: relative;
-    z-index: 1;
 }
 
 .balance-card .amount { 
-    font-size: 3.5rem; 
+    font-size: 2.5rem; 
     font-weight: 900; 
     color: var(--gold); 
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-    margin: 15px 0;
-    position: relative;
-    z-index: 1;
+    margin: 10px 0;
     font-family: 'Orbitron', sans-serif;
 }
 
 .balance-card .rate-info {
     color: var(--text-secondary); 
-    font-size: 1rem; 
-    margin-top: 20px;
-    position: relative;
-    z-index: 1;
+    font-size: 0.9rem; 
+    margin-top: 15px;
 }
 
 .balance-card .buy-link {
     color: var(--primary-cyan); 
     text-decoration: none; 
-    margin-top: 20px; 
+    margin-top: 15px; 
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     font-weight: 700;
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1;
-    padding: 10px 20px;
+    font-size: 0.95rem;
+    padding: 8px 16px;
     border: 1px solid var(--primary-cyan);
-    border-radius: 8px;
+    border-radius: 6px;
     background: rgba(0, 255, 255, 0.05);
-}
-
-.balance-card .buy-link:hover {
-    color: var(--primary-purple);
-    border-color: var(--primary-purple);
-    background: rgba(157, 78, 221, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(157, 78, 221, 0.3);
 }
 
 .bidding-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
-    gap: 30px; 
-    opacity: 0;
-    animation: fadeInUp 0.6s ease-out 0.2s forwards;
-}
-
-@keyframes fadeInUp {
-    from { 
-        opacity: 0; 
-        transform: translateY(30px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+    gap: 20px; 
 }
 
 .bidding-card { 
-    background: linear-gradient(135deg, var(--card-bg), rgba(20, 20, 35, 0.9)); 
-    border: 2px solid rgba(0, 255, 255, 0.3); 
-    border-radius: 20px; 
-    padding: 30px; 
+    background: var(--card-bg); 
+    border: 1px solid rgba(0, 255, 255, 0.3); 
+    border-radius: 12px; 
+    padding: 20px; 
     position: relative;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    backdrop-filter: blur(10px);
-    overflow: hidden;
-}
-
-.bidding-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
-    transition: left 0.5s;
-}
-
-.bidding-card:hover::before {
-    left: 100%;
 }
 
 .bidding-card.active { 
     border-color: var(--primary-cyan); 
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-    transform: translateY(-5px);
 }
 
 .bidding-card.expired { 
-    opacity: 0.8; 
+    opacity: 0.7; 
     border-color: rgba(255,255,255,0.2);
-    filter: grayscale(0.3);
-}
-
-.bidding-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4);
 }
 
 .bidding-title { 
     font-family: 'Orbitron', sans-serif; 
     color: var(--primary-cyan); 
-    font-size: 1.4rem; 
-    margin-bottom: 20px;
+    font-size: 1.2rem; 
+    margin-bottom: 15px;
     font-weight: 700;
-    line-height: 1.4;
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    line-height: 1.3;
 }
 
 .prize-amount { 
     color: var(--gold); 
-    font-size: 2rem; 
+    font-size: 1.6rem; 
     font-weight: 900; 
-    margin: 20px 0;
-    text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    margin: 15px 0;
     font-family: 'Orbitron', sans-serif;
 }
 
 .current-bid { 
     color: var(--primary-purple); 
-    font-size: 1.3rem; 
-    margin: 20px 0;
+    font-size: 1.1rem; 
+    margin: 15px 0;
     font-weight: 600;
 }
 
 .current-bid-amount {
     color: var(--primary-cyan);
     font-weight: 700;
-    font-size: 1.4rem;
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    font-size: 1.2rem;
 }
 
 .timer { 
     color: var(--error-red); 
     font-weight: 700; 
-    margin: 20px 0;
-    font-size: 1.2rem;
+    margin: 15px 0;
+    font-size: 1rem;
     font-family: 'Orbitron', sans-serif;
-    text-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
 }
 
-.bid-input { 
-    width: 100%; 
-    padding: 15px 20px; 
-    background: rgba(0,0,0,0.7); 
-    border: 2px solid var(--primary-cyan); 
-    border-radius: 10px; 
-    color: var(--text-primary); 
-    margin: 20px 0;
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-    font-family: 'Rajdhani', sans-serif;
+.bid-amount-display {
+    text-align: center;
+    padding: 12px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid var(--primary-cyan);
+    border-radius: 8px;
+    margin: 15px 0;
 }
 
-.bid-input:focus {
-    outline: none;
-    border-color: var(--primary-purple);
-    box-shadow: 0 0 20px rgba(157, 78, 221, 0.4);
-    background: rgba(0,0,0,0.9);
+.bid-amount-display .label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
 }
 
-.bid-input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.bid-amount-display .amount {
+    color: var(--primary-cyan);
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
 }
 
 .btn-bid { 
     width: 100%; 
-    padding: 18px; 
+    padding: 14px; 
     background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); 
     border: none; 
-    border-radius: 10px; 
+    border-radius: 8px; 
     color: white; 
     font-family: 'Orbitron', sans-serif; 
     font-weight: 700; 
-    font-size: 1.1rem;
+    font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-bid::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.btn-bid:hover:not(:disabled)::before {
-    width: 300px;
-    height: 300px;
-}
-
-.btn-bid:hover:not(:disabled) { 
-    transform: translateY(-3px); 
-    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.6);
-}
-
-.btn-bid:active:not(:disabled) {
-    transform: translateY(-1px);
+    letter-spacing: 1px;
 }
 
 .btn-bid:disabled {
@@ -397,108 +226,87 @@ body {
 }
 
 .recent-bids { 
-    margin-top: 25px; 
-    font-size: 1rem; 
+    margin-top: 20px; 
+    font-size: 0.9rem; 
     color: var(--text-secondary);
     text-align: center;
-    padding-top: 20px;
+    padding-top: 15px;
     border-top: 1px solid rgba(255,255,255,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .recent-bids i {
     color: var(--primary-cyan);
 }
 
-/* Professional status badges and messages */
+/* Status badges - no animations */
 .status-badge { 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    gap: 12px; 
-    padding: 18px 25px; 
-    margin: 20px 0; 
-    border-radius: 12px; 
+    gap: 10px; 
+    padding: 12px 18px; 
+    margin: 15px 0; 
+    border-radius: 8px; 
     font-family: 'Orbitron', sans-serif; 
     font-weight: 700; 
-    font-size: 1rem; 
+    font-size: 0.9rem; 
     text-transform: uppercase; 
-    letter-spacing: 2px;
+    letter-spacing: 1px;
 }
 
 .status-badge.completed { 
-    background: linear-gradient(135deg, rgba(0, 200, 0, 0.25), rgba(0, 150, 0, 0.15)); 
+    background: rgba(0, 200, 0, 0.2); 
     border: 2px solid var(--success-green); 
-    color: var(--success-green); 
-    box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+    color: var(--success-green);
 }
 
 .status-badge.completed i { 
-    font-size: 1.5rem; 
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.15); }
+    font-size: 1.2rem;
 }
 
 .winner-info { 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    gap: 12px; 
-    padding: 15px; 
-    margin: 20px 0; 
-    background: rgba(255, 215, 0, 0.2); 
+    gap: 10px; 
+    padding: 12px; 
+    margin: 15px 0; 
+    background: rgba(255, 215, 0, 0.15); 
     border: 2px solid var(--gold); 
-    border-radius: 12px; 
+    border-radius: 8px; 
     color: var(--gold); 
     font-weight: 700;
-    font-size: 1.1rem;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    font-size: 0.95rem;
 }
 
 .winner-info i { 
-    font-size: 1.5rem; 
+    font-size: 1.2rem; 
     color: var(--gold);
-    animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
 }
 
 .completed-message, .expired-message, .not-started-message { 
     text-align: center; 
-    padding: 25px; 
-    margin: 20px 0; 
-    border-radius: 12px; 
-    font-size: 1.05rem;
+    padding: 18px; 
+    margin: 15px 0; 
+    border-radius: 8px; 
+    font-size: 0.95rem;
 }
 
 .completed-message { 
-    background: rgba(0, 200, 0, 0.2); 
+    background: rgba(0, 200, 0, 0.15); 
     border: 2px solid var(--success-green); 
     color: var(--success-green);
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
 }
 
 .completed-message i { 
     display: block; 
-    font-size: 3rem; 
-    margin-bottom: 15px; 
+    font-size: 2rem; 
+    margin-bottom: 10px; 
     color: var(--success-green);
-    animation: lockPulse 2s infinite;
-}
-
-@keyframes lockPulse {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.1) rotate(5deg); }
 }
 
 .completed-message p { 
@@ -507,23 +315,16 @@ body {
 }
 
 .expired-message { 
-    background: rgba(255, 170, 0, 0.2); 
+    background: rgba(255, 170, 0, 0.15); 
     border: 2px solid var(--warning-orange); 
     color: #ffcc66;
-    box-shadow: 0 0 20px rgba(255, 170, 0, 0.3);
 }
 
 .expired-message i { 
     display: block; 
-    font-size: 3rem; 
-    margin-bottom: 15px; 
+    font-size: 2rem; 
+    margin-bottom: 10px; 
     color: var(--warning-orange);
-    animation: hourglass 2s infinite;
-}
-
-@keyframes hourglass {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(180deg); }
 }
 
 .expired-message p { 
@@ -532,23 +333,16 @@ body {
 }
 
 .not-started-message { 
-    background: rgba(255, 170, 0, 0.2); 
+    background: rgba(255, 170, 0, 0.15); 
     border: 2px solid var(--warning-orange); 
     color: #ffcc66;
-    box-shadow: 0 0 20px rgba(255, 170, 0, 0.3);
 }
 
 .not-started-message i { 
     display: block; 
-    font-size: 3rem; 
-    margin-bottom: 15px; 
+    font-size: 2rem; 
+    margin-bottom: 10px; 
     color: var(--warning-orange);
-    animation: clockTick 1s infinite;
-}
-
-@keyframes clockTick {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(10deg); }
 }
 
 .not-started-message p { 
@@ -556,23 +350,22 @@ body {
     font-weight: 600;
 }
 
-/* Loading and error states - Hidden by default */
+/* Loading and error states */
 .loading-state, .error-state, .empty-state {
     grid-column: 1 / -1;
     text-align: center;
-    padding: 80px 40px;
+    padding: 60px 40px;
     color: var(--text-secondary);
-    display: none; /* Hidden until needed */
+    display: none;
 }
 
 .loading-state.active, .error-state.active, .empty-state.active {
     display: block;
-    animation: fadeIn 0.5s ease-in;
 }
 
 .loading-state i {
-    font-size: 4rem;
-    margin-bottom: 25px;
+    font-size: 3rem;
+    margin-bottom: 20px;
     color: var(--primary-cyan);
 }
 
@@ -581,94 +374,87 @@ body {
 }
 
 .error-state i {
-    font-size: 4rem;
-    margin-bottom: 25px;
+    font-size: 3rem;
+    margin-bottom: 20px;
 }
 
 .empty-state i {
-    font-size: 4rem;
-    margin-bottom: 25px;
+    font-size: 3rem;
+    margin-bottom: 20px;
     color: var(--text-muted);
 }
 
 .retry-btn {
-    padding: 15px 40px;
+    padding: 12px 30px;
     background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     color: white;
     cursor: pointer;
     font-weight: 700;
     font-family: 'Orbitron', sans-serif;
-    margin-top: 25px;
-    transition: all 0.3s ease;
-    font-size: 1rem;
+    margin-top: 20px;
+    font-size: 0.95rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
-.retry-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.5);
-}
-
-/* Responsive design */
-@media (max-width: 1200px) {
-    .bidding-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    }
-}
-
+/* Mobile Grid Layout */
 @media (max-width: 768px) {
-    .bidding-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .header h1 {
-        font-size: 2rem;
-        letter-spacing: 2px;
-    }
-    
-    .balance-card .amount {
-        font-size: 2.5rem;
-    }
-    
-    .bidding-card {
-        padding: 20px;
-    }
-}
-
-@media (max-width: 480px) {
     body {
-        padding: 15px;
+        padding: 10px;
+    }
+    
+    .bidding-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
     
     .header h1 {
         font-size: 1.5rem;
+        letter-spacing: 1px;
     }
     
     .balance-card {
-        padding: 20px;
+        padding: 15px;
     }
     
     .balance-card .amount {
         font-size: 2rem;
     }
+    
+    .bidding-card {
+        padding: 15px;
+    }
+    
+    .bidding-title {
+        font-size: 1rem;
+    }
+    
+    .prize-amount {
+        font-size: 1.3rem;
+    }
+    
+    .current-bid {
+        font-size: 1rem;
+    }
+    
+    .btn-bid {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
 }
 
-/* Smooth transitions for all interactive elements */
-.bidding-card * {
-    transition: all 0.3s ease;
+@media (max-width: 480px) {
+    .bidding-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .balance-card .amount {
+        font-size: 1.8rem;
+    }
 }
-
-/* Hide content until ready */
-.content-hidden {
-    display: none !important;
-}
-
-.content-visible {
-    display: block !important;
-    animation: fadeIn 0.5s ease-in;
-}
-
