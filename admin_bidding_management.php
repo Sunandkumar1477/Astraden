@@ -3,6 +3,9 @@ session_start();
 require_once 'admin_check.php';
 require_once 'connection.php';
 
+// Set timezone to India (IST)
+date_default_timezone_set('Asia/Kolkata');
+
 $message = '';
 $error = '';
 
@@ -198,12 +201,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $starting_price = 0;
             $bid_increment = $bid_amount_per_bid;
             
-            // Combine date and time
+            // Set timezone to IST for date/time operations
+            date_default_timezone_set('Asia/Kolkata');
+            
+            // Combine date and time (treat as IST)
             $start_datetime = $start_date . ' ' . $start_time;
             $end_datetime = $end_date . ' ' . $end_time;
             
-            // Validate that end time is after start time
-            if (strtotime($end_datetime) <= strtotime($start_datetime)) {
+            // Create DateTime objects in IST timezone
+            $start_dt = new DateTime($start_datetime, new DateTimeZone('Asia/Kolkata'));
+            $end_dt = new DateTime($end_datetime, new DateTimeZone('Asia/Kolkata'));
+            
+            // Convert to UTC for database storage
+            $start_dt->setTimezone(new DateTimeZone('UTC'));
+            $end_dt->setTimezone(new DateTimeZone('UTC'));
+            
+            $start_datetime_utc = $start_dt->format('Y-m-d H:i:s');
+            $end_datetime_utc = $end_dt->format('Y-m-d H:i:s');
+            
+            // Validate that end time is after start time (using IST)
+            if ($end_dt <= $start_dt) {
                 $error = "End date/time must be after start date/time.";
             } else {
                 // Ensure is_active is set to 1 by default
@@ -211,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$stmt) {
                     $error = "Database prepare error: " . $conn->error;
                 } else {
-                    $stmt->bind_param("ssddddss", $title, $description, $prize_amount, $starting_price, $starting_price, $bid_increment, $start_datetime, $end_datetime);
+                    $stmt->bind_param("ssddddss", $title, $description, $prize_amount, $starting_price, $starting_price, $bid_increment, $start_datetime_utc, $end_datetime_utc);
                     if ($stmt->execute()) {
                         $inserted_id = $conn->insert_id;
                         $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'create_bidding_item', 'Created bidding item: $title', '{$_SERVER['REMOTE_ADDR']}')");
@@ -230,21 +247,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Update bidding item
     if (isset($_POST['update_bidding'])) {
+        date_default_timezone_set('Asia/Kolkata');
+        
         $id = intval($_POST['bidding_id'] ?? 0);
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $prize_amount = floatval($_POST['prize_amount'] ?? 0);
         $starting_price = floatval($_POST['starting_price'] ?? 0);
         $bid_increment = floatval($_POST['bid_increment'] ?? 1.00);
-        $start_time = trim($_POST['start_date'] ?? '') . ' ' . trim($_POST['start_time'] ?? '');
-        $end_time = trim($_POST['end_date'] ?? '') . ' ' . trim($_POST['end_time'] ?? '');
+        $start_date = trim($_POST['start_date'] ?? '');
+        $start_time_input = trim($_POST['start_time'] ?? '');
+        $end_date = trim($_POST['end_date'] ?? '');
+        $end_time_input = trim($_POST['end_time'] ?? '');
+        
+        // Combine date and time (treat as IST)
+        $start_datetime = $start_date . ' ' . $start_time_input;
+        $end_datetime = $end_date . ' ' . $end_time_input;
+        
+        // Create DateTime objects in IST timezone
+        $start_dt = new DateTime($start_datetime, new DateTimeZone('Asia/Kolkata'));
+        $end_dt = new DateTime($end_datetime, new DateTimeZone('Asia/Kolkata'));
+        
+        // Convert to UTC for database storage
+        $start_dt->setTimezone(new DateTimeZone('UTC'));
+        $end_dt->setTimezone(new DateTimeZone('UTC'));
+        
+        $start_time_utc = $start_dt->format('Y-m-d H:i:s');
+        $end_time_utc = $end_dt->format('Y-m-d H:i:s');
+        
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         
-        if ($id <= 0 || empty($title) || $prize_amount <= 0 || $starting_price <= 0 || empty($start_time) || empty($end_time)) {
+        if ($id <= 0 || empty($title) || $prize_amount <= 0 || $starting_price <= 0 || empty($start_datetime) || empty($end_datetime)) {
             $error = "Please fill all required fields with valid values.";
         } else {
             $stmt = $conn->prepare("UPDATE bidding_items SET title = ?, description = ?, prize_amount = ?, starting_price = ?, bid_increment = ?, start_time = ?, end_time = ?, is_active = ? WHERE id = ?");
-            $stmt->bind_param("ssddddsssi", $title, $description, $prize_amount, $starting_price, $bid_increment, $start_time, $end_time, $is_active, $id);
+            $stmt->bind_param("ssddddsssi", $title, $description, $prize_amount, $starting_price, $bid_increment, $start_time_utc, $end_time_utc, $is_active, $id);
             if ($stmt->execute()) {
                 $message = "Bidding item updated successfully!";
                 $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'update_bidding_item', 'Updated bidding item ID: $id', '{$_SERVER['REMOTE_ADDR']}')");
@@ -478,23 +515,26 @@ try {
                         <small style="color:rgba(255,255,255,0.4);">How many Astrons per bid (e.g., 0.20 means user with 1 Astron can bid 5 times)</small>
                     </div>
                 </div>
+                <div style="margin: 15px 0; padding: 10px; background: rgba(0, 255, 255, 0.1); border: 1px solid var(--primary-cyan); border-radius: 8px; color: var(--primary-cyan); font-size: 0.9rem;">
+                    <i class="fas fa-clock"></i> <strong>All dates and times are in IST (Indian Standard Time)</strong>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>START DATE *</label>
-                        <input type="date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+                        <label>START DATE (IST) *</label>
+                        <input type="date" name="start_date" value="<?php date_default_timezone_set('Asia/Kolkata'); echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="form-group">
-                        <label>START TIME *</label>
-                        <input type="time" name="start_time" value="<?php echo date('H:i'); ?>" required>
+                        <label>START TIME (IST) *</label>
+                        <input type="time" name="start_time" value="<?php date_default_timezone_set('Asia/Kolkata'); echo date('H:i'); ?>" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>END DATE *</label>
+                        <label>END DATE (IST) *</label>
                         <input type="date" name="end_date" required>
                     </div>
                     <div class="form-group">
-                        <label>END TIME *</label>
+                        <label>END TIME (IST) *</label>
                         <input type="time" name="end_time" required>
                     </div>
                 </div>
@@ -531,8 +571,22 @@ try {
                             <td><?php echo number_format($item['current_bid'], 2); ?> Astrons</td>
                             <td><?php echo $item['current_bidder_name'] ? htmlspecialchars($item['current_bidder_name']) : 'None'; ?></td>
                             <td><?php echo $item['total_bids']; ?></td>
-                            <td><?php echo isset($item['start_time']) && $item['start_time'] ? date('M d, Y H:i', strtotime($item['start_time'])) : 'N/A'; ?></td>
-                            <td><?php echo date('M d, Y H:i', strtotime($item['end_time'])); ?></td>
+                            <td><?php 
+                                date_default_timezone_set('Asia/Kolkata');
+                                if (isset($item['start_time']) && $item['start_time']) {
+                                    $start = new DateTime($item['start_time'], new DateTimeZone('UTC'));
+                                    $start->setTimezone(new DateTimeZone('Asia/Kolkata'));
+                                    echo $start->format('M d, Y H:i') . ' IST';
+                                } else {
+                                    echo 'N/A';
+                                }
+                            ?></td>
+                            <td><?php 
+                                date_default_timezone_set('Asia/Kolkata');
+                                $end = new DateTime($item['end_time'], new DateTimeZone('UTC'));
+                                $end->setTimezone(new DateTimeZone('Asia/Kolkata'));
+                                echo $end->format('M d, Y H:i') . ' IST';
+                            ?></td>
                             <td>
                                 <?php if($item['is_completed']): ?>
                                     <span class="badge badge-completed">COMPLETED</span>
