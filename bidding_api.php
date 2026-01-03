@@ -32,7 +32,8 @@ if ($action === 'get_active_biddings') {
     $all_items = $all_items_result ? $all_items_result->fetch_all(MYSQLI_ASSOC) : [];
     
     // Query for active bidding items
-    // Show ALL active items (regardless of end_time) so users can see them
+    // Show ALL items where is_active = 1 (regardless of completion status, end_time, or start_time)
+    // Items will remain visible until admin deletes them (sets is_active = 0)
     // Completed items will be shown with "BIDDING CLOSED" status
     // Items can show even before start_time (users can see upcoming auctions)
     $query = "SELECT bi.*, 
@@ -43,7 +44,7 @@ if ($action === 'get_active_biddings') {
         ORDER BY 
             CASE WHEN bi.is_completed = 1 THEN 1 ELSE 0 END,
             CASE WHEN bi.end_time < NOW() AND bi.is_completed = 0 THEN 1 ELSE 0 END,
-            bi.end_time ASC";
+            bi.created_at DESC";
     
     $result = $conn->query($query);
     

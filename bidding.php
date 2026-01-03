@@ -258,7 +258,7 @@ $conn->close();
                                 <div class="bidding-card ${expired || isCompleted ? 'expired' : 'active'}" data-id="${item.id}">
                                     <div class="bidding-title">${item.title}</div>
                                     <div class="prize-amount">Prize: ₹${parseFloat(item.prize_amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
-                                    <div class="current-bid">Final Bid: <span class="current-bid-amount">${parseFloat(item.current_bid).toFixed(2)}</span> Astrons</div>
+                                    <div class="current-bid">${isCompleted ? 'Final Bid' : 'Current Bid'}: <span class="current-bid-amount">${parseFloat(item.current_bid).toFixed(2)}</span> Astrons</div>
                                     ${isCompleted ? `
                                         <div class="status-badge completed">
                                             <i class="fas fa-check-circle"></i>

@@ -280,27 +280,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Delete completed bidding item
+    // Delete bidding item (any item can be deleted by admin)
     if (isset($_POST['delete_bidding'])) {
         $id = intval($_POST['bidding_id'] ?? 0);
         if ($id > 0) {
-            // Check if item is completed
-            $item = $conn->query("SELECT is_completed FROM bidding_items WHERE id = $id")->fetch_assoc();
-            if ($item && $item['is_completed'] == 1) {
-                // Delete related records first (bidding_history will be deleted by CASCADE, but user_wins won't)
-                // We'll keep user_wins for record keeping, just delete the bidding item
+            // Get item info for logging
+            $item = $conn->query("SELECT title, is_completed FROM bidding_items WHERE id = $id")->fetch_assoc();
+            if ($item) {
+                // Delete the bidding item (bidding_history will be deleted by CASCADE)
+                // Note: user_wins records are kept for historical purposes
                 $stmt = $conn->prepare("DELETE FROM bidding_items WHERE id = ?");
                 $stmt->bind_param("i", $id);
                 if ($stmt->execute()) {
-                    $message = "Bidding item deleted successfully!";
-                    $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'delete_bidding', 'Deleted completed bidding item ID: $id', '{$_SERVER['REMOTE_ADDR']}')");
+                    $item_title = htmlspecialchars($item['title']);
+                    $message = "Bidding item '{$item_title}' deleted successfully!";
+                    $conn->query("INSERT INTO admin_logs (admin_id, admin_username, action, description, ip_address) VALUES ({$_SESSION['admin_id']}, '{$_SESSION['admin_username']}', 'delete_bidding', 'Deleted bidding item ID: $id - {$item_title}', '{$_SERVER['REMOTE_ADDR']}')");
                 } else {
-                    $error = "Failed to delete bidding item.";
+                    $error = "Failed to delete bidding item: " . $stmt->error;
                 }
                 $stmt->close();
             } else {
-                $error = "Only completed bidding items can be deleted.";
+                $error = "Bidding item not found.";
             }
+        } else {
+            $error = "Invalid bidding item ID.";
         }
     }
 }
@@ -478,11 +481,11 @@ try {
                 <div class="form-row">
                     <div class="form-group">
                         <label>START DATE *</label>
-                        <input type="date" name="start_date" required>
+                        <input type="date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="form-group">
                         <label>START TIME *</label>
-                        <input type="time" name="start_time" required>
+                        <input type="time" name="start_time" value="<?php echo date('H:i'); ?>" required>
                     </div>
                 </div>
                 <div class="form-row">
@@ -540,18 +543,20 @@ try {
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if(!$item['is_completed'] && strtotime($item['end_time']) < time()): ?>
-                                    <form method="POST" style="display:inline;">
+                                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                    <?php if(!$item['is_completed'] && strtotime($item['end_time']) < time()): ?>
+                                        <form method="POST" style="display:inline;">
+                                            <input type="hidden" name="bidding_id" value="<?php echo $item['id']; ?>">
+                                            <button type="submit" name="complete_bidding" class="btn-complete">Complete</button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this bidding item? This action cannot be undone.');">
                                         <input type="hidden" name="bidding_id" value="<?php echo $item['id']; ?>">
-                                        <button type="submit" name="complete_bidding" class="btn-complete">Complete</button>
+                                        <button type="submit" name="delete_bidding" class="btn-delete" title="Delete this bidding item">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
                                     </form>
-                                <?php endif; ?>
-                                <?php if($item['is_completed']): ?>
-                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this completed bidding item? This action cannot be undone.');">
-                                        <input type="hidden" name="bidding_id" value="<?php echo $item['id']; ?>">
-                                        <button type="submit" name="delete_bidding" class="btn-delete">Delete</button>
-                                    </form>
-                                <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                         <?php endforeach; ?>
