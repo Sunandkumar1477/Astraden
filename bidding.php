@@ -90,6 +90,12 @@ $conn->close();
         const astronsPerCredit = <?php echo $astrons_per_credit; ?>;
         
         function updateBiddings() {
+            const grid = document.getElementById('biddingGrid');
+            if (!grid) {
+                console.error('Bidding grid element not found');
+                return;
+            }
+            
             fetch('bidding_api.php?action=get_active_biddings' + (window.location.search.includes('debug') ? '&debug=1' : ''))
                 .then(r => {
                     if (!r.ok) {
@@ -99,43 +105,67 @@ $conn->close();
                 })
                 .then(data => {
                     console.log('Bidding API Response:', data);
-                    const grid = document.getElementById('biddingGrid');
                     if (!data.success) {
                         grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">Error loading biddings: ' + (data.message || 'Unknown error') + '</div>';
                         console.error('Bidding API Error:', data);
                         if (data.debug) {
                             console.log('Debug Info:', data.debug);
+                            // Show debug info on page if debug mode
+                            if (window.location.search.includes('debug')) {
+                                grid.innerHTML += '<div style="grid-column: 1 / -1; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; margin-top: 20px; font-size: 0.9rem;"><pre>' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
+                            }
                         }
                         return;
                     }
                     
                     if (!data.items || data.items.length === 0) {
                         let message = 'No active biddings at the moment. Check back later!';
-                        if (data.debug && data.debug.total_items > 0) {
-                            message += '<br><small style="color: rgba(255,255,255,0.4);">Total items in database: ' + data.debug.total_items + '</small>';
-                        }
-                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">' + message + '</div>';
                         if (data.debug) {
                             console.log('Debug Info:', data.debug);
+                            if (data.debug.total_items > 0) {
+                                message += '<br><small style="color: rgba(255,255,255,0.4);">Total items in database: ' + data.debug.total_items + '</small>';
+                            }
+                            if (data.debug.bidding_enabled === false) {
+                                message += '<br><small style="color: #ffaa00;">Bidding system is disabled in admin settings.</small>';
+                            }
+                            // Show debug info on page if debug mode
+                            if (window.location.search.includes('debug')) {
+                                message += '<div style="margin-top: 20px; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; text-align: left; font-size: 0.9rem;"><strong>Debug Info:</strong><pre>' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
+                            }
                         }
+                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">' + message + '</div>';
                         return;
                     }
                         
                         grid.innerHTML = data.items.map(item => {
                             const endTime = new Date(item.end_time).getTime();
+                            const startTime = item.start_time ? new Date(item.start_time).getTime() : 0;
                             const now = Date.now();
                             const expired = endTime < now;
+                            const notStarted = startTime > 0 && startTime > now;
                             
                             return `
                                 <div class="bidding-card ${expired ? 'expired' : 'active'}" data-id="${item.id}">
                                     <div class="bidding-title">${item.title}</div>
                                     <div class="prize-amount">Prize: ₹${parseFloat(item.prize_amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
                                     <div class="current-bid">Current Bid: <span class="current-bid-amount">${parseFloat(item.current_bid).toFixed(2)}</span> Astrons</div>
-                                    <div class="timer" data-end="${item.end_time}">Time Left: <span class="countdown"></span></div>
-                                    ${!expired ? `
+                                    ${notStarted ? `
+                                        <div class="timer" data-start="${item.start_time}">Starts in: <span class="countdown-start"></span></div>
+                                    ` : `
+                                        <div class="timer" data-end="${item.end_time}">Time Left: <span class="countdown"></span></div>
+                                    `}
+                                    ${expired ? `
+                                        <div style="color: #ff3333; text-align: center; margin-top: 10px;">Bidding Ended</div>
+                                    ` : notStarted ? `
+                                        <div style="color: #ffaa00; text-align: center; margin-top: 10px; padding: 10px; background: rgba(255,170,0,0.1); border-radius: 8px;">
+                                            <i class="fas fa-clock"></i> Bidding will start soon
+                                        </div>
+                                        <input type="number" class="bid-input" placeholder="Bidding not started yet" disabled style="opacity: 0.5;">
+                                        <button class="btn-bid" disabled style="opacity: 0.5; cursor: not-allowed;">Bidding Not Started</button>
+                                    ` : `
                                         <input type="number" class="bid-input" placeholder="Min: ${(parseFloat(item.current_bid) + parseFloat(item.bid_increment)).toFixed(2)} Astrons" step="${item.bid_increment}" min="${parseFloat(item.current_bid) + parseFloat(item.bid_increment)}">
                                         <button class="btn-bid" onclick="placeBid(${item.id}, this)">Place Bid</button>
-                                    ` : '<div style="color: #ff3333; text-align: center; margin-top: 10px;">Bidding Ended</div>'}
+                                    `}
                                     <div class="recent-bids">Total Bids: ${item.total_bids}</div>
                                 </div>
                             `;
@@ -155,19 +185,51 @@ $conn->close();
         }
         
         function updateCountdowns() {
-            document.querySelectorAll('.timer').forEach(timer => {
+            // Update end countdowns
+            document.querySelectorAll('.timer[data-end]').forEach(timer => {
                 const endTime = new Date(timer.dataset.end).getTime();
                 const now = Date.now();
                 const diff = endTime - now;
                 
                 if (diff <= 0) {
-                    timer.querySelector('.countdown').textContent = 'Ended';
+                    const countdownEl = timer.querySelector('.countdown');
+                    if (countdownEl) {
+                        countdownEl.textContent = 'Ended';
+                    }
                     timer.closest('.bidding-card').classList.add('expired');
                 } else {
                     const hours = Math.floor(diff / 3600000);
                     const minutes = Math.floor((diff % 3600000) / 60000);
                     const seconds = Math.floor((diff % 60000) / 1000);
-                    timer.querySelector('.countdown').textContent = `${hours}h ${minutes}m ${seconds}s`;
+                    const countdownEl = timer.querySelector('.countdown');
+                    if (countdownEl) {
+                        countdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                    }
+                }
+            });
+            
+            // Update start countdowns
+            document.querySelectorAll('.timer[data-start]').forEach(timer => {
+                const startTime = new Date(timer.dataset.start).getTime();
+                const now = Date.now();
+                const diff = startTime - now;
+                
+                if (diff <= 0) {
+                    // Bidding has started, reload to show active bidding
+                    updateBiddings();
+                } else {
+                    const days = Math.floor(diff / 86400000);
+                    const hours = Math.floor((diff % 86400000) / 3600000);
+                    const minutes = Math.floor((diff % 3600000) / 60000);
+                    const seconds = Math.floor((diff % 60000) / 1000);
+                    const countdownEl = timer.querySelector('.countdown-start');
+                    if (countdownEl) {
+                        if (days > 0) {
+                            countdownEl.textContent = `${days}d ${hours}h ${minutes}m`;
+                        } else {
+                            countdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                        }
+                    }
                 }
             });
         }

@@ -32,17 +32,15 @@ if ($action === 'get_active_biddings') {
     $all_items = $all_items_result ? $all_items_result->fetch_all(MYSQLI_ASSOC) : [];
     
     // Query for active bidding items
+    // Show items that are active, not completed, and haven't ended yet
+    // Items can show even before start_time (users can see upcoming auctions)
     $query = "SELECT bi.*, 
         COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
         COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
         WHERE bi.is_active = 1 
         AND bi.is_completed = 0 
-        AND (
-            (bi.start_time IS NULL AND bi.end_time > NOW())
-            OR 
-            (bi.start_time IS NOT NULL AND bi.start_time <= NOW() AND bi.end_time > NOW())
-        )
+        AND bi.end_time > NOW()
         ORDER BY bi.end_time ASC";
     
     $result = $conn->query($query);
@@ -66,10 +64,10 @@ if ($action === 'get_active_biddings') {
         'current_time' => date('Y-m-d H:i:s')
     ];
     
-    // If bidding system is disabled, return empty but with info
-    if (!$bidding_enabled && !isset($_GET['debug'])) {
-        echo json_encode(['success' => true, 'items' => [], 'message' => 'Bidding system is disabled', 'debug' => $debug_info]);
-        exit;
+    // If bidding system is disabled, still return items but with a warning message
+    // This allows debugging even when system is disabled
+    if (!$bidding_enabled) {
+        $debug_info['warning'] = 'Bidding system is disabled in settings';
     }
     
     echo json_encode(['success' => true, 'items' => $items, 'debug' => $debug_info]);
@@ -127,8 +125,17 @@ if ($action === 'place_bid') {
     $start_time = $item['start_time'] ? strtotime($item['start_time']) : 0;
     $end_time = strtotime($item['end_time']);
     
-    if (!$item || !$item['is_active'] || $item['is_completed'] || ($start_time > 0 && $now < $start_time) || $now >= $end_time) {
+    if (!$item || !$item['is_active'] || $item['is_completed'] || $now >= $end_time) {
         echo json_encode(['success' => false, 'message' => 'Bidding is not active']);
+        exit;
+    }
+    
+    // Check if bidding has started
+    if ($start_time > 0 && $now < $start_time) {
+        $time_until_start = $start_time - $now;
+        $hours = floor($time_until_start / 3600);
+        $minutes = floor(($time_until_start % 3600) / 60);
+        echo json_encode(['success' => false, 'message' => "Bidding has not started yet. It will start in {$hours}h {$minutes}m"]);
         exit;
     }
     
