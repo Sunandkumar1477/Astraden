@@ -31,431 +31,29 @@ $conn->close();
     <link rel="icon" type="image/svg+xml" href="Alogo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/bidding.css">
     <style>
-        :root {
-            --primary-cyan: #00ffff;
-            --primary-purple: #9d4edd;
-            --dark-bg: #05050a;
-            --card-bg: rgba(15, 15, 25, 0.95);
-            --success-green: #00ff88;
-            --warning-orange: #ffaa00;
-            --error-red: #ff3333;
-        }
-        
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-        }
-        
-        body { 
-            font-family: 'Rajdhani', sans-serif; 
-            background: var(--dark-bg); 
-            color: white; 
-            min-height: 100vh; 
-            padding: 20px; 
-            position: relative;
-        }
-        
-        .space-bg { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #05050a 100%); 
-            z-index: -1; 
-        }
-        
+        /* Hide content until fully loaded - no loading spinner visible */
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            display: none;
         }
         
-        .back-btn { 
-            display: inline-block; 
-            margin-bottom: 20px; 
-            padding: 10px 20px; 
-            background: rgba(0,255,255,0.1); 
-            border: 1px solid var(--primary-cyan); 
-            border-radius: 8px; 
-            color: var(--primary-cyan); 
-            text-decoration: none; 
-            transition: all 0.3s ease;
+        .container.loaded {
+            display: block;
         }
         
-        .back-btn:hover {
-            background: rgba(0,255,255,0.2);
-            transform: translateX(-3px);
+        .bidding-grid {
+            display: none;
         }
         
-        .header { 
-            text-align: center; 
-            margin-bottom: 30px; 
-            padding: 20px 0; 
-        }
-        
-        .header h1 { 
-            font-family: 'Orbitron', sans-serif; 
-            color: var(--primary-cyan); 
-            font-size: 2.5rem; 
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            letter-spacing: 3px;
-        }
-        
-        .balance-card { 
-            background: var(--card-bg); 
-            border: 2px solid var(--primary-cyan); 
-            border-radius: 15px; 
-            padding: 25px; 
-            margin-bottom: 30px; 
-            text-align: center;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
-        }
-        
-        .balance-card h2 { 
-            color: var(--primary-purple); 
-            margin-bottom: 15px; 
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
-        
-        .balance-card .amount { 
-            font-size: 2.5rem; 
-            font-weight: 900; 
-            color: #FFD700; 
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-            margin: 10px 0;
-        }
-        
-        .balance-card .rate-info {
-            color: rgba(255,255,255,0.6); 
-            font-size: 0.95rem; 
-            margin-top: 15px;
-        }
-        
-        .balance-card .buy-link {
-            color: var(--primary-cyan); 
-            text-decoration: none; 
-            margin-top: 15px; 
-            display: inline-block; 
-            font-weight: 700;
-            transition: all 0.3s ease;
-        }
-        
-        .balance-card .buy-link:hover {
-            color: var(--primary-purple);
-            text-shadow: 0 0 10px rgba(157, 78, 221, 0.5);
-        }
-        
-        .bidding-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
-            gap: 25px; 
-        }
-        
-        .bidding-card { 
-            background: var(--card-bg); 
-            border: 1px solid rgba(0, 255, 255, 0.3); 
-            border-radius: 15px; 
-            padding: 25px; 
-            position: relative;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        
-        .bidding-card.active { 
-            border-color: var(--primary-cyan); 
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
-            transform: translateY(-2px);
-        }
-        
-        .bidding-card.expired { 
-            opacity: 0.75; 
-            border-color: rgba(255,255,255,0.2);
-        }
-        
-        .bidding-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 30px rgba(0, 255, 255, 0.3);
-        }
-        
-        .bidding-title { 
-            font-family: 'Orbitron', sans-serif; 
-            color: var(--primary-cyan); 
-            font-size: 1.3rem; 
-            margin-bottom: 15px;
-            font-weight: 700;
-            line-height: 1.4;
-        }
-        
-        .prize-amount { 
-            color: #FFD700; 
-            font-size: 1.8rem; 
-            font-weight: 900; 
-            margin: 15px 0;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-        
-        .current-bid { 
-            color: var(--primary-purple); 
-            font-size: 1.2rem; 
-            margin: 15px 0;
-            font-weight: 600;
-        }
-        
-        .current-bid-amount {
-            color: var(--primary-cyan);
-            font-weight: 700;
-        }
-        
-        .timer { 
-            color: var(--error-red); 
-            font-weight: 700; 
-            margin: 15px 0;
-            font-size: 1.1rem;
-            font-family: 'Orbitron', sans-serif;
-        }
-        
-        .bid-input { 
-            width: 100%; 
-            padding: 12px 15px; 
-            background: rgba(0,0,0,0.6); 
-            border: 2px solid var(--primary-cyan); 
-            border-radius: 8px; 
-            color: white; 
-            margin: 15px 0;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .bid-input:focus {
-            outline: none;
-            border-color: var(--primary-purple);
-            box-shadow: 0 0 15px rgba(157, 78, 221, 0.3);
-        }
-        
-        .bid-input:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .btn-bid { 
-            width: 100%; 
-            padding: 15px; 
-            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); 
-            border: none; 
-            border-radius: 8px; 
-            color: white; 
-            font-family: 'Orbitron', sans-serif; 
-            font-weight: 700; 
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .btn-bid:hover:not(:disabled) { 
-            transform: translateY(-3px); 
-            box-shadow: 0 8px 20px rgba(0, 255, 255, 0.5);
-        }
-        
-        .btn-bid:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .recent-bids { 
-            margin-top: 20px; 
-            font-size: 0.95rem; 
-            color: rgba(255,255,255,0.6);
-            text-align: center;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        /* Professional status badges and messages */
-        .status-badge { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 10px; 
-            padding: 15px 20px; 
-            margin: 15px 0; 
-            border-radius: 10px; 
-            font-family: 'Orbitron', sans-serif; 
-            font-weight: 700; 
-            font-size: 0.95rem; 
-            text-transform: uppercase; 
-            letter-spacing: 2px;
-        }
-        
-        .status-badge.completed { 
-            background: linear-gradient(135deg, rgba(0, 200, 0, 0.2), rgba(0, 150, 0, 0.2)); 
-            border: 2px solid var(--success-green); 
-            color: var(--success-green); 
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-        }
-        
-        .status-badge.completed i { 
-            font-size: 1.3rem; 
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
-        }
-        
-        .winner-info { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 10px; 
-            padding: 12px; 
-            margin: 15px 0; 
-            background: rgba(255, 215, 0, 0.15); 
-            border: 2px solid #FFD700; 
-            border-radius: 10px; 
-            color: #FFD700; 
-            font-weight: 700;
-            font-size: 1rem;
-        }
-        
-        .winner-info i { 
-            font-size: 1.3rem; 
-            color: #FFD700;
-        }
-        
-        .completed-message, .expired-message, .not-started-message { 
-            text-align: center; 
-            padding: 20px; 
-            margin: 15px 0; 
-            border-radius: 10px; 
-            font-size: 1rem;
-        }
-        
-        .completed-message { 
-            background: rgba(0, 200, 0, 0.15); 
-            border: 2px solid var(--success-green); 
-            color: var(--success-green);
-        }
-        
-        .completed-message i { 
-            display: block; 
-            font-size: 2.5rem; 
-            margin-bottom: 10px; 
-            color: var(--success-green);
-        }
-        
-        .completed-message p { 
-            margin: 0; 
-            font-weight: 600;
-        }
-        
-        .expired-message { 
-            background: rgba(255, 170, 0, 0.15); 
-            border: 2px solid var(--warning-orange); 
-            color: #ffcc66;
-        }
-        
-        .expired-message i { 
-            display: block; 
-            font-size: 2.5rem; 
-            margin-bottom: 10px; 
-            color: var(--warning-orange);
-        }
-        
-        .expired-message p { 
-            margin: 0; 
-            font-weight: 600;
-        }
-        
-        .not-started-message { 
-            background: rgba(255, 170, 0, 0.15); 
-            border: 2px solid var(--warning-orange); 
-            color: #ffcc66;
-        }
-        
-        .not-started-message i { 
-            display: block; 
-            font-size: 2.5rem; 
-            margin-bottom: 10px; 
-            color: var(--warning-orange);
-        }
-        
-        .not-started-message p { 
-            margin: 0; 
-            font-weight: 600;
-        }
-        
-        /* Loading and error states */
-        .loading-state, .error-state, .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 60px 40px;
-            color: rgba(255,255,255,0.7);
-        }
-        
-        .loading-state i {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            color: var(--primary-cyan);
-        }
-        
-        .error-state {
-            color: var(--error-red);
-        }
-        
-        .error-state i {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-        
-        .retry-btn {
-            padding: 12px 30px;
-            background: var(--primary-cyan);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-weight: 700;
-            font-family: 'Orbitron', sans-serif;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-        }
-        
-        .retry-btn:hover {
-            background: var(--primary-purple);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.4);
-        }
-        
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .bidding-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 1.8rem;
-            }
-            
-            .balance-card .amount {
-                font-size: 2rem;
-            }
-        }
-        
-        /* Smooth transitions */
-        .bidding-card * {
-            transition: all 0.3s ease;
+        .bidding-grid.loaded {
+            display: grid;
         }
     </style>
 </head>
 <body>
     <div class="space-bg"></div>
-    <div class="container">
+    <div class="container" id="mainContainer">
         <a href="index.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
         
         <div class="header">
@@ -474,16 +72,21 @@ $conn->close();
         </div>
         
         <div class="bidding-grid" id="biddingGrid">
-            <div class="loading-state">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading active biddings...</p>
-            </div>
+            <!-- Content will be loaded here without showing loading state -->
         </div>
     </div>
     
     <script>
         const astronsBalance = <?php echo $astrons_balance; ?>;
         const astronsPerCredit = <?php echo $astrons_per_credit; ?>;
+        
+        // Show container only when content is ready
+        function showContent() {
+            const container = document.getElementById('mainContainer');
+            const grid = document.getElementById('biddingGrid');
+            if (container) container.classList.add('loaded');
+            if (grid) grid.classList.add('loaded');
+        }
         
         function updateBiddings() {
             const grid = document.getElementById('biddingGrid');
@@ -492,8 +95,8 @@ $conn->close();
                 return;
             }
             
-            // Show loading state
-            grid.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Loading active biddings...</p></div>';
+            // Don't show loading state - keep grid hidden until content is ready
+            // grid.innerHTML = ''; // Keep empty until data loads
             
             fetch('bidding_api.php?action=get_active_biddings' + (window.location.search.includes('debug') ? '&debug=1' : ''))
                 .then(r => {
@@ -507,36 +110,42 @@ $conn->close();
                     console.log('Bidding API Response:', data);
                     console.log('Items count:', data.items ? data.items.length : 0);
                     
+                    // Show container now that we have response (even if error)
+                    showContent();
+                    
                     if (!data.success) {
-                        let errorHtml = '<div class="error-state">';
+                        let errorHtml = '<div class="error-state active">';
                         errorHtml += '<i class="fas fa-exclamation-triangle"></i><br>';
-                        errorHtml += '<strong>Error loading biddings</strong><br>';
-                        errorHtml += '<small>' + (data.message || 'Unknown error') + '</small><br><br>';
+                        errorHtml += '<strong style="font-size: 1.3rem; margin: 15px 0; display: block;">Error loading biddings</strong>';
+                        errorHtml += '<p style="color: var(--text-secondary); margin: 10px 0;">' + (data.message || 'Unknown error') + '</p>';
                         errorHtml += '<button onclick="updateBiddings()" class="retry-btn">Retry</button>';
                         errorHtml += '</div>';
                         grid.innerHTML = errorHtml;
                         console.error('Bidding API Error:', data);
                         if (data.debug && window.location.search.includes('debug')) {
-                            grid.innerHTML += '<div style="grid-column: 1 / -1; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; margin-top: 20px; font-size: 0.9rem; text-align: left;"><pre>' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
+                            grid.innerHTML += '<div style="grid-column: 1 / -1; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; margin-top: 20px; font-size: 0.9rem; text-align: left; border-radius: 10px;"><pre style="white-space: pre-wrap;">' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
                         }
                         return;
                     }
                     
+                    // Show container now that we have response
+                    showContent();
+                    
                     if (!data.items || data.items.length === 0) {
-                        let message = '<div class="empty-state">';
-                        message += '<i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 20px; color: rgba(255,255,255,0.3);"></i><br>';
-                        message += '<strong>No active biddings at the moment</strong><br>';
-                        message += '<small>Check back later for new bidding opportunities!</small>';
+                        let message = '<div class="empty-state active">';
+                        message += '<i class="fas fa-inbox"></i><br>';
+                        message += '<strong style="font-size: 1.3rem; margin: 15px 0; display: block;">No active biddings at the moment</strong>';
+                        message += '<p style="color: var(--text-secondary); font-size: 1.1rem;">Check back later for new bidding opportunities!</p>';
                         if (data.debug) {
                             console.log('Debug Info:', data.debug);
                             if (data.debug.total_items > 0) {
-                                message += '<br><br><small style="color: rgba(255,255,255,0.4);">Total items in database: ' + data.debug.total_items + '</small>';
+                                message += '<br><small style="color: var(--text-muted);">Total items in database: ' + data.debug.total_items + '</small>';
                             }
                             if (data.debug.bidding_enabled === false) {
-                                message += '<br><small style="color: #ffaa00;">Bidding system is disabled in admin settings.</small>';
+                                message += '<br><small style="color: var(--warning-orange);">Bidding system is disabled in admin settings.</small>';
                             }
                             if (window.location.search.includes('debug')) {
-                                message += '<div style="margin-top: 20px; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; text-align: left; font-size: 0.9rem;"><strong>Debug Info:</strong><pre>' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
+                                message += '<div style="margin-top: 30px; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; text-align: left; font-size: 0.9rem; border-radius: 10px;"><strong>Debug Info:</strong><pre style="margin-top: 10px; white-space: pre-wrap;">' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
                             }
                         }
                         message += '</div>';
@@ -607,12 +216,15 @@ $conn->close();
                 })
                 .catch(err => {
                     console.error('Error loading biddings:', err);
+                    // Show container even on error so user can see the error
+                    showContent();
+                    
                     const grid = document.getElementById('biddingGrid');
                     if (grid) {
-                        let errorHtml = '<div class="error-state">';
+                        let errorHtml = '<div class="error-state active">';
                         errorHtml += '<i class="fas fa-exclamation-circle"></i><br>';
-                        errorHtml += '<strong>Error loading biddings</strong><br>';
-                        errorHtml += '<small>' + err.message + '</small><br><br>';
+                        errorHtml += '<strong style="font-size: 1.3rem; margin: 15px 0; display: block;">Error loading biddings</strong>';
+                        errorHtml += '<p style="color: var(--text-secondary); margin: 10px 0;">' + err.message + '</p>';
                         errorHtml += '<button onclick="updateBiddings()" class="retry-btn">Retry</button>';
                         errorHtml += '</div>';
                         grid.innerHTML = errorHtml;
@@ -726,11 +338,23 @@ $conn->close();
                 });
         }
         
-        // Initial load
-        updateBiddings();
+        // Initial load - wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Load data first, then show content
+                updateBiddings();
+            });
+        } else {
+            // DOM already ready, load data
+            updateBiddings();
+        }
         
-        // Update every 5 seconds
-        setInterval(updateBiddings, 5000);
+        // Update every 5 seconds (only after initial load)
+        let updateInterval = null;
+        setTimeout(() => {
+            updateInterval = setInterval(updateBiddings, 5000);
+        }, 6000); // Start auto-refresh 6 seconds after initial load
+        
         setInterval(updateCountdowns, 1000);
         setInterval(updateBalance, 10000);
     </script>

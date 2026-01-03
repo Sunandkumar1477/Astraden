@@ -1,0 +1,674 @@
+/**
+ * Professional Bidding Page Styles
+ * Modern, sleek design for Astraden Live Bidding
+ */
+
+:root {
+    --primary-cyan: #00ffff;
+    --primary-purple: #9d4edd;
+    --dark-bg: #05050a;
+    --card-bg: rgba(15, 15, 25, 0.95);
+    --success-green: #00ff88;
+    --warning-orange: #ffaa00;
+    --error-red: #ff3333;
+    --gold: #FFD700;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.5);
+}
+
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+body { 
+    font-family: 'Rajdhani', sans-serif; 
+    background: var(--dark-bg); 
+    color: var(--text-primary); 
+    min-height: 100vh; 
+    padding: 20px; 
+    position: relative;
+    overflow-x: hidden;
+}
+
+.space-bg { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #05050a 100%);
+    z-index: -1; 
+}
+
+/* Animated stars background */
+.space-bg::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20% 30%, white, transparent),
+        radial-gradient(2px 2px at 60% 70%, white, transparent),
+        radial-gradient(1px 1px at 50% 50%, white, transparent),
+        radial-gradient(1px 1px at 80% 10%, white, transparent),
+        radial-gradient(2px 2px at 90% 40%, white, transparent),
+        radial-gradient(1px 1px at 33% 60%, white, transparent),
+        radial-gradient(1px 1px at 55% 80%, white, transparent);
+    background-repeat: repeat;
+    background-size: 200% 200%;
+    animation: twinkle 20s linear infinite;
+    opacity: 0.3;
+}
+
+@keyframes twinkle {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-50%, -50%); }
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-in forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.back-btn { 
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 25px; 
+    padding: 12px 24px; 
+    background: rgba(0,255,255,0.1); 
+    border: 2px solid var(--primary-cyan); 
+    border-radius: 10px; 
+    color: var(--primary-cyan); 
+    text-decoration: none; 
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.back-btn:hover {
+    background: rgba(0,255,255,0.2);
+    transform: translateX(-5px);
+    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+}
+
+.header { 
+    text-align: center; 
+    margin-bottom: 40px; 
+    padding: 30px 0; 
+}
+
+.header h1 { 
+    font-family: 'Orbitron', sans-serif; 
+    color: var(--primary-cyan); 
+    font-size: 3rem; 
+    text-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+    letter-spacing: 4px;
+    font-weight: 900;
+    margin-bottom: 10px;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 30px rgba(0, 255, 255, 0.3); }
+    to { text-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.5), 0 0 50px rgba(0, 255, 255, 0.3); }
+}
+
+.header h1 i {
+    margin-right: 15px;
+    animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.balance-card { 
+    background: linear-gradient(135deg, var(--card-bg), rgba(15, 15, 25, 0.8)); 
+    border: 2px solid var(--primary-cyan); 
+    border-radius: 20px; 
+    padding: 30px; 
+    margin-bottom: 40px; 
+    text-align: center;
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.balance-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    50% { transform: translate(-50%, -50%) rotate(180deg); }
+}
+
+.balance-card h2 { 
+    color: var(--primary-purple); 
+    margin-bottom: 20px; 
+    font-size: 1.5rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+}
+
+.balance-card .amount { 
+    font-size: 3.5rem; 
+    font-weight: 900; 
+    color: var(--gold); 
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    margin: 15px 0;
+    position: relative;
+    z-index: 1;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.balance-card .rate-info {
+    color: var(--text-secondary); 
+    font-size: 1rem; 
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.balance-card .buy-link {
+    color: var(--primary-cyan); 
+    text-decoration: none; 
+    margin-top: 20px; 
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    padding: 10px 20px;
+    border: 1px solid var(--primary-cyan);
+    border-radius: 8px;
+    background: rgba(0, 255, 255, 0.05);
+}
+
+.balance-card .buy-link:hover {
+    color: var(--primary-purple);
+    border-color: var(--primary-purple);
+    background: rgba(157, 78, 221, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(157, 78, 221, 0.3);
+}
+
+.bidding-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+    gap: 30px; 
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out 0.2s forwards;
+}
+
+@keyframes fadeInUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.bidding-card { 
+    background: linear-gradient(135deg, var(--card-bg), rgba(20, 20, 35, 0.9)); 
+    border: 2px solid rgba(0, 255, 255, 0.3); 
+    border-radius: 20px; 
+    padding: 30px; 
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.bidding-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.bidding-card:hover::before {
+    left: 100%;
+}
+
+.bidding-card.active { 
+    border-color: var(--primary-cyan); 
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    transform: translateY(-5px);
+}
+
+.bidding-card.expired { 
+    opacity: 0.8; 
+    border-color: rgba(255,255,255,0.2);
+    filter: grayscale(0.3);
+}
+
+.bidding-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4);
+}
+
+.bidding-title { 
+    font-family: 'Orbitron', sans-serif; 
+    color: var(--primary-cyan); 
+    font-size: 1.4rem; 
+    margin-bottom: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.prize-amount { 
+    color: var(--gold); 
+    font-size: 2rem; 
+    font-weight: 900; 
+    margin: 20px 0;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    font-family: 'Orbitron', sans-serif;
+}
+
+.current-bid { 
+    color: var(--primary-purple); 
+    font-size: 1.3rem; 
+    margin: 20px 0;
+    font-weight: 600;
+}
+
+.current-bid-amount {
+    color: var(--primary-cyan);
+    font-weight: 700;
+    font-size: 1.4rem;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+}
+
+.timer { 
+    color: var(--error-red); 
+    font-weight: 700; 
+    margin: 20px 0;
+    font-size: 1.2rem;
+    font-family: 'Orbitron', sans-serif;
+    text-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
+}
+
+.bid-input { 
+    width: 100%; 
+    padding: 15px 20px; 
+    background: rgba(0,0,0,0.7); 
+    border: 2px solid var(--primary-cyan); 
+    border-radius: 10px; 
+    color: var(--text-primary); 
+    margin: 20px 0;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.bid-input:focus {
+    outline: none;
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 20px rgba(157, 78, 221, 0.4);
+    background: rgba(0,0,0,0.9);
+}
+
+.bid-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-bid { 
+    width: 100%; 
+    padding: 18px; 
+    background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); 
+    border: none; 
+    border-radius: 10px; 
+    color: white; 
+    font-family: 'Orbitron', sans-serif; 
+    font-weight: 700; 
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-bid::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-bid:hover:not(:disabled)::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-bid:hover:not(:disabled) { 
+    transform: translateY(-3px); 
+    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.6);
+}
+
+.btn-bid:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btn-bid:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.recent-bids { 
+    margin-top: 25px; 
+    font-size: 1rem; 
+    color: var(--text-secondary);
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.recent-bids i {
+    color: var(--primary-cyan);
+}
+
+/* Professional status badges and messages */
+.status-badge { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 12px; 
+    padding: 18px 25px; 
+    margin: 20px 0; 
+    border-radius: 12px; 
+    font-family: 'Orbitron', sans-serif; 
+    font-weight: 700; 
+    font-size: 1rem; 
+    text-transform: uppercase; 
+    letter-spacing: 2px;
+}
+
+.status-badge.completed { 
+    background: linear-gradient(135deg, rgba(0, 200, 0, 0.25), rgba(0, 150, 0, 0.15)); 
+    border: 2px solid var(--success-green); 
+    color: var(--success-green); 
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+}
+
+.status-badge.completed i { 
+    font-size: 1.5rem; 
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.15); }
+}
+
+.winner-info { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 12px; 
+    padding: 15px; 
+    margin: 20px 0; 
+    background: rgba(255, 215, 0, 0.2); 
+    border: 2px solid var(--gold); 
+    border-radius: 12px; 
+    color: var(--gold); 
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.winner-info i { 
+    font-size: 1.5rem; 
+    color: var(--gold);
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.completed-message, .expired-message, .not-started-message { 
+    text-align: center; 
+    padding: 25px; 
+    margin: 20px 0; 
+    border-radius: 12px; 
+    font-size: 1.05rem;
+}
+
+.completed-message { 
+    background: rgba(0, 200, 0, 0.2); 
+    border: 2px solid var(--success-green); 
+    color: var(--success-green);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+.completed-message i { 
+    display: block; 
+    font-size: 3rem; 
+    margin-bottom: 15px; 
+    color: var(--success-green);
+    animation: lockPulse 2s infinite;
+}
+
+@keyframes lockPulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(5deg); }
+}
+
+.completed-message p { 
+    margin: 0; 
+    font-weight: 600;
+}
+
+.expired-message { 
+    background: rgba(255, 170, 0, 0.2); 
+    border: 2px solid var(--warning-orange); 
+    color: #ffcc66;
+    box-shadow: 0 0 20px rgba(255, 170, 0, 0.3);
+}
+
+.expired-message i { 
+    display: block; 
+    font-size: 3rem; 
+    margin-bottom: 15px; 
+    color: var(--warning-orange);
+    animation: hourglass 2s infinite;
+}
+
+@keyframes hourglass {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(180deg); }
+}
+
+.expired-message p { 
+    margin: 0; 
+    font-weight: 600;
+}
+
+.not-started-message { 
+    background: rgba(255, 170, 0, 0.2); 
+    border: 2px solid var(--warning-orange); 
+    color: #ffcc66;
+    box-shadow: 0 0 20px rgba(255, 170, 0, 0.3);
+}
+
+.not-started-message i { 
+    display: block; 
+    font-size: 3rem; 
+    margin-bottom: 15px; 
+    color: var(--warning-orange);
+    animation: clockTick 1s infinite;
+}
+
+@keyframes clockTick {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(10deg); }
+}
+
+.not-started-message p { 
+    margin: 0; 
+    font-weight: 600;
+}
+
+/* Loading and error states - Hidden by default */
+.loading-state, .error-state, .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--text-secondary);
+    display: none; /* Hidden until needed */
+}
+
+.loading-state.active, .error-state.active, .empty-state.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.loading-state i {
+    font-size: 4rem;
+    margin-bottom: 25px;
+    color: var(--primary-cyan);
+}
+
+.error-state {
+    color: var(--error-red);
+}
+
+.error-state i {
+    font-size: 4rem;
+    margin-bottom: 25px;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 25px;
+    color: var(--text-muted);
+}
+
+.retry-btn {
+    padding: 15px 40px;
+    background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    margin-top: 25px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.retry-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    .bidding-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .bidding-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+        letter-spacing: 2px;
+    }
+    
+    .balance-card .amount {
+        font-size: 2.5rem;
+    }
+    
+    .bidding-card {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .balance-card {
+        padding: 20px;
+    }
+    
+    .balance-card .amount {
+        font-size: 2rem;
+    }
+}
+
+/* Smooth transitions for all interactive elements */
+.bidding-card * {
+    transition: all 0.3s ease;
+}
+
+/* Hide content until ready */
+.content-hidden {
+    display: none !important;
+}
+
+.content-visible {
+    display: block !important;
+    animation: fadeIn 0.5s ease-in;
+}
+
