@@ -5,10 +5,20 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Database connection settings
-$servername = "skiller7.cvceqwaw4sm7.ap-south-2.rds.amazonaws.com";
-$username = "skiller7";
-$password = "JESUSjesus1477";
-$db_name = "astraden";
+// Try to load from environment variables first (more secure)
+if (file_exists('.env')) {
+    $env = parse_ini_file('.env');
+    $servername = $env['DB_HOST'] ?? "skiller7.cvceqwaw4sm7.ap-south-2.rds.amazonaws.com";
+    $username = $env['DB_USER'] ?? "skiller7";
+    $password = $env['DB_PASS'] ?? "JESUSjesus1477";
+    $db_name = $env['DB_NAME'] ?? "astraden";
+} else {
+    // Fallback to hardcoded values (not recommended for production)
+    $servername = "skiller7.cvceqwaw4sm7.ap-south-2.rds.amazonaws.com";
+    $username = "skiller7";
+    $password = "JESUSjesus1477";
+    $db_name = "astraden";
+}
 
 // Create MySQLi connection
 $conn = new mysqli($servername, $username, $password, $db_name);
@@ -21,6 +31,12 @@ if ($conn->connect_error) {
 
 // Set charset to utf8mb4 for proper character support
 $conn->set_charset("utf8mb4");
+
+// Initialize security middleware if not already initialized
+if (!isset($GLOBALS['security']) || $GLOBALS['security'] === null) {
+    require_once 'security_middleware.php';
+    $GLOBALS['security'] = new SecurityMiddleware($conn);
+}
 
 // Create PDO connection
 try {
