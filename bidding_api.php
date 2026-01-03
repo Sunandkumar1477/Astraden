@@ -6,6 +6,9 @@ ini_set('log_errors', 1);
 
 session_start();
 
+// Set timezone to India (IST) for all date/time operations
+date_default_timezone_set('Asia/Kolkata');
+
 // Set JSON header first
 header('Content-Type: application/json');
 
@@ -109,8 +112,31 @@ if ($action === 'get_active_biddings') {
         
         $items = [];
         if ($result && $result->num_rows > 0) {
-            $items = $result->fetch_all(MYSQLI_ASSOC);
+            $raw_items = $result->fetch_all(MYSQLI_ASSOC);
+            
+            // Convert UTC times from database to IST for display
+            foreach ($raw_items as $item) {
+                // Convert start_time from UTC to IST
+                if ($item['start_time']) {
+                    $start_utc = new DateTime($item['start_time'], new DateTimeZone('UTC'));
+                    $start_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
+                    $item['start_time'] = $start_utc->format('Y-m-d H:i:s');
+                }
+                
+                // Convert end_time from UTC to IST
+                if ($item['end_time']) {
+                    $end_utc = new DateTime($item['end_time'], new DateTimeZone('UTC'));
+                    $end_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
+                    $item['end_time'] = $end_utc->format('Y-m-d H:i:s');
+                }
+                
+                $items[] = $item;
+            }
         }
+        
+        // Get current time in IST
+        $now_ist = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
+        $current_time_ist = $now_ist->format('Y-m-d H:i:s');
         
         // Debug info (always include for troubleshooting)
         $debug_info = [
@@ -118,7 +144,7 @@ if ($action === 'get_active_biddings') {
             'active_items' => count($items),
             'bidding_enabled' => $bidding_enabled,
             'all_items' => $all_items,
-            'current_time' => date('Y-m-d H:i:s'),
+            'current_time' => $current_time_ist,
             'items_returned' => count($items)
         ];
         
@@ -219,20 +245,29 @@ if ($action === 'place_bid') {
         exit;
     }
     
-    $now = time();
-    $start_time = $item['start_time'] ? strtotime($item['start_time']) : 0;
-    $end_time = strtotime($item['end_time']);
+    // Get current time in IST
+    $now_ist = new DateTime('now', new DateTimeZone('Asia/Kolkata'));
     
-    if (!$item['is_active'] || $item['is_completed'] || $now >= $end_time) {
+    // Convert database times (UTC) to IST for comparison
+    $start_time_utc = $item['start_time'] ? new DateTime($item['start_time'], new DateTimeZone('UTC')) : null;
+    $end_time_utc = new DateTime($item['end_time'], new DateTimeZone('UTC'));
+    
+    // Convert to IST
+    if ($start_time_utc) {
+        $start_time_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
+    }
+    $end_time_utc->setTimezone(new DateTimeZone('Asia/Kolkata'));
+    
+    if (!$item['is_active'] || $item['is_completed'] || $now_ist >= $end_time_utc) {
         echo json_encode(['success' => false, 'message' => 'Bidding is not active']);
         exit;
     }
     
-    // Check if bidding has started
-    if ($start_time > 0 && $now < $start_time) {
-        $time_until_start = $start_time - $now;
-        $hours = floor($time_until_start / 3600);
-        $minutes = floor(($time_until_start % 3600) / 60);
+    // Check if bidding has started (compare in IST)
+    if ($start_time_utc && $now_ist < $start_time_utc) {
+        $diff = $now_ist->diff($start_time_utc);
+        $hours = $diff->h + ($diff->days * 24);
+        $minutes = $diff->i;
         echo json_encode(['success' => false, 'message' => "Bidding has not started yet. It will start in {$hours}h {$minutes}m"]);
         exit;
     }

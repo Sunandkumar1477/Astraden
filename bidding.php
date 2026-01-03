@@ -4,6 +4,9 @@ require_once 'security_headers.php';
 require_once 'check_user_session.php';
 require_once 'connection.php';
 
+// Set timezone to India (IST)
+date_default_timezone_set('Asia/Kolkata');
+
 $user_id = intval($_SESSION['user_id'] ?? 0);
 if ($user_id <= 0) {
     header('Location: index.php');
@@ -132,9 +135,20 @@ $conn->close();
                     }
                     
                     // Render bidding items (newest first - already sorted by API)
+                    // Note: API returns times in IST, JavaScript Date will parse them as local time
+                    // We need to treat them as IST
                     grid.innerHTML = data.items.map(item => {
-                        const endTime = new Date(item.end_time).getTime();
-                        const startTime = item.start_time ? new Date(item.start_time).getTime() : 0;
+                        // Parse IST times (API sends in IST format: Y-m-d H:i:s)
+                        // Create date assuming IST timezone
+                        const parseISTTime = (timeStr) => {
+                            if (!timeStr) return 0;
+                            // Replace space with T for ISO format, add IST offset (+05:30)
+                            const istTime = timeStr.replace(' ', 'T') + '+05:30';
+                            return new Date(istTime).getTime();
+                        };
+                        
+                        const endTime = parseISTTime(item.end_time);
+                        const startTime = parseISTTime(item.start_time);
                         const now = Date.now();
                         const expired = endTime < now;
                         const notStarted = startTime > 0 && startTime > now;
@@ -240,7 +254,7 @@ $conn->close();
             
             // Update start countdowns
             document.querySelectorAll('.timer[data-start]').forEach(timer => {
-                const startTime = new Date(timer.dataset.start).getTime();
+                const startTime = parseISTTime(timer.dataset.start);
                 const now = Date.now();
                 const diff = startTime - now;
                 
