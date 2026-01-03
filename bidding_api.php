@@ -34,17 +34,16 @@ if ($action === 'get_active_biddings') {
     // Query for active bidding items
     // Show ALL items where is_active = 1 (regardless of completion status, end_time, or start_time)
     // Items will remain visible until admin deletes them (sets is_active = 0)
-    // Completed items will be shown with "BIDDING CLOSED" status
-    // Items can show even before start_time (users can see upcoming auctions)
+    // Recent items (newest) show first, then by status
     $query = "SELECT bi.*, 
         COALESCE((SELECT u.username FROM users u WHERE u.id = bi.current_bidder_id LIMIT 1), '') as current_bidder_name,
         COALESCE((SELECT COUNT(*) FROM bidding_history WHERE bidding_item_id = bi.id), 0) as total_bids
         FROM bidding_items bi 
         WHERE bi.is_active = 1
         ORDER BY 
+            bi.created_at DESC,
             CASE WHEN bi.is_completed = 1 THEN 1 ELSE 0 END,
-            CASE WHEN bi.end_time < NOW() AND bi.is_completed = 0 THEN 1 ELSE 0 END,
-            bi.created_at DESC";
+            CASE WHEN bi.end_time < NOW() AND bi.is_completed = 0 THEN 1 ELSE 0 END";
     
     $result = $conn->query($query);
     

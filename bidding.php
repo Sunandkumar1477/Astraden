@@ -37,150 +37,447 @@ $conn->close();
             --primary-purple: #9d4edd;
             --dark-bg: #05050a;
             --card-bg: rgba(15, 15, 25, 0.95);
+            --success-green: #00ff88;
+            --warning-orange: #ffaa00;
+            --error-red: #ff3333;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Rajdhani', sans-serif; background: var(--dark-bg); color: white; min-height: 100vh; padding: 20px; }
-        .space-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #05050a 100%); z-index: -1; }
-        .header { text-align: center; margin-bottom: 30px; padding: 20px 0; }
-        .header h1 { font-family: 'Orbitron', sans-serif; color: var(--primary-cyan); font-size: 2rem; }
-        .balance-card { background: var(--card-bg); border: 2px solid var(--primary-cyan); border-radius: 15px; padding: 20px; margin-bottom: 30px; text-align: center; }
-        .balance-card h2 { color: var(--primary-purple); margin-bottom: 10px; }
-        .balance-card .amount { font-size: 2rem; font-weight: 900; color: #FFD700; }
-        .bidding-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .bidding-card { background: var(--card-bg); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 15px; padding: 20px; position: relative; }
-        .bidding-card.active { border-color: var(--primary-cyan); box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
-        .bidding-card.expired { opacity: 0.7; border-color: rgba(255,255,255,0.2); }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Rajdhani', sans-serif; 
+            background: var(--dark-bg); 
+            color: white; 
+            min-height: 100vh; 
+            padding: 20px; 
+            position: relative;
+        }
+        
+        .space-bg { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #05050a 100%); 
+            z-index: -1; 
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .back-btn { 
+            display: inline-block; 
+            margin-bottom: 20px; 
+            padding: 10px 20px; 
+            background: rgba(0,255,255,0.1); 
+            border: 1px solid var(--primary-cyan); 
+            border-radius: 8px; 
+            color: var(--primary-cyan); 
+            text-decoration: none; 
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: rgba(0,255,255,0.2);
+            transform: translateX(-3px);
+        }
+        
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            padding: 20px 0; 
+        }
+        
+        .header h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: var(--primary-cyan); 
+            font-size: 2.5rem; 
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            letter-spacing: 3px;
+        }
+        
+        .balance-card { 
+            background: var(--card-bg); 
+            border: 2px solid var(--primary-cyan); 
+            border-radius: 15px; 
+            padding: 25px; 
+            margin-bottom: 30px; 
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+        }
+        
+        .balance-card h2 { 
+            color: var(--primary-purple); 
+            margin-bottom: 15px; 
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .balance-card .amount { 
+            font-size: 2.5rem; 
+            font-weight: 900; 
+            color: #FFD700; 
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            margin: 10px 0;
+        }
+        
+        .balance-card .rate-info {
+            color: rgba(255,255,255,0.6); 
+            font-size: 0.95rem; 
+            margin-top: 15px;
+        }
+        
+        .balance-card .buy-link {
+            color: var(--primary-cyan); 
+            text-decoration: none; 
+            margin-top: 15px; 
+            display: inline-block; 
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        
+        .balance-card .buy-link:hover {
+            color: var(--primary-purple);
+            text-shadow: 0 0 10px rgba(157, 78, 221, 0.5);
+        }
+        
+        .bidding-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 25px; 
+        }
+        
+        .bidding-card { 
+            background: var(--card-bg); 
+            border: 1px solid rgba(0, 255, 255, 0.3); 
+            border-radius: 15px; 
+            padding: 25px; 
+            position: relative;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .bidding-card.active { 
+            border-color: var(--primary-cyan); 
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .bidding-card.expired { 
+            opacity: 0.75; 
+            border-color: rgba(255,255,255,0.2);
+        }
+        
+        .bidding-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        .bidding-title { 
+            font-family: 'Orbitron', sans-serif; 
+            color: var(--primary-cyan); 
+            font-size: 1.3rem; 
+            margin-bottom: 15px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        
+        .prize-amount { 
+            color: #FFD700; 
+            font-size: 1.8rem; 
+            font-weight: 900; 
+            margin: 15px 0;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .current-bid { 
+            color: var(--primary-purple); 
+            font-size: 1.2rem; 
+            margin: 15px 0;
+            font-weight: 600;
+        }
+        
+        .current-bid-amount {
+            color: var(--primary-cyan);
+            font-weight: 700;
+        }
+        
+        .timer { 
+            color: var(--error-red); 
+            font-weight: 700; 
+            margin: 15px 0;
+            font-size: 1.1rem;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .bid-input { 
+            width: 100%; 
+            padding: 12px 15px; 
+            background: rgba(0,0,0,0.6); 
+            border: 2px solid var(--primary-cyan); 
+            border-radius: 8px; 
+            color: white; 
+            margin: 15px 0;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .bid-input:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 15px rgba(157, 78, 221, 0.3);
+        }
+        
+        .bid-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-bid { 
+            width: 100%; 
+            padding: 15px; 
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); 
+            border: none; 
+            border-radius: 8px; 
+            color: white; 
+            font-family: 'Orbitron', sans-serif; 
+            font-weight: 700; 
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-bid:hover:not(:disabled) { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        .btn-bid:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .recent-bids { 
+            margin-top: 20px; 
+            font-size: 0.95rem; 
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
         
         /* Professional status badges and messages */
         .status-badge { 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            gap: 8px; 
-            padding: 12px 20px; 
+            gap: 10px; 
+            padding: 15px 20px; 
             margin: 15px 0; 
-            border-radius: 8px; 
+            border-radius: 10px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 700; 
-            font-size: 0.9rem; 
+            font-size: 0.95rem; 
             text-transform: uppercase; 
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
+        
         .status-badge.completed { 
             background: linear-gradient(135deg, rgba(0, 200, 0, 0.2), rgba(0, 150, 0, 0.2)); 
-            border: 2px solid #00cc00; 
-            color: #00ff88; 
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+            border: 2px solid var(--success-green); 
+            color: var(--success-green); 
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
         }
+        
         .status-badge.completed i { 
-            font-size: 1.2rem; 
+            font-size: 1.3rem; 
             animation: pulse 2s infinite;
         }
+        
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
         }
+        
         .winner-info { 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            gap: 8px; 
-            padding: 10px; 
-            margin: 10px 0; 
-            background: rgba(255, 215, 0, 0.1); 
-            border: 1px solid #FFD700; 
-            border-radius: 8px; 
+            gap: 10px; 
+            padding: 12px; 
+            margin: 15px 0; 
+            background: rgba(255, 215, 0, 0.15); 
+            border: 2px solid #FFD700; 
+            border-radius: 10px; 
             color: #FFD700; 
             font-weight: 700;
+            font-size: 1rem;
         }
+        
         .winner-info i { 
-            font-size: 1.1rem; 
+            font-size: 1.3rem; 
             color: #FFD700;
         }
+        
         .completed-message, .expired-message, .not-started-message { 
             text-align: center; 
-            padding: 15px; 
+            padding: 20px; 
             margin: 15px 0; 
-            border-radius: 8px; 
-            font-size: 0.95rem;
+            border-radius: 10px; 
+            font-size: 1rem;
         }
+        
         .completed-message { 
-            background: rgba(0, 200, 0, 0.1); 
-            border: 1px solid #00cc00; 
-            color: #00ff88;
+            background: rgba(0, 200, 0, 0.15); 
+            border: 2px solid var(--success-green); 
+            color: var(--success-green);
         }
+        
         .completed-message i { 
             display: block; 
-            font-size: 2rem; 
-            margin-bottom: 8px; 
-            color: #00ff88;
+            font-size: 2.5rem; 
+            margin-bottom: 10px; 
+            color: var(--success-green);
         }
+        
         .completed-message p { 
             margin: 0; 
-            font-weight: 500;
+            font-weight: 600;
         }
+        
         .expired-message { 
-            background: rgba(255, 170, 0, 0.1); 
-            border: 1px solid #ffaa00; 
+            background: rgba(255, 170, 0, 0.15); 
+            border: 2px solid var(--warning-orange); 
             color: #ffcc66;
         }
+        
         .expired-message i { 
             display: block; 
-            font-size: 2rem; 
-            margin-bottom: 8px; 
-            color: #ffaa00;
+            font-size: 2.5rem; 
+            margin-bottom: 10px; 
+            color: var(--warning-orange);
         }
+        
         .expired-message p { 
             margin: 0; 
-            font-weight: 500;
+            font-weight: 600;
         }
+        
         .not-started-message { 
-            background: rgba(255, 170, 0, 0.1); 
-            border: 1px solid #ffaa00; 
+            background: rgba(255, 170, 0, 0.15); 
+            border: 2px solid var(--warning-orange); 
             color: #ffcc66;
         }
+        
         .not-started-message i { 
             display: block; 
-            font-size: 2rem; 
-            margin-bottom: 8px; 
-            color: #ffaa00;
+            font-size: 2.5rem; 
+            margin-bottom: 10px; 
+            color: var(--warning-orange);
         }
+        
         .not-started-message p { 
             margin: 0; 
-            font-weight: 500;
+            font-weight: 600;
         }
-        .bidding-title { font-family: 'Orbitron', sans-serif; color: var(--primary-cyan); font-size: 1.2rem; margin-bottom: 10px; }
-        .prize-amount { color: #FFD700; font-size: 1.5rem; font-weight: 900; margin: 10px 0; }
-        .current-bid { color: var(--primary-purple); font-size: 1.2rem; margin: 10px 0; }
-        .bid-input { width: 100%; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--primary-cyan); border-radius: 8px; color: white; margin: 10px 0; }
-        .btn-bid { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple)); border: none; border-radius: 8px; color: white; font-family: 'Orbitron', sans-serif; font-weight: 700; cursor: pointer; }
-        .btn-bid:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4); }
-        .timer { color: #ff3333; font-weight: 700; margin: 10px 0; }
-        .recent-bids { margin-top: 15px; font-size: 0.9rem; color: rgba(255,255,255,0.6); }
-        .back-btn { display: inline-block; margin-bottom: 20px; padding: 10px 20px; background: rgba(0,255,255,0.1); border: 1px solid var(--primary-cyan); border-radius: 8px; color: var(--primary-cyan); text-decoration: none; }
+        
+        /* Loading and error states */
+        .loading-state, .error-state, .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 40px;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .loading-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--primary-cyan);
+        }
+        
+        .error-state {
+            color: var(--error-red);
+        }
+        
+        .error-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .retry-btn {
+            padding: 12px 30px;
+            background: var(--primary-cyan);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .retry-btn:hover {
+            background: var(--primary-purple);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.4);
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .bidding-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .balance-card .amount {
+                font-size: 2rem;
+            }
+        }
+        
+        /* Smooth transitions */
+        .bidding-card * {
+            transition: all 0.3s ease;
+        }
     </style>
 </head>
 <body>
     <div class="space-bg"></div>
-    <a href="index.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
-    
-    <div class="header">
-        <h1><i class="fas fa-gavel"></i> LIVE BIDDING</h1>
-    </div>
-    
-    <div class="balance-card">
-        <h2>Your Astrons Balance</h2>
-        <div class="amount" id="astronsBalance"><?php echo number_format($astrons_balance, 2); ?></div>
-        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-top: 10px;">
-            Rate: 1 Astron = <?php echo number_format($credits_per_astron, 2); ?> Credits
+    <div class="container">
+        <a href="index.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        
+        <div class="header">
+            <h1><i class="fas fa-gavel"></i> LIVE BIDDING</h1>
         </div>
-        <a href="buy_astrons.php" style="color: var(--primary-cyan); text-decoration: none; margin-top: 10px; display: inline-block; font-weight: 700;">Buy More Astrons with Credits</a>
-    </div>
-    
-    <div class="bidding-grid" id="biddingGrid">
-        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
-            <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
-            <p>Loading active biddings...</p>
+        
+        <div class="balance-card">
+            <h2>Your Astrons Balance</h2>
+            <div class="amount" id="astronsBalance"><?php echo number_format($astrons_balance, 2); ?></div>
+            <div class="rate-info">
+                Rate: 1 Astron = <?php echo number_format($credits_per_astron, 2); ?> Credits
+            </div>
+            <a href="buy_astrons.php" class="buy-link">
+                <i class="fas fa-shopping-cart"></i> Buy More Astrons with Credits
+            </a>
+        </div>
+        
+        <div class="bidding-grid" id="biddingGrid">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading active biddings...</p>
+            </div>
         </div>
     </div>
     
@@ -196,7 +493,7 @@ $conn->close();
             }
             
             // Show loading state
-            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p>Loading active biddings...</p></div>';
+            grid.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Loading active biddings...</p></div>';
             
             fetch('bidding_api.php?action=get_active_biddings' + (window.location.search.includes('debug') ? '&debug=1' : ''))
                 .then(r => {
@@ -211,109 +508,112 @@ $conn->close();
                     console.log('Items count:', data.items ? data.items.length : 0);
                     
                     if (!data.success) {
-                        let errorMsg = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">';
-                        errorMsg += '<i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i><br>';
-                        errorMsg += 'Error loading biddings: ' + (data.message || 'Unknown error');
-                        errorMsg += '</div>';
-                        grid.innerHTML = errorMsg;
+                        let errorHtml = '<div class="error-state">';
+                        errorHtml += '<i class="fas fa-exclamation-triangle"></i><br>';
+                        errorHtml += '<strong>Error loading biddings</strong><br>';
+                        errorHtml += '<small>' + (data.message || 'Unknown error') + '</small><br><br>';
+                        errorHtml += '<button onclick="updateBiddings()" class="retry-btn">Retry</button>';
+                        errorHtml += '</div>';
+                        grid.innerHTML = errorHtml;
                         console.error('Bidding API Error:', data);
-                        if (data.debug) {
-                            console.log('Debug Info:', data.debug);
-                            // Show debug info on page if debug mode
-                            if (window.location.search.includes('debug')) {
-                                grid.innerHTML += '<div style="grid-column: 1 / -1; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; margin-top: 20px; font-size: 0.9rem;"><pre>' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
-                            }
+                        if (data.debug && window.location.search.includes('debug')) {
+                            grid.innerHTML += '<div style="grid-column: 1 / -1; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; margin-top: 20px; font-size: 0.9rem; text-align: left;"><pre>' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
                         }
                         return;
                     }
                     
                     if (!data.items || data.items.length === 0) {
-                        let message = 'No active biddings at the moment. Check back later!';
+                        let message = '<div class="empty-state">';
+                        message += '<i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 20px; color: rgba(255,255,255,0.3);"></i><br>';
+                        message += '<strong>No active biddings at the moment</strong><br>';
+                        message += '<small>Check back later for new bidding opportunities!</small>';
                         if (data.debug) {
                             console.log('Debug Info:', data.debug);
                             if (data.debug.total_items > 0) {
-                                message += '<br><small style="color: rgba(255,255,255,0.4);">Total items in database: ' + data.debug.total_items + '</small>';
+                                message += '<br><br><small style="color: rgba(255,255,255,0.4);">Total items in database: ' + data.debug.total_items + '</small>';
                             }
                             if (data.debug.bidding_enabled === false) {
                                 message += '<br><small style="color: #ffaa00;">Bidding system is disabled in admin settings.</small>';
                             }
-                            // Show debug info on page if debug mode
                             if (window.location.search.includes('debug')) {
                                 message += '<div style="margin-top: 20px; padding: 20px; background: rgba(255,255,0,0.1); border: 1px solid yellow; text-align: left; font-size: 0.9rem;"><strong>Debug Info:</strong><pre>' + JSON.stringify(data.debug, null, 2) + '</pre></div>';
                             }
                         }
-                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">' + message + '</div>';
+                        message += '</div>';
+                        grid.innerHTML = message;
                         return;
                     }
+                    
+                    // Render bidding items (newest first - already sorted by API)
+                    grid.innerHTML = data.items.map(item => {
+                        const endTime = new Date(item.end_time).getTime();
+                        const startTime = item.start_time ? new Date(item.start_time).getTime() : 0;
+                        const now = Date.now();
+                        const expired = endTime < now;
+                        const notStarted = startTime > 0 && startTime > now;
+                        const isCompleted = item.is_completed == 1 || item.is_completed === true;
                         
-                        grid.innerHTML = data.items.map(item => {
-                            const endTime = new Date(item.end_time).getTime();
-                            const startTime = item.start_time ? new Date(item.start_time).getTime() : 0;
-                            const now = Date.now();
-                            const expired = endTime < now;
-                            const notStarted = startTime > 0 && startTime > now;
-                            const isCompleted = item.is_completed == 1 || item.is_completed === true;
-                            
-                            return `
-                                <div class="bidding-card ${expired || isCompleted ? 'expired' : 'active'}" data-id="${item.id}">
-                                    <div class="bidding-title">${item.title}</div>
-                                    <div class="prize-amount">Prize: ₹${parseFloat(item.prize_amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
-                                    <div class="current-bid">${isCompleted ? 'Final Bid' : 'Current Bid'}: <span class="current-bid-amount">${parseFloat(item.current_bid).toFixed(2)}</span> Astrons</div>
-                                    ${isCompleted ? `
-                                        <div class="status-badge completed">
-                                            <i class="fas fa-check-circle"></i>
-                                            <span>BIDDING CLOSED</span>
+                        return `
+                            <div class="bidding-card ${expired || isCompleted ? 'expired' : 'active'}" data-id="${item.id}">
+                                <div class="bidding-title">${item.title}</div>
+                                <div class="prize-amount">Prize: ₹${parseFloat(item.prize_amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                                <div class="current-bid">${isCompleted ? 'Final Bid' : 'Current Bid'}: <span class="current-bid-amount">${parseFloat(item.current_bid).toFixed(2)}</span> Astrons</div>
+                                ${isCompleted ? `
+                                    <div class="status-badge completed">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>BIDDING CLOSED</span>
+                                    </div>
+                                    ${item.current_bidder_name ? `
+                                        <div class="winner-info">
+                                            <i class="fas fa-trophy"></i>
+                                            <span>Winner: <strong>${item.current_bidder_name}</strong></span>
                                         </div>
-                                        ${item.current_bidder_name ? `
-                                            <div class="winner-info">
-                                                <i class="fas fa-trophy"></i>
-                                                <span>Winner: <strong>${item.current_bidder_name}</strong></span>
-                                            </div>
-                                        ` : ''}
-                                    ` : notStarted ? `
-                                        <div class="timer" data-start="${item.start_time}">Starts in: <span class="countdown-start"></span></div>
-                                    ` : `
-                                        <div class="timer" data-end="${item.end_time}">Time Left: <span class="countdown"></span></div>
-                                    `}
-                                    ${isCompleted ? `
-                                        <div class="completed-message">
-                                            <i class="fas fa-lock"></i>
-                                            <p>This auction has been completed and closed.</p>
-                                        </div>
-                                    ` : expired && !isCompleted ? `
-                                        <div class="expired-message">
-                                            <i class="fas fa-hourglass-end"></i>
-                                            <p>Bidding has ended. Awaiting completion.</p>
-                                        </div>
-                                    ` : notStarted ? `
-                                        <div class="not-started-message">
-                                            <i class="fas fa-clock"></i>
-                                            <p>Bidding will start soon</p>
-                                        </div>
-                                        <input type="number" class="bid-input" placeholder="Bidding not started yet" disabled style="opacity: 0.5;">
-                                        <button class="btn-bid" disabled style="opacity: 0.5; cursor: not-allowed;">Bidding Not Started</button>
-                                    ` : `
-                                        <input type="number" class="bid-input" placeholder="Min: ${(parseFloat(item.current_bid) + parseFloat(item.bid_increment)).toFixed(2)} Astrons" step="${item.bid_increment}" min="${parseFloat(item.current_bid) + parseFloat(item.bid_increment)}">
-                                        <button class="btn-bid" onclick="placeBid(${item.id}, this)">Place Bid</button>
-                                    `}
-                                    <div class="recent-bids">Total Bids: ${item.total_bids}</div>
+                                    ` : ''}
+                                ` : notStarted ? `
+                                    <div class="timer" data-start="${item.start_time}">Starts in: <span class="countdown-start"></span></div>
+                                ` : `
+                                    <div class="timer" data-end="${item.end_time}">Time Left: <span class="countdown"></span></div>
+                                `}
+                                ${isCompleted ? `
+                                    <div class="completed-message">
+                                        <i class="fas fa-lock"></i>
+                                        <p>This auction has been completed and closed.</p>
+                                    </div>
+                                ` : expired && !isCompleted ? `
+                                    <div class="expired-message">
+                                        <i class="fas fa-hourglass-end"></i>
+                                        <p>Bidding has ended. Awaiting completion.</p>
+                                    </div>
+                                ` : notStarted ? `
+                                    <div class="not-started-message">
+                                        <i class="fas fa-clock"></i>
+                                        <p>Bidding will start soon</p>
+                                    </div>
+                                    <input type="number" class="bid-input" placeholder="Bidding not started yet" disabled>
+                                    <button class="btn-bid" disabled>Bidding Not Started</button>
+                                ` : `
+                                    <input type="number" class="bid-input" placeholder="Min: ${(parseFloat(item.current_bid) + parseFloat(item.bid_increment)).toFixed(2)} Astrons" step="${item.bid_increment}" min="${parseFloat(item.current_bid) + parseFloat(item.bid_increment)}">
+                                    <button class="btn-bid" onclick="placeBid(${item.id}, this)">Place Bid</button>
+                                `}
+                                <div class="recent-bids">
+                                    <i class="fas fa-gavel"></i> Total Bids: ${item.total_bids}
                                 </div>
-                            `;
-                        }).join('');
-                        
-                        // Update countdowns
-                        updateCountdowns();
-                    }
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    // Update countdowns
+                    updateCountdowns();
                 })
                 .catch(err => {
                     console.error('Error loading biddings:', err);
                     const grid = document.getElementById('biddingGrid');
                     if (grid) {
-                        let errorHtml = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff3333;">';
-                        errorHtml += '<i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px;"></i><br>';
+                        let errorHtml = '<div class="error-state">';
+                        errorHtml += '<i class="fas fa-exclamation-circle"></i><br>';
                         errorHtml += '<strong>Error loading biddings</strong><br>';
-                        errorHtml += '<small style="color: rgba(255,255,255,0.6);">' + err.message + '</small><br><br>';
-                        errorHtml += '<button onclick="updateBiddings()" style="padding: 10px 20px; background: var(--primary-cyan); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 700;">Retry</button>';
+                        errorHtml += '<small>' + err.message + '</small><br><br>';
+                        errorHtml += '<button onclick="updateBiddings()" class="retry-btn">Retry</button>';
                         errorHtml += '</div>';
                         grid.innerHTML = errorHtml;
                     }
@@ -436,4 +736,3 @@ $conn->close();
     </script>
 </body>
 </html>
-
